@@ -1,0 +1,1 @@
+[{"id":9007199254740993,"name":"comma, value","missing":null,"nested":{"active":true},"first name":"space","quote\"name":"quote","😀":"emoji","select":"keyword","real":1e300},{"id":9223372036854775807,"name":"two\nlines","missing":"","extra":"union key","real":1e-300},{"id":-9223372036854775808,"name":"emoji 😀","missing":"NULL","real":-1e300}]

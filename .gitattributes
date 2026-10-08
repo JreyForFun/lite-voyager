@@ -1,0 +1,5 @@
+# Fixtures contain deliberate BOMs, line endings, and malformed binary data.
+test/fixtures/** -text
+# CRLF is required input data; a terminal TSV tab represents an empty cell.
+test/fixtures/bom-crlf.csv whitespace=cr-at-eol
+test/fixtures/sample.tsv whitespace=-blank-at-eol

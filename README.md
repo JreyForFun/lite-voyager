@@ -11,7 +11,8 @@ See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 
 ## Development
 
-Use Node.js 24 or newer for the development tools, then run:
+Use Node.js 25.7 or newer for the development tools and SQLite fixture tests,
+then run (Node 26.5.0 was tested):
 
 ```sh
 npm ci
@@ -43,6 +44,24 @@ npm run package
 
 `npm run package` performs a local packaging check; it does not publish.
 The manifest's VS Code minimum is provisional until compatibility spike T-002.
+
+## Test fixtures
+
+Small SQLite, CSV/TSV, JSON/JSONL, and XLSX inputs are committed in
+[test/fixtures](test/fixtures/README.md), including malformed and empty cases.
+The inventory records exact bytes/hashes and runtime scenario instructions.
+
+```sh
+npm run fixtures -- small
+npm run fixtures -- stress
+npm run fixtures -- large --rows 10000000
+```
+
+The generator writes a new directory under the git-ignored
+`test/fixtures/generated/`. It refuses existing destinations. The large profile
+creates CSV and SQLite with matching rows; `--csv-bytes` requests a minimum CSV
+size and `--payload-bytes` changes record width. See the fixture guide for all
+options, format limits, and what to paste back from a local generation run.
 
 ## Credits and license
 

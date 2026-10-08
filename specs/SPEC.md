@@ -111,7 +111,7 @@ Priority: **P0** first release, **P1** next, **P2** later in v1.
 
 ### Editing
 
-**FR-020 (P1) Inline edit (SQLite).** Edits are staged, shown with VS Code's dirty indicator, and applied in a single transaction on save. Undo / revert discards staged changes. Tables are addressed by primary key, else by `rowid`. A `WITHOUT ROWID` table with no primary key is read-only with an explanation.
+**FR-020 (P1) Inline edit (SQLite).** Edits are staged, shown with VS Code's dirty indicator, and applied in a single transaction on save. Undo / revert discards staged changes. Tables are addressed by primary key, else by `rowid`. SQLite requires a primary key on every valid `WITHOUT ROWID` table; address these tables by that key, including every component of a composite key.
 
 **FR-021 (P1) Add and delete rows,** same staging and save rules.
 
@@ -171,6 +171,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.4 T-005 clarification (2026-10-09): Corrected the impossible WITHOUT ROWID/no-primary-key case in FR-020 after user approval; fixtures cover a valid composite primary key.
 - v0.4: Added FR-017 (sort/filter), FR-018 (cell details), data fidelity rules, security and diagnostics NFRs, and screen states.
 - v0.3: Renamed to Lite Voyager. Engine risk resolved with a fallback strategy (PLAN D-3). Added fallback behavior to FR-001.
 - v0.2: Split into multiple files. Added competitive analysis, any-size requirement, resolved Q1 to Q5.

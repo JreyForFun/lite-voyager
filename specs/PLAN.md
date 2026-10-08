@@ -21,6 +21,8 @@ Status: Draft v0.2 | Implements `SPEC.md` under `CONSTITUTION.md`.
 T-006 development tooling uses Node 24 or newer to run TypeScript verification scripts.
 This does not establish the extension host's minimum Node or VS Code version;
 T-002 measures that separately. Strict typechecking covers host, webview, and tooling.
+T-005 raises the development/test minimum to Node 25.7, where node:sqlite no
+longer emits an experimental warning. Node 26.5.0 is the observed local runtime.
 `verify` runs typechecks, lint, unit tests, both production bundles, and a temporary
 VSIX packaging check. `verify:full` adds integration tests in an isolated VS Code.
 Every failing command or emitted warning fails the verification pipeline.
@@ -34,6 +36,35 @@ The test host uses empty profile-local installed and built-in extension director
 (`--extensions-dir`, `--builtin-extensions-dir`), loading Lite Voyager through its
 development path. This isolates unrelated Git/Copilot components without modifying
 VS Code or filtering diagnostics. These tests do not cover coexistence with built-ins.
+
+### T-005 fixture tooling
+
+- `test/fixtures/manifest.json` inventories committed synthetic assets with sizes,
+  hashes, and all applicable VALIDATION section 5 cases. `.gitattributes` preserves
+  their exact bytes. `test/fixtures/README.md` documents runtime-only setups.
+- `npm run fixtures -- small|stress|large` creates a fresh directory, defaulting
+  to the git-ignored `test/fixtures/generated/`. Existing destinations are refused.
+- Large CSV writes use a fixed 64 KiB batch and backpressure. SQLite creation runs
+  in a worker with 1,000-row transactions. IDs are BigInt; values are parameterized
+  and generated identifiers are quoted. No new project dependency is required.
+- Defaults: 10 million rows, 96-byte ASCII payload. Optional `--csv-bytes` is a
+  minimum, rounded up to a complete record; SQLite has the same resulting rows.
+- Stress data covers 1,048,577-byte text cells and 1,000 columns. XLSX's real row/
+  cell limits are documented instead of constructing invalid oversize worksheets.
+- The curated XLSX has three sheets, exact unsafe integers as text, and a cached
+  formula value. Regeneration copies this committed asset; external authoring/
+  independent QA tools are not required by project commands or the extension.
+- These are fixture/generator tests. They do not claim the future loaders, UI,
+  cancellation, file recovery, or T-004 import targets have passed.
+
+Observed T-005 local generation (2026-10-09, Windows, Node 26.5.0):
+`npm run fixtures -- large --rows 10000000 --output test/fixtures/generated/t005-10m-validation`
+completed in 163,629 ms with 10,000,000 rows, a 1,258,888,906-byte CSV, and a
+1,246,060,544-byte SQLite database. This is generation time; peak memory and
+extension/import performance were not measured. Large outputs remain git-ignored.
+An independent Python csv reader checked every record, exact ID, name and payload;
+Python sqlite3 opened the database read-only and confirmed matching counts,
+ID bounds 9007199254740993 through 9007199264740992, and aggregate payload length.
 
 ## 2. Decision log
 
@@ -156,6 +187,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-005 fixtures (2026-10-09): Recorded fixture inventory, safe generators, stress profiles, format limits, and Node 25.7 development minimum. Extension compatibility remains a T-002 measurement.
 - v0.4 T-006 validation (2026-10-09): Isolated installed and built-in extensions in fresh test profiles; full verification passes without filtering runtime diagnostics. Built-in coexistence is outside this isolated test's coverage.
 - v0.4 tooling clarification: Recorded approved MIT packaging dependency and T-006 verification tooling; development Node minimum is separate from T-002 compatibility measurements.
 - v0.4: Added commands/settings list and release plan.

@@ -10,7 +10,7 @@
   "description": "Your new favorite go to SQLite and data files tool",
   "version": "0.0.1",
   "engines": {
-    "node": ">=24.0.0",
+    "node": ">=25.7.0",
     "vscode": "^1.140.0"
   },
   "categories": [
@@ -41,7 +41,8 @@
     "test": "vitest run",
     "test:integration": "npm run compile-tests && npm run build && node scripts/integration-check.mts",
     "verify": "node scripts/verify.mts",
-    "verify:full": "node scripts/verify.mts --full"
+    "verify:full": "node scripts/verify.mts --full",
+    "fixtures": "node scripts/generate-fixtures.mts"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

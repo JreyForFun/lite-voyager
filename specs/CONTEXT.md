@@ -14,6 +14,8 @@ Status: Draft v0.1 | How to give an AI exactly what it needs and nothing more.
 4. **Paste exact text, not your paraphrase.** Requirement wording matters.
 5. **Small is better.** If the context pack for a task does not fit comfortably (a rough guide: under about 2,000 words of pasted material), the task is too big. Split it in `TASKS.md`.
 6. **Files are the memory.** Anything the AI must remember goes into a file: a decision into `PLAN.md`, a result into `PLAN.md`, a status into `PROGRESS.md`, a bug into a test.
+   The repository-root `PROGRESS.md` is the live session status;
+   `specs/PROGRESS.md` points to it rather than maintaining a second status.
 7. **Stop early.** If the AI starts repeating itself, forgetting rules, or contradicting earlier answers, the chat is full. Run the session-end prompt and start a new one.
 
 ---
@@ -134,4 +136,5 @@ At the end of every milestone, in this order:
 - Never rely on "as discussed earlier". If it matters, it is in a file.
 
 ## Changelog
+- v0.1 T-005 documentation (2026-10-09): Identified root PROGRESS.md as canonical and removed the stale duplicate-status ambiguity.
 - v0.1: Initial version.

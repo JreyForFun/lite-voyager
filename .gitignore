@@ -15,6 +15,7 @@ coverage/
 .vscode-test/
 *.tsbuildinfo
 *.vsix
+test/fixtures/generated/
 
 # Local environment configuration
 .env

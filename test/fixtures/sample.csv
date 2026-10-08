@@ -1,0 +1,5 @@
+id,name,value,real,"first name","quote""name",😀,select
+9007199254740993,"comma, value",,1e300,space,quote,emoji,keyword
+9223372036854775807,"two
+lines",NULL,1e-300,,,,
+-9223372036854775808,"emoji 😀","",-1e300,,,,

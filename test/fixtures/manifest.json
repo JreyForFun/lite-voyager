@@ -1,0 +1,251 @@
+{
+  "task": "T-005",
+  "files": {
+    "sample.sqlite": {
+      "bytes": 28672,
+      "sha256": "b8ee3eb4f6b3a5310ca094750f82987496faf48f24c0b0187a6d6d8b02850b14"
+    },
+    "empty.sqlite": {
+      "bytes": 4096,
+      "sha256": "92e0b9eb2e0e2fa957f065e8078904f79897f2c0fcb78560bc9cba6b51e8bd5c"
+    },
+    "zero-byte.sqlite": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "corrupt.sqlite": {
+      "bytes": 22,
+      "sha256": "8cdbac5a07cf021a0c46cb82be94701992005ec0797161791d80ad2f1685923c"
+    },
+    "truncated.sqlite": {
+      "bytes": 128,
+      "sha256": "8c3e6e30ab43f86d693838fb5de29be0cec7fcab7c6831391fb5c6e18ca3d2f5"
+    },
+    "sample.csv": {
+      "bytes": 219,
+      "sha256": "35b2c652f8e6508659708e310658d5f462fa7358f4a1b4730057c4da8e734a41"
+    },
+    "sample.tsv": {
+      "bytes": 79,
+      "sha256": "eecfb84442c12f9ba3d3b5bc12ccec146824d817688b2836420b78fdf5912fe1"
+    },
+    "bom-crlf.csv": {
+      "bytes": 63,
+      "sha256": "583ac83de0ae9171d94988031a01940056f2d033cd01de6bd467793c563a3eeb"
+    },
+    "ragged.csv": {
+      "bytes": 18,
+      "sha256": "73e723d084fae9a69a1a21002046ed5d3b95b1c3446db9b5e717dbd80c1062dd"
+    },
+    "duplicate-blank-headers.csv": {
+      "bytes": 22,
+      "sha256": "2fedd011ec0a34ecb37b1259dc618e269e7a09ea90ca957aa4d52a664b8138af"
+    },
+    "header-only.csv": {
+      "bytes": 8,
+      "sha256": "40d6bfdc74eae2ed68a97137ce414fa4ca6de1b3831cfd9a73c4622d8a8942c1"
+    },
+    "non-utf8.csv": {
+      "bytes": 15,
+      "sha256": "94dd2d078b458c04bfe86c242e14bf1a1ad800dfabe5b75f654bdd7c14b049fe"
+    },
+    "binary.csv": {
+      "bytes": 10,
+      "sha256": "4d70cd4593b269a97587197858e12f5a29247d23e51a5fb6337c77e652b0cdbb"
+    },
+    "unterminated.csv": {
+      "bytes": 21,
+      "sha256": "c5c8912754afc1f2ca34cae3b70a5fa0164c8fe778f40d97e365da35b2e2b26f"
+    },
+    "empty.csv": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "empty.tsv": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sample.json": {
+      "bytes": 351,
+      "sha256": "3311c35e2e51636d5912179de80f713d4758746372ae0f1a2786511a93a8c928"
+    },
+    "sample.jsonl": {
+      "bytes": 349,
+      "sha256": "64bab2b1144a8c72f88f82dfe652fff80998c0573f094a95bf1edd3b1be4ed22"
+    },
+    "unsupported.json": {
+      "bytes": 3,
+      "sha256": "084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0"
+    },
+    "corrupt.json": {
+      "bytes": 14,
+      "sha256": "7ad04e56a19a698dda3144a981483a70f3ce3ed9748017de148b34a1147e3782"
+    },
+    "truncated.jsonl": {
+      "bytes": 15,
+      "sha256": "a7b29d38dab534bebe5c7437c9473044bbcc0ef2d2e0ce468f375e63368cf409"
+    },
+    "empty.json": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "empty.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sample.xlsx": {
+      "bytes": 4785,
+      "sha256": "4d7ba4312f3597d9fcf5a4bee94bd5a34a506a4b7b053e6f56917210cdd9ed62"
+    },
+    "corrupt.xlsx": {
+      "bytes": 30,
+      "sha256": "f57fa8c5f57355f40d50186a3cc6fa77a883a50bb27230104f85c7a4f41997cf"
+    },
+    "truncated.xlsx": {
+      "bytes": 64,
+      "sha256": "6eedef4049fc4f32dd9af2870e0233e4fb8470c8f78b1128bb8747bc5403197b"
+    },
+    "empty.xlsx": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "cases": [
+    {
+      "id": "empty",
+      "kind": "static",
+      "files": [
+        "empty.sqlite",
+        "zero-byte.sqlite",
+        "empty.csv",
+        "empty.tsv",
+        "empty.json",
+        "empty.jsonl",
+        "empty.xlsx",
+        "header-only.csv"
+      ],
+      "expected": "Valid no-table database, zero-byte inputs, header-only CSV; XLSX includes an Empty sheet."
+    },
+    {
+      "id": "invalid",
+      "kind": "static",
+      "files": [
+        "corrupt.sqlite",
+        "truncated.sqlite",
+        "corrupt.json",
+        "truncated.jsonl",
+        "unterminated.csv",
+        "corrupt.xlsx",
+        "truncated.xlsx"
+      ],
+      "expected": "Reject malformed or incomplete inputs without modifying them."
+    },
+    {
+      "id": "encoding",
+      "kind": "static",
+      "files": [
+        "bom-crlf.csv",
+        "non-utf8.csv",
+        "binary.csv"
+      ],
+      "expected": "UTF-8 BOM/CRLF, Windows-1252 cafe, NUL and invalid UTF-8 bytes."
+    },
+    {
+      "id": "large-cell",
+      "kind": "generated",
+      "command": "npm run fixtures -- stress",
+      "expected": "1,048,577-byte text cell in CSV, JSON, JSONL, SQLite. Excel cannot represent such a cell; announce its format limit."
+    },
+    {
+      "id": "wide-table",
+      "kind": "generated",
+      "command": "npm run fixtures -- stress",
+      "expected": "1,000 columns in CSV and SQLite."
+    },
+    {
+      "id": "many-rows",
+      "kind": "generated",
+      "command": "npm run fixtures -- large --rows 10000000",
+      "expected": "10 million rows in CSV and SQLite. XLSX has a lower format row limit."
+    },
+    {
+      "id": "awkward-names",
+      "kind": "static",
+      "files": [
+        "sample.sqlite",
+        "sample.csv",
+        "sample.json"
+      ],
+      "expected": "Spaces, embedded double quotes, emoji, and SQL keywords."
+    },
+    {
+      "id": "null-empty-text",
+      "kind": "static",
+      "files": [
+        "sample.sqlite",
+        "sample.json",
+        "sample.jsonl",
+        "sample.xlsx",
+        "sample.csv"
+      ],
+      "expected": "NULL, empty string, text NULL; CSV empty fields do not define a SQL NULL convention."
+    },
+    {
+      "id": "numeric-fidelity",
+      "kind": "static",
+      "files": [
+        "sample.sqlite",
+        "sample.csv",
+        "sample.json",
+        "sample.jsonl",
+        "sample.xlsx"
+      ],
+      "expected": "Signed int64 extremes, integers beyond 2^53, REAL extremes. XLSX unsafe integers are text, never rounded numeric cells."
+    },
+    {
+      "id": "headers",
+      "kind": "static",
+      "files": [
+        "duplicate-blank-headers.csv",
+        "ragged.csv"
+      ],
+      "expected": "Duplicate and blank headers, short and long records."
+    },
+    {
+      "id": "read-only",
+      "kind": "runtime",
+      "setup": "README.md#runtime-scenarios",
+      "expected": "Copy any fixture into out; make the copy read-only; never change a committed fixture permission."
+    },
+    {
+      "id": "locked-file",
+      "kind": "runtime",
+      "setup": "README.md#runtime-scenarios",
+      "expected": "Hold an exclusive SQLite transaction on an out copy from another process."
+    },
+    {
+      "id": "deleted-file",
+      "kind": "runtime",
+      "setup": "README.md#runtime-scenarios",
+      "expected": "Browse an out copy, then delete it externally; run on each OS."
+    },
+    {
+      "id": "cancel-query",
+      "kind": "runtime",
+      "setup": "README.md#runtime-scenarios",
+      "expected": "Cancel the documented recursive query when the query engine exists."
+    },
+    {
+      "id": "cancel-import",
+      "kind": "runtime",
+      "setup": "README.md#runtime-scenarios",
+      "expected": "Cancel importing generated large.csv when import exists."
+    },
+    {
+      "id": "worker-crash",
+      "kind": "runtime",
+      "setup": "README.md#runtime-scenarios",
+      "expected": "Terminate the database worker under a debugger when the worker feature exists."
+    }
+  ]
+}

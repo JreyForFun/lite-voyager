@@ -107,7 +107,7 @@ A milestone is finished only when its gate passes. Then, and only then, tag the 
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
 - [ ] The dirty marker appears and clears correctly; write mode is clearly indicated.
-- [ ] A table without a primary key edits by `rowid`; a `WITHOUT ROWID` table with no primary key is read-only with an explanation.
+- [ ] A table without a primary key edits by `rowid`; a valid `WITHOUT ROWID` table edits by its full primary key, including composite keys.
 - [ ] Kill VS Code in the middle of a save: the database is still intact and openable.
 - [ ] Changing the file from another program triggers the refresh prompt and never silently overwrites it.
 
@@ -121,6 +121,17 @@ A milestone is finished only when its gate passes. Then, and only then, tag the 
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
+The inventory and setup guide are [manifest.json](../test/fixtures/manifest.json)
+and [fixture README](../test/fixtures/README.md). Checks validate fixture data;
+future feature tasks still need tests that use these inputs against real behavior.
+Static assets retain byte-for-byte hashes. Dynamic file conditions, cancellation,
+and worker exit are reproduced on disposable copies using the runtime guide.
+Generated stress files are git-ignored; run `npm run fixtures -- stress` and
+`npm run fixtures -- large --rows 10000000` locally. Retain the printed output
+directory, row/byte report, and `generation.json` as evidence, not large assets.
+Apply cases to formats that can represent them: Excel worksheets allow 1,048,576
+rows and 32,767 characters per cell, so the 10-million-row/1-MB-cell cases use
+CSV/JSON/JSONL/SQLite where applicable. No format limit authorizes silent truncation.
 
 - Empty file, 0-byte file, header-only CSV, database with no tables
 - Corrupt or truncated file, non-UTF-8 text, binary data inside a text file
@@ -168,4 +179,5 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-005 fixtures (2026-10-09): Linked inventory, runtime recipes and generator evidence; documented format applicability. Corrected the impossible WITHOUT ROWID/no-primary-key QA item to match approved FR-020.
 - v0.1: Initial version.
