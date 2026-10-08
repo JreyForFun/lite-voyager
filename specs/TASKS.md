@@ -20,9 +20,17 @@ Task numbers are IDs, not order. Work in the order the lists appear.
 
 ## Milestone 0A: Human setup (do these yourself, in this order)
 
-- [ ] **T-000 [H]** Create a **new** GitHub repository named `lite-voyager` (not a fork) with an MIT license and a Node `.gitignore`. Clone it. Add a README stub that credits filesql. Copy in this `specs/` folder plus `AGENTS.md` and `PROGRESS.md`, and commit them as the first commit. **Approved exception:** the user authorized AI execution and a follow-up setup commit preserving the existing initial commit.
+- [x] **T-000 [H]** Create a **new** GitHub repository named `lite-voyager` (not a fork) with an MIT license and a Node `.gitignore`. Clone it. Add a README stub that credits filesql. Copy in this `specs/` folder plus `AGENTS.md` and `PROGRESS.md`, and commit them as the first commit. **Approved exception:** the user authorized AI execution and a follow-up setup commit preserving the existing initial commit.
 - [ ] **T-001 [H]** Check that "Lite Voyager" is free on the VS Code Marketplace and create your publisher account. Re-verify the competitor table in `SPEC.md` (install counts and features change). *(D-1)*
-- [ ] **T-003 [H]** Run the extension generator yourself, because it is interactive: `npm install -g yo generator-code`, then `yo code`. Choose New Extension (TypeScript) with esbuild. If it creates a subfolder, move its contents to the repo root. Press F5 and confirm the "Hello World" command works. Commit.
+- [x] **T-003 [H]** Run the extension generator yourself, because it is interactive: `npm install -g yo generator-code`, then `yo code`. Choose New Extension (TypeScript) with esbuild. If it creates a subfolder, move its contents to the repo root. Press F5 and confirm the "Hello World" command works. Commit.
+
+### Verified status (2026-10-09)
+- T-000: setup commit `04c7bd7`, MIT license, Node ignore rules, root instructions, specs, and filesql credit are verified. The user reports the repository step complete; subsequent T-006 verification passes.
+- T-001: the user reports no existing Marketplace extension named "Lite Voyager" and supplied publisher ID `jreyinnovarev`. The competitor table has not been re-verified; this task stays open.
+- T-003: the user reports generator/F5 completion. TypeScript/esbuild scaffold is present; an integration test activates `jreyinnovarev.lite-voyager`, checks registration, and runs Hello World. The scaffold is included in the T-006 commit.
+- T-006: strict host/webview/tooling typechecks, lint, 29 unit tests, both production bundles, and a temporary VSIX check pass. Both integration tests pass in VS Code 1.140.0, but `verify:full` fails on the host's structured Copilot errors and Git warnings. The earlier apparent full pass missed unlabelled console errors; a red-first regression test and runtime-log check now catch them. No diagnostics or tests are suppressed. Implementation is prepared, but the checkbox stays open until full validation is clean.
+- Other Milestone 0B tasks T-005, T-007, T-002, T-004, T-008, T-051, and T-050 are not started. No fixtures, CI workflow, spikes, context/trace scripts, or dependency audit exist.
+- Before the milestone gate, clarify the Milestone 0 Engine interface requirement versus T-009 and Linux-only integration coverage in T-007 versus the three-platform gate. No milestone gate has passed; CI and cross-platform evidence are still missing.
 
 ## Milestone 0B: Foundation and risk spikes (mostly AI, with you running things)
 Goal: set up tooling and prove the risky technical bets before building features.
@@ -97,6 +105,9 @@ Every milestone ends with a gate (`VALIDATION.md` section 4): green `npm run ver
 When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part of `SPEC.md` and `PLAN.md`, and only the single task you are working on.
 
 ## Changelog
+- v0.6 T-006 implementation (2026-10-09): Ticked T-000/T-003 with setup and activation evidence. Added 29 unit tests and strict runtime-log validation; T-006 remains open because the downloaded VS Code host emits errors/warnings. T-001 retains its competitor-review gap.
+- v0.6 validation update (2026-10-09): Recorded the user's Marketplace/scaffold reports, passing scaffold build, README credit restoration, and remaining validation gaps; prepared T-006.
+- v0.6 status update (2026-10-09): Recorded repository setup evidence and outstanding Milestone 0A/0B work; no checkboxes changed without passing validation.
 - v0.6 clarification: User approved AI execution of T-000 and a follow-up setup commit instead of rewriting the initial commit.
 - v0.6: Added verify scripts (T-006), edge-case fixtures (T-005), spec tools (T-051), fallback test hook (T-009), milestone gates, and the fresh-chat working loop.
 - v0.5: Split Milestone 0 into human setup (0A) and AI work (0B); added owner tags. Moved CI to T-007, license audit to T-050, webview spike to T-008, project config to T-006.

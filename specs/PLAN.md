@@ -16,6 +16,20 @@ Status: Draft v0.2 | Implements `SPEC.md` under `CONSTITUTION.md`.
 | Grid | Virtualized, windowed rendering | Must stay smooth with very tall tables |
 | Build | `esbuild`, two bundles (host and webview) | |
 | Tests | Vitest for logic; `@vscode/test-electron` for integration | |
+| Development packaging | `@vscode/vsce` (MIT), approved for T-006 | Creates a temporary local VSIX during verification; no publishing |
+
+T-006 development tooling uses Node 24 or newer to run TypeScript verification scripts.
+This does not establish the extension host's minimum Node or VS Code version;
+T-002 measures that separately. Strict typechecking covers host, webview, and tooling.
+`verify` runs typechecks, lint, unit tests, both production bundles, and a temporary
+VSIX packaging check. `verify:full` adds integration tests in an isolated VS Code.
+Every failing command or emitted warning fails the verification pipeline.
+Integration tests use a separate profile with VS Code's built-in AI features
+disabled (`chat.disableAIFeatures`), exercise the scaffold's declared minimum
+VS Code version, and leave runtime diagnostics visible to the verification gate.
+Each integration run uses a fresh project-local profile. The full gate checks
+both command output and the profile's structured logs, so a host error without
+a console severity prefix cannot be mistaken for a clean run.
 
 ## 2. Decision log
 
@@ -138,6 +152,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 tooling clarification: Recorded approved MIT packaging dependency and T-006 verification tooling; development Node minimum is separate from T-002 compatibility measurements.
 - v0.4: Added commands/settings list and release plan.
 - v0.3: Renamed to Lite Voyager. D-3 now defines a primary engine plus fallback behind one interface.
 - v0.2: Engine changed from sql.js to `node:sqlite` in a worker (any-size requirement). Added import pipeline, open behavior, risks.
