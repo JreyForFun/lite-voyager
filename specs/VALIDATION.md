@@ -24,6 +24,15 @@ Rules:
 - Do not weaken a test, skip it, or delete it to make it pass. Fix the code, or change the spec first.
 - Do not silence the type checker (`any`, `@ts-ignore`) or the linter without a written reason next to it.
 
+T-007 CI runs the full gate on Windows, macOS, and Linux; Linux uses
+`xvfb-run -a npm run verify:full`. Workflow contract tests and a local YAML parse
+verify configuration, not runner compatibility. To complete T-007, provide the
+GitHub Actions CI run URL, tested commit SHA, and successful conclusions for all
+three Full verification jobs. For failures, provide the failing step's log with
+its first error or warning. Keep T-007 unchecked until that evidence is seen.
+The current scaffold does not cover both database engines; their tests follow
+their implementation tasks. The milestone's engine gate remains required.
+
 ### Layer 2: Per-task validation (spec to test)
 
 - Every acceptance criterion (Given / When / Then) becomes at least one test.
@@ -179,5 +188,6 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-007 CI (2026-10-09): Clarified approved full-gate execution on every platform and remote evidence required before checking T-007; local workflow checks do not establish CI success or engine coverage.
 - v0.1 T-005 fixtures (2026-10-09): Linked inventory, runtime recipes and generator evidence; documented format applicability. Corrected the impossible WITHOUT ROWID/no-primary-key QA item to match approved FR-020.
 - v0.1: Initial version.

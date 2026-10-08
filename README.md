@@ -45,6 +45,21 @@ npm run package
 `npm run package` performs a local packaging check; it does not publish.
 The manifest's VS Code minimum is provisional until compatibility spike T-002.
 
+## Continuous integration
+
+[CI](.github/workflows/ci.yml) runs on every push and pull request, with a manual
+run option. Each Windows, macOS, and Linux job installs the lockfile with `npm ci`
+using Node 26.5.0 and runs `npm run verify:full`. Linux uses `xvfb-run -a` for the
+VS Code window. All three jobs report results even if one fails; errors and
+warnings fail the existing verification gate. CI does not generate the large
+10-million-row datasets.
+
+After pushing the T-007 commit, open the repository's **Actions** tab and select
+**CI** for that commit. Paste the run URL, commit SHA, and the conclusion for all
+three **Full verification** jobs. For a failed job, paste its failing step's log
+including the first error or warning. Local workflow tests check its wiring;
+T-007 stays open until the actual three-platform run is green.
+
 ## Test fixtures
 
 Small SQLite, CSV/TSV, JSON/JSONL, and XLSX inputs are committed in
