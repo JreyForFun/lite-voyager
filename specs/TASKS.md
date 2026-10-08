@@ -20,7 +20,7 @@ Task numbers are IDs, not order. Work in the order the lists appear.
 
 ## Milestone 0A: Human setup (do these yourself, in this order)
 
-- [ ] **T-000 [H]** Create a **new** GitHub repository named `lite-voyager` (not a fork) with an MIT license and a Node `.gitignore`. Clone it. Add a README stub that credits filesql. Copy in this `specs/` folder plus `AGENTS.md` and `PROGRESS.md`, and commit them as the first commit.
+- [ ] **T-000 [H]** Create a **new** GitHub repository named `lite-voyager` (not a fork) with an MIT license and a Node `.gitignore`. Clone it. Add a README stub that credits filesql. Copy in this `specs/` folder plus `AGENTS.md` and `PROGRESS.md`, and commit them as the first commit. **Approved exception:** the user authorized AI execution and a follow-up setup commit preserving the existing initial commit.
 - [ ] **T-001 [H]** Check that "Lite Voyager" is free on the VS Code Marketplace and create your publisher account. Re-verify the competitor table in `SPEC.md` (install counts and features change). *(D-1)*
 - [ ] **T-003 [H]** Run the extension generator yourself, because it is interactive: `npm install -g yo generator-code`, then `yo code`. Choose New Extension (TypeScript) with esbuild. If it creates a subfolder, move its contents to the repo root. Press F5 and confirm the "Hello World" command works. Commit.
 
@@ -97,6 +97,7 @@ Every milestone ends with a gate (`VALIDATION.md` section 4): green `npm run ver
 When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part of `SPEC.md` and `PLAN.md`, and only the single task you are working on.
 
 ## Changelog
+- v0.6 clarification: User approved AI execution of T-000 and a follow-up setup commit instead of rewriting the initial commit.
 - v0.6: Added verify scripts (T-006), edge-case fixtures (T-005), spec tools (T-051), fallback test hook (T-009), milestone gates, and the fresh-chat working loop.
 - v0.5: Split Milestone 0 into human setup (0A) and AI work (0B); added owner tags. Moved CI to T-007, license audit to T-050, webview spike to T-008, project config to T-006.
 - v0.4: Added T-000 (repo setup), T-017, T-018, T-070.
