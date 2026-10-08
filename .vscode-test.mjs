@@ -14,7 +14,11 @@ if (!relativeProfile.startsWith('integration-profile-') || dirname(relativeProfi
 	throw new Error('The integration profile must be inside the project output directory.');
 }
 const settingsDirectory = join(profileDirectory, 'User');
+const extensionsDirectory = join(profileDirectory, 'extensions');
+const builtinExtensionsDirectory = join(profileDirectory, 'builtin-extensions');
 await mkdir(settingsDirectory, { recursive: true });
+await mkdir(extensionsDirectory, { recursive: true });
+await mkdir(builtinExtensionsDirectory, { recursive: true });
 await writeFile(join(settingsDirectory, 'settings.json'), JSON.stringify({
 	'chat.disableAIFeatures': true,
 }, null, 2));
@@ -25,6 +29,9 @@ export default defineConfig({
 	files: 'out/integration/test/**/*.test.js',
 	launchArgs: [
 		`--user-data-dir=${profileDirectory}`,
+		// Test Lite Voyager without unrelated installed or built-in extensions.
+		`--extensions-dir=${extensionsDirectory}`,
+		`--builtin-extensions-dir=${builtinExtensionsDirectory}`,
 		'--disable-extensions',
 		'--disable-gpu',
 		'--skip-welcome',

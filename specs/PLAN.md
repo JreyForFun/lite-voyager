@@ -30,6 +30,10 @@ VS Code version, and leave runtime diagnostics visible to the verification gate.
 Each integration run uses a fresh project-local profile. The full gate checks
 both command output and the profile's structured logs, so a host error without
 a console severity prefix cannot be mistaken for a clean run.
+The test host uses empty profile-local installed and built-in extension directories
+(`--extensions-dir`, `--builtin-extensions-dir`), loading Lite Voyager through its
+development path. This isolates unrelated Git/Copilot components without modifying
+VS Code or filtering diagnostics. These tests do not cover coexistence with built-ins.
 
 ## 2. Decision log
 
@@ -152,6 +156,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-006 validation (2026-10-09): Isolated installed and built-in extensions in fresh test profiles; full verification passes without filtering runtime diagnostics. Built-in coexistence is outside this isolated test's coverage.
 - v0.4 tooling clarification: Recorded approved MIT packaging dependency and T-006 verification tooling; development Node minimum is separate from T-002 compatibility measurements.
 - v0.4: Added commands/settings list and release plan.
 - v0.3: Renamed to Lite Voyager. D-3 now defines a primary engine plus fallback behind one interface.
