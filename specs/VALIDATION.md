@@ -47,7 +47,9 @@ attempt 1, commit `f3085869c88262b2ffdbfddb47805f6287cdcc3a`. GitHub API metadat
 confirms successful Windows, Ubuntu, and macOS Full verification jobs and each
 applicable verification step. Owner manual QA confirms both engines cancel
 (native 24 ms, fallback 92 ms), recover, and keep typing responsive. Independent
-review in a fresh chat is still required under section 6; no milestone is closed.
+fresh-context review under section 6 found HIGH silent omission of committed WAL
+rows in fallback and MEDIUM leaked sql.js statements on oversized column
+metadata. Add failing regressions and fixes; no task or milestone is closed.
 
 ### Layer 2: Per-task validation (spec to test)
 

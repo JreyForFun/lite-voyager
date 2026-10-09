@@ -142,12 +142,27 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
   2026-10-09. GitHub API metadata confirms successful Full verification jobs
   on windows-latest, ubuntu-latest, and macos-latest, including the applicable
   full-verification steps. Local verification, owner manual QA, and three-platform
-  CI pass; T-002 stays unchecked pending independent review in a fresh chat
-  (VALIDATION section 6 / CONTEXT section 1).
+  CI pass; the independent review below found missing edge cases, so T-002
+  stays unchecked pending fixes and new verification/CI evidence.
 - Final evidence-documentation gate: npm run verify passes with 93 unit tests,
   all strict checks, build, and a 346.49 KB VSIX in a disposable checkout. This
   preserves the owner's uncommitted edit to test/fixtures/empty.json; no claim
   is made that the edited local fixture passes the inventory hash check.
+- Independent fresh-context review of 3a6bcf8..f164fd2 (2026-10-09) confirmed:
+  HIGH: fallbackFile reads only the main database, so an open WAL writer's
+  committed second row is silently omitted by sql.js (native returns 1,2;
+  fallback returns 1 with hasMore=false). Reject unsupported WAL state clearly
+  or read a complete committed snapshot, without modifying/checkpointing source.
+  MEDIUM: collect rejects oversized column metadata before starting the row
+  generator, bypassing its statement.free cleanup. Three rejected queries left
+  three prepared sql.js statements alive after a subsequent successful query.
+  Disposable reproductions use real sql.js 1.14.2 and current transpiled sources:
+  node test/fixtures/generated/t002-review-wal-pr3sfi/reproduce.cjs
+  node test/fixtures/generated/t002-review-statements-H4ezlu/reproduce.cjs
+  Both ran on Windows, Node 26.5.0; statement instrumentation counts prepare/free.
+  No code fixes applied. Add failing WAL/file-in-use and pre-iteration cleanup
+  tests before fixes. No other concrete lifecycle/cancellation/fidelity defect
+  was found; the review does not prove absence of further defects.
 
 **D-6 CSV, JSON, and XLSX become on-disk SQLite tables.** One engine and one SQL dialect for everything, which also makes cross-file joins simple. Cost: a first import of a huge file takes time. Mitigated by instant preview, background import, progress, and cancel.
 

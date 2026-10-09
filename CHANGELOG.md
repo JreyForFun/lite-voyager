@@ -11,7 +11,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   assets. Confirmed cancellation within one second, reopening, exact integers,
   and source-byte safety locally in VS Code 1.140.0 and 1.141.0. Supported
   minimum is the lowest tested host, 1.140.0. Owner manual QA and fresh Windows,
-  macOS, and Linux CI pass; independent review in a fresh chat is pending.
+  macOS, and Linux CI pass. Independent review found two unfixed issues:
+  fallback omits committed WAL rows, and oversized column metadata leaks sql.js
+  statements. T-002 stays open pending regression tests, fixes, and fresh CI.
   Compiler-contract fixtures share one setup program, retaining their full
   libraries, compiler settings, diagnostic checks, and assertions.
 
