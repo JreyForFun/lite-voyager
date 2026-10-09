@@ -49,7 +49,9 @@ applicable verification step. Owner manual QA confirms both engines cancel
 (native 24 ms, fallback 92 ms), recover, and keep typing responsive. Independent
 fresh-context review under section 6 found HIGH silent omission of committed WAL
 rows in fallback and MEDIUM leaked sql.js statements on oversized column
-metadata. Add failing regressions and fixes; no task or milestone is closed.
+metadata. Owner-authorized fixes now have red-first regressions; independent
+follow-up review found no remaining concrete defect. Fresh final verification
+and three-platform CI are required for the fixes; no task or milestone is closed.
 
 ### Layer 2: Per-task validation (spec to test)
 

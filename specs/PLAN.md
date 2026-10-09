@@ -160,9 +160,46 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
   node test/fixtures/generated/t002-review-wal-pr3sfi/reproduce.cjs
   node test/fixtures/generated/t002-review-statements-H4ezlu/reproduce.cjs
   Both ran on Windows, Node 26.5.0; statement instrumentation counts prepare/free.
-  No code fixes applied. Add failing WAL/file-in-use and pre-iteration cleanup
+  At review time, no code fixes were applied. Add failing WAL/file-in-use and pre-iteration cleanup
   tests before fixes. No other concrete lifecycle/cancellation/fidelity defect
   was found; the review does not prove absence of further defects.
+- Owner authorized all T-002 fixes and restoration of empty.json. Red-first
+  regressions reproduced both findings, checkpointed WAL without sidecars,
+  sidecars appearing during copying, and observed file changes during copying.
+  The fallback now resolves the source path, rejects WAL header versions and
+  WAL/rollback-journal sidecars before/after reading, and compares file identity,
+  size, and nanosecond modification/change timestamps. It never checkpoints,
+  removes sidecars, or writes source files. These are conservative rejection
+  guards, not an atomic snapshot/locking guarantee against arbitrary writers.
+- sql.js statements now have explicit cursor cleanup around complete result
+  collection; binding/metadata failures also free immediately. Real-engine
+  prepare/free accounting covers repeated rejected metadata, binding/metadata
+  failures, stepping/row-reading failures, oversized rows, empty results,
+  successful queries, and paging stop.
+- A red-first exact-boundary test found result-budget accounting omitted JSON
+  object overhead and row separators. The 256 KiB cap now includes the complete
+  UTF-8 JSON page value (columns, rows, hasMore), excluding its IPC envelope.
+  The exact boundary succeeds; one additional byte fails on both engines.
+- Independent fresh-context follow-up review found no remaining concrete
+  T-002 defects. Its isolated build/reproduction verified native committed WAL
+  reads, fallback live/checkpointed WAL rejection, unchanged source/WAL hashes,
+  repeated oversized metadata and stepping-failure cleanup, paging cleanup,
+  exact page boundary, and exact 64-bit integers. Reproduction:
+  node out/t002-independent-fixes-review/reproduce.cjs
+  Cross-platform CI and production performance remain separate evidence.
+- Final-gate investigation: isolated VS Code startup intermittently logs a core
+  cloud-dictation timeout because GitHub's built-in provider is absent. A
+  test-only empty provider resolved that lookup but produced other core warnings
+  (undeclared provider and no cloud account); the experiment was removed.
+  No authentication feature, fabricated session, diagnostic filter, skipped
+  engine test, or weakened warning gate is retained. Record clean full-gate and
+  fresh CI results separately; the host startup timing remains a known issue.
+- Final local full gate for the fixes passes: 103 unit tests, six real-host
+  integration tests in VS Code 1.140.0, all strict runtime logs/typechecks/lint,
+  and a 13-file 347.26 KB VSIX. Executing-query cancellation takes 21 ms native
+  and 22 ms fallback; actual helper exit, reopening, and source hashes pass.
+- VS Code 1.141.0 compatibility recheck also passes all six integration tests
+  and strict runtime logs; cancellation is 20 ms native and 35 ms fallback.
 
 **D-6 CSV, JSON, and XLSX become on-disk SQLite tables.** One engine and one SQL dialect for everything, which also makes cross-file joins simple. Cost: a first import of a huge file takes time. Mitigated by instant preview, background import, progress, and cancel.
 

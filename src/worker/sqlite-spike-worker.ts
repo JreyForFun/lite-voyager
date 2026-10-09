@@ -1,4 +1,4 @@
-import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
+import { closeSync, fstatSync, lstatSync, openSync, readFileSync, readSync, realpathSync, statSync, type BigIntStats } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
@@ -27,7 +27,7 @@ interface WasmDatabase {
 }
 interface WasmModule { Database: new (bytes: Uint8Array) => WasmDatabase; }
 type InitializeWasm = (options: { wasmBinary: Uint8Array }) => Promise<WasmModule>;
-interface Cursor { columns: string[]; rows: Iterable<unknown[]>; }
+interface Cursor { columns: string[]; rows: Iterable<unknown[]>; close?: () => void; }
 
 function optionsFrom(value: unknown): SpikeWorkerOptions {
   if (typeof value !== 'object' || value === null || !('path' in value) || typeof value.path !== 'string'
@@ -59,11 +59,32 @@ function checkHeader(path: string): void {
   } finally { closeSync(file); }
 }
 
+const fallbackJournalMessage = 'Memory-limited spike mode cannot open WAL-mode databases or journal sidecars safely. Use a host with node:sqlite; source files are not modified.';
+
+function checkFallbackJournals(path: string): void {
+  for (const suffix of ['-wal', '-journal']) {
+    try { lstatSync(`${path}${suffix}`); }
+    catch (error: unknown) {
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') { continue; }
+      throw error;
+    }
+    throw new Error(fallbackJournalMessage);
+  }
+}
+
+function sameSnapshot(before: BigIntStats, after: BigIntStats): boolean {
+  return before.dev === after.dev && before.ino === after.ino && before.size === after.size
+    && before.mtimeNs === after.mtimeNs && before.ctimeNs === after.ctimeNs;
+}
+
 function fallbackFile(path: string): Uint8Array {
-  const file = openSync(path, 'r');
+  const source = realpathSync(path);
+  const file = openSync(source, 'r');
   try {
-    const size = fstatSync(file).size;
-    if (size > fallbackBytes) { throw new Error('Memory-limited spike mode accepts fixtures up to 8 MiB. Use a smaller fixture or a host with node:sqlite.'); }
+    const before = fstatSync(file, { bigint: true });
+    if (before.size > BigInt(fallbackBytes)) { throw new Error('Memory-limited spike mode accepts fixtures up to 8 MiB. Use a smaller fixture or a host with node:sqlite.'); }
+    const size = Number(before.size); // Bounded by 8 MiB before conversion.
+    checkFallbackJournals(source);
     const buffer = Buffer.alloc(Math.min(size + 1, fallbackBytes + 1));
     let length = 0;
     while (length < buffer.length) {
@@ -71,7 +92,14 @@ function fallbackFile(path: string): Uint8Array {
       if (bytes === 0) { break; }
       length += bytes;
     }
-    if (length !== size) { throw new Error('The file changed while being opened. Retry after its writer closes it.'); }
+    checkFallbackJournals(source);
+    if (length !== size || !sameSnapshot(before, fstatSync(file, { bigint: true }))
+      || !sameSnapshot(before, statSync(source, { bigint: true }))) {
+      throw new Error('The file changed while being opened. Retry after its writer closes it.');
+    }
+    // SQLite header bytes 18/19 identify WAL mode, even without a current sidecar.
+    // https://www.sqlite.org/fileformat.html#file_format_version_numbers
+    if (buffer[18] === 2 || buffer[19] === 2) { throw new Error(fallbackJournalMessage); }
     return buffer.subarray(0, length);
   } finally { closeSync(file); }
 }
@@ -94,15 +122,16 @@ function nativeCursor(db: DatabaseSync, sql: string, parameters: SpikeParameter[
 
 function wasmCursor(db: WasmDatabase, sql: string, parameters: SpikeParameter[]): Cursor {
   const statement = db.prepare(sql);
-  try { statement.bind(parameters); }
-  catch (error: unknown) { statement.free(); throw error; }
-  return {
-    columns: statement.getColumnNames(),
-    rows: (function* () {
-      try { while (statement.step()) { yield statement.get(null, { useBigInt: true }); } }
-      finally { statement.free(); }
-    })(),
-  };
+  try {
+    statement.bind(parameters);
+    return {
+      columns: statement.getColumnNames(),
+      rows: (function* () {
+        while (statement.step()) { yield statement.get(null, { useBigInt: true }); }
+      })(),
+      close: () => { statement.free(); },
+    };
+  } catch (error: unknown) { statement.free(); throw error; }
 }
 
 function display(value: unknown): SpikeCell {
@@ -113,17 +142,19 @@ function display(value: unknown): SpikeCell {
 }
 
 function collect(cursor: Cursor): SpikeResult {
-  const rows: SpikeCell[][] = [];
-  let bytes = Buffer.byteLength(JSON.stringify(cursor.columns));
-  if (bytes > pageBytes) { throw new Error('The spike page exceeds 256 KiB. Select fewer columns or smaller text values.'); }
-  for (const row of cursor.rows) {
-    if (rows.length === 100) { return { columns: cursor.columns, rows, hasMore: true }; }
-    const cells = row.map(display);
-    bytes += Buffer.byteLength(JSON.stringify(cells));
+  try {
+    const rows: SpikeCell[][] = [];
+    let bytes = Buffer.byteLength(JSON.stringify({ columns: cursor.columns, rows: [], hasMore: false }));
     if (bytes > pageBytes) { throw new Error('The spike page exceeds 256 KiB. Select fewer columns or smaller text values.'); }
-    rows.push(cells);
-  }
-  return { columns: cursor.columns, rows, hasMore: false };
+    for (const row of cursor.rows) {
+      if (rows.length === 100) { return { columns: cursor.columns, rows, hasMore: true }; }
+      const cells = row.map(display);
+      bytes += Buffer.byteLength(JSON.stringify(cells)) + (rows.length > 0 ? 1 : 0);
+      if (bytes > pageBytes) { throw new Error('The spike page exceeds 256 KiB. Select fewer columns or smaller text values.'); }
+      rows.push(cells);
+    }
+    return { columns: cursor.columns, rows, hasMore: false };
+  } finally { cursor.close?.(); }
 }
 
 /** Only one read statement; skip comments and quoted literals when finding separators. */
@@ -195,7 +226,7 @@ async function start(): Promise<void> {
         engine: sqlite === undefined ? 'sql.js' : 'node:sqlite', threadId, processId: process.pid, node: process.versions.node,
         sqlite: query('SELECT sqlite_version()', []).rows[0]?.[0] ?? 'unknown',
         memoryLimited: sqlite === undefined, trustedSchemaOff, extensionLoadingDisabled,
-        notice: sqlite === undefined ? 'Memory-limited spike mode: fixtures up to 8 MiB.' : 'Primary engine reads from disk.',
+        notice: sqlite === undefined ? 'Memory-limited spike mode: fixtures up to 8 MiB; WAL/journal snapshots are unsupported.' : 'Primary engine reads from disk.',
       },
     };
     port?.postMessage(response);

@@ -8,7 +8,7 @@ files and querying them with SQL in an editor tab.
 This is the foundation scaffold. It provides **Hello World** and experimental
 T-002 worker/fallback spike commands. The spike runs its worker in a killable
 helper process and passes local open/query/cancel/reopen checks, owner manual QA,
-and three-platform CI. Independent review found two bugs awaiting fixes (below).
+and prior three-platform CI. Review fixes are undergoing fresh verification (below).
 Data browsing and querying in editor tabs
 are planned and are not implemented yet.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
@@ -100,9 +100,14 @@ For the required manual QA:
 Owner manual QA passes both engines, including responsive typing, cancellation
 (native 24 ms, fallback 92 ms), and reopening. [CI run 37916047454](https://github.com/JreyForFun/lite-voyager/actions/runs/37916047454)
 passes all three full-verification jobs for commit f3085869c88262b2ffdbfddb47805f6287cdcc3a.
-Independent review found silent omission of committed WAL rows in fallback and
-leaked sql.js statements when oversized column metadata is rejected. T-002
-stays unchecked pending regression tests, fixes, and fresh verification/CI.
+Red-first regressions cover the review's WAL omission and statement-leak defects.
+Fallback now rejects WAL-mode files, WAL/rollback-journal sidecars, and observed
+changes during copying, with an actionable message. The native engine can read
+committed WAL rows. The fallback never checkpoints or modifies source files;
+its copy checks do not provide an atomic snapshot against arbitrary writers.
+All sql.js statement paths free resources, and complete JSON pages fit 256 KiB.
+Independent follow-up review found no remaining concrete defect. T-002 stays
+unchecked pending final verification and fresh three-platform CI for these fixes.
 The production Engine interface,
 fallback banner/large-file prompt, and permanent force-fallback hook remain T-009.
 

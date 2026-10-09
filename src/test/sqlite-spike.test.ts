@@ -1,12 +1,41 @@
 import * as assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import * as vscode from 'vscode';
 import { SqliteSpike } from '../worker/sqlite-spike';
 
 suite('T-002 extension-host worker spike', () => {
   for (const simulateUnavailable of [false, true]) {
+    test(`NFR-001: Given a live WAL database and missing built-in=${String(simulateUnavailable)}, When opened, Then complete native reads or explicit fallback rejection preserve its bytes`, async function () {
+      this.timeout(15000);
+      const extension = vscode.extensions.getExtension<unknown>('jreyinnovarev.lite-voyager');
+      assert.ok(extension);
+      const root = extension.extensionPath;
+      const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-host-wal-'));
+      const path = join(directory, 'source.sqlite');
+      const writer = new DatabaseSync(path);
+      const spike = new SqliteSpike(join(root, 'dist/sqlite-spike-worker.js'), { fallbackDirectory: join(root, 'dist'), simulateUnavailable });
+      const hash = async (file: string): Promise<string> => createHash('sha256').update(await readFile(file)).digest('hex');
+      try {
+        writer.exec('PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0; CREATE TABLE records(value); INSERT INTO records VALUES(1); PRAGMA wal_checkpoint(TRUNCATE); INSERT INTO records VALUES(2);');
+        assert.ok((await readFile(`${path}-wal`)).length > 0);
+        const before = [await hash(path), await hash(`${path}-wal`)];
+        if (simulateUnavailable) {
+          await assert.rejects(spike.open(path), /WAL/);
+          await spike.open(join(root, 'test/fixtures/sample.sqlite'));
+          assert.deepEqual((await spike.query('SELECT 1')).rows, [['1']]);
+        } else {
+          await spike.open(path);
+          assert.deepEqual((await spike.query('SELECT value FROM records ORDER BY value')).rows, [['1'], ['2']]);
+        }
+        await spike.close();
+        assert.deepEqual([await hash(path), await hash(`${path}-wal`)], before);
+      } finally { await spike.close(); writer.close(); await rm(directory, { recursive: true, force: true }); }
+    });
+
     test(`NFR-002: Given the extension host and missing built-in=${String(simulateUnavailable)}, When a worker queries and cancels, Then the real engine recovers`, async function () {
       this.timeout(15000);
       const extension = vscode.extensions.getExtension<unknown>('jreyinnovarev.lite-voyager');

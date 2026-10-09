@@ -132,6 +132,15 @@ Priority: **P0** first release, **P1** next, **P2** later in v1.
 
 **FR-016 (P0) Read-only by default.** SQLite files open read-only. Write statements and inline editing need the user to switch on write mode, which is clearly indicated.
 
+- T-002 fallback snapshot safety: refuse WAL-mode database headers (including
+  checkpointed WAL files), WAL/rollback-journal sidecars, or a file observed to
+  change while being copied. Explain that a host with node:sqlite is required;
+  never checkpoint or alter a source to make fallback opening succeed.
+- T-002 result cleanup: free every sql.js statement on success, paging stop,
+  or failure, including binding, column metadata, and pre-iteration limits.
+- T-002 result pages fit 256 KiB as complete UTF-8 JSON values, including column
+  metadata, row separators, and hasMore. Oversized pages fail explicitly.
+
 **FR-017 (P1) Sort and filter the grid.** Click a column header to sort; add a simple per-column filter. Sorting and filtering run in the engine, not in the webview, so they work on huge tables. Sorting a large table on an unindexed column shows a warning and can be cancelled.
 
 **FR-018 (P1) Cell details and copy.** Selecting a cell shows its full value in a side panel (long text, JSON pretty-printed). Copy a cell, row, or selection as TSV.
@@ -198,6 +207,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-002 review fixes (2026-10-09): Owner authorized conservative fallback rejection of WAL/journal snapshots and observed concurrent changes, complete statement cleanup, and exact complete-page budget accounting. No source checkpointing or mutation is allowed.
 - v0.5 T-002 cancellation clarification (2026-10-09): Owner authorized revising the cancellation design after slow native worker termination. Added a 1,000 ms deterministic-spike target, confirmed helper exit, and successful reopening. NFR-002 documents the lowest tested supported host, VS Code 1.140.0; cross-platform closure remains pending.
 - v0.5 T-001 evidence / spec consistency (2026-10-09): Recorded the owner's Marketplace reports; preserved the supplied competitor review and open D-2 positioning. Restored the previously approved FR-020 correction and its T-005 changelog entry after they were reverted in the review update.
 - v0.5: Competitor table re-verified on 2026-10-09 against Marketplace and GitHub pages. Corrected install counts and capabilities, added Data Wrangler and SQLite (alexcvzz), revised goals G1 to G5, marked positioning (D-2) as open.
