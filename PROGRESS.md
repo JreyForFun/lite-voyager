@@ -1,9 +1,9 @@
 ﻿# Progress
 
 ## Current phase / task
-Phase: Milestone 0B. T-008 implementation and owner manual QA pass; keep CodeMirror 6.
-T-008's checkbox awaits the owner task commit; the foundation milestone remains open.
-T-000, T-001, T-003, T-006, T-005, T-007, T-002 and T-004 are checked.
+Phase: Milestone 0B. T-008 is complete at 8fed6f0; keep CodeMirror 6.
+The foundation milestone remains open.
+T-000, T-001, T-003, T-006, T-005, T-007, T-002, T-004 and T-008 are checked.
 
 ## Verify status
 - npm run verify passes: 150 unit tests, strict types/lint, builds and VSIX packaging.
@@ -37,6 +37,8 @@ T-000, T-001, T-003, T-006, T-005, T-007, T-002 and T-004 are checked.
 - Found/fixed sparse row/cell message acceptance with a confirmed failing regression.
 - T-004 remains complete; its benchmark evidence is preserved above and in PLAN.md.
 - Recorded the owner manual report and confirmed CodeMirror 6 in PLAN.md.
+- Owner committed T-008 at 8fed6f0ef7dff1950f9b2dfca34004d77c71456a and reports
+  pushing. Local main matches origin/main; task acceptance and commit requirements pass.
 
 ## Decisions made this session (move lasting ones into specs/PLAN.md)
 - Owner corrected task authorization to T-008 and approved implementation judgment.
@@ -50,7 +52,8 @@ T-000, T-001, T-003, T-006, T-005, T-007, T-002 and T-004 are checked.
 ## Known issues / blockers
 - No T-004 acceptance criterion remains open; other foundation tasks/gate items remain open.
 - T-008 spike acceptance is met with passing verification; no manual criterion remains open.
-- T-008 changes are uncommitted; owner handles review/commit/push and remote CI evidence.
+- No T-008 acceptance criterion remains open. Completion documentation is a
+  follow-up working-tree update to commit/push; no fresh remote CI evidence yet.
 - Local disk space prevented a 5 GB run; extension memory/visible first paint remain unproven.
 - R-1, D-2 and the foundation milestone remain open; no production performance claim.
 - Owner's prior T-002 fix/push status is preserved: main confirmed at 9faea17.
@@ -58,8 +61,6 @@ T-000, T-001, T-003, T-006, T-005, T-007, T-002 and T-004 are checked.
 - Large local QA output removed after verification to free space; ignored reports retained.
 
 ## Next
-Owner reviews and commits with a message naming T-008 (VALIDATION.md section 2),
-then T-008 may be checked. Owner pushes and shares the commit/CI evidence.
-Start the next task in a fresh chat after closure. Keep the full-gate warning
-and remaining foundation tasks visible; no milestone tag yet.
-The foundation milestone remains open; no milestone tag yet.
+Owner commits/pushes the completion documentation. Start a fresh chat for one
+remaining foundation task: T-051 (context/trace scripts) or T-050 (dependency check).
+Keep the full-gate warning and remaining foundation tasks visible; no milestone tag yet.

@@ -90,10 +90,9 @@ Editor decision: Keep CodeMirror 6 / Change (reason)
 ```
 
 Synthetic rows test the UI mechanics; they do not measure real database query
-latency, large-file memory, or production first paint. T-008's acceptance is met
-with passing verification. Its checkbox awaits the owner commit required by
-VALIDATION.md section 2. Push the changes after your review; the foundation
-milestone remains open.
+latency, large-file memory, or production first paint. T-008 is complete: passing
+verification, owner manual QA and task commit 8fed6f0; the owner reports pushing.
+The strict integration-log warning and remaining foundation tasks/gate remain open.
 
 ## T-002 experiment status
 

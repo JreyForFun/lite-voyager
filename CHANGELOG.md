@@ -12,7 +12,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   A bounded scroll track supports the entire row range, with wheel, keyboard
   and explicit row jumps. Assets and MIT dependency notices are packaged locally.
   Owner manual QA passes in VS Code 1.141.0, with 512 cached and about 20–23
-  rendered rows; CodeMirror 6 is confirmed. The owner task commit remains pending.
+  rendered rows; CodeMirror 6 is confirmed. T-008 is complete at commit 8fed6f0;
+  the owner reports pushing. The foundation milestone remains open.
 
 - T-002: added SQLite worker/fallback spike commands with a killable helper,
   typed messages, bounded read-only results, and packaged MIT sql.js 1.14.2

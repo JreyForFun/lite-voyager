@@ -219,9 +219,9 @@ errors/warnings. The VS Code 1.141.0 integration probe passes all seven tests;
 its strict log check again fails on the same warning. Final validation results follow
 in PROGRESS.md. New three-platform CI, real database paging and production NFR-003/NFR-004/
 NFR-005/NFR-007 performance/accessibility claims remain unproven by this spike.
-README.md contains exact F5 steps and the report format. No milestone gate
-or tag is claimed; T-008's task checkbox awaits the owner's task commit under
-VALIDATION.md section 2.
+README.md contains exact F5 steps and the report format. T-008 is complete at
+commit 8fed6f0ef7dff1950f9b2dfca34004d77c71456a; the owner reports pushing and
+local main matches origin/main. No new CI, milestone gate or tag is claimed.
 
 Owner manual QA (2026-10-09), VS Code 1.141.0 (OS not restated in the report):
 typing/selection/undo/redo, wheel/trackpad and scrollbar smoothness, first/middle/
@@ -230,7 +230,8 @@ reopen all PASS. The owner clarified that the observed maximum cache was 512
 rows, with about 20–23 rows rendered. Editor decision: **Keep CodeMirror 6**.
 These are owner-observed usability results, not quantitative production NFR
 measurements. The synthetic spike acceptance is met with passing verification;
-the owner will commit and push the implementation and completion documentation.
+the owner committed the implementation and QA documentation at 8fed6f0 and
+reports pushing it. The task checkbox is now checked.
 
 ## 2. Decision log
 
@@ -492,6 +493,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-008 completion (2026-10-09): Recorded task commit 8fed6f0 and owner push report; all spike acceptance criteria pass. T-008 is checked; no foundation gate or production performance claim.
 - v0.4 T-008 owner QA (2026-10-09): Recorded all manual checks passing in VS Code 1.141.0, 512 cached / about 20–23 rendered rows, and the decision to keep CodeMirror 6. Task checkbox awaits the owner commit; the foundation gate remains open.
 - v0.4 T-008 implementation (2026-10-09): Recorded approved CodeMirror dependencies, synthetic bounded paging/rendering, scroll-height mapping, CSP/lifecycle tests and manual handoff. CodeMirror is provisional; owner smoothness/editor evidence remains pending.
 - v0.4 T-004 completion (2026-10-09): Recorded passing owner verification and the 10-million-row benchmark at 7d9cf25 (145.4 s import, 223.0 MB standalone RSS, 27.2 ms parsed preview). T-004 is complete; production NFR-003/NFR-004 targets and the foundation milestone remain open.
