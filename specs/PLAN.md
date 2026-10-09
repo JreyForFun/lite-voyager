@@ -11,7 +11,7 @@ Status: Draft v0.2 | Implements `SPEC.md` under `CONSTITUTION.md`.
 | Engine isolation | `worker_threads` inside a killable helper process | Database work runs in a worker; cancellation kills its enclosing helper and awaits confirmed process exit. The bundled Node/Electron executable is reused; no external CLI or shipped binary. |
 | CSV | `papaparse` in streaming mode | Chunked reads, batched inserts in transactions |
 | JSON / JSONL | Line reader for JSONL; a streaming JSON parser for big arrays | |
-| XLSX | SheetJS or an alternative | Memory-bound by format. Note: the old `xlsx` package on npm is outdated; check SheetJS's current install guidance and security advisories in T-050. |
+| XLSX | SheetJS Community Edition, for the future XLSX task | Memory-bound by format. T-050 checked official CDN 0.20.3, Apache-2.0 and advisories; prefer an integrity-checked vendor tarball and recheck when implementing. Do not use outdated npm `xlsx` 0.18.5. No XLSX dependency is installed yet. |
 | SQL editor | CodeMirror 6 | Confirmed by owner T-008 manual QA (2026-10-09) |
 | Grid | Virtualized, windowed rendering | Must stay smooth with very tall tables |
 | Build | `esbuild`, two bundles (host and webview) | |
@@ -234,6 +234,16 @@ the owner committed the implementation and QA documentation at 8fed6f0 and
 reports pushing it. The task checkbox is now checked.
 
 ## 2. Decision log
+
+**D-4 Dependency and license review (T-050).** Owner authorized the full locked dependency review and routine fixes on 2026-10-09. Include direct, transitive, development, peer and optional packages, even when another platform installs them. Package-manager license metadata is evidence, not a substitute for special license text.
+- Given the current lockfile, the inventory must contain every non-root package path, exact version, declared license and scope flags. A canonical JSON SHA-256 ties the evidence to this dependency tree. Inventory tests must fail on omissions or stale versions/licenses.
+- Given missing license metadata or `SEE LICENSE` declarations, record the resolved license, source and license-file hash. Do not guess or silently classify them as MIT.
+- Given the shipped extension bundles, all embedded third-party packages and copied sql.js assets must retain their complete license notices. Development tooling is excluded from the VSIX.
+- Run `npm audit --json`, record the date, runtime, registry, exit status and complete result, and investigate any reported vulnerability. A clean audit only means no known findings in that registry response.
+- Check SheetJS's official current install guidance, CE license and advisories. Record the future installation choice without introducing the Milestone 2 XLSX feature.
+- Owner delegated review decisions to the assistant for this task. Record the decision and any remaining issue; run `npm run verify` with zero errors/warnings before closure. Owner pushes.
+
+**T-050 result (2026-10-09):** [dependency review](DEPENDENCIES.md), [full license inventory](dependency-licenses.json) and [raw audit evidence](dependency-audit.json) cover all 576 locked package paths. Two registry audit runs return exit 0 and zero known vulnerabilities. Resolve memorystream's missing metadata as MIT from its shipped license. All ten VSCE signing tarballs pass lockfile integrity checks and carry identical Microsoft-specific terms; retain them only as VS Code development tooling, excluded from the extension. Select JSZip's MIT option and retain development-only MPL tooling outside the VSIX. Retain current dependencies and overrides; no dependency/fixture fix is needed. Fourteen bundled editor packages and copied sql.js assets have complete MIT notices. Three red-first task tests and `npm run verify` pass (179 unit tests, strict types/lint, builds and VSIX packaging, zero errors/warnings). The owner authorized delegated review/decisions and handles pushing; no new full-gate/CI result or milestone closure is claimed.
 
 **D-3 Engine: two implementations behind one interface, chosen at runtime.** Decided by judgement rather than waiting for a spike, because the downside of being wrong is small and the upside is an extension that never simply crashes.
 - **Primary: `node:sqlite` in a worker thread inside a helper process.** Reads from disk and ships no native binary. The helper reuses `process.execPath`; Electron hosts use the documented `ELECTRON_RUN_AS_NODE=1` mode. Native execution does not reliably stop on worker termination alone, so cancel kills the helper with SIGKILL and confirms its exit before reopening. This keeps database work off the extension host and stops all the helper's threads.
@@ -493,6 +503,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-050 completion (2026-10-09): Restored D-4 with approved scope and acceptance criteria; documented all locked licenses, resolved missing/custom declarations, captured a clean audit and official SheetJS guidance. Three red-first checks verify inventory and production notice coverage; verify passes with 179 tests and zero errors/warnings. No dependency or fixture change; owner pushes.
 - v0.4 T-008 completion (2026-10-09): Recorded task commit 8fed6f0 and owner push report; all spike acceptance criteria pass. T-008 is checked; no foundation gate or production performance claim.
 - v0.4 T-008 owner QA (2026-10-09): Recorded all manual checks passing in VS Code 1.141.0, 512 cached / about 20–23 rendered rows, and the decision to keep CodeMirror 6. Task checkbox awaits the owner commit; the foundation gate remains open.
 - v0.4 T-008 implementation (2026-10-09): Recorded approved CodeMirror dependencies, synthetic bounded paging/rendering, scroll-height mapping, CSP/lifecycle tests and manual handoff. CodeMirror is provisional; owner smoothness/editor evidence remains pending.

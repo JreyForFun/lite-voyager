@@ -1,0 +1,33 @@
+{
+  "task": "T-050",
+  "assessedOn": "2026-10-09",
+  "command": "npm audit --json",
+  "registry": "https://registry.npmjs.org/",
+  "node": "v26.5.0",
+  "npm": "12.2.0",
+  "platform": "Windows x64",
+  "lockfileSha256": "65c6a5a55c72e953c236cdd9a154d3dfe1084e979935be41c25c54d525605890",
+  "exitCode": 0,
+  "report": {
+    "auditReportVersion": 2,
+    "vulnerabilities": {},
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependencies": {
+        "prod": 2,
+        "dev": 575,
+        "optional": 75,
+        "peer": 36,
+        "peerOptional": 0,
+        "total": 576
+      }
+    }
+  }
+}
