@@ -127,7 +127,13 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
   standalone integration run and subsequent full run passed the strict log gate.
   No warning was filtered or suppressed. Windows results do not establish the
   other platforms. T-002 stays unchecked pending completed owner manual QA and
-  fresh three-platform CI; supplied manual logs establish only open/query so far.
+  fresh three-platform CI.
+- Owner-supplied native manual result in VS Code 1.141.0: node:sqlite on worker
+  thread 1, Node 24.21.0, SQLite 3.53.4; cancelled=true, cancelMs=24,
+  heartbeatTicks=226, recovered=true. This passes native manual cancellation
+  and reopening. Fallback manual cancellation/reopening and editor typing
+  responsiveness remain unconfirmed. Requested computer-use automation could
+  not connect to its native pipe; no UI input was sent.
 
 **D-6 CSV, JSON, and XLSX become on-disk SQLite tables.** One engine and one SQL dialect for everything, which also makes cross-file joins simple. Cost: a first import of a huge file takes time. Mitigated by instant preview, background import, progress, and cancel.
 

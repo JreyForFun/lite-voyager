@@ -28,12 +28,13 @@ T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 - Production Engine interface/banner/large-file prompt/hook remain T-009.
 
 ## Known issues / blockers
-- Manual logs confirm both engines open/query, but lack cancellation result lines.
-- Need both manual results (cancelled/recovered true) and responsiveness report.
+- Owner's native manual result: 24 ms cancel, 226 heartbeats, recovered true.
+- Fallback cancel/recovery and editor responsiveness remain unconfirmed.
+- Requested UI automation failed: computer-use native connection pipe unavailable.
 - Fresh three-platform CI and independent risky-change review remain outstanding.
 - Earlier VS Code versions/browser support and production performance not claimed.
 - No tests, compiler checks, or warning gates disabled; D-2 remains open.
 
 ## Next
-Commit the verified T-002 implementation; keep it unchecked pending human evidence.
+Implementation committed as a587400b29af6dbf3d54ea3b1e9a37deb88e539d; T-002 stays open.
 Owner finishes manual QA, pushes the commit, and supplies CI run/SHA/job evidence.
