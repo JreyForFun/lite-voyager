@@ -1,66 +1,39 @@
-﻿# Progress
+# Progress
 
 ## Current phase / task
-Phase: Milestone 0B. T-008 is complete at 8fed6f0; keep CodeMirror 6.
-The foundation milestone remains open.
-T-000, T-001, T-003, T-006, T-005, T-007, T-002, T-004 and T-008 are checked.
+Milestone 0B: T-051 spec tools are implemented and verified; owner pushes.
+T-000, T-001, T-003, T-006, T-005, T-007, T-002, T-004, T-008 and T-051 are checked.
+The foundation milestone remains open; T-050 is next in a fresh chat.
 
 ## Verify status
-- npm run verify passes: 150 unit tests, strict types/lint, builds and VSIX packaging.
-- Fresh verification after owner QA also passes with zero errors/warnings.
-- Final verification after the sparse-array fix passes with zero errors/warnings.
-  Both full runs preceded that guard fix; its regression and the final build pass.
-- T-008 adds 11 unit cases and one real-webview integration case (opens/reopens twice).
-- Owner manual QA in VS Code 1.141.0: all checks PASS; 512 cached / about
-  20–23 rendered rows. OS was not restated in the manual report.
-- First full run: seven integration tests pass in Windows x64 / VS Code 1.140.0;
-  strict logs fail on the existing intermittent cloud-dictation warning. No checks weakened.
-- Second full run: all 150 unit / seven integration tests pass; strict logs again
-  fail only on the cloud-dictation warning. No clean full gate is claimed.
-- Post-guard integration probe in VS Code 1.141.0: all seven tests pass;
-  strict runtime logs still fail on the same cloud-dictation warning.
-- Owner pasted passing verify output and the complete benchmark JSON at 7d9cf25.
-- T-004 final local CSV: 1,258,888,906 bytes; 10,000,000 rows fully verified.
-- Owner import 145.4 s; verification 60.1 s; total with worker startup 205.9 s.
-- Owner peak standalone RSS 223.0 MB; first 100 parsed rows 27.2 ms (no visible UI).
-- Windows x64 / Node 26.5.0 / SQLite 3.53.3; source/value hashes match.
-- Independent Python read-only comparison confirms every field in all 10 million rows.
-- Prior T-002 CI 37922970386 passes three platforms at 0e3ec57 (2026-10-09).
-- No new three-platform CI or milestone gate is claimed; prior cloud-dictation diagnostics remain intermittent.
+- Final npm run verify passes: 176 unit tests, strict types/lint, builds and VSIX packaging; zero errors/warnings.
+- T-051 adds 26 cases; every current task pack resolves. Direct ctx/trace checks pass.
+- Trace reports 24 FR/NFR naming gaps; this is not proof of behavioral coverage or passing tests.
+- No new verify:full or three-platform CI run is claimed for T-051.
+- Prior T-008: all seven integration tests pass, but strict logs fail on the intermittent cloud-dictation warning.
+- Prior T-002 CI run 37922970386 passes three platforms at 0e3ec57 (2026-10-09).
 
 ## Last session
-- Implemented T-008's CodeMirror SQL editor and virtualized synthetic ten-million-row grid.
-- Seven initial unit cases failed before implementation; four rendering/lifecycle cases added.
-- Tested row mapping, paging/cache bounds, validation/CSP, exact/literal text,
-  wheel/keyboard navigation, resize, stale replies, timeout errors and disposal.
-- README.md contains the F5 command, manual checks and report to paste.
-- Found/fixed sparse row/cell message acceptance with a confirmed failing regression.
-- T-004 remains complete; its benchmark evidence is preserved above and in PLAN.md.
-- Recorded the owner manual report and confirmed CodeMirror 6 in PLAN.md.
-- Owner committed T-008 at 8fed6f0ef7dff1950f9b2dfca34004d77c71456a and reports
-  pushing. Local main matches origin/main; task acceptance and commit requirements pass.
+- Added npm run ctx -- TASK-ID and npm run trace; no new dependencies or network calls.
+- Context preserves exact linked FR blocks/NFR rows and Constitution; supports ranges, duplicate links and tasks without links.
+- Trace parses unit/integration test source with installed TypeScript; excludes comments, fixture strings and skipped tests/suites.
+- Tests preceded implementation; skipped-suite and fixed-template-prefix bugs had failing regressions before fixes.
+- README documents usage, source scope, error behavior and naming-check limitations.
+- T-051 code and completion documentation belong to its local task commit; owner handles pushing.
 
-## Decisions made this session (move lasting ones into specs/PLAN.md)
-- Owner corrected task authorization to T-008 and approved implementation judgment.
-- Owner confirmed CodeMirror 6 after passing all F5 manual QA checks.
-- No grid dependency: 128-row pages, four-page cache, one request in flight,
-  28-pixel rows and six-row overscan per side. An 8-million-pixel track maps all rows.
-- Six pinned MIT editor/highlighting development dependencies; shipped notices
-  cover all fourteen bundled editor packages. No source fixture edits required.
-- Synthetic UI mechanics do not establish production file/query/performance targets.
+## Decisions made this session
+- Reuse the existing TypeScript parser; execute no test code for trace.
+- Count fixed literal requirement prefixes, including prefixes before template interpolation; do not guess dynamic IDs.
+- Trace gaps are an informational report (exit 0); invalid input/unreadable files exit 1 without a stack trace.
 
 ## Known issues / blockers
-- No T-004 acceptance criterion remains open; other foundation tasks/gate items remain open.
-- T-008 spike acceptance is met with passing verification; no manual criterion remains open.
-- No T-008 acceptance criterion remains open. Completion documentation is a
-  follow-up working-tree update to commit/push; no fresh remote CI evidence yet.
-- Local disk space prevented a 5 GB run; extension memory/visible first paint remain unproven.
-- R-1, D-2 and the foundation milestone remain open; no production performance claim.
-- Owner's prior T-002 fix/push status is preserved: main confirmed at 9faea17.
-- Owner reports T-004 implementation (7d9cf25) and completion docs (b3a5aab) are pushed.
-- Large local QA output removed after verification to free space; ignored reports retained.
+- No T-051 acceptance criterion remains open; remote push/CI evidence is pending.
+- T-008 is complete at 8fed6f0; completion docs are at eb8c498. Owner QA passes; keep CodeMirror 6.
+- T-004 remains complete: 10 million rows / 1,258,888,906-byte CSV fully verified, with matching source/value hashes.
+- Owner benchmark at 7d9cf25: import 145.4 s, standalone peak RSS 223.0 MB, parsed preview 27.2 ms; completion docs b3a5aab.
+- These do not prove 5 GB extension memory or visible first paint; disk space prevented the 5 GB run.
+- R-1, D-2, T-050, naming gaps and the foundation/full-gate warning remain open; no milestone tag.
 
 ## Next
-Owner commits/pushes the completion documentation. Start a fresh chat for one
-remaining foundation task: T-051 (context/trace scripts) or T-050 (dependency check).
-Keep the full-gate warning and remaining foundation tasks visible; no milestone tag yet.
+Owner pushes the T-051 commit and supplies CI evidence if available.
+Start a fresh chat for T-050 dependency/license checking; retain the remaining milestone gate items.

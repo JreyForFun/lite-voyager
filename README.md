@@ -53,6 +53,37 @@ The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
 
+## T-051 spec tools
+
+```sh
+npm run ctx -- T-012
+npm run trace
+npm test -- test/unit/spec-tools.test.ts
+```
+
+`ctx` prints the exact task line, complete directly linked FR/NFR definitions
+from `specs/SPEC.md`, and the Constitution. Repeated links appear once; ranges
+such as `FR-001 to FR-003` include every ID. Missing IDs and invalid input fail
+with a concise message. Tasks without FR/NFR links say so explicitly.
+Unnumbered sections and plan decisions are not automatically included;
+provide relevant sections, `AGENTS.md` and `PROGRESS.md` separately for a new chat.
+For context without npm's command banner, use `npm run --silent ctx -- T-012`.
+
+`trace` reports FR/NFR definitions without a matching test-name prefix in
+`test/unit/**/*.test.ts` or `src/test/**/*.test.ts`. It parses source with the
+already installed TypeScript package, adds no dependencies, and executes no
+test code. Literal names on `test`/`it`, imported aliases and parameterized tests
+count, as do template names with a fixed ID and delimiter before interpolation.
+Comments, fixture strings, suite names, skipped/todo tests and skipped suites
+do not count. Dynamically computed requirement prefixes are not counted; use
+a literal requirement prefix. Compiled output and fixture directories are excluded.
+
+Trace is a naming check: it does not prove that tests passed or that every
+acceptance criterion is covered. Reports (including gaps) exit successfully;
+invalid arguments or unreadable inputs exit with code 1. Run `npm run verify`
+for the automatic task gate. Both commands locate the repository relative to
+their script files and make no network calls or file changes.
+
 ## T-008 editor/grid spike — owner manual check
 
 Owner QA on 2026-10-09 in VS Code 1.141.0: all checks below PASS. The owner

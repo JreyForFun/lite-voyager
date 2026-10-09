@@ -54,6 +54,8 @@
     "test:integration": "npm run compile-tests && npm run build && node scripts/integration-check.mts",
     "verify": "node scripts/verify.mts",
     "verify:full": "node scripts/verify.mts --full",
+    "ctx": "node scripts/ctx.mts",
+    "trace": "node scripts/trace.mts",
     "fixtures": "node scripts/generate-fixtures.mts",
     "spike:csv": "node scripts/csv-import-spike.mts"
   },
