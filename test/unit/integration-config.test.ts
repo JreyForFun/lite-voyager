@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
@@ -32,8 +32,31 @@ test('T-006: Given an integration run, When its configuration loads, Then instal
       `--extensions-dir=${join(profile, 'extensions')}`,
       `--builtin-extensions-dir=${join(profile, 'builtin-extensions')}`,
     ]));
-    expect(await readdir(join(profile, 'extensions'))).toEqual([]);
+    // An empty manifest is metadata, not an installed extension.
+    expect(await readdir(join(profile, 'extensions'))).toEqual(['extensions.json']);
+    expect(JSON.parse(await readFile(join(profile, 'extensions', 'extensions.json'), 'utf8')) as unknown).toEqual([]);
     expect(await readdir(join(profile, 'builtin-extensions'))).toEqual([]);
+  } finally {
+    await rm(profile, { recursive: true, force: true });
+  }
+});
+
+test('T-007: Given an isolated host without GitHub authentication, When configuration loads, Then only the signed-out fixture accompanies the development extension', async () => {
+  const output = resolve('out');
+  await mkdir(output, { recursive: true });
+  const profile = await mkdtemp(join(output, 'integration-profile-auth-test-'));
+  try {
+    const { stdout } = await execute(process.execPath, ['--input-type=module', '-e',
+      'const { default: config } = await import("./.vscode-test.mjs"); console.log(JSON.stringify(config.extensionDevelopmentPath));',
+    ], { env: { ...process.env, LITE_VOYAGER_TEST_PROFILE: profile } });
+    const fixture = join(profile, 'authentication-fixture');
+    expect(JSON.parse(stdout) as unknown).toEqual([resolve('.'), fixture]);
+    const manifest: unknown = JSON.parse(await readFile(join(fixture, 'package.json'), 'utf8'));
+    expect(manifest).toMatchObject({
+      name: 'signed-out-authentication', publisher: 'lite-voyager-tests',
+      main: './extension.js', contributes: { authentication: [{ id: 'github', label: 'Signed-out test fixture' }] },
+    });
+    expect(await readFile(join(fixture, 'extension.js'), 'utf8')).toContain('registerAuthenticationProvider');
   } finally {
     await rm(profile, { recursive: true, force: true });
   }

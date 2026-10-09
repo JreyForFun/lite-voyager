@@ -216,9 +216,14 @@ test('NFR-005: Given SQL inserts in the worker, When importing, Then the caller 
   let inserting = false;
   const timer = setInterval(() => { if (inserting) { ticks += 1; } }, 5);
   try {
-    await runCsvImportSpike(paths, {
+    // This checks event-loop responsiveness, not 100 disk commits under CI load.
+    // Keep the same rows and assertions; other cases cover default batching.
+    const report = await runCsvImportSpike({ ...paths, batchRows: 10_000 }, {
       onProgress: (progress) => { inserting = progress.phase === 'import'; },
     });
+    expect(report.rows).toBe(100_000);
+    expect(report.verifiedRows).toBe(100_000);
+    expect(report.sourceSha256After).toBe(report.sourceSha256Before);
   }
   finally { clearInterval(timer); }
   expect(ticks).toBeGreaterThan(2);

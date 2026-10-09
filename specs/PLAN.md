@@ -25,7 +25,9 @@ T-005 raises the development/test minimum to Node 25.7, where node:sqlite no
 longer emits an experimental warning. Node 26.5.0 is the observed local runtime.
 `verify` runs typechecks, lint, unit tests, both production bundles, and a temporary
 VSIX packaging check. `verify:full` adds integration tests in an isolated VS Code.
-Every failing command or emitted warning fails the verification pipeline.
+Every failing command or console warning fails the verification pipeline.
+Structured runtime logs permit only the two owner-approved, individually reported
+host diagnostic families in VALIDATION section 1; all other warnings/errors fail.
 Integration tests use a separate profile with VS Code's built-in AI features
 disabled (`chat.disableAIFeatures`), exercise the scaffold's declared minimum
 VS Code version, and leave runtime diagnostics visible to the verification gate.
@@ -36,6 +38,43 @@ The test host uses empty profile-local installed and built-in extension director
 (`--extensions-dir`, `--builtin-extensions-dir`), loading Lite Voyager through its
 development path. This isolates unrelated Git/Copilot components without modifying
 VS Code or filtering diagnostics. These tests do not cover coexistence with built-ins.
+
+T-007 CI repair (owner-authorized): initialize the installed-extension manifest
+with an empty JSON array before launching the host, avoiding competing first-run
+creation by the renderer and shared process. Keep both extension directories
+free of installed extensions. Load a separate, generated development fixture
+alongside Lite Voyager that contributes only a signed-out `github` authentication
+provider. VS Code 1.140.0 requests GitHub sessions from its dictation service even
+with `chat.disableAIFeatures` enabled; the fixture returns no sessions and rejects
+creation/removal without credentials, UI or network calls. It uses the public
+AuthenticationProvider API in the installed VS Code typings; it is test infrastructure,
+not GitHub authentication coverage or extension functionality. The fixture is
+excluded from the VSIX. The first real-host run passed all eight integration
+tests and removed the original two warnings, but exposed a signed-out cloud
+sandbox lookup warning and a vendor workbench-initialization timing warning.
+The owner explicitly approved only the two source-restricted message families
+in VALIDATION section 1; the scanner must return structured records and the
+runner must report them. Every other warning and every error remains fatal.
+Regression tests cover profile initialization, fixture wiring/behavior, real-host
+signed-out lookup, and rejection of the exact reported warnings. The Windows
+responsiveness fixture retains 100,000 rows and its timer assertion but batches
+10,000 rows per transaction to avoid measuring 100 disk commits under CI load;
+production/default import batching is unchanged. Full local verification and a
+fresh three-platform CI run are required before closing the repair.
+
+Local T-007 repair evidence (2026-10-10, Windows x64): final `verify:full`
+passes strict types/lint, 197 unit tests, builds, the 15-file VSIX, and eight
+integration tests in VS Code 1.140.0. The original manifest/dictation warnings
+are absent. One `VSCODE-HOST-001` signed-out renderer record is reported with
+its original warning severity; no unexpected warning or error is accepted.
+Native/fallback cancellation and reopening pass (39 ms / 34 ms cancellation).
+The generated authentication fixture is absent from the VSIX. New profile
+regressions and exception-policy tests were observed failing before their fixes;
+near matches, errors, wrong log sources and the original warnings still fail.
+The earlier standalone `verify` also passed before the exception-policy change;
+the final full command repeats all of its stages with the final code. Remote
+repair CI and milestone review remain pending; no new compatibility minimum,
+production benchmark, foundation completion or release tag is claimed.
 
 ### T-005 fixture tooling
 
@@ -503,6 +542,9 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-007 local validation (2026-10-10): Final full verification passes with 197 unit/eight integration tests and one explicitly reported approved host diagnostic; fixture is excluded from the VSIX. Fresh three-platform CI remains pending.
+- v0.4 T-007 host diagnostic policy: Owner approved exact renderer-only signed-out cloud lookup and chat language-model schema timing diagnostics, reported individually; original CI warning causes and all other errors/warnings still fail.
+- v0.4 T-007 CI repair: Owner authorized a signed-out authentication fixture and preinitialized empty manifest for isolated integration hosts, plus less disk-intensive responsiveness-test batching. Runtime warning rejection remains strict; validation evidence is pending.
 - v0.4 T-050 completion (2026-10-09): Restored D-4 with approved scope and acceptance criteria; documented all locked licenses, resolved missing/custom declarations, captured a clean audit and official SheetJS guidance. Three red-first checks verify inventory and production notice coverage; verify passes with 179 tests and zero errors/warnings. No dependency or fixture change; owner pushes.
 - v0.4 T-008 completion (2026-10-09): Recorded task commit 8fed6f0 and owner push report; all spike acceptance criteria pass. T-008 is checked; no foundation gate or production performance claim.
 - v0.4 T-008 owner QA (2026-10-09): Recorded all manual checks passing in VS Code 1.141.0, 512 cached / about 20–23 rendered rows, and the decision to keep CodeMirror 6. Task checkbox awaits the owner commit; the foundation gate remains open.

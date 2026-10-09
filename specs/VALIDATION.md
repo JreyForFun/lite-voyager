@@ -21,6 +21,20 @@ Two commands, defined in task T-006:
 
 Rules:
 - Zero errors and zero warnings. A warning is a defect that has not been explained yet.
+- **Owner-approved T-007 host exceptions:** only structured `[warning]` records
+  in a dated VS Code session's `windowN/renderer.log` may match either exact
+  message family below. Report every accepted record with source, line, original
+  severity, rule ID and message; never call such a run warning-free. All errors,
+  other warnings, altered scopes/messages and records from other log sources fail.
+  - `VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+    A signed-out test fixture deliberately has no credentials; the bundled host
+    logs this during provider registration even with cloud sandboxes disabled.
+  - `VSCODE-HOST-002`: `Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took Nms.`
+    `N` must be an integer duration. This is the vendor's synchronous startup
+    schema contribution, not Lite Voyager work or its responsiveness measurement.
+  The original manifest-creation and cloud-dictation timeout warnings remain
+  failures. Console diagnostic checks, types, lint and builds retain zero
+  errors/warnings. No blanket vendor-warning allowance or retry-to-green is permitted.
 - Do not weaken a test, skip it, or delete it to make it pass. Fix the code, or change the spec first.
 - Do not silence the type checker (`any`, `@ts-ignore`) or the linter without a written reason next to it.
 
@@ -61,6 +75,22 @@ foundation checklist item are complete; all other milestone gate items retain
 their previous status. No milestone gate or release tag is complete.
 
 ### Layer 2: Per-task validation (spec to test)
+
+T-007 repair evidence (2026-10-10): final local `npm run verify:full` passes on
+Windows x64 with 197 unit tests, eight integration tests in VS Code 1.140.0,
+strict types/lint, builds and a 15-file VSIX that excludes the authentication
+fixture. One `VSCODE-HOST-001` record is reported; no unexpected diagnostic is
+accepted. Red-first tests cover missing profile initialization/fixture wiring
+and the new diagnostic-policy behavior; rejection tests retain the original
+warnings and cover errors, changed scopes/messages and wrong sources.
+An earlier standalone `npm run verify` passed with 185 tests before the new
+policy tests; final full verification repeats all those stages with 197 tests.
+The owner's supplied latest macOS log passed its tests but failed on the
+original manifest/dictation warnings. Old Windows annotations report a 5-second
+responsiveness-test timeout. Current local tests retain the 100,000-row workload,
+timer assertion and timeout, use fewer disk commits, and additionally verify
+all rows and unchanged-source hashes. Fresh remote CI is still required;
+earlier green runs do not close the current regression.
 
 - Every acceptance criterion (Given / When / Then) becomes at least one test.
 - Test names start with the requirement ID, for example `FR-002: shows NULL differently from empty string`. This lets you search for coverage.
@@ -103,7 +133,7 @@ A task may be ticked in `TASKS.md` only when all of these are true:
 A milestone is finished only when its gate passes. Then, and only then, tag the commit (for example `v0.1.0`) and start the next milestone in a **fresh AI chat** (see `CONTEXT.md`).
 
 ### Universal gate items (every milestone)
-- [x] `npm run verify:full` is green locally and in CI on all three operating systems. *(Current M0 evidence: T-007 run/SHA above.)*
+- [ ] `npm run verify:full` is green locally and in CI on all three operating systems. *(Historical green evidence above; current T-007 repair requires fresh evidence.)*
 - [ ] NFR-001 test passes: a source file's hash is identical before and after browsing and querying.
 - [ ] Every requirement for this milestone has at least one test (`npm run trace` shows no gaps).
 - [ ] Measured numbers (open time, peak memory) are recorded in `PLAN.md` and compared with the NFR targets.
@@ -113,7 +143,7 @@ A milestone is finished only when its gate passes. Then, and only then, tag the 
 - [ ] Specs, changelogs, and `PROGRESS.md` are up to date; git tag created.
 
 ### Milestone 0 (foundation)
-- [x] CI is green on three operating systems. *(T-007 run/SHA above.)*
+- [ ] CI is green on three operating systems. *(Current runs 37944872111, 37949436855 and 37952380317 fail; fresh repair evidence is required.)*
 - [ ] Spike results (T-002, T-004, T-008) are written into `PLAN.md`.
 - [x] T-002 proves worker open/query/cancel/reopen inside a killable helper, confirms helper exit within 1,000 ms after SQL execution begins, and verifies real sql.js fallback when the built-in is unavailable. Local verification, owner manual QA, and fresh three-platform CI pass (run/SHA above). The production `Engine` interface, fallback banner/large-file prompt, and permanent force-fallback hook follow in T-009 (Milestone 1).
 
@@ -215,6 +245,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-007 local repair evidence (2026-10-10): Recorded final full verification, red-first coverage and the explicitly reported host diagnostic; current local/remote milestone gate checkboxes remain open for fresh three-platform CI.
+- v0.1 T-007 host diagnostic policy: Owner explicitly approved two exact, source-restricted VS Code host warning families, with mandatory reporting and fail-closed tests; all other warnings and every error remain failures.
+- v0.1 T-007 CI regression repair: Reopened current local/CI gate items after failed owner-supplied runs, preserving the earlier passing evidence and the zero-warning rule.
 - v0.1 T-002 completion (2026-10-09): Recorded fresh run 37922970386/0e3ec57 and passing reviewed fixes, local gates and owner manual QA; checked the T-002-specific foundation item only.
 - v0.1 T-002 cancellation redesign (2026-10-09): Owner authorized confirmed helper exit within one second; local, manual, and fresh CI evidence are required for closure.
 - v0.1 T-002 scope clarification (2026-10-09): Owner approved keeping the production Engine interface in T-009; the foundation gate measures the worker/fallback spike instead.
