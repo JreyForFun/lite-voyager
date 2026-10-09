@@ -233,6 +233,39 @@ the final tag remain required. Existing subjective owner QA is reused honestly;
 production multi-GB UI performance, accessibility, dual-macOS-architecture and
 built-in-extension coexistence remain later validation.
 
+#### T-052 candidate CI and local fixture timing follow-up (2026-10-10)
+
+The owner supplied [run 37961300752](https://github.com/JreyForFun/lite-voyager/actions/runs/37961300752).
+Public GitHub API metadata verifies attempt 1 at exact commit
+`d18e5e6c4f9045524bd2ec05bb7dcebea2dbb155`, completed successfully
+2026-10-09 16:46:17 UTC (2026-10-10 in Asia/Manila). Ubuntu job 113924516849,
+macOS 113924517083 and Windows 113924517213 all succeed, including locked
+installation and each applicable platform's full-verification step. Only
+inapplicable alternative platform steps are skipped. Remote warning counts
+are not claimed; the approved diagnostic policy applies.
+
+Completion-documentation `npm run verify` then failed locally: the existing
+FR-004 quoted-header case took 5,045 ms and exceeded its original 5,000 ms
+timeout. Its 70 KB header was read in 7-byte chunks (about 10,000 reads).
+Retain the entire header, embedded LF, CRLF records, exact text/int64 assertion
+and timeout; change this fixture to 4,096-byte reads so the header still spans
+18 chunks, and assert that input bytes exceed the chunk size. Other quote and
+UTF-8 boundary cases retain tiny/one-byte chunks. This preserves the actual
+header-detection acceptance without tying it to thousands of tiny filesystem
+reads. The focused adjusted case passes. Independent read-only follow-up review
+confirms the original acceptance/assertions/time bound remain covered and finds
+no concrete concern. No parser/helper/dependency or committed
+data asset changes are made in this follow-up. Because the executable test
+fixture changed, fresh full local and three-platform candidate evidence are
+required before T-052 or the remaining gate items are checked. No tag created.
+Final adjusted-fixture `npm run verify:full` now passes locally: 207 unit tests,
+eight integration tests in Windows x64 / VS Code 1.140.0, strict checks/build and
+a 15-file / 468.91 KB VSIX. Native/fallback cancellation is 28 ms / 37 ms, with
+helper exit/reopening and source hashes verified. One approved VSCODE-HOST-001
+record is explicitly reported from `20261010T005558/window1/renderer.log`, line
+10, severity warning; no unexpected warning/error is accepted. This run is not
+warning-free. The adjusted fixture still requires fresh three-platform CI.
+
 ### Milestone 1 manual QA (read-only SQLite)
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
 - [ ] A generated multi-GB database shows its first rows within the NFR-004 target, and memory stays flat while scrolling.
@@ -331,6 +364,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-052 fixture follow-up (2026-10-10): Verified three-platform candidate run 37961300752/d18e5e6, then recorded a real local quoted-header timeout and preserved its data/assertions/time bound while reducing redundant tiny reads; require fresh verification/CI for the adjusted fixture before tagging.
 - v0.1 T-052 local gate (2026-10-10): Full verification passes with 207 unit/eight integration tests, source/cancellation evidence and one explicitly reported approved host warning; fresh remote candidate evidence and final tag remain required.
 - v0.1 T-052 evidence reconciliation (2026-10-10): Checked evidenced source safety, scoped coverage, measurements, owner QA, independent review, marker search and spike records; reopened only current gate CI items for new executable review repairs. T-007 remains complete and no tag is claimed.
 - v0.1 T-052 scope clarification (2026-10-10): Under the owner's delegated closure judgment, clarified the existing milestone-specific coverage rule without changing the global trace or production requirements; the foundation checks explicit spike acceptance and preserves future gaps.

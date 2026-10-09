@@ -1,37 +1,36 @@
 # Progress
 
 ## Current phase / task
-Milestone 0B: T-052 foundation gate candidate is implemented and reviewed locally.
-All earlier foundation tasks remain checked. T-052 awaits fresh CI and tagging; T-009 is not started.
+Milestone 0B: T-052 fixture timing follow-up is implemented and reviewed locally.
+All earlier foundation tasks remain checked; T-052 awaits this candidate's fresh CI/tag. T-009 is not started.
 
 ## Verify status
-- `npm run verify:full` passes (2026-10-10), Windows x64 / VS Code 1.140.0: 207 unit tests, eight integration tests, strict types/lint/build and a 15-file / 468.83 KB VSIX.
-- One approved VSCODE-HOST-001 signed-out renderer warning is explicitly reported; no unexpected warning/error. This full run is not warning-free.
-- Native/fallback cancellation: 30 ms / 28 ms; helper exit, reopening and source hashes pass.
-- Independent post-fix review passes 35 SQLite cases and original CSV reproductions; no remaining concrete HIGH/MEDIUM finding.
-- Foundation coverage regression passes all nine linked spike IDs. Global trace retains 22 later requirement naming gaps; no production requirement completion is inferred.
+- Adjusted-fixture `npm run verify:full` passes (2026-10-10), Windows x64 / VS Code 1.140.0: 207 unit/eight integration tests, strict types/lint/build, 15-file / 468.91 KB VSIX.
+- One approved VSCODE-HOST-001 renderer warning is explicitly reported; no unexpected warning/error. This full run is not warning-free.
+- Native/fallback cancellation: 28 ms / 37 ms; helper exit/reopening and source hashes pass.
+- Owner CI run 37961300752, attempt 1 at d18e5e6c4f9045524bd2ec05bb7dcebea2dbb155, passes locked installs and applicable full checks on Ubuntu/macOS/Windows.
+- That run verifies the parser/helper repairs, not the later fixture adjustment. New candidate CI remains required.
+- Independent review confirms original split-header acceptance/assertions/time bound are retained. Foundation coverage passes nine IDs; global trace retains 22 future gaps.
 
 ## Last session
-- Owner delegated gate decisions and necessary repairs; owner retains pushing. Added T-052 as the single closure task.
-- Fresh-context independent review examined the actual 110-file foundation diff 04c7bd7..e02f38f and repair diff against Constitution/acceptance criteria.
-- MEDIUM CSV bug: post-quote whitespace was silently discarded. Six new cases failed before repair; streaming validation now rejects malformed quote endings. Seven rejection/two valid-whitespace cases pass with source/cleanup/fidelity assertions.
-- LOW recovery race: immediate reopen after a worker crash failed. Strengthened test failed before repair; reopening now waits for failed-helper exit and verifies its old PID is dead.
-- Corrected real FR-015 cancellation and FR-016 fallback-safety test prefixes without weakening assertions/timeouts; the new coverage regression first failed on both IDs.
-- Reconciled existing source safety, owner manual QA, spike measurements and review evidence; no TODO/FIXME markers found in searched code directories.
+- Verified the supplied green CI's exact SHA and every applicable job/step via public GitHub API.
+- Final closure `npm run verify` failed the existing large quoted-header test: 5,045 ms exceeded the original 5,000 ms timeout. Did not tag or claim completion.
+- Retained the 70 KB header, embedded LF, CRLF records, exact values and timeout; changed read chunks from 7 to 4,096 bytes (still 18 chunks) and added input-spans-chunks assertion. One-byte boundary cases remain.
+- Focused fixture test and subsequent full verification pass. Independent read-only follow-up finds no concrete concern or acceptance weakening.
+- No parser/helper implementation, dependency or committed fixture data changed in this follow-up. Earlier CSV fidelity/crash-recovery repairs remain verified by green CI.
 
 ## Decisions made this session
-- Accept focused D-2 positioning under delegated judgment; retain disk-backed SQLite and current dependencies.
-- Accept monitored R-1 with instant preview/background progress/cancel for Milestone 2; revisit before that milestone.
-- Preserve production 5 GB / 500 MB extension-memory and under-two-second visible-row targets; standalone/synthetic spikes do not prove them.
-- Reuse recorded T-002/T-004/T-008 owner QA honestly. No new subjective QA, fixture edit or dependency change.
+- Keep T-052 and current CI/tag gate items open until the adjusted fixture's fresh three-platform CI passes.
+- Preserve every assertion/workload and timeout; reduce redundant filesystem reads unrelated to the header-detection criterion.
+- Retain accepted D-2 positioning and monitored R-1 mitigation; production targets and T-009 scope are unchanged.
 
 ## Known issues / blockers
-- New executable repairs need fresh three-platform CI. Earlier run 37956761308/f3d82bb passes the T-007 repair, not this candidate.
-- Current local candidate is ready for owner push; T-052, current gate CI checkboxes and final tag remain open.
-- Production Engine/fallback UX, real database paging, performance, full accessibility, both macOS architectures and built-in coexistence remain later validation.
+- Owner must push the fixture candidate and supply new Actions evidence; no foundation tag yet.
+- Production Engine/fallback UX, real database paging, performance, accessibility, both macOS architectures and built-in coexistence remain later validation.
+- The earlier full/local/remote passing evidence is retained honestly; it does not guarantee timing failures cannot recur.
 
 ## Next
-Owner: `git push origin main`, then send the Actions URL for this T-052 candidate.
-Verify exact SHA and successful full jobs/steps on Windows/macOS/Linux; fix any failures.
-Only then check T-052/the remaining gate items, commit final records and tag `v0.0.1`; owner pushes the records/tag.
-Start Milestone 1 / T-009 in a fresh chat with AGENTS.md, Constitution and this progress file.
+Owner runs `git push origin main`, then sends the Actions URL for this candidate.
+Verify its exact SHA and successful Windows/macOS/Linux full jobs/steps; fix any failure without weakening checks.
+Only then complete the final records/T-052 gate and tag v0.0.1; owner pushes the closure records/tag.
+Start Milestone 1 / T-009 in a fresh chat using AGENTS.md, Constitution, PROGRESS.md and the CONTEXT phase pack.

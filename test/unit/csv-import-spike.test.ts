@@ -98,7 +98,10 @@ test('FR-004: Given a single quoted empty field, When imported, Then it remains 
 test('FR-004: Given a header spanning the first chunk with embedded LF, When CRLF records are imported, Then line-ending detection preserves exact fields', async () => {
   const name = `start\n${'x'.repeat(70_000)}`;
   const paths = await setup(`"${name}",id\r\nexact,9007199254740993\r\n`);
-  await runCsvImportSpike({ ...paths, chunkBytes: 7 });
+  // Keep the 70 KB header across reads, without thousands of tiny filesystem
+  // reads unrelated to this header-detection case. Other cases use 1-byte reads.
+  const report = await runCsvImportSpike({ ...paths, chunkBytes: 4096 });
+  expect(report.inputBytes).toBeGreaterThan(report.chunkBytes);
   expect(stored(paths.output)).toEqual([{ [name]: 'exact', id: '9007199254740993' }]);
 });
 

@@ -314,6 +314,24 @@ native/fallback cancellation and a 468.83 KB / 15-file VSIX. VALIDATION records
 the coverage/manual/review evidence. The owner must push this candidate and
 supply new three-platform CI before T-052 can be checked or `v0.0.1` tagged.
 
+The owner supplied passing [run 37961300752](https://github.com/JreyForFun/lite-voyager/actions/runs/37961300752),
+attempt 1 at d18e5e6c4f9045524bd2ec05bb7dcebea2dbb155. Public API metadata
+confirms successful locked installation and applicable full checks on all three
+platforms. Final closure verification nevertheless exposed a local 5,045 ms
+timeout in the existing 70 KB quoted-header fixture (5,000 ms bound). Change
+only its read chunk from 7 to 4,096 bytes, preserving the full large header,
+embedded LF, CRLF, exact value assertions and timeout, with an added assertion
+that the header input spans reads. Other byte-boundary cases remain unchanged.
+Focused validation passes. New full local and remote fixture-candidate evidence
+is required before closing/tagging; the parser/helper repairs remain verified
+by the supplied green run. This is a fixture efficiency repair, not a new
+production performance claim.
+Final adjusted-fixture full verification passes locally with 207 unit/eight
+integration tests, one reported approved VSCODE-HOST-001 warning, 28 ms / 37 ms
+native/fallback cancellation and a 15-file / 468.91 KB VSIX. Independent read-only
+follow-up review confirms the fixture preserves its acceptance/time bound.
+Owner pushes this candidate and supplies fresh three-platform CI before tagging.
+
 
 **D-4 Dependency and license review (T-050).** Owner authorized the full locked dependency review and routine fixes on 2026-10-09. Include direct, transitive, development, peer and optional packages, even when another platform installs them. Package-manager license metadata is evidence, not a substitute for special license text.
 - Given the current lockfile, the inventory must contain every non-root package path, exact version, declared license and scope flags. A canonical JSON SHA-256 ties the evidence to this dependency tree. Inventory tests must fail on omissions or stale versions/licenses.
@@ -583,6 +601,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-052 fixture follow-up (2026-10-10): Recorded verified green run 37961300752/d18e5e6 and the subsequent local large-header test timeout; preserve its acceptance with fewer tiny reads and require fresh fixture-candidate gate evidence.
 - v0.4 T-052 review/local gate (2026-10-10): Recorded repaired quote-fidelity and crash-recovery findings, post-fix independent review and passing full local evidence; new three-platform candidate evidence remains required.
 - v0.4 T-052 feasibility decision (2026-10-10): Recorded delegated D-2 positioning and accepted R-1 mitigation, reconciled existing foundation manual/measurement evidence and retained all unproven production targets.
 - v0.4 T-007 repair completion (2026-10-10): Recorded independently checked run 37956761308/attempt 1/f3d82bb and successful full-verification steps on all three platforms; the repair is complete, while the foundation milestone remains open.

@@ -12,6 +12,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   Added foundation requirement-coverage checks and corrected cancellation/
   fallback-safety test prefixes. Production features and milestone tagging
   remain pending the final gate.
+  Follow-up: preserve the large quoted-header regression and its original
+  timeout while reducing redundant tiny filesystem reads; explicitly assert
+  that its input still spans read chunks.
 
 - T-008: added an experimental CodeMirror SQL editor and virtualized synthetic
   ten-million-row grid. Page requests contain 128 rows; the webview caches at

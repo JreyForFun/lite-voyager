@@ -78,6 +78,17 @@ measurements, existing owner QA and spike records are reconciled in VALIDATION.
 No dependency or committed fixture changes. The owner pushes; fresh three-platform
 CI and the final commit/tag are still required. Keep T-052 unchecked until then.
 
+Owner-supplied run 37961300752/attempt 1 at d18e5e6 passes all locked installs
+and applicable full-verification steps on Windows/macOS/Linux. Local completion
+verification then hit a 5-second large quoted-header test timeout. The fixture
+retains its 70 KB header, embedded LF/CRLF, exact assertions and timeout while
+reading 4,096-byte chunks instead of 7-byte chunks; a new assertion confirms
+the input spans reads. T-052 stays open for this adjusted fixture's fresh local
+full gate/three-platform CI and final tag. No Milestone 1 task is started.
+Adjusted-fixture full local verification now passes with 207 unit/eight integration
+tests and one explicitly reported approved host warning; independent follow-up
+review confirms unchanged acceptance. Owner pushes this candidate for fresh CI.
+
 **Exit criteria:** T-002 and T-004 results are written into `PLAN.md`, and CI is green. The `Engine` interface from `PLAN.md` D-3 comes next in T-009. If T-004 shows imports are unacceptably slow, revisit R-1 before Milestone 2.
 
 ## Milestone 1: Read-only SQLite (release 0.1)
@@ -137,6 +148,7 @@ Every milestone ends with a gate (`VALIDATION.md` section 4): green `npm run ver
 When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part of `SPEC.md` and `PLAN.md`, and only the single task you are working on.
 
 ## Changelog
+- v0.6 T-052 fixture follow-up (2026-10-10): Recorded passing candidate CI and a subsequent local header-test timeout; fixture efficiency is repaired without reducing data/assertions or extending timeout. Keep closure open for new candidate evidence.
 - v0.6 T-052 local candidate (2026-10-10): Recorded reviewed red-first repairs and passing full local gate; closure remains pending the owner's push, new three-platform CI and final tag. T-009 is not started.
 - v0.6 T-052 kickoff (2026-10-10): Owner delegated foundation closure decisions and necessary fixes; added one explicit closure task and linked T-002's already-specified source/security/fallback safety criteria. Production features remain in later tasks.
 - v0.6 T-007 repair completion (2026-10-10): Verified owner-supplied run 37956761308, attempt 1 at f3d82bb, including successful dependency installation and full-verification steps on all three platforms; rechecked T-007 only. Foundation completion is not claimed.
