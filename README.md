@@ -52,19 +52,19 @@ run option. Each Windows, macOS, and Linux job installs the lockfile with `npm c
 using Node 26.5.0 and runs `npm run verify:full`. Linux runs
 `dbus-run-session -- xvfb-run -a npm run verify:full` to provide a fresh session
 bus and a virtual display for VS Code. All three jobs report results even if one
-fails; errors and warnings fail the existing verification gate. CI does not generate the large
-10-million-row datasets.
+fails; errors and warnings fail the existing verification gate. CI does not
+generate the large 10-million-row datasets.
 
-After pushing the T-007 commit, open the repository's **Actions** tab and select
-**CI** for that commit. Paste the run URL, commit SHA, and the conclusion for all
-three **Full verification** jobs. For a failed job, paste its failing step's log
-including the first error or warning. Local workflow tests check its wiring;
-T-007 stays open until the actual three-platform run is green.
+[Run 37884550873](https://github.com/JreyForFun/lite-voyager/actions/runs/37884550873)
+passed all three Full verification jobs on 2026-10-09 for commit
+`93b23bf1420cf10dd8b0ea82d3b4c2be0e35268d`. GitHub's job metadata confirms that
+the Linux session-bus/display step and the Windows/macOS verification steps
+succeeded. T-007 is complete; the remaining Milestone 0B tasks are still open.
 
-The supplied initial Ubuntu log passed all 65 unit tests and both integration
-tests, but Electron's D-Bus errors failed the diagnostic gate. The session-bus
-wrapper is the proposed environment fix; its Linux execution still needs a
-fresh Actions run. Diagnostics remain visible and errors still fail verification.
+For subsequent changes, open the repository's **Actions** tab and select **CI**
+for the tested commit. Paste the run URL, SHA, and all three job conclusions.
+For a failure, paste the complete failing-step log. Local workflow tests check
+configuration; actual platform runs establish runner compatibility.
 
 ## Test fixtures
 

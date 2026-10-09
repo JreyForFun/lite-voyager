@@ -34,6 +34,13 @@ its first error or warning. Keep T-007 unchecked until that evidence is seen.
 The current scaffold does not cover both database engines; their tests follow
 their implementation tasks. The milestone's engine gate remains required.
 
+T-007 evidence recorded on 2026-10-09:
+[run 37884550873](https://github.com/JreyForFun/lite-voyager/actions/runs/37884550873),
+commit `93b23bf1420cf10dd8b0ea82d3b4c2be0e35268d`. The user supplied the run URL;
+GitHub API metadata confirms successful Ubuntu, Windows, and macOS jobs and
+each applicable full-verification step. Local full verification also passed.
+Only the two CI-related gate items below are checked; the milestone is open.
+
 ### Layer 2: Per-task validation (spec to test)
 
 - Every acceptance criterion (Given / When / Then) becomes at least one test.
@@ -77,7 +84,7 @@ A task may be ticked in `TASKS.md` only when all of these are true:
 A milestone is finished only when its gate passes. Then, and only then, tag the commit (for example `v0.1.0`) and start the next milestone in a **fresh AI chat** (see `CONTEXT.md`).
 
 ### Universal gate items (every milestone)
-- [ ] `npm run verify:full` is green locally and in CI on all three operating systems.
+- [x] `npm run verify:full` is green locally and in CI on all three operating systems. *(Current M0 evidence: T-007 run/SHA above.)*
 - [ ] NFR-001 test passes: a source file's hash is identical before and after browsing and querying.
 - [ ] Every requirement for this milestone has at least one test (`npm run trace` shows no gaps).
 - [ ] Measured numbers (open time, peak memory) are recorded in `PLAN.md` and compared with the NFR targets.
@@ -87,7 +94,7 @@ A milestone is finished only when its gate passes. Then, and only then, tag the 
 - [ ] Specs, changelogs, and `PROGRESS.md` are up to date; git tag created.
 
 ### Milestone 0 (foundation)
-- [ ] CI is green on three operating systems.
+- [x] CI is green on three operating systems. *(T-007 run/SHA above.)*
 - [ ] Spike results (T-002, T-004, T-008) are written into `PLAN.md`.
 - [ ] Both engines work behind the `Engine` interface and the fallback triggers when `node:sqlite` is forced off.
 
@@ -189,6 +196,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-007 completion (2026-10-09): Recorded run 37884550873/commit 93b23bf with three successful full-gate jobs; checked only the two evidenced CI gate items. All other milestone gate items remain open.
 - v0.1 T-007 Ubuntu environment (2026-10-09): Added isolated D-Bus session setup after the supplied Ubuntu log passed tests but failed on Electron errors. Error/warning rejection remains required; a fresh three-platform run is still needed.
 - v0.1 T-007 CI (2026-10-09): Clarified approved full-gate execution on every platform and remote evidence required before checking T-007; local workflow checks do not establish CI success or engine coverage.
 - v0.1 T-005 fixtures (2026-10-09): Linked inventory, runtime recipes and generator evidence; documented format applicability. Corrected the impossible WITHOUT ROWID/no-primary-key QA item to match approved FR-020.
