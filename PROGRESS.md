@@ -1,7 +1,7 @@
 ﻿# Progress
 
 ## Current phase / task
-Phase: Milestone 0B. Task: T-002 implemented; typing check and fresh CI pending.
+Phase: Milestone 0B. Task: T-002 implemented; manual QA passes, fresh CI pending.
 T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 
 ## Verify status
@@ -10,7 +10,7 @@ T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 - Real VS Code 1.140.0 and 1.141.0 integration runs pass all four tests/log checks.
 - Windows x64: bundled Node 24.21.0; native SQLite 3.53.4; fallback SQLite 3.49.1.
 - Helper cancellation observed at 25-47 ms; exit/reopen/source hashes verified.
-- Owner manual QA: native 24 ms / fallback 92 ms; both cancelled/recovered true.
+- Owner QA: native 24 ms / fallback 92 ms; both recover and typing stays responsive.
 - One full run failed startup timing warnings; unchanged integration/full retries pass.
 - Previous green CI: run 37884550873, commit 93b23bf1420cf10dd8b0ea82d3b4c2be0e35268d.
 - That old run does not validate T-002. Fresh Windows/macOS/Linux CI is required.
@@ -29,11 +29,11 @@ T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 - Production Engine interface/banner/large-file prompt/hook remain T-009.
 
 ## Known issues / blockers
-- Editor typing responsiveness remains unconfirmed; UI automation pipe unavailable.
+- Local owner edit to test/fixtures/empty.json left untouched and uncommitted.
 - Fresh three-platform CI and independent risky-change review remain outstanding.
 - Earlier VS Code versions/browser support and production performance not claimed.
 - No tests, compiler checks, or warning gates disabled; D-2 remains open.
 
 ## Next
 Implementation committed as a587400b29af6dbf3d54ea3b1e9a37deb88e539d; T-002 stays open.
-Owner finishes manual QA, pushes the commit, and supplies CI run/SHA/job evidence.
+Owner pushes the commit and supplies fresh CI run/SHA/job evidence.
