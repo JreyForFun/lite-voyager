@@ -45,8 +45,9 @@ verify configuration, not runner compatibility. To complete T-007, provide the
 GitHub Actions CI run URL, tested commit SHA, and successful conclusions for all
 three Full verification jobs. For failures, provide the failing step's log with
 its first error or warning. Keep T-007 unchecked until that evidence is seen.
-The current scaffold does not cover both database engines; their tests follow
-their implementation tasks. The milestone's engine gate remains required.
+T-002 now covers both real database engines in the foundation spike. Production
+Engine selection, fallback UX and its permanent force-fallback hook follow in
+T-009; the milestone-specific engine gate below preserves that distinction.
 
 T-007 evidence recorded on 2026-10-09:
 [run 37884550873](https://github.com/JreyForFun/lite-voyager/actions/runs/37884550873),
@@ -140,19 +141,97 @@ A task may be ticked in `TASKS.md` only when all of these are true:
 A milestone is finished only when its gate passes. Then, and only then, tag the commit (for example `v0.1.0`) and start the next milestone in a **fresh AI chat** (see `CONTEXT.md`).
 
 ### Universal gate items (every milestone)
-- [x] `npm run verify:full` is green locally and in CI on all three operating systems. *(T-007 repair: local full gate and run 37956761308/attempt 1/f3d82bb; approved host policy applies.)*
-- [ ] NFR-001 test passes: a source file's hash is identical before and after browsing and querying.
-- [ ] Every requirement for this milestone has at least one test (`npm run trace` shows no gaps).
-- [ ] Measured numbers (open time, peak memory) are recorded in `PLAN.md` and compared with the NFR targets.
-- [ ] Manual QA checklist for the milestone is complete.
-- [ ] Independent review done (section 6) and its high-severity findings fixed.
-- [ ] No unexplained `TODO` or `FIXME` left in the code.
+- [ ] `npm run verify:full` is green locally and in CI on all three operating systems. *(T-007 repair run 37956761308/f3d82bb remains passing historical evidence; T-052 executable repairs require fresh three-platform evidence before closure.)*
+- [x] NFR-001 test passes: a source file's hash is identical before and after browsing and querying. *(Foundation worker/query and CSV spike scope; production browse coverage follows T-016.)*
+- [x] Every requirement for this milestone has at least one test (reconcile `npm run trace` against the milestone's scope; no gap in its required acceptance criteria). *(T-052 coverage regression passes; global future gaps remain reported.)*
+- [x] Measured numbers (open time, peak memory) are recorded in `PLAN.md` and compared with the NFR targets. *(T-002 runtime/cancel, T-004 standalone memory/parsed preview, T-008 cache/render measurements; production targets stay open.)*
+- [x] Manual QA checklist for the milestone is complete. *(Existing owner T-002/T-004/T-008 evidence reconciled below.)*
+- [x] Independent review done (section 6) and its high-severity findings fixed. *(Fresh-context foundation review and post-fix checks below; no remaining concrete HIGH/MEDIUM finding.)*
+- [x] No unexplained `TODO` or `FIXME` left in the code. *(Search of src, webview, scripts, test and .github on 2026-10-10 finds no markers.)*
 - [ ] Specs, changelogs, and `PROGRESS.md` are up to date; git tag created.
 
 ### Milestone 0 (foundation)
-- [x] CI is green on three operating systems. *(Fresh repair run 37956761308/attempt 1/f3d82bb; failed earlier runs remain historical evidence.)*
-- [ ] Spike results (T-002, T-004, T-008) are written into `PLAN.md`.
+Milestone 0 validates the explicit spike criteria, not completed production
+features. Its linked requirement IDs are FR-004, FR-015, FR-016 and NFR-001
+through NFR-005 plus NFR-009. The foundation coverage regression checks those
+links against actual unit/integration test declarations. T-008 and tooling
+criteria also have task-ID tests and the recorded owner QA. A matching test
+name is an index, not evidence of full requirement completion: review the real
+assertions and passing output. The global `npm run trace` must continue reporting
+unimplemented later requirements; do not hide gaps, rename unrelated tests, or
+implement future features to make the global list empty. Production performance,
+fallback UX, custom editors, accessibility and logging remain their later tasks.
+
+- [ ] CI is green on three operating systems. *(T-052 changes pending the owner's push and new Actions evidence; run 37956761308 remains the successful T-007 repair.)*
+- [x] Spike results (T-002, T-004, T-008) are written into `PLAN.md`. *(Measurement sections and T-052 feasibility decision.)*
 - [x] T-002 proves worker open/query/cancel/reopen inside a killable helper, confirms helper exit within 1,000 ms after SQL execution begins, and verifies real sql.js fallback when the built-in is unavailable. Local verification, owner manual QA, and fresh three-platform CI pass (run/SHA above). The production `Engine` interface, fallback banner/large-file prompt, and permanent force-fallback hook follow in T-009 (Milestone 1).
+
+#### T-052 foundation evidence reconciliation (2026-10-10)
+
+The owner authorized necessary gate decisions, repairs and fixture edits and
+retains responsibility for pushing. T-052 is the single closure task; T-009 is
+not started. D-2 is accepted by delegated judgment and R-1 retains its documented
+mitigation. No dependencies or committed fixture data changed.
+
+Acceptance-to-test evidence:
+- T-002 source preservation: `test/unit/sqlite-spike.test.ts` hashes disposable
+  source copies after SELECT and refused writes on both engines. WAL/source
+  hashes and fallback rejection are also tested in `src/test/sqlite-spike.test.ts`.
+- T-002 runtime/cancellation/security: real native/fallback worker tests prove
+  exact values, trusted_schema off, no extension loading, helper exit within
+  1,000 ms, reopening and full serialized-page bounds. Actual cancellation tests
+  now start with FR-015; checkpointed-WAL rejection starts with FR-016. Assertions
+  and timeouts are retained, and other NFR-001/NFR-002/NFR-005 tests remain.
+- T-004: `test/unit/csv-import-spike.test.ts` covers streaming text fidelity,
+  malformed input, source hashes, row/value verification, caller responsiveness,
+  cancellation/output cleanup and honest NFR-003/NFR-004 measurement scopes.
+  PLAN records the owner-run 10-million-row benchmark and independent comparison.
+- T-008: protocol, grid-window, virtual-grid and webview-spike unit tests cover
+  bounded paging/cache/rendering, full-range navigation, exact/literal text,
+  stale replies, CSP, visible failures and disposal. Real-host webview tests
+  initialize/close/reopen. PLAN records owner typing, scrolling, navigation,
+  resizing, themes and editor-choice checks, plus T-002/T-004 owner checks.
+- Foundation tooling: fixture/generator/inventory, compiler/protocol, check-runner,
+  CI/config/log-policy, spec-tools and dependency-audit tests cover the other
+  completed tasks. `foundation-gate.test.ts` cross-checks all nine linked spike
+  IDs against real test declarations; it initially failed on FR-015/FR-016.
+  Global trace now reports 22 later requirement naming gaps. A matching spike
+  name does not establish completed production FR-004/FR-015/FR-016 behavior.
+
+Independent review: a fresh-context reviewer computed and examined the actual
+`04c7bd7..e02f38f` foundation diff and current repair diff, using Constitution
+and linked acceptance criteria rather than the author's summary. It reviewed
+worker/helper lifecycle, source safety/fallback, CSV import, bounded webview/
+protocol/security, fixtures, packaging and diagnostic policy. It found:
+- MEDIUM, Constitution 6 / T-004: Papa Parse silently drops whitespace after a
+  closing quote. Six new real-import cases reproduced acceptance/data loss before
+  the fix. The streaming validator now rejects non-delimiter text after closing
+  quotes, including across chunks; seven rejection cases verify source preservation
+  and partial-output cleanup, and two valid whitespace/escaped-quote cases pass.
+- LOW, NFR-005 recovery: a worker failure message can precede helper exit, so
+  immediate reopening fails. The strengthened existing test failed before the
+  fix. Failed sessions now terminate and confirm exit before replacement opening;
+  the regression also checks the old PID is dead. The current command's explicit
+  finally-close flow already allowed recovery, so this was not a user-blocking
+  production failure.
+
+Final local `npm run verify:full` passes on Windows x64 / VS Code 1.140.0:
+207 unit tests, eight real-host integration tests, strict types/lint/build and
+15-file VSIX packaging (468.83 KB). Native/fallback executing-query cancellation
+takes 30 ms / 28 ms, with helper exit, reopening and source hashes verified.
+One VSCODE-HOST-001 signed-out renderer warning is explicitly reported with
+source, line, severity, rule and message. No unexpected warning/error is accepted;
+this run is not warning-free. Fresh three-platform CI for the committed T-052
+candidate is still required; the earlier f3d82bb run does not test these repairs.
+
+The reviewer independently reran the 35 SQLite cases and the original CSV
+reproductions after repairs; they pass/reject correctly, with no remaining
+concrete HIGH/MEDIUM defect. Earlier focused review ran 135 tests and failed
+only the newly strengthened crash regression before repair. Review lowers
+risk; it does not prove absence of defects. Fresh full/remote gate evidence and
+the final tag remain required. Existing subjective owner QA is reused honestly;
+production multi-GB UI performance, accessibility, dual-macOS-architecture and
+built-in-extension coexistence remain later validation.
 
 ### Milestone 1 manual QA (read-only SQLite)
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -252,6 +331,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-052 local gate (2026-10-10): Full verification passes with 207 unit/eight integration tests, source/cancellation evidence and one explicitly reported approved host warning; fresh remote candidate evidence and final tag remain required.
+- v0.1 T-052 evidence reconciliation (2026-10-10): Checked evidenced source safety, scoped coverage, measurements, owner QA, independent review, marker search and spike records; reopened only current gate CI items for new executable review repairs. T-007 remains complete and no tag is claimed.
+- v0.1 T-052 scope clarification (2026-10-10): Under the owner's delegated closure judgment, clarified the existing milestone-specific coverage rule without changing the global trace or production requirements; the foundation checks explicit spike acceptance and preserves future gaps.
 - v0.1 T-007 repair completion (2026-10-10): Verified fresh run 37956761308, attempt 1 at f3d82bb, and successful applicable full-verification steps on Ubuntu/Windows/macOS; rechecked only the two local/CI gate items. Other foundation checklist items remain open.
 - v0.1 T-007 local repair evidence (2026-10-10): Recorded final full verification, red-first coverage and the explicitly reported host diagnostic; current local/remote milestone gate checkboxes remain open for fresh three-platform CI.
 - v0.1 T-007 host diagnostic policy: Owner explicitly approved two exact, source-restricted VS Code host warning families, with mandatory reporting and fail-closed tests; all other warnings and every error remain failures.

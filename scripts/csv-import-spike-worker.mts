@@ -72,6 +72,11 @@ async function run(): Promise<ImportReport> {
           if (quotePending) {
             quotePending = false;
             if (character === '"') { continue; }
+            // Papa Parse tolerates and drops whitespace after closing quotes.
+            // The spike rejects that malformed form rather than losing text.
+            if (character !== ',' && character !== '\r' && character !== '\n') {
+              throw new Error('Malformed CSV: a closing quote must be followed by a comma, record ending or end of file.');
+            }
             quoted = false;
           } else {
             if (character === '"') { quotePending = true; }

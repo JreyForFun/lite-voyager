@@ -278,6 +278,42 @@ the owner committed the implementation and QA documentation at 8fed6f0 and
 reports pushing it. The task checkbox is now checked.
 
 ## 2. Decision log
+### T-052 foundation feasibility decision (2026-10-10)
+
+The owner delegated Milestone 0 closure decisions and necessary repairs while
+retaining responsibility for pushing. Accept SPEC D-2's focused positioning:
+lightweight, disk-backed SQLite/tabular browsing with no shipped native binary.
+The completed T-002 helper/fallback spike and T-004 streaming/fidelity experiment
+support building the read-only SQLite milestone. They do not justify a claim
+to beat competitors or an engine/dependency change.
+
+Retain R-1 as an accepted, monitored import-speed risk: the owner-run 1.26 GB
+CSV takes 145.4 s to import, with 223.0 MB standalone peak RSS and 27.2 ms to
+parsed preview. Keep instant preview, background progress and cancellation for
+Milestone 2; revisit R-1 before that milestone with production measurements.
+The original 5 GB / 500 MB extension-memory and under-two-second visible-row
+targets remain open. Neither the standalone benchmark nor T-008's synthetic
+grid proves them. Both macOS architectures and built-in-extension coexistence
+remain separate compatibility checks, not claims made by the existing matrix.
+
+Milestone 0 manual evidence is already recorded: T-002 owner cancellation,
+recovery and responsive typing on both engines; T-004 owner benchmark and
+all-row/hash verification; T-008 owner editor/scrolling/navigation/themes/
+resize/reopen checks and CodeMirror 6 decision. No additional subjective QA is
+claimed from automated tests. T-009's production Engine and fallback UX follow
+only after the foundation gate passes and the phase-transition handoff.
+
+Independent foundation review of `04c7bd7..e02f38f` found MEDIUM CSV whitespace
+loss after closing quotes and a LOW immediate-reopen race after a worker crash.
+Red-first regressions reproduced both; the CSV streaming validator now rejects
+non-delimiter text after closing quotes, and reopening waits for failed helper
+exit. Fresh-context post-fix review finds no remaining concrete HIGH/MEDIUM defect.
+Full local verification passes with 207 unit/eight integration tests in VS Code
+1.140.0, one explicitly reported approved VSCODE-HOST-001 warning, 30 ms / 28 ms
+native/fallback cancellation and a 468.83 KB / 15-file VSIX. VALIDATION records
+the coverage/manual/review evidence. The owner must push this candidate and
+supply new three-platform CI before T-052 can be checked or `v0.0.1` tagged.
+
 
 **D-4 Dependency and license review (T-050).** Owner authorized the full locked dependency review and routine fixes on 2026-10-09. Include direct, transitive, development, peer and optional packages, even when another platform installs them. Package-manager license metadata is evidence, not a substitute for special license text.
 - Given the current lockfile, the inventory must contain every non-root package path, exact version, declared license and scope flags. A canonical JSON SHA-256 ties the evidence to this dependency tree. Inventory tests must fail on omissions or stale versions/licenses.
@@ -547,6 +583,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-052 review/local gate (2026-10-10): Recorded repaired quote-fidelity and crash-recovery findings, post-fix independent review and passing full local evidence; new three-platform candidate evidence remains required.
+- v0.4 T-052 feasibility decision (2026-10-10): Recorded delegated D-2 positioning and accepted R-1 mitigation, reconciled existing foundation manual/measurement evidence and retained all unproven production targets.
 - v0.4 T-007 repair completion (2026-10-10): Recorded independently checked run 37956761308/attempt 1/f3d82bb and successful full-verification steps on all three platforms; the repair is complete, while the foundation milestone remains open.
 - v0.4 T-007 local validation (2026-10-10): Final full verification passes with 197 unit/eight integration tests and one explicitly reported approved host diagnostic; fixture is excluded from the VSIX. Fresh three-platform CI remains pending.
 - v0.4 T-007 host diagnostic policy: Owner approved exact renderer-only signed-out cloud lookup and chat language-model schema timing diagnostics, reported individually; original CI warning causes and all other errors/warnings still fail.

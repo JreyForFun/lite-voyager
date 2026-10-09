@@ -93,7 +93,7 @@ describe.each([false, true])('SQLite spike, missing built-in = %s', (simulateUna
     } finally { await spike.close(); }
   });
 
-  test('NFR-005: Given a running query, When cancelled, Then the host responds and a fresh worker can query again', async () => {
+  test('FR-015: Given a running query, When cancelled, Then the host responds and a fresh worker can query again', async () => {
     const spike = makeSpike();
     try {
       const opened = await spike.open(fixture);
@@ -196,7 +196,7 @@ test('NFR-002: Given an oversized fallback input, When opening, Then its explici
   finally { await spike.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
-test('NFR-001: Given a checkpointed WAL database without sidecars, When using fallback, Then WAL mode is explicitly rejected', async () => {
+test('FR-016: Given a checkpointed WAL database without sidecars, When using fallback, Then WAL mode is explicitly rejected', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-spike-wal-header-'));
   const path = join(directory, 'source.sqlite');
   const writer = new DatabaseSync(path);
@@ -327,7 +327,7 @@ test('NFR-005: Given a worker startup crash, When opening, Then the failure is r
   finally { await spike.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
-test('NFR-005: Given a worker crash after opening, When querying, Then the failure settles and closing allows real recovery', async () => {
+test('NFR-005: Given a worker crash after opening, When querying, Then the failure settles and immediate reopening allows real recovery', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-spike-worker-crash-'));
   const worker = join(directory, 'crash.cjs');
   await writeFile(worker, `
@@ -339,10 +339,10 @@ test('NFR-005: Given a worker crash after opening, When querying, Then the failu
   `);
   const spike = new SqliteSpike(worker, { fallbackDirectory: resolve('dist') });
   try {
-    await spike.open('crash-first');
+    const crashed = await spike.open('crash-first');
     await expect(spike.query('SELECT 1')).rejects.toThrow('worker');
-    await spike.close();
     await spike.open(fixture);
+    expect(() => process.kill(crashed.processId, 0)).toThrow();
     expect((await spike.query('SELECT 1')).rows).toEqual([['1']]);
   } finally { await spike.close(); await rm(directory, { recursive: true, force: true }); }
 });

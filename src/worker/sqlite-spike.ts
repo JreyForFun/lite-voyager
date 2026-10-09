@@ -21,6 +21,7 @@ interface HelperSession {
   pending: PendingQuery | undefined;
   ready: boolean;
   stopping: boolean;
+  failed: boolean;
 }
 
 /** T-002 experiment; the production Engine abstraction follows in T-009. */
@@ -31,6 +32,12 @@ export class SqliteSpike {
   constructor(private readonly workerPath: string, private readonly options: SpikeOptions) {}
 
   async open(path: string): Promise<SpikeOpened> {
+    const previous = this.helper;
+    if (previous?.failed === true) {
+      // A failure message may arrive before the helper's close event. Recovery
+      // must confirm its exit before starting the replacement helper.
+      await this.stopSession(previous, 'The failed SQLite spike worker was closed.');
+    }
     if (this.helper !== undefined) { throw new Error('Close the current spike worker before opening another file.'); }
     // Electron's documented run-as-Node mode reuses VS Code's bundled executable.
     // No system Node installation, shell, external CLI, or shipped binary is needed.
@@ -41,7 +48,7 @@ export class SqliteSpike {
     });
     const session: HelperSession = {
       process: child, closed: Promise.resolve(), rejectOpen: undefined,
-      pending: undefined, ready: false, stopping: false,
+      pending: undefined, ready: false, stopping: false, failed: false,
     };
     session.closed = new Promise((resolve) => {
       child.once('close', () => {
@@ -54,6 +61,8 @@ export class SqliteSpike {
     });
     this.helper = session;
     child.on('error', () => {
+      session.failed = true;
+      session.ready = false;
       session.rejectOpen?.(new Error('The SQLite spike worker helper failed. Close it and reopen the file.'));
       this.failQuery(session, 'The SQLite spike worker helper failed. Reopen the file to recover.');
     });
@@ -64,6 +73,7 @@ export class SqliteSpike {
           if (this.helper !== session || session.stopping) { return; }
           if (message.type === 'opened') { session.ready = true; resolve(message.value); }
           else if (message.type === 'failed') {
+            session.failed = true;
             session.ready = false;
             reject(new Error(message.message));
             this.failQuery(session, message.message);

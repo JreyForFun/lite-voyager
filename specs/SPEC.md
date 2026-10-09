@@ -61,7 +61,7 @@ Seen but not checked in depth: SQLite View (jsldvr; bundles native SQLite runtim
 
 **Known trade-off:** DuckDB reads CSV and Parquet in place without importing and is very fast at big analytical queries. Our approach imports CSV into an on-disk SQLite file, so a first load of a huge CSV will be slower. We compensate with instant preview, background import with progress, and editing. A DuckDB-backed read path stays a future option (see `PLAN.md` risk R-1).
 
-**Positioning status: proposed, awaiting the owner's decision (D-2).** Lite Voyager is the lightweight, zero-native-binary, disk-backed tool for SQLite and tabular files. Its success depends on the T-002 and T-004 spikes.
+**Positioning status: accepted under the owner's delegated judgment (D-2, 2026-10-10).** Lite Voyager is the lightweight, zero-native-binary, disk-backed tool for SQLite and tabular files. T-002 establishes the runtime/helper approach, and T-004 establishes preliminary streaming feasibility. These spikes do not prove the production memory/first-paint targets or superiority over competitors.
 
 ## 3. Scope
 
@@ -222,12 +222,13 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | ID | Question | Decision |
 |---|---|---|
 | D-1 | Name | **Lite Voyager**. Chosen over "DB Voyager" because it signals a small, focused tool rather than a full database suite. T-001 human evidence recorded on 2026-10-09: the owner reports the exact Marketplace name is free, supplied publisher ID `jreyinnovarev`, and updated the competitor review in section 2. Account ownership and individual Marketplace figures were not independently verified by the AI. |
-| D-2 | Beat all competitors | **Open.** Re-verification (section 2) shows a crowded market. Proposed positioning: the lightweight, zero-native-binary, disk-backed tool for SQLite and tabular files; do not compete on SQLite schema tooling. Owner to confirm after the T-002 and T-004 spikes. |
+| D-2 | Beat all competitors | **Accepted under owner-delegated judgment, 2026-10-10.** Focus on a lightweight, zero-native-binary, disk-backed tool for SQLite and tabular files; do not compete on SQLite schema tooling or claim to beat every competitor. T-002/T-004 support continuing to Milestone 1. Retain R-1's instant-preview/background-import mitigation and validate production targets in later tasks. |
 | D-3 | Open files of any size | Accepted. Primary engine is disk-backed `node:sqlite`; a memory-limited sql.js fallback keeps the extension working on hosts that lack it (see `PLAN.md`, D-3). Real limits are disk space and, for XLSX, memory. |
 | D-4 | License | **MIT.** Permissive, familiar, and maximizes adoption. Run a dependency license audit in T-050. |
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-052 positioning decision (2026-10-10): Owner delegated closure decisions; accepted focused D-2 positioning based on the completed runtime/import spikes, with no competitive superiority or production performance claim.
 - v0.5 T-008 acceptance (2026-10-09): Owner authorized the editor/grid spike and implementation judgment. Added explicit synthetic-data, bounded paging/rendering, browser-height, lifecycle and manual editor-choice criteria; production query behavior and NFR targets remain later validation.
 - v0.5 T-002 completion (2026-10-09): Recorded fresh three-platform full verification for reviewed fixes at 0e3ec57 (run 37922970386). Both macOS architectures are not separately covered by the current CI matrix.
 - v0.5 T-002 review fixes (2026-10-09): Owner authorized conservative fallback rejection of WAL/journal snapshots and observed concurrent changes, complete statement cleanup, and exact complete-page budget accounting. No source checkpointing or mutation is allowed.

@@ -36,7 +36,7 @@ suite('T-002 extension-host worker spike', () => {
       } finally { await spike.close(); writer.close(); await rm(directory, { recursive: true, force: true }); }
     });
 
-    test(`NFR-002: Given the extension host and missing built-in=${String(simulateUnavailable)}, When a worker queries and cancels, Then the real engine recovers`, async function () {
+    test(`FR-015: Given the extension host and missing built-in=${String(simulateUnavailable)}, When a worker queries and cancels, Then the real engine recovers`, async function () {
       this.timeout(15000);
       const extension = vscode.extensions.getExtension<unknown>('jreyinnovarev.lite-voyager');
       assert.ok(extension);

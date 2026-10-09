@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-052: foundation review repairs reject malformed CSV text after a closing
+  quote instead of silently discarding it, and allow immediate SQLite spike
+  recovery after a worker crash while confirming the old helper has exited.
+  Added foundation requirement-coverage checks and corrected cancellation/
+  fallback-safety test prefixes. Production features and milestone tagging
+  remain pending the final gate.
+
 - T-008: added an experimental CodeMirror SQL editor and virtualized synthetic
   ten-million-row grid. Page requests contain 128 rows; the webview caches at
   most four pages and renders the viewport plus six overscan rows on each side.

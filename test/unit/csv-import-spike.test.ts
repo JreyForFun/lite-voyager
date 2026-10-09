@@ -62,6 +62,33 @@ test('FR-004: Given a header-only CSV, When imported, Then an empty table is ver
   expect(report.previewParseMs).toBeNull();
 });
 
+test.each([
+  'a,b\n"foo" ,bar\n',
+  'a,b\n"foo"\t,bar\n',
+  'a\n"foo" \n',
+  'a\r\n"foo"\t\r\n',
+  'a\n"foo" ',
+  '"a" ,b\nfoo,bar\n',
+  'a,b\nfoo,"bar"\u00a0\n',
+])('FR-004: Given non-delimiter text after a closing quote in %j, When streamed across byte boundaries, Then it fails without silently dropping data or retaining partial output', async (contents) => {
+  const paths = await setup(contents);
+  await expect(runCsvImportSpike({ ...paths, chunkBytes: 1 })).rejects.toThrow('Malformed CSV');
+  expect(await readFile(paths.input, 'utf8')).toBe(contents);
+  await expect(stat(paths.output)).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
+test.each(['\n', '\r\n'])('FR-004: Given valid quoted fields with significant whitespace and %j endings, When streamed byte by byte, Then quotes delimit fields and all whitespace is preserved', async (ending) => {
+  const contents = `"a","b"${ending}" foo ","bar""baz"${ending}"",unquoted space ${ending}last,"end"`;
+  const paths = await setup(contents);
+  const report = await runCsvImportSpike({ ...paths, chunkBytes: 1 });
+  expect(stored(paths.output)).toEqual([
+    { a: ' foo ', b: 'bar"baz' }, { a: '', b: 'unquoted space ' }, { a: 'last', b: 'end' },
+  ]);
+  expect(report.rows).toBe(3);
+  expect(report.sourceSha256Before).toBe(report.sourceSha256After);
+  expect(report.parsedValuesSha256).toBe(report.storedValuesSha256);
+});
+
 test('FR-004: Given a single quoted empty field, When imported, Then it remains an empty string rather than a skipped blank record', async () => {
   const paths = await setup('value\n""\nNULL\n');
   await runCsvImportSpike({ ...paths, chunkBytes: 1 });
