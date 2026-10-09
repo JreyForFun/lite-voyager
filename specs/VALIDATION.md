@@ -89,8 +89,15 @@ The owner's supplied latest macOS log passed its tests but failed on the
 original manifest/dictation warnings. Old Windows annotations report a 5-second
 responsiveness-test timeout. Current local tests retain the 100,000-row workload,
 timer assertion and timeout, use fewer disk commits, and additionally verify
-all rows and unchanged-source hashes. Fresh remote CI is still required;
-earlier green runs do not close the current regression.
+all rows and unchanged-source hashes. Fresh remote evidence is now verified:
+[run 37956761308](https://github.com/JreyForFun/lite-voyager/actions/runs/37956761308),
+attempt 1, commit `f3d82bb365f3886a18b950bbf61141a16b321faa`, passes on
+2026-10-10. GitHub API metadata confirms successful locked installation and
+all three Full verification jobs, including the applicable Linux session-bus/xvfb
+step and Windows/macOS full-verification steps. This closes the T-007 repair
+under the approved host policy; remote warning counts are not claimed.
+Completion-documentation `npm run verify` also passes locally with 197 unit
+tests, strict types/lint, builds and packaging; zero errors/warnings.
 
 - Every acceptance criterion (Given / When / Then) becomes at least one test.
 - Test names start with the requirement ID, for example `FR-002: shows NULL differently from empty string`. This lets you search for coverage.
@@ -133,7 +140,7 @@ A task may be ticked in `TASKS.md` only when all of these are true:
 A milestone is finished only when its gate passes. Then, and only then, tag the commit (for example `v0.1.0`) and start the next milestone in a **fresh AI chat** (see `CONTEXT.md`).
 
 ### Universal gate items (every milestone)
-- [ ] `npm run verify:full` is green locally and in CI on all three operating systems. *(Historical green evidence above; current T-007 repair requires fresh evidence.)*
+- [x] `npm run verify:full` is green locally and in CI on all three operating systems. *(T-007 repair: local full gate and run 37956761308/attempt 1/f3d82bb; approved host policy applies.)*
 - [ ] NFR-001 test passes: a source file's hash is identical before and after browsing and querying.
 - [ ] Every requirement for this milestone has at least one test (`npm run trace` shows no gaps).
 - [ ] Measured numbers (open time, peak memory) are recorded in `PLAN.md` and compared with the NFR targets.
@@ -143,7 +150,7 @@ A milestone is finished only when its gate passes. Then, and only then, tag the 
 - [ ] Specs, changelogs, and `PROGRESS.md` are up to date; git tag created.
 
 ### Milestone 0 (foundation)
-- [ ] CI is green on three operating systems. *(Current runs 37944872111, 37949436855 and 37952380317 fail; fresh repair evidence is required.)*
+- [x] CI is green on three operating systems. *(Fresh repair run 37956761308/attempt 1/f3d82bb; failed earlier runs remain historical evidence.)*
 - [ ] Spike results (T-002, T-004, T-008) are written into `PLAN.md`.
 - [x] T-002 proves worker open/query/cancel/reopen inside a killable helper, confirms helper exit within 1,000 ms after SQL execution begins, and verifies real sql.js fallback when the built-in is unavailable. Local verification, owner manual QA, and fresh three-platform CI pass (run/SHA above). The production `Engine` interface, fallback banner/large-file prompt, and permanent force-fallback hook follow in T-009 (Milestone 1).
 
@@ -245,6 +252,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-007 repair completion (2026-10-10): Verified fresh run 37956761308, attempt 1 at f3d82bb, and successful applicable full-verification steps on Ubuntu/Windows/macOS; rechecked only the two local/CI gate items. Other foundation checklist items remain open.
 - v0.1 T-007 local repair evidence (2026-10-10): Recorded final full verification, red-first coverage and the explicitly reported host diagnostic; current local/remote milestone gate checkboxes remain open for fresh three-platform CI.
 - v0.1 T-007 host diagnostic policy: Owner explicitly approved two exact, source-restricted VS Code host warning families, with mandatory reporting and fail-closed tests; all other warnings and every error remain failures.
 - v0.1 T-007 CI regression repair: Reopened current local/CI gate items after failed owner-supplied runs, preserving the earlier passing evidence and the zero-warning rule.

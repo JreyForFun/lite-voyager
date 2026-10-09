@@ -72,8 +72,13 @@ The generated authentication fixture is absent from the VSIX. New profile
 regressions and exception-policy tests were observed failing before their fixes;
 near matches, errors, wrong log sources and the original warnings still fail.
 The earlier standalone `verify` also passed before the exception-policy change;
-the final full command repeats all of its stages with the final code. Remote
-repair CI and milestone review remain pending; no new compatibility minimum,
+the final full command repeats all of its stages with the final code.
+Fresh [CI run 37956761308](https://github.com/JreyForFun/lite-voyager/actions/runs/37956761308),
+attempt 1 at `f3d82bb365f3886a18b950bbf61141a16b321faa`, passes all three
+Full verification jobs on 2026-10-10. GitHub API metadata confirms successful
+locked installation and each applicable full-verification step on Ubuntu,
+Windows and macOS. T-007 repair is complete; milestone review remains pending.
+No new compatibility minimum,
 production benchmark, foundation completion or release tag is claimed.
 
 ### T-005 fixture tooling
@@ -542,6 +547,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-007 repair completion (2026-10-10): Recorded independently checked run 37956761308/attempt 1/f3d82bb and successful full-verification steps on all three platforms; the repair is complete, while the foundation milestone remains open.
 - v0.4 T-007 local validation (2026-10-10): Final full verification passes with 197 unit/eight integration tests and one explicitly reported approved host diagnostic; fixture is excluded from the VSIX. Fresh three-platform CI remains pending.
 - v0.4 T-007 host diagnostic policy: Owner approved exact renderer-only signed-out cloud lookup and chat language-model schema timing diagnostics, reported individually; original CI warning causes and all other errors/warnings still fail.
 - v0.4 T-007 CI repair: Owner authorized a signed-out authentication fixture and preinitialized empty manifest for isolated integration hosts, plus less disk-intensive responsiveness-test batching. Runtime warning rejection remains strict; validation evidence is pending.
