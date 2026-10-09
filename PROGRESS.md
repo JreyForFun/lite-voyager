@@ -1,7 +1,7 @@
 ﻿# Progress
 
 ## Current phase / task
-Phase: Milestone 0B. Task: T-002 fixes reviewed; local full gate passes, fresh CI pending.
+Phase: Milestone 0B. T-002 fixes committed; local full gate passes, fresh CI pending.
 T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 
 ## Verify status
@@ -16,11 +16,9 @@ T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 - Tested SHA: f3085869c88262b2ffdbfddb47805f6287cdcc3a (attempt 1, 2026-10-09).
 
 ## Last session
-- Added typed helper/worker lifecycle and real native/sql.js query tests.
 - Worker-only native cancellation took 11,042 ms; replaced by killable helper.
 - Added cancel-during-open, concurrent close, process/worker crash recovery tests.
 - Installed plan-named sql.js 1.14.2 (MIT), packaged for local-only initialization.
-- Shared compiler-fixture setup; kept full options/libraries/diagnostic assertions.
 - Fixed WAL/snapshot rejection, statement cleanup, and complete-page byte accounting.
 
 ## Decisions made this session (move lasting ones into specs/PLAN.md)
@@ -31,9 +29,11 @@ T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 ## Known issues / blockers
 - Owner-authorized empty.json restoration is complete (zero bytes).
 - Fresh-context follow-up review confirms fixes; no remaining concrete defect found.
-- Existing CI precedes these fixes; a new tested commit/run is required.
+- Fix commit: 9b80bbfe805a84edf65e72297daf20a65ea8d041.
+- Push failed: no cached GitHub credentials. Owner sign-in/push is required.
 - Earlier VS Code versions/browser support and production performance not claimed.
 - No tests, compiler checks, or warning gates disabled; D-2 remains open.
 
 ## Next
-Commit/push fixes, inspect fresh three-platform CI before ticking T-002.
+Owner: git -c http.proxy= push origin main; paste the Actions run URL.
+Then inspect fresh three-platform CI before ticking T-002.

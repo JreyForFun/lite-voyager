@@ -50,8 +50,12 @@ applicable verification step. Owner manual QA confirms both engines cancel
 fresh-context review under section 6 found HIGH silent omission of committed WAL
 rows in fallback and MEDIUM leaked sql.js statements on oversized column
 metadata. Owner-authorized fixes now have red-first regressions; independent
-follow-up review found no remaining concrete defect. Fresh final verification
-and three-platform CI are required for the fixes; no task or milestone is closed.
+follow-up review found no remaining concrete defect. Local full verification
+passes with 103 unit tests, six integration tests and strict runtime logs in
+VS Code 1.140.0; VS Code 1.141.0 also passes integration tests and strict logs.
+Fix commit `9b80bbfe805a84edf65e72297daf20a65ea8d041` still needs fresh
+three-platform CI. Push could not authenticate with existing credentials;
+owner sign-in/push is required. No task or milestone is closed.
 
 ### Layer 2: Per-task validation (spec to test)
 

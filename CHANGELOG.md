@@ -15,8 +15,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   with red-first regressions: fallback explicitly rejects WAL/journal snapshots
   and observed concurrent file changes; statements are freed on every sql.js
   result path. Corrected complete-page 256 KiB accounting with boundary tests.
-  Independent follow-up review found no remaining concrete defect. T-002 stays
-  open pending final verification and fresh CI for these fixes.
+  Independent follow-up review found no remaining concrete defect. Local full
+  verification passes (103 unit / six integration tests); T-002 stays open
+  pending fresh CI for these fixes.
   Compiler-contract fixtures share one setup program, retaining their full
   libraries, compiler settings, diagnostic checks, and assertions.
 

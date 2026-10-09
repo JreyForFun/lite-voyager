@@ -200,6 +200,9 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
   and 22 ms fallback; actual helper exit, reopening, and source hashes pass.
 - VS Code 1.141.0 compatibility recheck also passes all six integration tests
   and strict runtime logs; cancellation is 20 ms native and 35 ms fallback.
+- Fixes committed as 9b80bbfe805a84edf65e72297daf20a65ea8d041. Push could
+  not authenticate using existing credentials; owner sign-in/push and a fresh
+  three-platform Actions run are still required before closing T-002.
 
 **D-6 CSV, JSON, and XLSX become on-disk SQLite tables.** One engine and one SQL dialect for everything, which also makes cross-file joins simple. Cost: a first import of a huge file takes time. Mitigated by instant preview, background import, progress, and cancel.
 
