@@ -126,7 +126,7 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
   One full run correctly failed two VS Code startup timing warnings; an unchanged
   standalone integration run and subsequent full run passed the strict log gate.
   No warning was filtered or suppressed. Windows results do not establish the
-  other platforms. T-002 stays unchecked pending fresh three-platform CI.
+  other platforms without the separate CI evidence below.
 - Owner-supplied native manual result in VS Code 1.141.0: node:sqlite on worker
   thread 1, Node 24.21.0, SQLite 3.53.4; cancelled=true, cancelMs=24,
   heartbeatTicks=226, recovered=true. This passes native manual cancellation
@@ -137,6 +137,17 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
   confirms typing stayed responsive during both long queries, completing manual
   QA. Requested computer-use automation could not connect to its native pipe;
   no UI input was sent.
+- Fresh CI evidence: [run 37916047454](https://github.com/JreyForFun/lite-voyager/actions/runs/37916047454),
+  attempt 1, commit f3085869c88262b2ffdbfddb47805f6287cdcc3a, passed on
+  2026-10-09. GitHub API metadata confirms successful Full verification jobs
+  on windows-latest, ubuntu-latest, and macos-latest, including the applicable
+  full-verification steps. Local verification, owner manual QA, and three-platform
+  CI pass; T-002 stays unchecked pending independent review in a fresh chat
+  (VALIDATION section 6 / CONTEXT section 1).
+- Final evidence-documentation gate: npm run verify passes with 93 unit tests,
+  all strict checks, build, and a 346.49 KB VSIX in a disposable checkout. This
+  preserves the owner's uncommitted edit to test/fixtures/empty.json; no claim
+  is made that the edited local fixture passes the inventory hash check.
 
 **D-6 CSV, JSON, and XLSX become on-disk SQLite tables.** One engine and one SQL dialect for everything, which also makes cross-file joins simple. Cost: a first import of a huge file takes time. Mitigated by instant preview, background import, progress, and cancel.
 

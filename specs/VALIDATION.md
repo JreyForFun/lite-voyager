@@ -41,6 +41,14 @@ GitHub API metadata confirms successful Ubuntu, Windows, and macOS jobs and
 each applicable full-verification step. Local full verification also passed.
 Only the two CI-related gate items below are checked; the milestone is open.
 
+T-002 CI evidence recorded on 2026-10-09:
+[run 37916047454](https://github.com/JreyForFun/lite-voyager/actions/runs/37916047454),
+attempt 1, commit `f3085869c88262b2ffdbfddb47805f6287cdcc3a`. GitHub API metadata
+confirms successful Windows, Ubuntu, and macOS Full verification jobs and each
+applicable verification step. Owner manual QA confirms both engines cancel
+(native 24 ms, fallback 92 ms), recover, and keep typing responsive. Independent
+review in a fresh chat is still required under section 6; no milestone is closed.
+
 ### Layer 2: Per-task validation (spec to test)
 
 - Every acceptance criterion (Given / When / Then) becomes at least one test.
