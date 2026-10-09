@@ -1,37 +1,39 @@
-# Progress
+﻿# Progress
 
 ## Current phase / task
-Phase: Milestone 0B. Task: T-007 complete; next task is T-002.
-T-000, T-001, T-003, T-006, T-005, T-007 checked; 0A checklist complete.
+Phase: Milestone 0B. Task: T-002 implemented; manual QA and fresh CI pending.
+T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 
 ## Verify status
-- Refreshed npm run verify passes locally with 66 unit tests.
-- Strict checks, lint, bundles, and eight-file VSIX check pass (6.54 KB).
-- Prior local verify:full passed two integration tests and runtime-log checks.
-- CI: [run 37884550873](https://github.com/JreyForFun/lite-voyager/actions/runs/37884550873).
-- Tested commit: 93b23bf1420cf10dd8b0ea82d3b4c2be0e35268d.
-- Ubuntu, Windows, and macOS full-verification jobs/steps all succeeded.
-- GitHub API metadata independently confirms the user-supplied green run.
+- npm run verify and verify:full pass: 93 unit tests, four integration tests/logs.
+- Package includes helper, worker, local sql.js loader/WASM/license: 346.38 KB.
+- Real VS Code 1.140.0 and 1.141.0 integration runs pass all four tests/log checks.
+- Windows x64: bundled Node 24.21.0; native SQLite 3.53.4; fallback SQLite 3.49.1.
+- Helper cancellation observed at 25-47 ms; exit/reopen/source hashes verified.
+- One full run failed startup timing warnings; unchanged integration/full retries pass.
+- Previous green CI: run 37884550873, commit 93b23bf1420cf10dd8b0ea82d3b4c2be0e35268d.
+- That old run does not validate T-002. Fresh Windows/macOS/Linux CI is required.
 
 ## Last session
-- Verified CI run, commit, and all three applicable verification steps.
-- Checked T-007 and only the two evidenced CI gate items in VALIDATION.md.
-- Updated affected docs/changelogs and recorded immutable CI evidence.
-- No code, test, dependency, or workflow changes in this closure update.
+- Added typed helper/worker lifecycle and real native/sql.js query tests.
+- Worker-only native cancellation took 11,042 ms; replaced by killable helper.
+- Added cancel-during-open, concurrent close, process/worker crash recovery tests.
+- Installed plan-named sql.js 1.14.2 (MIT), packaged for local-only initialization.
+- Shared compiler-fixture setup; kept full options/libraries/diagnostic assertions.
+- Added exact-version override and manual commands/instructions to README.md.
 
 ## Decisions made this session (move lasting ones into specs/PLAN.md)
-- T-007 is complete; three-platform scaffold verification is evidenced.
-- This does not establish future engine/feature coverage or finish Milestone 0B.
-- Existing Linux session-bus setup and strict diagnostics remain intact.
+- Owner authorized helper isolation and a one-second deterministic cancel target.
+- Supported minimum is the lowest tested host, VS Code 1.140.0.
+- Production Engine interface/banner/large-file prompt/hook remain T-009.
 
 ## Known issues / blockers
-- Earlier T-006 compiler tests had intermittent local timing failures.
-- M0 Engine-interface gate versus T-009 still needs clarification.
-- D-2 positioning remains open until the risk spikes inform the decision.
-- T-002, T-004, T-008, T-051, and T-050 remain unstarted.
-- Remaining milestone gate requirements have not passed; no tag claimed.
+- Manual logs confirm both engines open/query, but lack cancellation result lines.
+- Need both manual results (cancelled/recovered true) and responsiveness report.
+- Fresh three-platform CI and independent risky-change review remain outstanding.
+- Earlier VS Code versions/browser support and production performance not claimed.
+- No tests, compiler checks, or warning gates disabled; D-2 remains open.
 
 ## Next
-Start a fresh chat for T-002, the worker/node:sqlite/fallback spike.
-Restate its acceptance criteria/files and obtain approval before coding.
-Push the local status commit when ready; no push performed here.
+Commit the verified T-002 implementation; keep it unchecked pending human evidence.
+Owner finishes manual QA, pushes the commit, and supplies CI run/SHA/job evidence.

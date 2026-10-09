@@ -23,9 +23,14 @@ await writeFile(join(settingsDirectory, 'settings.json'), JSON.stringify({
 	'chat.disableAIFeatures': true,
 }, null, 2));
 
+const version = process.env.LITE_VOYAGER_TEST_VSCODE_VERSION ?? '1.140.0';
+if (!/^\d+\.\d+\.\d+$/.test(version)) {
+	throw new Error('Set LITE_VOYAGER_TEST_VSCODE_VERSION to an exact numeric VS Code version.');
+}
+
 export default defineConfig({
-	// Exercise the currently declared minimum; T-002 will measure compatibility.
-	version: '1.140.0',
+	// Default to the declared minimum; compatibility probes can choose another exact version.
+	version,
 	files: 'out/integration/test/**/*.test.js',
 	launchArgs: [
 		`--user-data-dir=${profileDirectory}`,

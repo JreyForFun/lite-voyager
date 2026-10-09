@@ -6,6 +6,18 @@ import { expect, test } from 'vitest';
 
 const execute = promisify(execFile);
 
+test('NFR-002: Given a compatibility version, When configuration loads, Then the exact requested VS Code version is selected', async () => {
+  const { stdout } = await execute(process.execPath, ['--input-type=module', '-e',
+    'const { default: config } = await import("./.vscode-test.mjs"); console.log(config.version);',
+  ], { env: { ...process.env, LITE_VOYAGER_TEST_VSCODE_VERSION: '1.141.0' } });
+  expect(stdout.trim()).toBe('1.141.0');
+});
+
+test('NFR-002: Given an invalid compatibility version, When configuration loads, Then it fails instead of silently choosing a version', async () => {
+  await expect(execute(process.execPath, ['--input-type=module', '-e', 'await import("./.vscode-test.mjs");'],
+    { env: { ...process.env, LITE_VOYAGER_TEST_VSCODE_VERSION: 'latest' } })).rejects.toThrow();
+});
+
 test('T-006: Given an integration run, When its configuration loads, Then installed and built-in extensions use empty isolated directories', async () => {
   const output = resolve('out');
   await mkdir(output, { recursive: true });

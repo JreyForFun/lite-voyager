@@ -124,6 +124,12 @@ Priority: **P0** first release, **P1** next, **P2** later in v1.
 
 **FR-015 (P0) Cancel a running query.** The UI stays responsive and the user can stop any query.
 
+- T-002 cancellation acceptance (owner-authorized design revision, 2026-10-09):
+  on the deterministic long-query fixture, cancellation stops the database helper
+  and confirms its exit within 1,000 ms, even after SQL execution has begun.
+  Reopening starts a fresh helper and a new query succeeds. Rejecting the host
+  promise while native SQL continues running does not count as cancellation.
+
 **FR-016 (P0) Read-only by default.** SQLite files open read-only. Write statements and inline editing need the user to switch on write mode, which is clearly indicated.
 
 **FR-017 (P1) Sort and filter the grid.** Click a column header to sort; add a simple per-column filter. Sorting and filtering run in the engine, not in the webview, so they work on huge tables. Sorting a large table on an unindexed column shows a warning and can be cancelled.
@@ -158,7 +164,7 @@ Targets marked "start" are starting points to validate in the benchmark task, th
 | ID | Requirement | Target |
 |---|---|---|
 | NFR-001 | Source files are never modified unless the user saves | Verified by automated test |
-| NFR-002 | Windows, macOS (Intel and Apple Silicon), Linux; no native binaries to ship or install | Primary engine is Node's built-in `node:sqlite`; the engine is feature-detected at runtime, with a sql.js fallback. Exact minimum VS Code version is set from T-002 results |
+| NFR-002 | Windows, macOS (Intel and Apple Silicon), Linux; no native binaries to ship or install | Primary engine is Node's built-in `node:sqlite`, feature-detected in a worker with a sql.js fallback. Supported minimum is VS Code 1.140.0, the lowest T-002 tested host; 1.141.0 also passes locally. Other-platform evidence remains pending. A killable helper reuses the bundled runtime, without an external CLI or shipped binary. |
 | NFR-003 | No artificial size limit on the primary engine; memory stays bounded | Peak extension memory under 500 MB while importing a 5 GB CSV (start). Fallback engine is exempt but must warn |
 | NFR-004 | Fast first paint | First rows visible in under 2 s for any CSV or SQLite file, excluding cold-disk effects (start) |
 | NFR-005 | UI never blocked | Main thread blocked for no more than 100 ms during any operation |
@@ -192,6 +198,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-002 cancellation clarification (2026-10-09): Owner authorized revising the cancellation design after slow native worker termination. Added a 1,000 ms deterministic-spike target, confirmed helper exit, and successful reopening. NFR-002 documents the lowest tested supported host, VS Code 1.140.0; cross-platform closure remains pending.
 - v0.5 T-001 evidence / spec consistency (2026-10-09): Recorded the owner's Marketplace reports; preserved the supplied competitor review and open D-2 positioning. Restored the previously approved FR-020 correction and its T-005 changelog entry after they were reverted in the review update.
 - v0.5: Competitor table re-verified on 2026-10-09 against Marketplace and GitHub pages. Corrected install counts and capabilities, added Data Wrangler and SQLite (alexcvzz), revised goals G1 to G5, marked positioning (D-2) as open.
 - v0.4 T-005 clarification (2026-10-09): Corrected the impossible WITHOUT ROWID/no-primary-key case in FR-020 after user approval; fixtures cover a valid composite primary key.

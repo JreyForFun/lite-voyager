@@ -1,4 +1,5 @@
 const esbuild = require('esbuild');
+const { copyFile, mkdir } = require('node:fs/promises');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -56,6 +57,25 @@ async function main() {
     outfile: 'dist/extension.js',
     external: ['vscode'],
   });
+  await buildBundle({
+    entryPoints: ['src/worker/sqlite-spike-process.ts'],
+    platform: 'node',
+    format: 'cjs',
+    target: 'es2022',
+    outfile: 'dist/sqlite-spike-process.js',
+  });
+  await buildBundle({
+    entryPoints: ['src/worker/sqlite-spike-worker.ts'],
+    platform: 'node',
+    format: 'cjs',
+    target: 'es2022',
+    outfile: 'dist/sqlite-spike-worker.js',
+    external: ['node:sqlite'],
+  });
+  await mkdir('dist', { recursive: true });
+  await copyFile('node_modules/sql.js/dist/sql-wasm.js', 'dist/sql-wasm.cjs');
+  await copyFile('node_modules/sql.js/dist/sql-wasm.wasm', 'dist/sql-wasm.wasm');
+  await copyFile('node_modules/sql.js/LICENSE', 'dist/sql.js-LICENSE');
   await buildBundle({
     entryPoints: ['webview/main.ts'],
     platform: 'browser',

@@ -5,8 +5,11 @@ files and querying them with SQL in an editor tab.
 
 ## Current status
 
-This is the foundation scaffold. It provides the **Hello World** command;
-data browsing and querying are planned and are not implemented yet.
+This is the foundation scaffold. It provides **Hello World** and experimental
+T-002 worker/fallback spike commands. The spike runs its worker in a killable
+helper process and passes local open/query/cancel/reopen checks. Manual QA and
+fresh three-platform CI are pending. Data browsing and querying in editor tabs
+are planned and are not implemented yet.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 
 ## Development
@@ -21,7 +24,7 @@ npm run verify:full
 ```
 
 `verify` checks strict TypeScript for the host, webview, and tooling, runs lint
-and unit tests, builds both bundles, and creates then removes a local VSIX as
+and unit tests, builds the host, webview, helper and worker bundles, and creates then removes a local VSIX as
 a packaging check. Any failed command or warning fails verification.
 
 `verify:full` adds the integration tests in an isolated VS Code instance and
@@ -43,7 +46,59 @@ npm run package
 ```
 
 `npm run package` performs a local packaging check; it does not publish.
-The manifest's VS Code minimum is provisional until compatibility spike T-002.
+The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
+This is separate from the development Node version and does not claim that
+1.140.0 was the first historical VS Code version with node:sqlite.
+
+## T-002 experiment status
+
+On Windows x64, VS Code 1.140.0 and 1.141.0 expose `node:sqlite` through
+their bundled Node 24.21.0 (SQLite 3.53.4). The real sql.js 1.14.2 fallback also opens and
+queries the fixture when the built-in module is deliberately unavailable.
+sql.js is [MIT licensed](https://github.com/sql-js/sql.js); its loader, WASM,
+and license are copied into the package, without runtime downloads.
+
+Database work runs in a worker inside a helper process launched with the
+bundled executable; no system Node installation or external CLI is needed.
+Cancellation kills that helper and awaits confirmed exit before reopening.
+Worker termination alone waited 11,042 ms inside native SQLite; the revised
+design stopped in 30 ms on 1.140.0 and 25 ms on 1.141.0 in measured runs.
+Both engines meet the approved 1,000 ms spike target, reopen successfully,
+and preserve source hashes. This does not claim full NFR-003 memory/performance
+coverage or measure NFR-005's main-thread blocking target.
+
+Run the automated checks:
+
+```sh
+npm test -- --run test/unit/sqlite-spike.test.ts
+npm run test:integration
+npm run verify
+```
+
+For another exact VS Code version in PowerShell, set the version override and
+run the integration check, then remove the override:
+
+```powershell
+$env:LITE_VOYAGER_TEST_VSCODE_VERSION = '1.141.0'
+npm run test:integration
+Remove-Item Env:LITE_VOYAGER_TEST_VSCODE_VERSION
+```
+
+For the required manual QA:
+
+1. Press F5, then run **Lite Voyager: T-002 SQLite Worker Spike** in the
+   Extension Development Host and choose `test/fixtures/sample.sqlite`.
+2. Wait for the long-query message. Type or move around in another editor, then
+   click **Cancel** in the progress notification.
+3. Repeat with **Lite Voyager: T-002 SQLite Fallback Spike**, accepting its
+   memory-limited notice. This experiment refuses inputs over 8 MiB.
+4. Paste both **T-002 manual result** lines from the **Lite Voyager T-002**
+   Output channel and say whether typing stayed responsive. Expect `cancelled`
+   and `recovered` to be true, `cancelMs` below 1000, and heartbeat ticks above zero.
+
+New three-platform CI must also pass on the tested commit. T-002 stays unchecked
+until that evidence and manual QA are supplied. The production Engine interface,
+fallback banner/large-file prompt, and permanent force-fallback hook remain T-009.
 
 ## Continuous integration
 

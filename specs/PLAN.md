@@ -8,7 +8,7 @@ Status: Draft v0.2 | Implements `SPEC.md` under `CONSTITUTION.md`.
 |---|---|---|
 | Language | TypeScript, strict mode | |
 | Database engine | Primary: Node's built-in `node:sqlite`. Fallback: `sql.js` (WASM) | Primary is disk-backed, so no size limit, and ships no native binary. It needs Node 22+ in the extension host. The fallback keeps the extension working elsewhere, with a memory limit and a visible warning. |
-| Engine isolation | `worker_threads` | `node:sqlite` is synchronous, so all database work runs in a worker. This keeps the UI responsive and makes cancel possible (terminate the worker). |
+| Engine isolation | `worker_threads` inside a killable helper process | Database work runs in a worker; cancellation kills its enclosing helper and awaits confirmed process exit. The bundled Node/Electron executable is reused; no external CLI or shipped binary. |
 | CSV | `papaparse` in streaming mode | Chunked reads, batched inserts in transactions |
 | JSON / JSONL | Line reader for JSONL; a streaming JSON parser for big arrays | |
 | XLSX | SheetJS or an alternative | Memory-bound by format. Note: the old `xlsx` package on npm is outdated; check SheetJS's current install guidance and security advisories in T-050. |
@@ -69,12 +69,65 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
 ## 2. Decision log
 
 **D-3 Engine: two implementations behind one interface, chosen at runtime.** Decided by judgement rather than waiting for a spike, because the downside of being wrong is small and the upside is an extension that never simply crashes.
-- **Primary: `node:sqlite` in a worker thread.** Reads from disk, so any file size works. No native binary, so none of the Electron ABI problems that make `better-sqlite3` painful in VS Code. `node:sqlite` is synchronous, so it must run in a worker to keep the UI responsive and to allow cancel (terminate the worker).
-- **Fallback: `sql.js`.** Used automatically when `node:sqlite` is missing (older VS Code, remote hosts on Node 20, VS Code for Web). It loads the file into memory, so it shows a "memory-limited mode" banner and asks before loading large files. This is the only place the "any size" promise is relaxed, and it is announced, never silent (Constitution 2 and 6).
-- **How it works:** both engines implement one `Engine` interface (open, schema, page, query, cancel, close). At startup the extension tries to load `node:sqlite` inside a try/catch and picks the engine. Everything above the interface (UI, import pipeline, staging) is engine-agnostic.
+- **Primary: `node:sqlite` in a worker thread inside a helper process.** Reads from disk and ships no native binary. The helper reuses `process.execPath`; Electron hosts use the documented `ELECTRON_RUN_AS_NODE=1` mode. Native execution does not reliably stop on worker termination alone, so cancel kills the helper with SIGKILL and confirms its exit before reopening. This keeps database work off the extension host and stops all the helper's threads.
+- **Fallback: `sql.js`.** Used automatically when `node:sqlite` is missing in a supported Node extension host. The spike uses the same helper/worker lifecycle for both engines. It loads the file into memory, so production T-009 adds a "memory-limited mode" banner and a large-file prompt. The spike announces its 8 MiB input cap and rejects larger files before loading. This is the only place the "any size" promise is relaxed (Constitution 2 and 6). VS Code for Web is not established by this Node-host spike or the current manifest.
+- **How it works:** both production engines will implement one `Engine` interface in T-009 (open, schema, page, query, cancel, close). The database worker tries to load `node:sqlite` and chooses sql.js only when the built-in module is absent; corrupt files or query failures do not change engines. Everything above the future interface stays engine-agnostic.
 - **Why not a native module (`better-sqlite3`):** it must match VS Code's Electron ABI and be built per platform, which is the maintenance burden we set out to avoid. It stays as a last resort if both engines prove inadequate.
 - **Role of spike T-002:** no longer a go/no-go gate. It measures reality (which VS Code versions have `node:sqlite`, whether workers behave) so we can set the documented minimum version and verify the fallback triggers correctly.
 - **Cost:** two engine implementations to test, and the CSV import pipeline needs a fallback path (the sql.js route imports into memory, so it is capped).
+
+### T-002 measurements and revised cancellation design (2026-10-09)
+
+- Spike tests cover real worker queries, exact 64-bit integers, NULL/empty
+  string distinctions, BLOB placeholders, source-byte safety, malformed inputs,
+  trusted_schema=OFF, disabled extension loading, and bounded result messages.
+- Installed the plan-named sql.js fallback at registry-verified version 1.14.2
+  (MIT). Build copies its loader, WASM, and license into dist; initialization reads
+  the local WASM bytes inside the worker. No extension network access is added.
+- The spike-only missing-module injection requests an unavailable built-in via
+  Node's real resolver and follows the same ERR_UNKNOWN_BUILTIN_MODULE branch
+  as an absent node:sqlite. File/query errors do not trigger fallback selection.
+- Fallback input is explicitly limited to 8 MiB for this experiment. Result pages
+  have at most 100 rows and a 256 KiB payload budget; hasMore announces extra rows,
+  and oversized pages fail explicitly. These are not production paging semantics.
+- Actual Windows x64 extension-host measurement: VS Code 1.140.0, Node 24.21.0,
+  native SQLite 3.53.4. Both engines open/query; sql.js uses SQLite 3.49.1.
+- Cancelling after 150 ms of a 20-million-step recursive aggregate: native
+  worker.terminate awaited 11,042 ms; sql.js awaited 16 ms and then reopened,
+  queried again, and retained the fixture hash. Node 26.5.0 unit testing also
+  measured slow native termination (9,308 ms). Early queued-request cancellation
+  passed but did not prove cancellation while inside native SQLite execution.
+- Owner authorized the cancellation redesign and best-judgment implementation.
+  FR-015 now defines a 1,000 ms deterministic-spike cancellation bound, confirmed
+  helper exit, and successful reopening; this is distinct from NFR-005's
+  main-thread blocking target. The original worker-only failure is retained above
+  as evidence for the architectural change, rather than suppressed or ignored.
+- Helper-based real-host tests pass: VS Code 1.140.0 native 30 ms / sql.js 47 ms;
+  VS Code 1.141.0 native 25 ms / sql.js 27 ms. Both report Node 24.21.0 and native
+  SQLite 3.53.4. Tests confirm helper death, fresh reopening, exact integers, and
+  unchanged source hashes. The stdout/stderr diagnostics remain inherited.
+- The helper has no descendant processes: its database worker is a thread.
+  Parent IPC disconnection kills the helper; worker faults are reported clearly.
+  Concurrent cancel/close and cancellation during opening have regression tests.
+- Helper tests made the existing compiler-test timing failure repeatable.
+  Serial file scheduling alone did not fix it and was not retained. The two
+  compiler fixtures now share one setup program: the same compiler options,
+  full default libraries, imported protocol, and positive/negative assertions
+  remain. Both assertions include all shared diagnostics, excluding only the
+  other fixture's diagnostics. No assertion timeout or compiler check is disabled.
+- Owner-approved scope clarification: the production Engine abstraction and its
+  permanent force-fallback hook stay in T-009; T-002 measures the experiment.
+- Documented supported minimum: VS Code 1.140.0, matching the manifest and the
+  lowest host tested. This does not claim that it is the first historical version
+  containing node:sqlite or establish earlier-host/browser support. npm's Node
+  25.7 development minimum is separate from the bundled extension runtime.
+- Local npm run verify and verify:full pass with 93 unit tests, four real-host
+  integration tests, strict diagnostics, all bundles, and a 13-file 346.38 KB VSIX.
+  One full run correctly failed two VS Code startup timing warnings; an unchanged
+  standalone integration run and subsequent full run passed the strict log gate.
+  No warning was filtered or suppressed. Windows results do not establish the
+  other platforms. T-002 stays unchecked pending completed owner manual QA and
+  fresh three-platform CI; supplied manual logs establish only open/query so far.
 
 **D-6 CSV, JSON, and XLSX become on-disk SQLite tables.** One engine and one SQL dialect for everything, which also makes cross-file joins simple. Cost: a first import of a huge file takes time. Mitigated by instant preview, background import, progress, and cancel.
 
@@ -91,15 +144,18 @@ CustomEditorProvider                      Table list, schema panel
 Import pipeline (streams to temp DB)      SQL editor (CodeMirror)
 Staged-edit manager, save logic           Virtualized results grid
         |                                          ^
-        | MessagePort                              | postMessage
+      | child-process IPC                        | postMessage
         v                                          |
-DB worker thread  <------ host relays typed messages ------>
-(node:sqlite, queries, paging)
+Killable helper process  <--- host relays typed messages --->
+      | MessagePort
+DB worker thread (node:sqlite or sql.js, queries, paging)
 ```
 
 - The webview never touches files or the database. It sends typed requests and renders typed responses.
 - Query results are paged in the worker; the webview only ever holds the rows it is showing.
-- Cancel terminates and restarts the worker, then reopens the database.
+- Cancel kills the helper process, awaits its exit, starts a fresh helper/worker,
+  then reopens the database. Worker termination alone is not sufficient for
+  synchronous native SQLite execution. T-002 validates a 1,000 ms spike target.
 
 ## 4. Message protocol (draft)
 
@@ -189,6 +245,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-002 cancellation redesign (2026-10-09): Owner authorized process isolation and a one-second deterministic cancellation target. Recorded passing worker/fallback recovery tests in VS Code 1.140.0 and 1.141.0; supported minimum is the lowest tested host, 1.140.0. Manual QA and new CI are still required.
+- v0.4 T-002 investigation (2026-10-09): Recorded real worker/fallback measurements and failing native cancellation evidence. No cancellation redesign or final compatibility minimum selected; production Engine scope stays in T-009 as approved.
 - v0.4 T-007 completion (2026-10-09): Recorded verified run/SHA and successful full verification on all three platforms, including the Linux D-Bus fix. Foundation spikes and engine behavior remain unimplemented/unvalidated.
 - v0.4 T-007 Ubuntu environment (2026-10-09): Recorded the supplied D-Bus failure, added an isolated session-bus wrapper and red-first regression coverage, and retained strict diagnostics and remote-evidence requirements.
 - v0.4 T-007 CI (2026-10-09): Recorded approved full verification on all three platforms, Linux xvfb, tested development runtime, action versions, and the distinction between local workflow checks and remote execution evidence.
