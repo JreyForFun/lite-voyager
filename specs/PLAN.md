@@ -311,8 +311,8 @@ exit. Fresh-context post-fix review finds no remaining concrete HIGH/MEDIUM defe
 Full local verification passes with 207 unit/eight integration tests in VS Code
 1.140.0, one explicitly reported approved VSCODE-HOST-001 warning, 30 ms / 28 ms
 native/fallback cancellation and a 468.83 KB / 15-file VSIX. VALIDATION records
-the coverage/manual/review evidence. The owner must push this candidate and
-supply new three-platform CI before T-052 can be checked or `v0.0.1` tagged.
+the coverage/manual/review evidence. Candidate CI and the fixture follow-up are
+recorded below; foundation closure uses the final adjusted-fixture evidence.
 
 The owner supplied passing [run 37961300752](https://github.com/JreyForFun/lite-voyager/actions/runs/37961300752),
 attempt 1 at d18e5e6c4f9045524bd2ec05bb7dcebea2dbb155. Public API metadata
@@ -330,7 +330,15 @@ Final adjusted-fixture full verification passes locally with 207 unit/eight
 integration tests, one reported approved VSCODE-HOST-001 warning, 28 ms / 37 ms
 native/fallback cancellation and a 15-file / 468.91 KB VSIX. Independent read-only
 follow-up review confirms the fixture preserves its acceptance/time bound.
-Owner pushes this candidate and supplies fresh three-platform CI before tagging.
+The owner supplied [run 37962951570](https://github.com/JreyForFun/lite-voyager/actions/runs/37962951570),
+attempt 1 at exact commit `6b2d665f39aa5c544a74c1467b838acf6b45ac8a`. Public API
+metadata verifies successful locked installs and applicable full-verification
+steps on Ubuntu, Windows and macOS (2026-10-10 local). This completes the final
+foundation CI requirement. Together with local full verification, scoped
+coverage, owner QA and independent review, T-052 and Milestone 0 are complete.
+The documentation-only closure commit is tagged locally `v0.0.1`; owner pushes
+it and the tag. T-009 starts in a fresh chat. Production targets and compatibility
+limitations remain open as described above.
 
 
 **D-4 Dependency and license review (T-050).** Owner authorized the full locked dependency review and routine fixes on 2026-10-09. Include direct, transitive, development, peer and optional packages, even when another platform installs them. Package-manager license metadata is evidence, not a substitute for special license text.
@@ -601,6 +609,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-052 completion (2026-10-10): Verified final fixture-candidate run 37962951570/attempt 1/6b2d665 on all three platforms; completed foundation scope and the local v0.0.1 checkpoint with all later production targets retained.
 - v0.4 T-052 fixture follow-up (2026-10-10): Recorded verified green run 37961300752/d18e5e6 and the subsequent local large-header test timeout; preserve its acceptance with fewer tiny reads and require fresh fixture-candidate gate evidence.
 - v0.4 T-052 review/local gate (2026-10-10): Recorded repaired quote-fidelity and crash-recovery findings, post-fix independent review and passing full local evidence; new three-platform candidate evidence remains required.
 - v0.4 T-052 feasibility decision (2026-10-10): Recorded delegated D-2 positioning and accepted R-1 mitigation, reconciled existing foundation manual/measurement evidence and retained all unproven production targets.

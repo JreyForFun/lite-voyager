@@ -35,7 +35,7 @@ Task numbers are IDs, not order. Work in the order the lists appear.
 - T-004 is checked: local verification passes with 139 unit tests (36 spike cases), and an independent Python comparison checks all 10 million rows. Owner verification passes; the owner-run 1.26 GB benchmark at 7d9cf25 verifies every row with matching source/value hashes: 145.4 s import, 223.0 MB standalone peak RSS and 27.2 ms parsed preview. Evidence, scope and feasibility decision are in PLAN.md. Production NFR-003/NFR-004 targets remain open.
 - T-008 is complete at 8fed6f0: owner committed and reports pushing; local main matches origin/main. Verify passes with 150 unit tests, and owner manual QA passes in VS Code 1.141.0 (512 cached / about 20–23 rendered rows; keep CodeMirror 6). All seven integration tests pass, but the strict log gate still fails on the existing cloud-dictation warning. No new CI or foundation gate is claimed.
 - T-051: ctx prints exact task/linked requirement/Constitution text; trace scans unit and integration test names without executing tests. All current task packs resolve. Verify passes with 176 unit tests, including 26 T-051 cases, strict types/lint, builds and packaging with zero errors/warnings. Trace reports 24 existing naming gaps; no full coverage or foundation gate is claimed. Task changes and completion documentation are included in the T-051 commit; the owner pushes.
-- T-052 reconciles the remaining foundation gate. The production Engine scope is already clarified as T-009. Existing spike/manual evidence is sufficient for foundation scope; independently reviewed executable repairs require fresh three-platform CI and a final tag before milestone closure.
+- T-052 completes the foundation gate: reviewed repairs/fixture adjustment, local full verification and fresh run 37962951570/6b2d665 pass on all three platforms. Closure records are tagged locally v0.0.1; T-009 is next in a fresh chat.
 
 ## Milestone 0B: Foundation and risk spikes (mostly AI, with you running things)
 Goal: set up tooling and prove the risky technical bets before building features.
@@ -66,7 +66,7 @@ task is reopened or newly checked, and the foundation milestone remains open.
 - [x] **T-051 [AI]** Spec tools: `npm run ctx -- <TASK-ID>` prints the task line, the full text of the FR / NFR requirements it links to, and the Constitution, ready to paste into a fresh AI chat. `npm run trace` lists every requirement ID that has no test whose name starts with that ID. Plain Node scripts, no new dependencies. *(`CONTEXT.md`, `VALIDATION.md` layer 2)*
 - [x] **T-050 [AI+H]** Dependency check: list the license of every dependency and run `npm audit`; check SheetJS's current install guidance. **Owner-approved delegation (2026-10-09):** the assistant reviews and decides within this task; the owner pushes. All 576 locked paths are inventoried; missing MIT/custom Microsoft declarations are resolved, audit reports zero known vulnerabilities, and official SheetJS install/license/advisory guidance is recorded. Retain the current tree; no dependency or fixture fix is required. Three red-first checks and verify pass with 179 tests and zero errors/warnings. Evidence: `specs/DEPENDENCIES.md`, `specs/dependency-licenses.json`, `specs/dependency-audit.json`. Completion documentation belongs to the local T-050 task commit. *(D-4)*
 
-- [ ] **T-052 [AI+H]** Close the foundation gate: reconcile Milestone 0 acceptance-to-test coverage and existing source-safety, measurement and manual QA evidence; independently review the actual foundation diff and fix concrete findings with failing regressions first; record delegated D-2/R-1 decisions and remaining production targets. Run local `verify:full`, obtain passing three-platform CI for any new executable changes, update the gate records, commit and tag `v0.0.1`. The owner pushes and supplies remote evidence. Do not implement T-009 in this task. **Owner-approved delegation (2026-10-10):** the assistant makes necessary closure decisions and repairs; the owner handles pushing. *(VALIDATION sections 3, 4, 6; CONTEXT section 5)*
+- [x] **T-052 [AI+H]** Close the foundation gate: reconcile Milestone 0 acceptance-to-test coverage and existing source-safety, measurement and manual QA evidence; independently review the actual foundation diff and fix concrete findings with failing regressions first; record delegated D-2/R-1 decisions and remaining production targets. Run local `verify:full`, obtain passing three-platform CI for any new executable changes, update the gate records, commit and tag `v0.0.1`. The owner pushes and supplies remote evidence. Do not implement T-009 in this task. **Owner-approved delegation (2026-10-10):** the assistant makes necessary closure decisions and repairs; the owner handles pushing. *(VALIDATION sections 3, 4, 6; CONTEXT section 5; passed run 37962951570/6b2d665 and local v0.0.1 checkpoint.)*
 
 **Gate (see `VALIDATION.md` section 4):** T-002 and T-004 results are written into `PLAN.md`, `npm run verify:full` is green locally and in CI, and the milestone checklist is complete. Then tag, close the chat, and start Milestone 1 in a fresh one (`CONTEXT.md` section 5).
 
@@ -75,19 +75,24 @@ concrete issues, now repaired with red-first tests and independently rechecked.
 Full local verification passes with 207 unit/eight integration tests and one
 explicitly reported approved host diagnostic. Source safety, scoped coverage,
 measurements, existing owner QA and spike records are reconciled in VALIDATION.
-No dependency or committed fixture changes. The owner pushes; fresh three-platform
-CI and the final commit/tag are still required. Keep T-052 unchecked until then.
+No dependency or committed fixture changes. Subsequent candidate/fixture evidence
+below completes the CI and tagging requirements.
 
 Owner-supplied run 37961300752/attempt 1 at d18e5e6 passes all locked installs
 and applicable full-verification steps on Windows/macOS/Linux. Local completion
 verification then hit a 5-second large quoted-header test timeout. The fixture
 retains its 70 KB header, embedded LF/CRLF, exact assertions and timeout while
 reading 4,096-byte chunks instead of 7-byte chunks; a new assertion confirms
-the input spans reads. T-052 stays open for this adjusted fixture's fresh local
-full gate/three-platform CI and final tag. No Milestone 1 task is started.
+the input spans reads. This adjustment required the fresh local/remote gate
+evidence below. No Milestone 1 task is started.
 Adjusted-fixture full local verification now passes with 207 unit/eight integration
 tests and one explicitly reported approved host warning; independent follow-up
-review confirms unchanged acceptance. Owner pushes this candidate for fresh CI.
+review confirms unchanged acceptance. The owner pushed this candidate and supplied
+[run 37962951570](https://github.com/JreyForFun/lite-voyager/actions/runs/37962951570),
+attempt 1 at 6b2d665f39aa5c544a74c1467b838acf6b45ac8a. Public API metadata confirms
+locked installation and applicable full checks succeed on Windows/macOS/Linux.
+T-052 and the foundation gate are complete; closure records are tagged locally
+v0.0.1. Owner pushes the final records/tag, then starts T-009 in a fresh chat.
 
 **Exit criteria:** T-002 and T-004 results are written into `PLAN.md`, and CI is green. The `Engine` interface from `PLAN.md` D-3 comes next in T-009. If T-004 shows imports are unacceptably slow, revisit R-1 before Milestone 2.
 
@@ -148,6 +153,7 @@ Every milestone ends with a gate (`VALIDATION.md` section 4): green `npm run ver
 When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part of `SPEC.md` and `PLAN.md`, and only the single task you are working on.
 
 ## Changelog
+- v0.6 T-052 completion (2026-10-10): Verified run 37962951570/attempt 1/6b2d665 and applicable full checks on all three platforms; checked T-052 and completed the foundation checkpoint. T-009 remains unstarted.
 - v0.6 T-052 fixture follow-up (2026-10-10): Recorded passing candidate CI and a subsequent local header-test timeout; fixture efficiency is repaired without reducing data/assertions or extending timeout. Keep closure open for new candidate evidence.
 - v0.6 T-052 local candidate (2026-10-10): Recorded reviewed red-first repairs and passing full local gate; closure remains pending the owner's push, new three-platform CI and final tag. T-009 is not started.
 - v0.6 T-052 kickoff (2026-10-10): Owner delegated foundation closure decisions and necessary fixes; added one explicit closure task and linked T-002's already-specified source/security/fallback safety criteria. Production features remain in later tasks.

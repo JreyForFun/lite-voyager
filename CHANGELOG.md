@@ -10,8 +10,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   quote instead of silently discarding it, and allow immediate SQLite spike
   recovery after a worker crash while confirming the old helper has exited.
   Added foundation requirement-coverage checks and corrected cancellation/
-  fallback-safety test prefixes. Production features and milestone tagging
-  remain pending the final gate.
+  fallback-safety test prefixes. Local full verification and final three-platform
+  [CI](https://github.com/JreyForFun/lite-voyager/actions/runs/37962951570) pass on
+  adjusted-fixture candidate 6b2d665. Milestone 0 is complete with local foundation
+  checkpoint v0.0.1; production features follow in Milestone 1.
   Follow-up: preserve the large quoted-header regression and its original
   timeout while reducing redundant tiny filesystem reads; explicitly assert
   that its input still spans read chunks.

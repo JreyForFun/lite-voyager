@@ -141,14 +141,14 @@ A task may be ticked in `TASKS.md` only when all of these are true:
 A milestone is finished only when its gate passes. Then, and only then, tag the commit (for example `v0.1.0`) and start the next milestone in a **fresh AI chat** (see `CONTEXT.md`).
 
 ### Universal gate items (every milestone)
-- [ ] `npm run verify:full` is green locally and in CI on all three operating systems. *(T-007 repair run 37956761308/f3d82bb remains passing historical evidence; T-052 executable repairs require fresh three-platform evidence before closure.)*
+- [x] `npm run verify:full` is green locally and in CI on all three operating systems. *(T-052 adjusted-fixture local full gate plus run 37962951570/attempt 1/6b2d665; approved host policy applies.)*
 - [x] NFR-001 test passes: a source file's hash is identical before and after browsing and querying. *(Foundation worker/query and CSV spike scope; production browse coverage follows T-016.)*
 - [x] Every requirement for this milestone has at least one test (reconcile `npm run trace` against the milestone's scope; no gap in its required acceptance criteria). *(T-052 coverage regression passes; global future gaps remain reported.)*
 - [x] Measured numbers (open time, peak memory) are recorded in `PLAN.md` and compared with the NFR targets. *(T-002 runtime/cancel, T-004 standalone memory/parsed preview, T-008 cache/render measurements; production targets stay open.)*
 - [x] Manual QA checklist for the milestone is complete. *(Existing owner T-002/T-004/T-008 evidence reconciled below.)*
 - [x] Independent review done (section 6) and its high-severity findings fixed. *(Fresh-context foundation review and post-fix checks below; no remaining concrete HIGH/MEDIUM finding.)*
 - [x] No unexplained `TODO` or `FIXME` left in the code. *(Search of src, webview, scripts, test and .github on 2026-10-10 finds no markers.)*
-- [ ] Specs, changelogs, and `PROGRESS.md` are up to date; git tag created.
+- [x] Specs, changelogs, and `PROGRESS.md` are up to date; git tag created. *(Foundation closure records commit tagged locally v0.0.1; owner pushes.)*
 
 ### Milestone 0 (foundation)
 Milestone 0 validates the explicit spike criteria, not completed production
@@ -162,7 +162,7 @@ unimplemented later requirements; do not hide gaps, rename unrelated tests, or
 implement future features to make the global list empty. Production performance,
 fallback UX, custom editors, accessibility and logging remain their later tasks.
 
-- [ ] CI is green on three operating systems. *(T-052 changes pending the owner's push and new Actions evidence; run 37956761308 remains the successful T-007 repair.)*
+- [x] CI is green on three operating systems. *(Run 37962951570/attempt 1 verifies adjusted-fixture candidate 6b2d665, including all applicable full-verification steps.)*
 - [x] Spike results (T-002, T-004, T-008) are written into `PLAN.md`. *(Measurement sections and T-052 feasibility decision.)*
 - [x] T-002 proves worker open/query/cancel/reopen inside a killable helper, confirms helper exit within 1,000 ms after SQL execution begins, and verifies real sql.js fallback when the built-in is unavailable. Local verification, owner manual QA, and fresh three-platform CI pass (run/SHA above). The production `Engine` interface, fallback banner/large-file prompt, and permanent force-fallback hook follow in T-009 (Milestone 1).
 
@@ -222,14 +222,13 @@ takes 30 ms / 28 ms, with helper exit, reopening and source hashes verified.
 One VSCODE-HOST-001 signed-out renderer warning is explicitly reported with
 source, line, severity, rule and message. No unexpected warning/error is accepted;
 this run is not warning-free. Fresh three-platform CI for the committed T-052
-candidate is still required; the earlier f3d82bb run does not test these repairs.
+candidate is recorded below; the earlier f3d82bb run does not test these repairs.
 
 The reviewer independently reran the 35 SQLite cases and the original CSV
 reproductions after repairs; they pass/reject correctly, with no remaining
 concrete HIGH/MEDIUM defect. Earlier focused review ran 135 tests and failed
 only the newly strengthened crash regression before repair. Review lowers
-risk; it does not prove absence of defects. Fresh full/remote gate evidence and
-the final tag remain required. Existing subjective owner QA is reused honestly;
+risk; it does not prove absence of defects. Existing subjective owner QA is reused honestly;
 production multi-GB UI performance, accessibility, dual-macOS-architecture and
 built-in-extension coexistence remain later validation.
 
@@ -256,15 +255,37 @@ reads. The focused adjusted case passes. Independent read-only follow-up review
 confirms the original acceptance/assertions/time bound remain covered and finds
 no concrete concern. No parser/helper/dependency or committed
 data asset changes are made in this follow-up. Because the executable test
-fixture changed, fresh full local and three-platform candidate evidence are
-required before T-052 or the remaining gate items are checked. No tag created.
+fixture changed, fresh full local and three-platform candidate evidence were
+required before closure; that evidence is now verified below.
 Final adjusted-fixture `npm run verify:full` now passes locally: 207 unit tests,
 eight integration tests in Windows x64 / VS Code 1.140.0, strict checks/build and
 a 15-file / 468.91 KB VSIX. Native/fallback cancellation is 28 ms / 37 ms, with
 helper exit/reopening and source hashes verified. One approved VSCODE-HOST-001
 record is explicitly reported from `20261010T005558/window1/renderer.log`, line
 10, severity warning; no unexpected warning/error is accepted. This run is not
-warning-free. The adjusted fixture still requires fresh three-platform CI.
+warning-free. The adjusted fixture's fresh three-platform CI is verified below.
+
+#### T-052 foundation gate completion (2026-10-10)
+
+The owner pushed the adjusted fixture and supplied
+[run 37962951570](https://github.com/JreyForFun/lite-voyager/actions/runs/37962951570).
+Public GitHub API metadata verifies attempt 1 at exact commit
+`6b2d665f39aa5c544a74c1467b838acf6b45ac8a`, completed successfully
+2026-10-09 17:00:09 UTC (2026-10-10 in Asia/Manila). All three jobs succeed:
+Ubuntu 113930114003, macOS 113930114323 and Windows 113930114353. Locked
+installation and every applicable full-verification step succeed; only each
+job's inapplicable alternative platform step is skipped. Remote host-warning
+counts are not claimed; the approved fail-closed diagnostic policy applies.
+
+All foundation acceptance criteria are met by the existing local full gate,
+scoped coverage/source safety, measurements, owner manual QA, independently
+reviewed fixes and this fresh three-platform CI. Only closure documentation
+changes after the tested candidate. T-052 and Milestone 0 are complete; the
+closure records commit is tagged locally `v0.0.1`, which the owner pushes.
+This is a foundation checkpoint; production requirements stay open and T-009
+starts in a fresh chat.
+Completion-record `npm run verify` also passes with 207 unit tests, strict
+types/lint/build and packaging; zero errors/warnings.
 
 ### Milestone 1 manual QA (read-only SQLite)
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -364,6 +385,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-052 completion (2026-10-10): Verified run 37962951570/attempt 1/6b2d665 and successful locked installs/full-verification steps on all three platforms; completed the foundation gate and local v0.0.1 checkpoint, preserving production limitations.
 - v0.1 T-052 fixture follow-up (2026-10-10): Verified three-platform candidate run 37961300752/d18e5e6, then recorded a real local quoted-header timeout and preserved its data/assertions/time bound while reducing redundant tiny reads; require fresh verification/CI for the adjusted fixture before tagging.
 - v0.1 T-052 local gate (2026-10-10): Full verification passes with 207 unit/eight integration tests, source/cancellation evidence and one explicitly reported approved host warning; fresh remote candidate evidence and final tag remain required.
 - v0.1 T-052 evidence reconciliation (2026-10-10): Checked evidenced source safety, scoped coverage, measurements, owner QA, independent review, marker search and spike records; reopened only current gate CI items for new executable review repairs. T-007 remains complete and no tag is claimed.
