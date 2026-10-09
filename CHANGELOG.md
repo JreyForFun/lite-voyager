@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-007: run Linux CI inside an isolated D-Bus session as well as xvfb after
+  Electron connection errors failed the initial Ubuntu run. Added a regression
+  test; fresh Linux CI evidence is pending.
+- T-001: recorded the owner's dated competitor review and Marketplace reports.
+  Preserved the revised positioning and restored the approved FR-020 correction.
 - T-007: added full verification CI for Windows, macOS, and Linux (with xvfb),
   workflow contract tests, and instructions for supplying remote run evidence.
   Three-platform CI execution remains pending.

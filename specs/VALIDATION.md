@@ -25,7 +25,8 @@ Rules:
 - Do not silence the type checker (`any`, `@ts-ignore`) or the linter without a written reason next to it.
 
 T-007 CI runs the full gate on Windows, macOS, and Linux; Linux uses
-`xvfb-run -a npm run verify:full`. Workflow contract tests and a local YAML parse
+`dbus-run-session -- xvfb-run -a npm run verify:full` for an isolated session bus
+and virtual display. Workflow contract tests and a local YAML parse
 verify configuration, not runner compatibility. To complete T-007, provide the
 GitHub Actions CI run URL, tested commit SHA, and successful conclusions for all
 three Full verification jobs. For failures, provide the failing step's log with
@@ -188,6 +189,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-007 Ubuntu environment (2026-10-09): Added isolated D-Bus session setup after the supplied Ubuntu log passed tests but failed on Electron errors. Error/warning rejection remains required; a fresh three-platform run is still needed.
 - v0.1 T-007 CI (2026-10-09): Clarified approved full-gate execution on every platform and remote evidence required before checking T-007; local workflow checks do not establish CI success or engine coverage.
 - v0.1 T-005 fixtures (2026-10-09): Linked inventory, runtime recipes and generator evidence; documented format applicability. Corrected the impossible WITHOUT ROWID/no-primary-key QA item to match approved FR-020.
 - v0.1: Initial version.

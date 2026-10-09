@@ -1,6 +1,6 @@
 # Lite Voyager: Spec (the "what" and "why")
 
-Status: Draft v0.2 | Read `CONSTITUTION.md` first.
+Status: Draft v0.5 | Read `CONSTITUTION.md` first.
 Companion files: `PLAN.md` (how), `TASKS.md` (work items).
 
 Credit: the "query a file with SQL" idea is inspired by [nao1215/filesql](https://github.com/nao1215/filesql) (Go, MIT). Lite Voyager is an independent TypeScript implementation and shares no code with it.
@@ -15,32 +15,53 @@ Open any data file in VS Code, of any size, browse it, query it with SQL, and ed
 
 **Name:** Lite Voyager (see decision D-1). "Lite" is a nod to SQLite and a promise: small, fast, focused.
 
-## 2. Competitive landscape and "beat them all"
+## 2. Competitive landscape and positioning
 
-Checked on the VS Code Marketplace and GitHub. Install counts come from search snippets and may be out of date; **re-verify in task T-001**.
+**Re-verified on 2026-10-09** by reading each extension's Marketplace or GitHub page. Install counts are as shown on the Marketplace that day. Capabilities come from each extension's own description; we have not run these extensions ourselves, and any performance claim waits for the benchmark task (T-060).
 
-| Extension | What it does | Gap we can exploit |
-|---|---|---|
-| DuckDB (Charlie Jonas), ~23k installs | Query CSV, Parquet, JSON, Excel with DuckDB | Query-centric; editing is not its focus |
-| DuckDB Viewer (Caio Ricciuti), ~2.5k installs | Browse and query DuckDB, Parquet, CSV, JSON | Uses native bindings |
-| Duckweed, 1 install | Browse and edit SQLite and CSV, WebAssembly engines | Brand new; WASM engines load files into memory |
-| SQLite Viewer (qwtel) | Polished read-only SQLite viewer | Its README says read-only, no query runner, files must fit in memory |
-| SQLite3 Editor (yy0931) | SQLite-focused editor | SQLite only |
-| vscode-sqlite (alexcvzz) | Query and explore SQLite | Relies on bundled sqlite3 CLI binaries |
+| Extension | Installs | Verified capabilities | Limits and notes (from its own page) |
+|---|---|---|---|
+| SQLite3 Editor (yy0931) | 660,426 | Spreadsheet-style editing, table schema editing, query editor with autocomplete and syntax validation, foreign-key navigation, ER diagram, auto-reload, CSV / JSON / SQL import and export, image BLOB previews, git diff. Fetches only the visible rows from disk, so large databases load quickly | SQLite only. Bundles a native helper (Rust) built per platform. GPL-3.0 |
+| SQLite Viewer (qwtel) | 3,659,148 | Read-only viewer with virtualized scrolling, sort, filter. No native dependencies; also runs in VS Code for Web. Actively updated (v26.9.1) | README: files must be under 200 MB and are loaded into memory; no query runner; includes a paid upgrade and sponsored content |
+| SQLite (alexcvzz) | 4,719,794 | Run queries through a bundled sqlite3 CLI, sidebar explorer, autocomplete, export to JSON / CSV / HTML | Relies on CLI binaries. Last published version is 0.14.1; the asset timestamp suggests mid-2022 (our inference) |
+| Data Wrangler (Microsoft) | 2,345,864 | Opens CSV / TSV, Parquet, Excel, JSONL. View, filter, sort, column statistics, one-click transforms with generated Pandas code. Sandboxed until you export | Requires Python 3.8+ with the Jupyter and Python extensions. No SQL. Collects usage telemetry |
+| DuckDB (Charlie Jonas) | 24,665 | Query CSV, Parquet, JSON, Excel by file path with DuckDB SQL (so joins across files work in SQL). Virtualized grid, sort, filter, column statistics, autocomplete, history, export. Double-click a cell to edit and **save back to the source file**. MIT; also on Open VSX | Runs DuckDB's native Node API in the extension host; memory limit about 1.5 GB with spill to disk. Opens CSV by default. Its page does not mention SQLite files (DuckDB can read them through its own extension; unverified here) |
+| DuckDB Viewer (Caio Ricciuti) | 2,658 | Browse and query DuckDB, Parquet, CSV, JSON / JSONL. CodeMirror 6 editor, autocomplete, history, SUMMARIZE | Native DuckDB bindings with per-platform packages. No Excel listed. No editing listed |
+| Duckweed (chaffed) | 1 (v0.1.0) | Browse, query, and edit SQLite and CSV / TSV; DuckDB read-only. Pure WebAssembly, no native binaries | Its README says SQLite databases are loaded into memory (fine to "a few hundred MB"), UTF-8 only, SQLite files with a pending WAL open read-only, no JSON or Excel. Brand new |
 
-**Reality check:** multi-format querying inside VS Code already exists, mostly built on DuckDB. Our edge cannot be "nobody does this". "Beat all of them" is turned into measurable goals:
+Seen but not checked in depth: SQLite View (jsldvr; bundles native SQLite runtimes, CSV import / export), SQL Explorer, DuckDB SQL Tools, and several small SQLite viewers.
 
-| Goal | Measurable target | Requirements |
-|---|---|---|
-| G1. Any size, bounded memory | Opens a multi-GB SQLite or CSV with memory staying flat and first rows visible in about 2 s | FR-001, FR-004, NFR-003, NFR-004 |
-| G2. Edit, not just view | Inline edit with staged changes, undo, and save for SQLite, CSV, and JSON | FR-020 to FR-022 |
-| G3. One tool for all formats | SQLite, CSV/TSV, JSON/JSONL, XLSX in one UI, joinable | FR-004 to FR-006, FR-030 |
-| G4. Zero setup | No native binaries, no CLI, works out of the box | NFR-002 |
-| G5. Best-in-class feel | Autocomplete, history, cancel, virtualized grid, theme-aware | FR-012, FR-013, FR-015 |
+### 2.1 What this changes
 
-**Benchmark suite (task T-060):** a repeatable test on the same machine comparing time to first rows, peak memory, and query time on a 1 GB CSV and a 1 GB SQLite file against the DuckDB extension, DuckDB Viewer, and SQLite Viewer. We only claim "faster" or "better" where the numbers show it.
+- **The market is crowded.** SQLite has a dominant editor (SQLite3 Editor, 660k installs) plus two tools with millions of installs. Tabular files are served by Microsoft's Data Wrangler (2.3M installs, needs Python) and by DuckDB-based extensions (about 25k installs for the largest).
+- **Earlier drafts of this spec were wrong in places.** SQLite Viewer has about 3.7M installs, not ~2M. The DuckDB extension can edit cells and save back to the source file; we had written that editing "is not its focus". SQLite3 Editor is far more than "SQLite only", and its large-database handling matches what we planned. The "500K to 1M installs" ceiling mentioned earlier in conversation was a guess with no evidence behind it.
+- **"Any size" is table stakes, not a differentiator.** SQLite3 Editor reads only visible rows; the DuckDB extension spills to disk. It only sets us apart from the in-memory tools (SQLite Viewer under 200 MB, Duckweed a few hundred MB).
+- **Cross-file joins are not unique.** DuckDB SQL can read several files by path.
+- **Do not compete on SQLite schema tooling** (schema editor, ER diagram, foreign-key navigation). SQLite3 Editor already does this well.
+
+### 2.2 Where a gap still appears to exist
+
+1. **Disk-backed and no native binaries, together.** Every verified disk-backed tool ships native code (a Rust helper, native DuckDB bindings, or a bundled sqlite3 CLI). The tools without native code are memory-bound. Node's built-in `node:sqlite` could give both, **if spike T-002 confirms it works** inside VS Code.
+2. **One lightweight tool for SQLite + CSV/TSV + JSON/JSONL + XLSX, with editing, and no Python or DuckDB.** Data Wrangler needs Python; the DuckDB extension is DuckDB-centric; Duckweed lacks JSON and Excel and is memory-bound.
+3. **"Lite".** Smaller and simpler than the feature-heavy options. This is subjective and must be tested with real users.
+
+### 2.3 Goals (revised honestly)
+
+"Beat them all" is not testable. These goals are, and each is labeled by how much it really separates us:
+
+| Goal | Separates us? | Measurable target | Requirements |
+|---|---|---|---|
+| G1. Any size, bounded memory, no native binary | Yes, as a combination (see 2.2 item 1) | Opens a multi-GB SQLite or CSV with memory flat and first rows visible in about 2 s, with no native code shipped | FR-001, FR-004, NFR-002, NFR-003, NFR-004 |
+| G2. Edit, not just view | Parity, not unique | Inline edit with staged changes, undo, and save for SQLite, CSV, and JSON | FR-020 to FR-022 |
+| G3. One tool for SQLite, CSV/TSV, JSON/JSONL, XLSX | Only as a bundle | All four formats open in one UI and are queryable | FR-004 to FR-006, FR-030 |
+| G4. Zero setup (no native binaries, no Python, no CLI) | Yes (Data Wrangler needs Python; others ship native code) | Works after install on a locked-down machine | NFR-002 |
+| G5. Good feel | Table stakes (the DuckDB extension already has autocomplete, history, statistics) | Autocomplete, history, cancel, virtualized grid, theme-aware | FR-012, FR-013, FR-015 |
+
+**Benchmark suite (task T-060):** a repeatable test on the same machine measuring time to first rows, peak memory, and query time on a 1 GB CSV and a 1 GB SQLite file, against SQLite3 Editor (SQLite), the DuckDB extension (CSV), and DuckDB Viewer. SQLite Viewer and Duckweed can only be compared on files within their own memory limits. We claim "faster" or "better" only where the numbers show it.
 
 **Known trade-off:** DuckDB reads CSV and Parquet in place without importing and is very fast at big analytical queries. Our approach imports CSV into an on-disk SQLite file, so a first load of a huge CSV will be slower. We compensate with instant preview, background import with progress, and editing. A DuckDB-backed read path stays a future option (see `PLAN.md` risk R-1).
+
+**Positioning status: proposed, awaiting the owner's decision (D-2).** Lite Voyager is the lightweight, zero-native-binary, disk-backed tool for SQLite and tabular files. Its success depends on the T-002 and T-004 spikes.
 
 ## 3. Scope
 
@@ -164,13 +185,15 @@ Every screen must handle each of these, with a test or a manual checklist item:
 
 | ID | Question | Decision |
 |---|---|---|
-| D-1 | Name | **Lite Voyager**. Chosen over "DB Voyager" because it signals a small, focused tool rather than a full database suite. Searches found no existing VS Code extension with this exact name (other unrelated "Voyager" tools exist), but search results are not proof: verify the Marketplace name and publisher ID in T-001. |
-| D-2 | Beat all competitors | Converted to measurable goals G1 to G5 and a benchmark suite (section 2). |
+| D-1 | Name | **Lite Voyager**. Chosen over "DB Voyager" because it signals a small, focused tool rather than a full database suite. T-001 human evidence recorded on 2026-10-09: the owner reports the exact Marketplace name is free, supplied publisher ID `jreyinnovarev`, and updated the competitor review in section 2. Account ownership and individual Marketplace figures were not independently verified by the AI. |
+| D-2 | Beat all competitors | **Open.** Re-verification (section 2) shows a crowded market. Proposed positioning: the lightweight, zero-native-binary, disk-backed tool for SQLite and tabular files; do not compete on SQLite schema tooling. Owner to confirm after the T-002 and T-004 spikes. |
 | D-3 | Open files of any size | Accepted. Primary engine is disk-backed `node:sqlite`; a memory-limited sql.js fallback keeps the extension working on hosts that lack it (see `PLAN.md`, D-3). Real limits are disk space and, for XLSX, memory. |
 | D-4 | License | **MIT.** Permissive, familiar, and maximizes adoption. Run a dependency license audit in T-050. |
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-001 evidence / spec consistency (2026-10-09): Recorded the owner's Marketplace reports; preserved the supplied competitor review and open D-2 positioning. Restored the previously approved FR-020 correction and its T-005 changelog entry after they were reverted in the review update.
+- v0.5: Competitor table re-verified on 2026-10-09 against Marketplace and GitHub pages. Corrected install counts and capabilities, added Data Wrangler and SQLite (alexcvzz), revised goals G1 to G5, marked positioning (D-2) as open.
 - v0.4 T-005 clarification (2026-10-09): Corrected the impossible WITHOUT ROWID/no-primary-key case in FR-020 after user approval; fixtures cover a valid composite primary key.
 - v0.4: Added FR-017 (sort/filter), FR-018 (cell details), data fidelity rules, security and diagnostics NFRs, and screen states.
 - v0.3: Renamed to Lite Voyager. Engine risk resolved with a fallback strategy (PLAN D-3). Added fallback behavior to FR-001.

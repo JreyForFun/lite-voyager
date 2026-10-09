@@ -21,13 +21,19 @@ test('T-007: Given a fresh runner, When dependencies install, Then CI uses the t
   const text = await workflow();
   expect(text).toMatch(/^      - name: Set up Node\.js\s*\r?\n        uses: actions\/setup-node@\S+\s*\r?\n        with:\s*\r?\n          node-version: '26\.5\.0'\s*$/m);
   expect(text).toMatch(/^        run: npm ci\s*$/m);
-  expect(text.indexOf('run: npm ci')).toBeLessThan(text.indexOf('run: xvfb-run'));
+  expect(text.indexOf('npm run verify:full')).toBeGreaterThan(text.indexOf('run: npm ci'));
   expect(text).not.toMatch(/npm install|npm update/);
 });
 
 test('T-007: Given a Linux runner, When verification executes, Then the entire full gate runs inside xvfb', async () => {
   const text = await workflow();
-  expect(text).toMatch(/^        if: runner\.os == 'Linux'\s*\r?\n        run: xvfb-run -a npm run verify:full\s*$/m);
+  expect(text).toMatch(/^        if: runner\.os == 'Linux'\s*\r?\n        run: dbus-run-session -- xvfb-run -a npm run verify:full\s*$/m);
+});
+
+test('T-007: Given a runner without a usable session bus, When Linux verification starts, Then a fresh D-Bus session supplies the address', async () => {
+  const text = await workflow();
+  expect(text).toMatch(/^        run: dbus-run-session -- /m);
+  expect(text).not.toMatch(/DBUS_SESSION_BUS_ADDRESS\s*[:=]/);
 });
 
 test('T-007: Given a Windows or macOS runner, When verification executes, Then the full gate runs and failures cannot be ignored', async () => {

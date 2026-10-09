@@ -49,9 +49,10 @@ The manifest's VS Code minimum is provisional until compatibility spike T-002.
 
 [CI](.github/workflows/ci.yml) runs on every push and pull request, with a manual
 run option. Each Windows, macOS, and Linux job installs the lockfile with `npm ci`
-using Node 26.5.0 and runs `npm run verify:full`. Linux uses `xvfb-run -a` for the
-VS Code window. All three jobs report results even if one fails; errors and
-warnings fail the existing verification gate. CI does not generate the large
+using Node 26.5.0 and runs `npm run verify:full`. Linux runs
+`dbus-run-session -- xvfb-run -a npm run verify:full` to provide a fresh session
+bus and a virtual display for VS Code. All three jobs report results even if one
+fails; errors and warnings fail the existing verification gate. CI does not generate the large
 10-million-row datasets.
 
 After pushing the T-007 commit, open the repository's **Actions** tab and select
@@ -59,6 +60,11 @@ After pushing the T-007 commit, open the repository's **Actions** tab and select
 three **Full verification** jobs. For a failed job, paste its failing step's log
 including the first error or warning. Local workflow tests check its wiring;
 T-007 stays open until the actual three-platform run is green.
+
+The supplied initial Ubuntu log passed all 65 unit tests and both integration
+tests, but Electron's D-Bus errors failed the diagnostic gate. The session-bus
+wrapper is the proposed environment fix; its Linux execution still needs a
+fresh Actions run. Diagnostics remain visible and errors still fail verification.
 
 ## Test fixtures
 

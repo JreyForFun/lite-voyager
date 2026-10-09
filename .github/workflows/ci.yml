@@ -26,9 +26,9 @@ jobs:
           package-manager-cache: false
       - name: Install locked dependencies
         run: npm ci
-      - name: Verify with virtual display on Linux
+      - name: Verify with session bus and virtual display on Linux
         if: runner.os == 'Linux'
-        run: xvfb-run -a npm run verify:full
+        run: dbus-run-session -- xvfb-run -a npm run verify:full
       - name: Verify on Windows and macOS
         if: runner.os != 'Linux'
         run: npm run verify:full
