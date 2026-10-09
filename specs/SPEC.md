@@ -173,7 +173,7 @@ Targets marked "start" are starting points to validate in the benchmark task, th
 | ID | Requirement | Target |
 |---|---|---|
 | NFR-001 | Source files are never modified unless the user saves | Verified by automated test |
-| NFR-002 | Windows, macOS (Intel and Apple Silicon), Linux; no native binaries to ship or install | Primary engine is Node's built-in `node:sqlite`, feature-detected in a worker with a sql.js fallback. Supported minimum is VS Code 1.140.0, the lowest T-002 tested host; 1.141.0 also passes locally. Other-platform evidence remains pending. A killable helper reuses the bundled runtime, without an external CLI or shipped binary. |
+| NFR-002 | Windows, macOS (Intel and Apple Silicon), Linux; no native binaries to ship or install | Primary engine is Node's built-in `node:sqlite`, feature-detected in a worker with a sql.js fallback. Supported minimum is VS Code 1.140.0, the lowest T-002 tested host; 1.141.0 also passes locally. Fresh T-002 CI run 37922970386 passes full verification on Windows, macOS and Linux; the matrix does not separately establish both macOS architectures. A killable helper reuses the bundled runtime, without an external CLI or shipped binary. |
 | NFR-003 | No artificial size limit on the primary engine; memory stays bounded | Peak extension memory under 500 MB while importing a 5 GB CSV (start). Fallback engine is exempt but must warn |
 | NFR-004 | Fast first paint | First rows visible in under 2 s for any CSV or SQLite file, excluding cold-disk effects (start) |
 | NFR-005 | UI never blocked | Main thread blocked for no more than 100 ms during any operation |
@@ -207,6 +207,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-002 completion (2026-10-09): Recorded fresh three-platform full verification for reviewed fixes at 0e3ec57 (run 37922970386). Both macOS architectures are not separately covered by the current CI matrix.
 - v0.5 T-002 review fixes (2026-10-09): Owner authorized conservative fallback rejection of WAL/journal snapshots and observed concurrent changes, complete statement cleanup, and exact complete-page budget accounting. No source checkpointing or mutation is allowed.
 - v0.5 T-002 cancellation clarification (2026-10-09): Owner authorized revising the cancellation design after slow native worker termination. Added a 1,000 ms deterministic-spike target, confirmed helper exit, and successful reopening. NFR-002 documents the lowest tested supported host, VS Code 1.140.0; cross-platform closure remains pending.
 - v0.5 T-001 evidence / spec consistency (2026-10-09): Recorded the owner's Marketplace reports; preserved the supplied competitor review and open D-2 positioning. Restored the previously approved FR-020 correction and its T-005 changelog entry after they were reverted in the review update.

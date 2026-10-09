@@ -200,9 +200,15 @@ ID bounds 9007199254740993 through 9007199264740992, and aggregate payload lengt
   and 22 ms fallback; actual helper exit, reopening, and source hashes pass.
 - VS Code 1.141.0 compatibility recheck also passes all six integration tests
   and strict runtime logs; cancellation is 20 ms native and 35 ms fallback.
-- Fixes committed as 9b80bbfe805a84edf65e72297daf20a65ea8d041. Push could
-  not authenticate using existing credentials; owner sign-in/push and a fresh
-  three-platform Actions run are still required before closing T-002.
+- Fixes committed as 9b80bbfe805a84edf65e72297daf20a65ea8d041; final local
+  evidence committed as 0e3ec57de8254b80a2aa8bc830ea65c527e8301c. After
+  the automated push lacked credentials, the owner pushed the commits.
+  [Fresh run 37922970386](https://github.com/JreyForFun/lite-voyager/actions/runs/37922970386),
+  attempt 1 at 0e3ec57de8254b80a2aa8bc830ea65c527e8301c, passes on
+  2026-10-09. GitHub API metadata confirms all three Full verification jobs
+  (windows-latest, macos-latest, ubuntu-latest) and each applicable verification
+  step succeeded. Together with local gates, owner manual QA and reviewed fixes,
+  this closes T-002. The remaining foundation tasks and milestone gate stay open.
 
 **D-6 CSV, JSON, and XLSX become on-disk SQLite tables.** One engine and one SQL dialect for everything, which also makes cross-file joins simple. Cost: a first import of a huge file takes time. Mitigated by instant preview, background import, progress, and cancel.
 

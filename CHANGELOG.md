@@ -16,8 +16,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   and observed concurrent file changes; statements are freed on every sql.js
   result path. Corrected complete-page 256 KiB accounting with boundary tests.
   Independent follow-up review found no remaining concrete defect. Local full
-  verification passes (103 unit / six integration tests); T-002 stays open
-  pending fresh CI for these fixes.
+  verification passes (103 unit / six integration tests), and [fresh CI](https://github.com/JreyForFun/lite-voyager/actions/runs/37922970386)
+  passes on Windows, macOS, and Linux for the review fixes. T-002 is complete.
   Compiler-contract fixtures share one setup program, retaining their full
   libraries, compiler settings, diagnostic checks, and assertions.
 

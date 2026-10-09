@@ -1,8 +1,8 @@
 ﻿# Progress
 
 ## Current phase / task
-Phase: Milestone 0B. T-002 fixes committed; local full gate passes, fresh CI pending.
-T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
+Phase: Milestone 0B. T-002 is complete; the foundation milestone remains open.
+T-000, T-001, T-003, T-006, T-005, T-007 and T-002 are checked.
 
 ## Verify status
 - npm run verify and verify:full pass: 103 unit and six integration tests/strict logs.
@@ -12,8 +12,8 @@ T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 - Final full gate: native 21 ms / fallback 22 ms; exit/reopen/source hashes verified.
 - Owner QA: native 24 ms / fallback 92 ms; both recover and typing stays responsive.
 - Core cloud-dictation startup warnings intermittently fail the strict host gate.
-- T-002 CI run 37916047454 passes Windows, macOS, Linux full verification.
-- Tested SHA: f3085869c88262b2ffdbfddb47805f6287cdcc3a (attempt 1, 2026-10-09).
+- Fresh T-002 run 37922970386 passes all three full jobs/applicable verify steps.
+- Tested SHA: 0e3ec57de8254b80a2aa8bc830ea65c527e8301c (attempt 1, 2026-10-09).
 
 ## Last session
 - Worker-only native cancellation took 11,042 ms; replaced by killable helper.
@@ -30,10 +30,10 @@ T-000, T-001, T-003, T-006, T-005, T-007 remain checked. T-002 stays unchecked.
 - Owner-authorized empty.json restoration is complete (zero bytes).
 - Fresh-context follow-up review confirms fixes; no remaining concrete defect found.
 - Fix commit: 9b80bbfe805a84edf65e72297daf20a65ea8d041.
-- Push failed: no cached GitHub credentials. Owner sign-in/push is required.
+- Owner pushed the fixes; fresh CI independently confirms three-platform results.
 - Earlier VS Code versions/browser support and production performance not claimed.
 - No tests, compiler checks, or warning gates disabled; D-2 remains open.
 
 ## Next
-Owner: git -c http.proxy= push origin main; paste the Actions run URL.
-Then inspect fresh three-platform CI before ticking T-002.
+Push completion docs: git -c http.proxy= push origin main (credentials unavailable here).
+Then start a fresh chat for T-004 (streaming import spike); no milestone tag yet.

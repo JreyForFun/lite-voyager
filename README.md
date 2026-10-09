@@ -108,8 +108,10 @@ its copy checks do not provide an atomic snapshot against arbitrary writers.
 All sql.js statement paths free resources, and complete JSON pages fit 256 KiB.
 Independent follow-up review found no remaining concrete defect. Local full
 verification passes with 103 unit tests, six integration tests, and strict logs;
-VS Code 1.141.0 also passes the integration/log gate. T-002 stays unchecked
-pending fresh three-platform CI for these fixes. GitHub sign-in is needed to push.
+VS Code 1.141.0 also passes the integration/log gate. [CI run 37922970386](https://github.com/JreyForFun/lite-voyager/actions/runs/37922970386)
+passes all three Full verification jobs and their applicable verification steps
+for the review fixes at commit 0e3ec57de8254b80a2aa8bc830ea65c527e8301c.
+T-002 is complete; the remaining Milestone 0 tasks and gate are open.
 The production Engine interface,
 fallback banner/large-file prompt, and permanent force-fallback hook remain T-009.
 

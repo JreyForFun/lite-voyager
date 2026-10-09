@@ -53,9 +53,12 @@ metadata. Owner-authorized fixes now have red-first regressions; independent
 follow-up review found no remaining concrete defect. Local full verification
 passes with 103 unit tests, six integration tests and strict runtime logs in
 VS Code 1.140.0; VS Code 1.141.0 also passes integration tests and strict logs.
-Fix commit `9b80bbfe805a84edf65e72297daf20a65ea8d041` still needs fresh
-three-platform CI. Push could not authenticate with existing credentials;
-owner sign-in/push is required. No task or milestone is closed.
+The owner pushed the fixes and evidence. [Fresh run 37922970386](https://github.com/JreyForFun/lite-voyager/actions/runs/37922970386),
+attempt 1, commit `0e3ec57de8254b80a2aa8bc830ea65c527e8301c`, succeeds on
+2026-10-09. GitHub API metadata confirms all three Full verification jobs and
+their applicable full-verification steps succeeded. T-002 and its specific
+foundation checklist item are complete; all other milestone gate items retain
+their previous status. No milestone gate or release tag is complete.
 
 ### Layer 2: Per-task validation (spec to test)
 
@@ -112,7 +115,7 @@ A milestone is finished only when its gate passes. Then, and only then, tag the 
 ### Milestone 0 (foundation)
 - [x] CI is green on three operating systems. *(T-007 run/SHA above.)*
 - [ ] Spike results (T-002, T-004, T-008) are written into `PLAN.md`.
-- [ ] T-002 proves worker open/query/cancel/reopen inside a killable helper, confirms helper exit within 1,000 ms after SQL execution begins, and verifies real sql.js fallback when the built-in is unavailable. Local verification, owner manual QA, and fresh three-platform CI are required. The production `Engine` interface, fallback banner/large-file prompt, and permanent force-fallback hook follow in T-009 (Milestone 1).
+- [x] T-002 proves worker open/query/cancel/reopen inside a killable helper, confirms helper exit within 1,000 ms after SQL execution begins, and verifies real sql.js fallback when the built-in is unavailable. Local verification, owner manual QA, and fresh three-platform CI pass (run/SHA above). The production `Engine` interface, fallback banner/large-file prompt, and permanent force-fallback hook follow in T-009 (Milestone 1).
 
 ### Milestone 1 manual QA (read-only SQLite)
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -212,6 +215,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-002 completion (2026-10-09): Recorded fresh run 37922970386/0e3ec57 and passing reviewed fixes, local gates and owner manual QA; checked the T-002-specific foundation item only.
 - v0.1 T-002 cancellation redesign (2026-10-09): Owner authorized confirmed helper exit within one second; local, manual, and fresh CI evidence are required for closure.
 - v0.1 T-002 scope clarification (2026-10-09): Owner approved keeping the production Engine interface in T-009; the foundation gate measures the worker/fallback spike instead.
 - v0.1 T-007 completion (2026-10-09): Recorded run 37884550873/commit 93b23bf with three successful full-gate jobs; checked only the two evidenced CI gate items. All other milestone gate items remain open.
