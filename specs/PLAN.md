@@ -114,8 +114,8 @@ behavior: [Papa Parse documentation](https://www.papaparse.com/docs);
   Keep the original 5 GB / 500 MB and visible-under-two-second targets open.
 
 Commands, disk-space requirements and owner evidence instructions are in
-`test/fixtures/README.md`. T-004 stays open until owner benchmark evidence is
-received. R-1 and the foundation milestone remain open; no comparison with
+`test/fixtures/README.md`. Owner verification and benchmark evidence have now
+been received; T-004 is complete. R-1 and the foundation milestone remain open; no comparison with
 DuckDB or production extension performance is implied.
 
 Observed final local run (2026-10-09, Windows x64, Node 26.5.0, SQLite 3.53.3):
@@ -147,7 +147,25 @@ was attempted because local free disk space was insufficient. Full import
 takes several minutes here, so R-1 remains material: keep instant preview,
 background progress and cancellation in the production plan. There is no
 numeric full-import-time target or measured DuckDB comparison to justify
-changing the database backend in this spike. Owner confirmation remains open.
+changing the database backend in this spike. Owner-run evidence below completes
+the spike without establishing either production target.
+
+Owner-run completion evidence (2026-10-09), implementation commit
+`7d9cf25020554ef32d8f422a937d0d4c41fa1fc7`:
+the owner pasted `All verification checks passed.` and the full benchmark JSON.
+The on-disk `report.json` in the ignored directory
+`test/fixtures/generated/t004-10b2cd4c-cb00-4074-82ec-649573868332/`
+independently matches the pasted numeric/hash fields. The same 1,258,888,906-byte
+CSV imported 10,000,000 rows in 10,000 transactions into a 1,406,361,600-byte
+SQLite file. Import: 145,436.5997 ms; separate verification: 60,147.8904 ms;
+total: 205,873.3571 ms. Peak standalone process RSS: 222,994,432 bytes
+(223.0 MB decimal); sampled peak: 222,035,968 bytes. The first 100 parsed rows
+took 27.1822 ms. Windows x64, Node 26.5.0, SQLite 3.53.3, 64 KiB reads and
+1,000-row transactions match the final local setup. All rows verified, and both
+source hashes and parsed/stored value digests match the final local hashes above.
+T-004's streaming, fidelity, safety, measurement and owner-evidence criteria are
+met. Retain the provisional NFR-003/NFR-004 targets and R-1 mitigation; the
+5 GB extension-memory and visible-first-paint measurements still remain open.
 
 ## 2. Decision log
 
@@ -409,6 +427,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-004 completion (2026-10-09): Recorded passing owner verification and the 10-million-row benchmark at 7d9cf25 (145.4 s import, 223.0 MB standalone RSS, 27.2 ms parsed preview). T-004 is complete; production NFR-003/NFR-004 targets and the foundation milestone remain open.
 - v0.4 T-004 spike (2026-10-09): Recorded owner-approved scope, streaming/transaction settings, exact text fidelity, strict input rejection, safe output cleanup, final 1.26 GB measurements and independent 10-million-row comparison. Original NFR-003/NFR-004 targets remain unchanged; owner evidence is still required.
 - v0.4 T-002 cancellation redesign (2026-10-09): Owner authorized process isolation and a one-second deterministic cancellation target. Recorded passing worker/fallback recovery tests in VS Code 1.140.0 and 1.141.0; supported minimum is the lowest tested host, 1.140.0. Manual QA and new CI are still required.
 - v0.4 T-002 investigation (2026-10-09): Recorded real worker/fallback measurements and failing native cancellation evidence. No cancellation redesign or final compatibility minimum selected; production Engine scope stays in T-009 as approved.
