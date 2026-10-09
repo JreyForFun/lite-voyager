@@ -12,7 +12,7 @@ Status: Draft v0.2 | Implements `SPEC.md` under `CONSTITUTION.md`.
 | CSV | `papaparse` in streaming mode | Chunked reads, batched inserts in transactions |
 | JSON / JSONL | Line reader for JSONL; a streaming JSON parser for big arrays | |
 | XLSX | SheetJS or an alternative | Memory-bound by format. Note: the old `xlsx` package on npm is outdated; check SheetJS's current install guidance and security advisories in T-050. |
-| SQL editor | CodeMirror 6 (start) | Confirm in T-008 |
+| SQL editor | CodeMirror 6 | Confirmed by owner T-008 manual QA (2026-10-09) |
 | Grid | Virtualized, windowed rendering | Must stay smooth with very tall tables |
 | Build | `esbuild`, two bundles (host and webview) | |
 | Tests | Vitest for logic; `@vscode/test-electron` for integration | |
@@ -166,6 +166,71 @@ source hashes and parsed/stored value digests match the final local hashes above
 T-004's streaming, fidelity, safety, measurement and owner-evidence criteria are
 met. Retain the provisional NFR-003/NFR-004 targets and R-1 mitigation; the
 5 GB extension-memory and visible-first-paint measurements still remain open.
+
+### T-008 editor and grid spike (2026-10-09)
+
+Owner authorized implementation, necessary fixes and synthetic-fixture choices;
+the owner will review/push and perform F5 manual QA. Detailed acceptance is in
+SPEC.md, Querying / T-008 foundation spike.
+
+- `Lite Voyager: T-008 Editor and Grid Spike` opens a local webview. The editor
+  supports SQL syntax highlighting, selection and undo/redo. Query execution
+  remains T-013. Owner manual QA confirms CodeMirror 6 (2026-10-09).
+- Pinned development dependencies: MIT `@codemirror/state` 6.7.6,
+  `@codemirror/view` 6.43.14, `@codemirror/commands` 6.11.1,
+  `@codemirror/lang-sql` 6.10.0, `@codemirror/language` 6.13.1, and
+  `@lezer/highlight` 1.2.5 (also a CodeMirror transitive dependency).
+  Package metadata and shipped declarations verified the APIs/licenses;
+  the bundle includes all fourteen editor dependency license notices. No grid
+  library was added. The extension loads no remote assets and makes no requests.
+- A deterministic six-column source synthesizes only requested 128-row pages
+  on the host. Exact unsafe integers use BigInt-to-string conversion; unicode,
+  script-looking literal text and BLOB placeholders exercise display mechanics.
+  No files are opened or modified; no fixture inventory changes are needed.
+- Typed protocol guards bound offsets, request IDs, page dimensions and text
+  lengths. The client keeps at most four pages / 512 rows, with one request in
+  flight, and renders only visible rows plus six overscan rows per side.
+  A confirmed red-first regression rejects sparse row/cell arrays rather than
+  accepting missing data through Array.every's empty-slot behavior.
+  Scroll updates are coalesced through requestAnimationFrame. A reply for a
+  superseded viewport cannot substitute the old rows for the new viewport.
+- A capped 8,000,000-pixel physical track maps to all ten million logical rows,
+  avoiding browser scroll-height limits. Wheel and keyboard movement use
+  logical row height (28 pixels); scrollbar dragging maps the full range.
+  First/middle/last and row-input jumps provide direct access. The maximum
+  viewport height is 560 pixels, keeping the render window small.
+- CSS uses VS Code theme variables; SQL token colors have light/dark variants.
+  Local scripts and CodeMirror-injected styles use a cryptographic CSP nonce.
+  Cell content is assigned through textContent. Loading/deadline failures are
+  visible; closing releases timers, observers, listeners and the editor.
+- Eleven new unit cases cover mapping/edges, paging/cache, message validation,
+  CSP, exact/safe text, rendering, navigation/resize, stale replies, timeouts
+  and disposal. Seven initial cases failed on absent implementation modules
+  before implementation; four later cases strengthen behavioral validation.
+  A real VS Code integration case opens and closes the webview twice and checks
+  successful CodeMirror startup and bounded rendered/cached row counts.
+
+Two full runs passed all seven integration tests in Windows x64 / VS Code
+1.140.0, including real webview startup/reopening. Their strict runtime-log gates
+failed on the pre-existing intermittent cloud-dictation authentication warning;
+the diagnostics were not filtered or weakened. After owner QA and the final
+protocol guard fix, fresh verification passes all 150 unit tests with zero
+errors/warnings. The VS Code 1.141.0 integration probe passes all seven tests;
+its strict log check again fails on the same warning. Final validation results follow
+in PROGRESS.md. New three-platform CI, real database paging and production NFR-003/NFR-004/
+NFR-005/NFR-007 performance/accessibility claims remain unproven by this spike.
+README.md contains exact F5 steps and the report format. No milestone gate
+or tag is claimed; T-008's task checkbox awaits the owner's task commit under
+VALIDATION.md section 2.
+
+Owner manual QA (2026-10-09), VS Code 1.141.0 (OS not restated in the report):
+typing/selection/undo/redo, wheel/trackpad and scrollbar smoothness, first/middle/
+last/jumps, keyboard/horizontal scrolling/resize, light/dark themes and close/
+reopen all PASS. The owner clarified that the observed maximum cache was 512
+rows, with about 20–23 rows rendered. Editor decision: **Keep CodeMirror 6**.
+These are owner-observed usability results, not quantitative production NFR
+measurements. The synthetic spike acceptance is met with passing verification;
+the owner will commit and push the implementation and completion documentation.
 
 ## 2. Decision log
 
@@ -427,6 +492,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-008 owner QA (2026-10-09): Recorded all manual checks passing in VS Code 1.141.0, 512 cached / about 20–23 rendered rows, and the decision to keep CodeMirror 6. Task checkbox awaits the owner commit; the foundation gate remains open.
+- v0.4 T-008 implementation (2026-10-09): Recorded approved CodeMirror dependencies, synthetic bounded paging/rendering, scroll-height mapping, CSP/lifecycle tests and manual handoff. CodeMirror is provisional; owner smoothness/editor evidence remains pending.
 - v0.4 T-004 completion (2026-10-09): Recorded passing owner verification and the 10-million-row benchmark at 7d9cf25 (145.4 s import, 223.0 MB standalone RSS, 27.2 ms parsed preview). T-004 is complete; production NFR-003/NFR-004 targets and the foundation milestone remain open.
 - v0.4 T-004 spike (2026-10-09): Recorded owner-approved scope, streaming/transaction settings, exact text fidelity, strict input rejection, safe output cleanup, final 1.26 GB measurements and independent 10-million-row comparison. Original NFR-003/NFR-004 targets remain unchanged; owner evidence is still required.
 - v0.4 T-002 cancellation redesign (2026-10-09): Owner authorized process isolation and a one-second deterministic cancellation target. Recorded passing worker/fallback recovery tests in VS Code 1.140.0 and 1.141.0; supported minimum is the lowest tested host, 1.140.0. Manual QA and new CI are still required.

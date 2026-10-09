@@ -1,5 +1,5 @@
 const esbuild = require('esbuild');
-const { copyFile, mkdir } = require('node:fs/promises');
+const { copyFile, mkdir, readFile, writeFile } = require('node:fs/promises');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -76,6 +76,11 @@ async function main() {
   await copyFile('node_modules/sql.js/dist/sql-wasm.js', 'dist/sql-wasm.cjs');
   await copyFile('node_modules/sql.js/dist/sql-wasm.wasm', 'dist/sql-wasm.wasm');
   await copyFile('node_modules/sql.js/LICENSE', 'dist/sql.js-LICENSE');
+  const editorLicenses = [];
+  for (const name of ['@codemirror/state', '@codemirror/view', '@codemirror/commands', '@codemirror/lang-sql', '@codemirror/language', '@codemirror/autocomplete', '@codemirror/streamparser', '@marijn/find-cluster-break', '@lezer/common', '@lezer/highlight', '@lezer/lr', 'style-mod', 'w3c-keyname', 'crelt']) {
+    editorLicenses.push(`${name}\n${await readFile(`node_modules/${name}/LICENSE`, 'utf8')}`);
+  }
+  await writeFile('dist/codemirror-LICENSES.txt', editorLicenses.join('\n\n'));
   await buildBundle({
     entryPoints: ['webview/main.ts'],
     platform: 'browser',

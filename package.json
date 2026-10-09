@@ -25,6 +25,10 @@
         "title": "Hello World"
       },
       {
+        "command": "lite-voyager.webviewSpike",
+        "title": "Lite Voyager: T-008 Editor and Grid Spike"
+      },
+      {
         "command": "lite-voyager.sqliteSpike",
         "title": "Lite Voyager: T-002 SQLite Worker Spike"
       },
@@ -54,6 +58,12 @@
     "spike:csv": "node scripts/csv-import-spike.mts"
   },
   "devDependencies": {
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/lang-sql": "6.10.0",
+    "@codemirror/language": "6.13.1",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.14",
+    "@lezer/highlight": "1.2.5",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
     "@types/papaparse": "5.5.2",

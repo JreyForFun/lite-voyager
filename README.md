@@ -12,6 +12,8 @@ and prior three-platform CI. Review fixes are undergoing fresh verification (bel
 Data browsing and querying in editor tabs
 are planned and are not implemented yet.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
+T-008 now provides an experimental CodeMirror editor and synthetic grid;
+owner manual QA passes and confirms CodeMirror 6 (steps and evidence below).
 
 ## Development
 
@@ -50,6 +52,48 @@ npm run package
 The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
+
+## T-008 editor/grid spike — owner manual check
+
+Owner QA on 2026-10-09 in VS Code 1.141.0: all checks below PASS. The owner
+observed 512 cached rows and about 20–23 rendered rows, and chose to keep
+CodeMirror 6. Detailed evidence and limitations are recorded in PLAN.md.
+
+Run `npm run verify` and `npm run verify:full`, then press **F5** and run
+**Lite Voyager: T-008 Editor and Grid Spike** in the development window's
+Command Palette. No fixture generation or file selection is required.
+
+1. Type SQL, select text, and try undo/redo. Syntax highlighting should be
+   readable. SQL execution is outside this spike.
+2. Scroll the grid rapidly with a wheel/trackpad and drag its scrollbar. While
+   scrolling, edit SQL to assess whether the editor stays responsive.
+3. Use **Middle**, **Last**, and the row input. The last row is **10000000**;
+   row 1's exact integer is **9007199254740993**. Script-looking cell text must
+   remain literal text. The footer reports the visible row range, rendered rows
+   and cached rows; cached rows must never exceed **512**.
+4. Focus the grid and try arrows, Page Up/Down and Home/End. Use horizontal
+   scrolling on a narrow panel. Resize the editor area/window, then repeat.
+5. Repeat in VS Code light and dark themes. Close and reopen the spike twice.
+
+Paste the verify/full-verify conclusions and this report:
+
+```text
+T-008 manual QA
+VS Code version / OS:
+Editor typing, selection, undo/redo: PASS or issue
+Wheel/trackpad and scrollbar smoothness: PASS or issue
+First/middle/last/jump correctness: PASS or issue
+Keyboard, horizontal scrolling and resize: PASS or issue
+Light/dark themes and close/reopen: PASS or issue
+Largest rendered/cached counts observed:
+Editor decision: Keep CodeMirror 6 / Change (reason)
+```
+
+Synthetic rows test the UI mechanics; they do not measure real database query
+latency, large-file memory, or production first paint. T-008's acceptance is met
+with passing verification. Its checkbox awaits the owner commit required by
+VALIDATION.md section 2. Push the changes after your review; the foundation
+milestone remains open.
 
 ## T-002 experiment status
 

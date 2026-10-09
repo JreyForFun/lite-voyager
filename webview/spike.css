@@ -1,0 +1,33 @@
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 18px 24px; color: var(--vscode-foreground, #24292f); background: var(--vscode-editor-background, #fff); font: 13px var(--vscode-font-family, sans-serif); }
+h1 { font-size: 20px; margin: 0 0 8px; font-weight: 500; }
+p { margin: 8px 0 14px; }
+.hint { color: var(--vscode-descriptionForeground, #666); font-size: 12px; }
+#editor { margin-top: 8px; border: 1px solid var(--vscode-panel-border, #aaa); }
+.cm-editor { height: 150px; }
+.cm-scroller { overflow: auto; }
+.tok-keyword { color: #0000ff; }
+.tok-string { color: #a31515; }
+.tok-number { color: #098658; }
+.tok-comment { color: #008000; }
+.vscode-dark .tok-keyword { color: #c586c0; }
+.vscode-dark .tok-string { color: #ce9178; }
+.vscode-dark .tok-number { color: #b5cea8; }
+.vscode-dark .tok-comment { color: #6a9955; }
+.vscode-high-contrast .cm-content [class*="tok-"], .vscode-high-contrast-light .cm-content [class*="tok-"] { color: var(--vscode-editor-foreground); }
+form { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+input { width: 130px; padding: 5px 8px; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, #aaa); }
+button { padding: 6px 12px; border: 0; color: var(--vscode-button-foreground, #fff); background: var(--vscode-button-background, #007acc); cursor: pointer; }
+button:hover { background: var(--vscode-button-hoverBackground, #005a9e); }
+:focus-visible { outline: 2px solid var(--vscode-focusBorder, #007acc); outline-offset: 2px; }
+#status { min-height: 28px; padding: 5px 0; font-variant-numeric: tabular-nums; }
+#grid { border: 1px solid var(--vscode-panel-border, #aaa); overflow: hidden; }
+#grid-header, .data-row { display: grid; grid-template-columns: 100px 190px 150px 150px 270px 160px; width: 1020px; height: 28px; }
+#grid-header { font-weight: 600; background: var(--vscode-sideBar-background, #eee); }
+#viewport { position: relative; height: clamp(140px, 48vh, 560px); overflow: auto; overflow-anchor: none; }
+#track { width: 1020px; position: relative; }
+#rows { position: absolute; top: 0; left: 0; }
+.data-row { position: absolute; background: var(--vscode-editor-background, #fff); }
+.data-row:nth-child(even) { background: var(--vscode-list-hoverBackground, #f6f6f6); }
+#grid-header > div, .data-row > div { padding: 5px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid var(--vscode-panel-border, #ddd); border-right: 1px solid var(--vscode-panel-border, #ddd); }

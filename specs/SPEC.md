@@ -112,6 +112,27 @@ Priority: **P0** first release, **P1** next, **P2** later in v1.
 
 ### Querying
 
+#### T-008 foundation spike acceptance (owner-authorized, 2026-10-09)
+
+This experiment informs the editor/grid choice; production query execution and
+file loading remain later tasks.
+
+- Given the development extension, when the T-008 command runs, then a local
+  webview displays an editable CodeMirror 6 SQL editor and a virtualized grid.
+- Given 10,000,000 synthetic logical rows, when scrolling, jumping or resizing,
+  then the correct viewport rows and a small overscan buffer are rendered.
+  Browser scroll-height limits must not prevent reaching the last row.
+- Given page requests, when validated and served, then each response contains
+  at most 128 rows, the webview caches at most four pages, and only one request
+  is in flight. No whole-table array is generated or sent.
+- Given the panel, when closed, then listeners, timers and editor resources are
+  released. Invalid messages are rejected; loading/failure states are visible.
+- Given F5 manual QA, when the owner types, scrolls, jumps and resizes in light
+  and dark themes, then they report responsiveness and confirm or change the
+  editor choice. Automated checks cannot establish subjective smoothness.
+- Tests are written first; `npm run verify` must pass without errors/warnings.
+  Record measured scope, manual evidence and the editor decision in PLAN.md.
+
 **FR-010 (P0) SQL editor.** Syntax highlighting. Run with a button or `Ctrl/Cmd+Enter`; if text is selected, only the selection runs.
 
 **FR-011 (P0) Results grid.** Shows row count and execution time. SQL errors show the SQLite message and keep the previous results. Results are paged from the engine, never held whole in the webview.
@@ -207,6 +228,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-008 acceptance (2026-10-09): Owner authorized the editor/grid spike and implementation judgment. Added explicit synthetic-data, bounded paging/rendering, browser-height, lifecycle and manual editor-choice criteria; production query behavior and NFR targets remain later validation.
 - v0.5 T-002 completion (2026-10-09): Recorded fresh three-platform full verification for reviewed fixes at 0e3ec57 (run 37922970386). Both macOS architectures are not separately covered by the current CI matrix.
 - v0.5 T-002 review fixes (2026-10-09): Owner authorized conservative fallback rejection of WAL/journal snapshots and observed concurrent changes, complete statement cleanup, and exact complete-page budget accounting. No source checkpointing or mutation is allowed.
 - v0.5 T-002 cancellation clarification (2026-10-09): Owner authorized revising the cancellation design after slow native worker termination. Added a 1,000 ms deterministic-spike target, confirmed helper exit, and successful reopening. NFR-002 documents the lowest tested supported host, VS Code 1.140.0; cross-platform closure remains pending.

@@ -6,6 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-008: added an experimental CodeMirror SQL editor and virtualized synthetic
+  ten-million-row grid. Page requests contain 128 rows; the webview caches at
+  most four pages and renders the viewport plus six overscan rows on each side.
+  A bounded scroll track supports the entire row range, with wheel, keyboard
+  and explicit row jumps. Assets and MIT dependency notices are packaged locally.
+  Owner manual QA passes in VS Code 1.141.0, with 512 cached and about 20–23
+  rendered rows; CodeMirror 6 is confirmed. The owner task commit remains pending.
+
 - T-002: added SQLite worker/fallback spike commands with a killable helper,
   typed messages, bounded read-only results, and packaged MIT sql.js 1.14.2
   assets. Confirmed cancellation within one second, reopening, exact integers,
