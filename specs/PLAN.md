@@ -66,6 +66,89 @@ An independent Python csv reader checked every record, exact ID, name and payloa
 Python sqlite3 opened the database read-only and confirmed matching counts,
 ID bounds 9007199254740993 through 9007199264740992, and aggregate payload length.
 
+### T-004 streaming CSV import spike (2026-10-09)
+
+Owner authorized implementation and clarification of the measurement scope.
+The standalone `npm run spike:csv -- --input CSV` command runs local UTF-8 CSV
+parsing and `node:sqlite` inserts in a worker. `papaparse` 5.7.0 and
+`@types/papaparse` 5.5.2 are MIT development dependencies, pinned in the lockfile;
+they are not packaged in the extension. Tooling enables DOM declarations solely
+because the upstream parser types describe browser APIs too. Official parser
+behavior: [Papa Parse documentation](https://www.papaparse.com/docs);
+[parser MIT license](https://github.com/mholt/PapaParse/blob/master/LICENSE).
+
+- Default reads are 64 KiB; 1,000 inserts per transaction. Insert statements use
+  parameters and quoted identifiers. A collision-free INTEGER PRIMARY KEY
+  preserves record order even when CSV headers shadow every rowid alias;
+  `rowOrderColumn` identifies this metadata, excluded from CSV-value digests.
+  SQLite's durable journal/synchronous
+  defaults stay enabled, the cache target is 8 MiB and temporary work is on disk.
+  There is no queue of whole-table results or JavaScript row batches.
+- Fields remain TEXT, including exact int64/REAL spellings, empty strings and
+  literal `NULL`. The spike requires a comma delimiter, a nonblank unique
+  header, UTF-8 and consistent LF/CRLF endings. BOM, quotes and multiline fields
+  are supported. Ambiguous blank records, ragged rows, invalid encoding/NUL,
+  malformed quotes, duplicate/blank headers and mixed/bare-CR endings fail
+  clearly rather than changing or dropping values. Production delimiter/header
+  controls, type inference and encoding selection remain FR-004's later tasks.
+- Each invocation reserves a fresh directory, refuses existing destinations,
+  and never writes the source. Failure/Ctrl+C waits for worker exit, removes
+  only known partial SQLite files, and refuses to recursively remove unknown
+  files. Source changes fail verification. Success retains `import.sqlite` and
+  `report.json`; generated files remain git-ignored.
+- The import duration includes parsing, inserts, streamed source hashing and
+  a digest of all inserted text values. Verification duration is separate:
+  rehash the source, compare size/mtime, iterate every SQLite row in order and
+  compare the value digest/count, then check database integrity. Progress covers
+  import and the verification stages. No file values are printed.
+- Peak memory is the whole standalone process, including its worker, native
+  SQLite and verification. Use the maximum of OS lifetime peak RSS and 10 ms
+  RSS samples. Node reports `resourceUsage().maxRSS` in KiB, converted to bytes;
+  see [Node process documentation](https://nodejs.org/api/process.html#processresourceusage).
+  Memory is bounded relative to row count but depends on the largest record,
+  header and read chunk. A sampling-only peak could miss short spikes.
+- Parsed preview latency measures up to 100 data rows during import, including
+  reads/parsing/inserts and excluding worker startup. It is supporting evidence
+  for NFR-004, not visible first paint. A 1 GB standalone run is preliminary
+  NFR-003 evidence; even a 5 GB run would not measure VS Code extension memory.
+  Keep the original 5 GB / 500 MB and visible-under-two-second targets open.
+
+Commands, disk-space requirements and owner evidence instructions are in
+`test/fixtures/README.md`. T-004 stays open until owner benchmark evidence is
+received. R-1 and the foundation milestone remain open; no comparison with
+DuckDB or production extension performance is implied.
+
+Observed final local run (2026-10-09, Windows x64, Node 26.5.0, SQLite 3.53.3):
+`npm run spike:csv -- --input test/fixtures/generated/t005-10m-validation/large.csv --output test/fixtures/generated/t004-validated-1gb`
+used the existing synthetic 1,258,888,906-byte CSV with 10,000,000 rows.
+Import: 190,407.9622 ms; separate verification: 89,125.0099 ms;
+total including worker startup: 279,844.9193 ms. Peak process RSS:
+223,363,072 bytes (223.4 MB decimal); sampled peak: 222,420,992 bytes.
+The first 100 parsed rows took 41.5683 ms. All 10,000,000 rows verified in
+10,000 transactions; the resulting SQLite file was 1,406,361,600 bytes.
+Source hashes matched at
+`8caacc5001048cc3d7058b9c73aace7b100f9647a28f55af50082c4183b3e350`;
+parsed/stored value digests matched at
+`8be97c64febb03e2bc0ccd20de56962710601d2e28da2d6538aef0639b06a111`.
+Verification and other heavy project commands were not run concurrently with
+the final benchmark. Earlier diagnostic runs are not the final evidence.
+An independent Python 3.14.6 / SQLite 3.53.2 read-only comparison checked all
+10,000,000 CSV records against SQLite, including every field and the generator's
+exact unsafe-integer/name/payload pattern. It also independently confirmed the
+source SHA-256 (134,857 ms). The ignored `t004-validated-1gb` directory retains
+the benchmark report, comparison script and comparison report. The large local
+SQLite output was removed after validation to restore space for the owner's run;
+the source CSV and pre-existing T-005 reference database were left untouched.
+
+Feasibility decision: retain NFR-003's starting 500 MB target and NFR-004's
+two-second target provisionally. The standalone memory/parsed-preview results
+are encouraging; they do not establish either production target. No 5 GB run
+was attempted because local free disk space was insufficient. Full import
+takes several minutes here, so R-1 remains material: keep instant preview,
+background progress and cancellation in the production plan. There is no
+numeric full-import-time target or measured DuckDB comparison to justify
+changing the database backend in this spike. Owner confirmation remains open.
+
 ## 2. Decision log
 
 **D-3 Engine: two implementations behind one interface, chosen at runtime.** Decided by judgement rather than waiting for a spike, because the downside of being wrong is small and the upside is an extension that never simply crashes.
@@ -326,6 +409,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-004 spike (2026-10-09): Recorded owner-approved scope, streaming/transaction settings, exact text fidelity, strict input rejection, safe output cleanup, final 1.26 GB measurements and independent 10-million-row comparison. Original NFR-003/NFR-004 targets remain unchanged; owner evidence is still required.
 - v0.4 T-002 cancellation redesign (2026-10-09): Owner authorized process isolation and a one-second deterministic cancellation target. Recorded passing worker/fallback recovery tests in VS Code 1.140.0 and 1.141.0; supported minimum is the lowest tested host, 1.140.0. Manual QA and new CI are still required.
 - v0.4 T-002 investigation (2026-10-09): Recorded real worker/fallback measurements and failing native cancellation evidence. No cancellation redesign or final compatibility minimum selected; production Engine scope stays in T-009 as approved.
 - v0.4 T-007 completion (2026-10-09): Recorded verified run/SHA and successful full verification on all three platforms, including the Linux D-Bus fix. Foundation spikes and engine behavior remain unimplemented/unvalidated.

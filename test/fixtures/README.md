@@ -76,6 +76,83 @@ cells are not valid Excel worksheets/cells: Excel permits 1,048,576 rows and
 32,767 characters per cell. These limits must be explained by the future XLSX
 loader, not silently truncated. See [Microsoft's Excel limits](https://support.microsoft.com/en-us/excel/excel-specifications-and-limits).
 
+## T-004 streaming import benchmark
+
+Install locked development dependencies with `npm ci`, then run `npm run verify`.
+The spike uses `papaparse` 5.7.0 and `@types/papaparse` 5.5.2 (both MIT), as
+development-only dependencies. No parser code is added to the extension bundle.
+DOM types in the tooling tsconfig satisfy the parser declarations' browser
+options; the spike uses only local Node streams.
+
+Reuse the existing T-005 10-million-row dataset if it is available:
+
+```sh
+npm run spike:csv -- --input test/fixtures/generated/t005-10m-validation/large.csv
+```
+
+Otherwise, generate a fresh dataset of at least 1 GB (decimal bytes):
+
+```sh
+npm run fixtures -- large --rows 1 --csv-bytes 1000000000 --output test/fixtures/generated/t004-input-1gb
+npm run spike:csv -- --input test/fixtures/generated/t004-input-1gb/large.csv
+```
+
+Generation also creates a reference SQLite file; allow disk space for the CSV,
+the reference database and the imported database (roughly 3-4 GB for this
+profile, plus free headroom). Choose a new generation directory on each run.
+Run the benchmark after verification finishes, with other heavy jobs idle.
+The import command defaults to a unique ignored output directory. Optional
+`--output FRESH_DIRECTORY`, `--batch-rows 1000` and `--chunk-bytes 65536` control
+the destination and bounded processing settings. Existing destinations are
+refused. Ctrl+C cancels, waits for worker exit and removes partial database files.
+Unknown files in the reserved directory are never recursively deleted.
+
+Paste the full final JSON report and generation report, or the first failure
+message. `report.json` is retained beside `import.sqlite` on success. The report
+contains import/verification/total elapsed milliseconds, up to 100 parsed-row
+preview latency, source and stored-value SHA-256 checks, verified row count,
+transaction count, file sizes, runtime/platform/SQLite version and peak RSS.
+Import timing includes streamed source hashing and inserted-value hashing;
+the separate verification phase rehashes the source, reads every stored row
+in order and runs SQLite integrity checking. Source hashes compare the bytes
+read during import with a second read afterward, with size/mtime checks too.
+No field contents or preview values are printed.
+
+RSS includes the whole standalone process and its worker, native SQLite and
+verification. The reported peak is the greater of Node's OS lifetime maximum
+RSS (KiB converted to bytes) and samples every 10 ms. The sampler alone can
+miss brief peaks. Tests invoking the API inside Vitest include that harness in
+RSS; use the fresh CLI process for performance evidence. Parsed preview time
+includes reading/parsing/inserts and excludes worker startup; it is not visible
+first paint. A 1 GB run establishes neither the 5 GB extension-memory target
+nor the under-two-second visible-UI target. Those NFR targets remain open.
+
+This spike accepts comma-delimited UTF-8 CSV with a required nonblank, unique
+header and consistent LF or CRLF record endings. BOM, quoted commas, multiline
+fields, escaped quotes and large/wide records are supported. Every value is
+stored as TEXT: unsafe integers, REAL spellings, empty strings and `NULL` text
+remain exact. CSV does not define a SQL NULL convention. Blank records, ragged
+rows, duplicate/blank headers, malformed quotes, invalid UTF-8/NUL bytes and
+mixed or bare-CR endings are rejected clearly. Delimiter/encoding selection,
+type inference, UI preview and production temp-storage management belong to
+later tasks. Memory is bounded relative to row count, but necessarily depends
+on the largest record/header; there is no arbitrary file-size cap.
+The SQLite table also has a generated INTEGER PRIMARY KEY for original row
+order, named by `rowOrderColumn` in the report. Its name is chosen to avoid
+collisions with CSV headers, including the three SQLite rowid aliases. This
+metadata key is excluded from the parsed/stored CSV-value digest.
+
+Optional later 5 GB evidence needs substantially more disk space (roughly
+15-20 GB including all three files, plus headroom):
+
+```sh
+npm run fixtures -- large --rows 1 --csv-bytes 5000000000 --output test/fixtures/generated/t004-input-5gb
+npm run spike:csv -- --input test/fixtures/generated/t004-input-5gb/large.csv
+```
+
+This remains a standalone test; extension memory and visible first paint must
+be measured when the production importer and webview exist.
+
 ## Runtime scenarios
 
 Run from the repository root. Use disposable copies under `out`, not committed

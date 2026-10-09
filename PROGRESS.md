@@ -1,39 +1,39 @@
 ﻿# Progress
 
 ## Current phase / task
-Phase: Milestone 0B. T-002 is complete; the foundation milestone remains open.
-T-000, T-001, T-003, T-006, T-005, T-007 and T-002 are checked.
+Phase: Milestone 0B. T-004 implementation is locally validated; owner evidence pending.
+T-000, T-001, T-003, T-006, T-005, T-007 and T-002 are checked; T-004 is open.
 
 ## Verify status
-- npm run verify and verify:full pass: 103 unit and six integration tests/strict logs.
-- Package includes helper, worker, local sql.js loader/WASM/license; under 1 MB.
-- VS Code 1.141.0 fixes pass six integration tests/strict logs (20/35 ms cancel).
-- Windows x64: bundled Node 24.21.0; native SQLite 3.53.4; fallback SQLite 3.49.1.
-- Final full gate: native 21 ms / fallback 22 ms; exit/reopen/source hashes verified.
-- Owner QA: native 24 ms / fallback 92 ms; both recover and typing stays responsive.
-- Core cloud-dictation startup warnings intermittently fail the strict host gate.
-- Fresh T-002 run 37922970386 passes all three full jobs/applicable verify steps.
-- Tested SHA: 0e3ec57de8254b80a2aa8bc830ea65c527e8301c (attempt 1, 2026-10-09).
+- npm run verify passes: 139 unit tests, strict types/lint, builds and VSIX packaging.
+- T-004 final local CSV: 1,258,888,906 bytes; 10,000,000 rows fully verified.
+- Import 190.4 s; verification 89.1 s; total with worker startup 279.8 s.
+- Peak standalone RSS 223.4 MB; first 100 parsed rows 41.6 ms (no visible UI).
+- Windows x64 / Node 26.5.0 / SQLite 3.53.3; source/value hashes match.
+- Independent Python read-only comparison confirms every field in all 10 million rows.
+- Prior T-002 CI 37922970386 passes three platforms at 0e3ec57 (2026-10-09).
+- No new T-004 integration/CI or milestone gate is claimed; prior cloud-dictation diagnostics remain intermittent.
 
 ## Last session
-- Worker-only native cancellation took 11,042 ms; replaced by killable helper.
-- Added cancel-during-open, concurrent close, process/worker crash recovery tests.
-- Installed plan-named sql.js 1.14.2 (MIT), packaged for local-only initialization.
-- Fixed WAL/snapshot rejection, statement cleanup, and complete-page byte accounting.
+- Added a local streaming CSV/worker benchmark with durable 1,000-row transactions.
+- Tests cover exact text, malformed inputs, large/wide records and quoted headers.
+- Red-first fixes cover empty quoted fields, split headers, mixed endings and rowid aliases.
+- Added cancellation/cleanup, changed/read-only source, CLI and caller-heartbeat checks.
 
 ## Decisions made this session (move lasting ones into specs/PLAN.md)
-- Owner authorized helper isolation and a one-second deterministic cancel target.
-- Supported minimum is the lowest tested host, VS Code 1.140.0.
-- Production Engine interface/banner/large-file prompt/hook remain T-009.
+- Owner authorized T-004 changes and measurement clarification; PLAN.md records them.
+- Fields remain TEXT; an internal collision-free key preserves original record order.
+- Retain NFR-003/NFR-004 targets provisionally; standalone results support further testing.
+- Added pinned MIT papaparse/declarations as development-only dependencies.
 
 ## Known issues / blockers
-- Owner-authorized empty.json restoration is complete (zero bytes).
-- Fresh-context follow-up review confirms fixes; no remaining concrete defect found.
-- Fix commit: 9b80bbfe805a84edf65e72297daf20a65ea8d041.
-- Owner pushed the fixes; fresh CI independently confirms three-platform results.
-- Earlier VS Code versions/browser support and production performance not claimed.
-- No tests, compiler checks, or warning gates disabled; D-2 remains open.
+- Owner must run the benchmark and paste the final JSON; T-004 remains unchecked.
+- Local disk space prevented a 5 GB run; extension memory/visible first paint remain unproven.
+- R-1, D-2 and the foundation milestone remain open; no production performance claim.
+- Owner's prior T-002 fix/push status is preserved: main confirmed at 9faea17.
+- T-004 implementation is committed locally; owner will push after review/evidence.
+- Large local QA output removed after verification to free space; ignored reports retained.
 
 ## Next
-Push completion docs: git -c http.proxy= push origin main (credentials unavailable here).
-Then start a fresh chat for T-004 (streaming import spike); no milestone tag yet.
+Run npm run verify, then npm run spike:csv -- --input test/fixtures/generated/t005-10m-validation/large.csv.
+Paste the complete final JSON or the first failure; record owner evidence before checking T-004.
