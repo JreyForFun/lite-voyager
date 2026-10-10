@@ -387,6 +387,66 @@ No unexpected warning/error is accepted; this full run is not warning-free.
 Fresh three-platform CI for the repair still requires the owner's push and run
 evidence. T-009 remains locally complete; no later task or milestone is closed.
 
+#### T-009 colored-console regression repair (2026-10-10)
+
+The owner supplied [run 38016821325](https://github.com/JreyForFun/lite-voyager/actions/runs/38016821325).
+Public GitHub API metadata verifies attempt 1 at commit
+`ece4194f4b54dc507d8dc73754f9984ae9d2006b`. All full-verification jobs fail:
+Windows 114108825644, macOS 114108825791 and Ubuntu 114108825819.
+Each pasted log reports the same four non-agent diagnostic regressions failing
+with `promise resolved "undefined" instead of rejecting`; 261 other unit tests
+pass. No job reaches the build/package/integration stages. The earlier local
+265-test evidence above remains historical and did not prove CI compatibility.
+
+The missed environment difference is terminal color: local `NO_COLOR=1` hid
+the scanner defect. Vitest writes a terminal reset immediately before a console
+message in colored mode; that control sequence breaks the severity regex's
+prefix boundary. Tests now explicitly cover color on/off for agent/non-agent
+subprocesses. Before the code fix, all eight forced-color diagnostic cases fail;
+both new segmented-formatting cases also fail. The scanner now applies Node's
+`stripVTControlCharacters` to the fully assembled scan text. It keeps the
+original captured/echoed output, both diagnostic patterns, nonzero-exit rejection
+and the two exact renderer-log exceptions intact. No dependency is added.
+All 28 focused check-runner tests pass, including 18 reporter cases and two
+segmented-formatting cases. Independent review of this repair finds no bugs.
+Local verification and an additional full probe with injected CI/color settings
+are recorded below; fresh three-platform CI remains pending owner push.
+T-009 is reopened for this failed CI follow-up; later tasks stay open.
+
+The normal `npm run verify` passes with 275 unit tests, strict types/lint/build
+and a 17-file / 477.16 KB VSIX; zero errors and zero warnings, Node 26.5.0.
+An additional full probe explicitly sets `CI=true`, `GITHUB_ACTIONS=true`,
+`FORCE_COLOR=1`, `TERM=xterm` and removes the parent agent/no-color flags.
+Its colored unit stage passes all 275 tests and build/package/compilation pass;
+all 12 host tests also pass. **The full probe fails** its console gate on
+`Unable to retrieve mac address (unexpected format)`. A separate strict-log
+audit confirms seven errors and one unapproved warning; none is accepted:
+- `20261010T103933/main.log:2`, error: `Error: Unable to retrieve mac address (unexpected format)`.
+- `20261010T103933/network-shared.log:1`, error: `#1: https://main.vscode-cdn.net/extensions/marketplace.json - error GET net::ERR_INTERNET_DISCONNECTED`.
+- `20261010T103933/window1/network.log:1`, error: `#1: https://main.vscode-cdn.net/extensions/chat.json - error GET Offline`.
+- `20261010T103933/window1/network.log:2`, error: `#2: https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery - error POST Offline`.
+- `20261010T103933/window1/network.log:3`, error: `#3: https://main.vscode-cdn.net/core/stable.json - error GET Offline`.
+- `20261010T103933/window1/renderer.log:3`, warning: `[LM] Failed to request chat control data Offline`.
+- `20261010T103933/window1/renderer.log:9` and `:28`, error: `Offline: Offline`.
+The audit also identifies one matching approved-family record: source
+`20261010T103933/window1/renderer.log`, line 24, original severity `warning`,
+`VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This probe is not green or warning-free and does not establish remote host
+compatibility. No host setting, exception or diagnostic filter is changed to
+clear it. The expanded unit fixtures always exercise both terminal modes.
+
+The canonical `npm run verify:full` in the normal local environment completes
+successfully (exit 0): all 275 unit and 12 integration tests, strict types/lint,
+build/package/compilation and runtime logs, Windows x64 / VS Code 1.140.0,
+Node 26.5.0 for the verifier and a 17-file / 477.16 KB VSIX. It accepts only
+source `20261010T104857/window1/renderer.log`, line 10, original severity
+`warning`, `VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No unexpected warning/error is accepted; this successful full run is not
+warning-free. It does not erase the failed injected-environment probe or prove
+remote platform compatibility. No host/harness settings are changed. Fresh
+three-platform CI for the repaired candidate is still needed before rechecking
+T-009; the Engine implementation's existing coverage remains intact.
+
 The following checklist is the remaining whole-milestone QA, not T-009 completion:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -486,6 +546,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-009 colored-console repair (2026-10-10): Preserve failed run 38016821325/ece4194 on all platforms and the incomplete earlier local coverage. Explicit color/agent matrices and segmented-formatting regressions precede scan-only terminal normalization; original output and strict rejection policy remain intact. Canonical verify/full pass with 275 unit/12 integration tests and one reported approved warning; the injected-CI probe fails on host startup/offline diagnostics and is retained. T-009 remains reopened pending fresh three-platform CI.
 - v0.1 T-009 CI follow-up (2026-10-10): Recorded failed run 38015468652/4d0d435 and its successful Windows/macOS jobs. Ten real-runner regressions cover the Ubuntu prose false positive and hidden passing diagnostics under automatic agent reporting; explicitly select dot reporting without relaxing rejection policy. Local verify/full pass with 265 unit/12 integration tests and one explicitly reported approved host warning; fresh repair CI remains required.
 - v0.1 T-009 evidence (2026-10-10): Recorded 48 task unit/four production integration cases, red-first reviewed repairs, final local full-check evidence and exact host diagnostics. Preserve the failed startup-warning run; isolate parent cache paths without weakening policy. Saved host results/strict checks recovered after interruption. Later browsing/performance/manual QA and new remote CI remain open.
 - v0.1 T-052 completion (2026-10-10): Verified run 37962951570/attempt 1/6b2d665 and successful locked installs/full-verification steps on all three platforms; completed the foundation gate and local v0.0.1 checkpoint, preserving production limitations.

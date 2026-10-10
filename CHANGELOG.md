@@ -23,6 +23,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   containing "error" do not trigger the diagnostic gate. Real console warnings
   and errors stay visible in both CI and agent environments; the gate still
   rejects them and failed assertions.
+  Follow-up: normalize terminal formatting only for diagnostic matching, so
+  colored CI output cannot hide warnings/errors. Original console output is
+  preserved. Regressions explicitly cover color on/off and segmented formatting.
 
 - T-052: foundation review repairs reject malformed CSV text after a closing
   quote instead of silently discarding it, and allow immediate SQLite spike

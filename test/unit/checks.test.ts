@@ -35,6 +35,13 @@ describe('verification gate', () => {
     await expect(runCheck({ name: 'error diagnostic', command: process.execPath, args: ['-e', 'console.error("ERROR fixture diagnostic")'] }, { echo: false })).rejects.toThrow('emitted an error');
   });
 
+  test.each([
+    ['warning', 'process.stdout.write("\\u001b["); setTimeout(() => process.stdout.write("33mWarning: fixture diagnostic\\u001b[0m\\n"), 10);', 'emitted a warning'],
+    ['error', 'process.stderr.write("\\u001b["); setTimeout(() => process.stderr.write("31mERROR fixture diagnostic\\u001b[0m\\n"), 10);', 'emitted an error'],
+  ])('T-009: Given a %s with segmented terminal formatting, When checked, Then assembled output still rejects the diagnostic', async (_label, source, message) => {
+    await expect(runCheck({ name: 'segmented diagnostic', command: process.execPath, args: ['-e', source] }, { echo: false })).rejects.toThrow(message);
+  });
+
   test('T-006: Given a failed stage, When verification runs, Then later stages never run', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-gate-'));
     temporaryDirectories.push(directory);
@@ -48,7 +55,7 @@ describe('verification gate', () => {
 });
 
 describe('unit-test reporter through the verification gate', () => {
-  async function checkFixture(body: string, title = 'T-009: diagnostic fixture', agent = false): Promise<void> {
+  async function checkFixture(body: string, title = 'T-009: diagnostic fixture', agent = false, colors = true): Promise<void> {
     const root = resolve('.');
     const output = join(root, 'out');
     await mkdir(output, { recursive: true });
@@ -67,6 +74,8 @@ describe('unit-test reporter through the verification gate', () => {
       ...process.env, CI: 'true', GITHUB_ACTIONS: 'true',
       AI_AGENT: agent ? 'fixture' : undefined,
       CODEX_THREAD_ID: undefined, CODEX_SANDBOX: undefined,
+      NO_COLOR: colors ? undefined : '1', FORCE_COLOR: colors ? '1' : undefined,
+      NODE_DISABLE_COLORS: undefined, TERM: 'xterm',
     } });
   }
 
@@ -77,13 +86,15 @@ describe('unit-test reporter through the verification gate', () => {
   });
 
   describe.each([false, true])('agent environment: %s', (agent) => {
-    test.each([
-      ['stdout severity warning', 'console.log("Warning: fixture diagnostic");', 'emitted a warning'],
-      ['stderr severity warning', 'console.warn("Warning: fixture diagnostic");', 'emitted a warning'],
-      ['stdout severity error', 'console.log("ERROR fixture diagnostic");', 'emitted an error'],
-      ['stderr severity error', 'console.error("ERROR fixture diagnostic");', 'emitted an error'],
-    ])('T-009: Given a passing test emitting %s, When the reporter is checked, Then verification still rejects the diagnostic', async (_label, body, message) => {
-      await expect(checkFixture(body, undefined, agent)).rejects.toThrow(message);
+    describe.each([false, true])('terminal colors: %s', (colors) => {
+      test.each([
+        ['stdout severity warning', 'console.log("Warning: fixture diagnostic");', 'emitted a warning'],
+        ['stderr severity warning', 'console.warn("Warning: fixture diagnostic");', 'emitted a warning'],
+        ['stdout severity error', 'console.log("ERROR fixture diagnostic");', 'emitted an error'],
+        ['stderr severity error', 'console.error("ERROR fixture diagnostic");', 'emitted an error'],
+      ])('T-009: Given a passing test emitting %s, When the reporter is checked, Then verification still rejects the diagnostic', async (_label, body, message) => {
+        await expect(checkFixture(body, undefined, agent, colors)).rejects.toThrow(message);
+      });
     });
   });
 

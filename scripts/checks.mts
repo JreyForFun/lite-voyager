@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { stripVTControlCharacters } from 'node:util';
 
 export interface Check {
   name: string;
@@ -36,11 +37,14 @@ export function runCheck(check: Check, options: CheckOptions = {}): Promise<void
     child.stderr.on('data', (chunk: Buffer) => capture(chunk, process.stderr));
     child.on('error', (error) => reject(new Error(`${check.name} could not start: ${error.message}`)));
     child.on('close', (code, signal) => {
+      // Scan assembled text so terminal formatting (even across chunks) cannot hide severity.
+      // Keep the captured and echoed output intact for diagnosis.
+      const diagnostics = stripVTControlCharacters(output);
       if (code !== 0) {
         reject(new Error(`${check.name} failed with ${signal === null ? `exit code ${String(code)}` : `signal ${signal}`}.`));
-      } else if (errorPattern.test(output)) {
+      } else if (errorPattern.test(diagnostics)) {
         reject(new Error(`${check.name} emitted an error; verification requires zero errors.`));
-      } else if (warningPattern.test(output)) {
+      } else if (warningPattern.test(diagnostics)) {
         reject(new Error(`${check.name} emitted a warning; verification requires zero warnings.`));
       } else {
         resolve();
