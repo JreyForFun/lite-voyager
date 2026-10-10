@@ -793,6 +793,29 @@ types/lint/builds and a 17-file / 481.24 KB VSIX, zero errors and warnings.
 Only T-011 is checked in its task commit. No milestone completion or release
 tag is claimed.
 
+**T-011 CI confirmation (2026-10-10):** owner supplies GREEN
+[run 38034122214](https://github.com/JreyForFun/lite-voyager/actions/runs/38034122214),
+attempt 1, commit `f49f87d9faaab5aa082ab70c0daf566a45c41de8`.
+Public GitHub API metadata independently confirms the run is completed/successful
+and all three full-verification jobs succeed:
+
+- [Ubuntu](https://github.com/JreyForFun/lite-voyager/actions/runs/38034122214/job/114160913111): locked installation and Linux session-bus/xvfb full verification succeed.
+- [Windows](https://github.com/JreyForFun/lite-voyager/actions/runs/38034122214/job/114160913193): locked installation and Windows/macOS full verification succeed.
+- [macOS](https://github.com/JreyForFun/lite-voyager/actions/runs/38034122214/job/114160913206): locked installation and Windows/macOS full verification succeed.
+
+The workflow runs `npm ci` and `npm run verify:full` on each platform, with
+`dbus-run-session -- xvfb-run -a` on Linux. Alternative OS-specific steps are
+skipped by their platform condition, not skipped tests. This confirms candidate
+CI against the existing strict diagnostic policy; remote full logs were not
+independently inspected and remote runs are not claimed warning-free. Preserve
+the exact accepted local host warning and earlier failed evidence above.
+
+T-011 remains complete and checked. T-012 UI, production first-row/multi-GB
+targets, independent milestone review and whole-milestone QA remain open.
+These completion-record changes modify only documentation; owner pushes them.
+CI-record `npm run verify` passes (exit 0): 330 unit tests, strict types/lint,
+builds and a 17-file / 481.24 KB VSIX; zero errors and zero warnings.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -892,6 +915,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-011 CI confirmation (2026-10-10): Verify run 38034122214/attempt 1/f49f87d success and successful locked installs/applicable full checks on Windows/macOS/Ubuntu via public API metadata. Preserve exact local host diagnostics, remote-log limitations and later-task/milestone scope.
 - v0.1 T-011 metadata (2026-10-10): Record tests-first metadata implementation, six red-first function-name-collision repairs, 26 task unit/four host cases and passing 330-unit/23-host full gate. Report the exact approved host warning; retain later UI/performance/CI and independent milestone-review limits.
 - v0.1 T-010 CI completion (2026-10-10): Independently verify run/job/step metadata for fresh 55e5da0/run 38030277300 success on Windows/macOS/Ubuntu. Close scoped T-010 only; preserve failed CI, exact historical host diagnostics, manually unobserved cancellation and later milestone requirements. Remote logs are not independently retrieved or called warning-free.
 - v0.1 T-010 CI lifecycle follow-up (2026-10-10): Preserve failed macOS run 38029094981/7981bf2 and passing Windows/Ubuntu conclusions. Normal test closure must assert webview transport readiness and await helper exit; four red-first regressions cover ordering and failures. No diagnostic rule is changed; fresh candidate CI remains required.
