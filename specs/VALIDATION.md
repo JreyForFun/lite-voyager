@@ -650,6 +650,68 @@ This final standalone gate has zero errors and zero warnings. Only T-010 is
 checked in its completion commit; prior full/compatibility host warnings stay
 explicitly recorded above, and new remote CI remains pending the owner's push.
 
+**T-010 CI lifecycle follow-up (2026-10-10):**
+[run 38029094981](https://github.com/JreyForFun/lite-voyager/actions/runs/38029094981),
+attempt 1 at `7981bf2ce23e66695379606ec28f37d51f92a972`, fails on macOS;
+Windows and Ubuntu full-verification jobs pass. The supplied macOS log passes
+all 300 unit / 19 integration tests but the runtime gate correctly rejects an
+error in `20261010T055556/main.log:8`: a blocked SQLite editor webview request.
+This is not an approved warning. Reopen T-010 until repaired-candidate CI passes.
+
+Original rejected record from the supplied log:
+```text
+20261010T055556/main.log:8: 2026-10-10 05:56:06.109 [error] Blocked vscode-webview request vscode-webview://07hsas9arjnn012qt486b8124bvn42nvn6gng51995aioc2rqvd6/index.html?id=da248b05-2ae4-4a3f-8ac8-68b8a2cd11ff&parentId=1&origin=a98e0787-99e0-4b01-9696-5467c7be959d&swVersion=6&extensionId=jreyinnovarev.lite-voyager&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app
+```
+The failed run also accepted one original diagnostic: source
+`20261010T055556/window1/renderer.log`, line 15, severity `warning`, rule
+`VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+That exception does not excuse the error or make this run warning-free.
+
+Lifecycle regression acceptance: given a normally opened script-free SQLite
+panel, when an integration test closes it, then it first asserts successful
+webview transport delivery and still awaits confirmed database-helper exit.
+Missing panels or failed delivery must fail the test. This checks VS Code's
+outer frame initialization, not DOM paint or visible-row performance. It must
+not introduce sleeps, retries, scripts, or diagnostic exceptions. Early user
+cancellation/disposal and late-reply production tests remain unchanged.
+
+The pre-repair close helper immediately issued close after backend completion.
+Four new regressions fail before repair and pass afterward: wait for delivery
+before closing, keep waiting for helper exit, reject failed delivery/missing
+panels, and accept the typed no-op probe. Existing assertions and timeouts stay.
+The first candidate full gate stopped on two new fixture `require-await` lint
+errors; replacing unnecessary async arrows fixes them without rule disables.
+
+The cause is a lifecycle hypothesis pending macOS confirmation, not a proven
+platform diagnosis. VS Code 1.140.0 queues transport sends until `webview-ready`
+([WebviewElement source](https://github.com/microsoft/vscode/blob/1.140.0/src/vs/workbench/contrib/webview/browser/webviewElement.ts));
+its main process rejects webview index requests when the requesting frame is
+missing/destroyed or outside a live main window
+([app source](https://github.com/microsoft/vscode/blob/1.140.0/src/vs/code/electron-main/app.ts)).
+Awaiting successful public `postMessage` delivery prevents normal host tests
+from destroying an initializing outer frame. No production close action is
+delayed and no app scripts are enabled.
+
+Repaired candidate `npm run verify:full` passes locally (exit 0): strict types,
+lint, all 304 unit / 19 real VS Code integration tests, builds and a 17-file /
+480.52 KB VSIX. Host: Windows x64, VS Code 1.140.0, bundled Node 24.21.0;
+development Node 26.5.0. The new readiness assertions pass across native and
+fallback valid/error/empty/reopen cases; source hashes/helper exits still pass.
+One original diagnostic is accepted: source
+`20261010T140740/window1/renderer.log`, line 10, severity `warning`, rule
+`VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+There are no unexpected diagnostics; this run is not warning-free. Preserve
+earlier owner QA, including the manually unobserved early-cancel case. T-010
+remains unchecked pending fresh repaired-candidate Windows/macOS/Ubuntu CI.
+
+Final standalone `npm run verify` passes (exit 0): strict host/webview/tooling
+types, lint, all 304 unit tests, production builds and a 17-file / 480.52 KB
+VSIX; zero errors and zero warnings. The lifecycle test additionally drains
+pending promise continuations before asserting that closure still waits for
+helper exit. No new host implementation change follows the passing full run.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -749,6 +811,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-010 CI lifecycle follow-up (2026-10-10): Preserve failed macOS run 38029094981/7981bf2 and passing Windows/Ubuntu conclusions. Normal test closure must assert webview transport readiness and await helper exit; four red-first regressions cover ordering and failures. No diagnostic rule is changed; fresh candidate CI remains required.
 - v0.1 T-010 completion QA (2026-10-10): Owner passes repaired Cancel/Proceed after Escape; scoped task acceptance has passing automated/observable manual evidence. Preserve unobserved manual cancellation, its automated coverage, earlier failures, exact host warnings and later milestone/CI gaps. Restore normal F5 engine detection by removing the temporary QA setting.
 - v0.1 T-010 Escape confirmation (2026-10-10): Owner supplies declined-consent output after Escape in the fresh fd9bd13 fallback QA host. Escape passes; explicit Cancel and Proceed retests remain. Preserve earlier failed QA and automated-run diagnostics.
 - v0.1 T-010 explicit consent candidate (2026-10-10): Owner confirms fresh-dialog Escape failed. Add red-first explicit Cancel/Escape routing and only-Proceed approval tests; candidate full verification passes with 300 unit/19 integration tests and the exact approved host diagnostic recorded. Desktop retest remains required; native root cause is not claimed.

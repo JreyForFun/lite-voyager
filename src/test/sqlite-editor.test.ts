@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
 import type { activate } from '../extension';
-import type { SqliteDocument } from '../editor/sqlite-editor';
+import { closeEditor } from './sqlite-editor-lifecycle';
 
 const hash = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
 async function editorApi() {
@@ -13,11 +13,6 @@ async function editorApi() {
   assert.ok(extension);
   return { extension, api: await extension.activate() };
 }
-async function closeEditor(document: SqliteDocument): Promise<void> {
-  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-  await document.session.closed;
-}
-
 suite('T-010 SQLite custom editor', () => {
   for (const fallback of [false, true]) {
     test(`FR-001: Given valid files with all SQLite extensions and fallback=${String(fallback)}, When opened normally, Then the registered binary editor opens read-only and closes its real helper`, async function () {

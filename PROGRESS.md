@@ -1,39 +1,38 @@
 # Progress
 
 ## Current phase / task
-Milestone 0, T-009 and T-010 are complete; historical evidence remains in VALIDATION.
-Milestone 1 continues. T-011 is next, not started; no milestone/release tag is claimed.
+Milestone 0 and T-009 are complete. T-010 is reopened for its CI lifecycle repair.
+T-011 is not started; no milestone completion or release tag is claimed.
 
 ## Verify status
-- Consent-candidate `npm run verify:full` passes: 300 unit / 19 integration tests, strict checks/builds and 17-file / 480.33 KB VSIX (2026-10-10).
+- Run 38029094981, attempt 1, SHA 7981bf2ce23e66695379606ec28f37d51f92a972: Windows/Ubuntu pass; macOS fails.
+- macOS passes 300 unit/19 host tests but rejects `20261010T055556/main.log:8`, an error: Blocked vscode-webview request.
+- Failed CI also accepts renderer.log line 15, VSCODE-HOST-001; exact original record remains in VALIDATION.
+- Four lifecycle/protocol regressions fail before repair; normal host closure now asserts transport readiness and awaits helper exit.
+- Initial candidate full gate stops on two fixture require-await lint errors; corrected without rule changes.
+- Repaired local `npm run verify:full` passes: 304 unit/19 host tests, strict checks/builds, 17-file/480.52 KB VSIX.
 - Windows x64 / VS Code 1.140.0 / bundled Node 24.21.0; development Node 26.5.0.
-- Consent-candidate VS Code 1.141.0 compatibility integration passes all 19 tests.
-- Consent contract red-first: five fail/six pass before provider repair; 23 provider/session tests pass afterward. These model actions, not the physical Escape key.
-- Each host run accepts one original warning: `20261010T133634/window1/renderer.log:10` and `20261010T133731/window1/renderer.log:10`, VSCODE-HOST-001, `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
-- No unexpected diagnostic; these host runs are not warning-free. Earlier evidence is retained in VALIDATION.
-- Completion-record `npm run verify` passes: 300 unit tests, strict checks/builds and 17-file / 480.32 KB VSIX; zero errors/warnings.
-- Fresh T-010 three-platform CI remains pending the owner's push.
+- Accepted local record: `20261010T140740/window1/renderer.log:10`, warning, VSCODE-HOST-001.
+- Exact message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+- No unexpected local diagnostic; full verification is not warning-free.
+- Final standalone `npm run verify` passes: 304 tests, strict checks/builds/package; zero errors/warnings.
 
 ## Last session
-- Owner passes all four default extensions and other-extension Reopen Editor With in VS Code 1.141 after repair 9ea86eb.
-- Owner passes invalid/zero-byte/valid-empty, close/reopen/responsiveness/light/dark and exact 200 MB checks; opened-state text confirms the persistent fallback notice.
-- Repaired extension-limited picker registration (9ea86eb) and explicit consent dismissal (fd9bd13); owner confirms both repairs.
-- 25 FR-001 task unit and seven task host tests cover opening, validation, source safety, lifecycle, editor defaults and explicit consent routing.
-- No dependency or committed fixture change; preserve owner's untracked copies and debug.log.
+- Read owner-supplied macOS failure; public API confirms the run SHA and three job conclusions.
+- Strengthen normal host-test closure with a typed no-op transport probe; fail on missing panels or failed delivery.
+- Existing assertions, timeouts, scripts-disabled UI, early cancellation tests and diagnostic policy remain intact.
+- Owner observable QA still passes: default/picker, invalid/empty, themes/reopen, fallback notice, threshold and Escape/Cancel/Proceed.
+- Early opening cancellation/closure remains manually unobserved; automated cleanup/late-reply coverage is retained.
+- Preserve owner's untracked fixture copies and debug.log; no dependency or committed fixture changes.
 
 ## Decisions made this session
-- Owner authorizes necessary repairs and best judgment; owner handles pushing.
-- Extension contributes defaults without writing user settings; explicit user associations win.
-- Opening/validation/fallback/lifecycle only; table browsing and first-row performance remain later tasks.
+Owner authorizes necessary repairs/best judgment and handles pushing. Stay on T-010 only.
 
 ## Known issues / blockers
-- Owner confirms Escape and Cancel leave the file unloaded, and Proceed opens it, on fd9bd13. Observable T-010 manual QA passes.
-- Opening cancellation/closure remains manually unobserved; automated provider/session/real Engine cleanup tests satisfy scoped acceptance. Fresh CI remains pending.
-- Native desktop control is unavailable here; CLI launches and automated host checks are available.
-- Production deep paging, multi-GB memory/first-row targets and whole-milestone QA remain later validation.
-- R-1: prior CSV benchmark remains 145.4 s / 223.0 MB RSS / 27.2 ms parsed preview; planned mitigations remain.
+- Closing before outer-frame initialization is the leading CI hypothesis; macOS reproduction/repair confirmation requires fresh CI.
+- Native desktop control is unavailable here; CLI and real Windows host checks are available.
+- Browsing, first-row/multi-GB targets and whole-milestone QA remain later tasks; prior CSV benchmark limitations remain.
 
 ## Next
-T-010 is checked in its completion commit; temporary F5 fallback setting has been removed.
-Owner closes the fallback QA window, pushes with `git push origin main`, and supplies Actions URL/SHA/job conclusions.
-Start T-011 in a fresh chat after the pending CI check; no further task is started here.
+Owner pushes the repair candidate with `git push origin main`.
+Supply the new Actions URL/SHA/job conclusions; leave T-010 unchecked until all three full jobs pass.

@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-010 CI follow-up: reopen the task after macOS run 38029094981 rejected
+  a blocked webview request despite passing tests. Normal editor host tests
+  now assert webview transport readiness before closing, then await helper
+  exit. Four red-first regressions cover ordering, failed delivery, missing
+  panels and the typed no-op probe. No scripts, delays, retries or diagnostic
+  exceptions were added; fresh three-platform CI remains required.
+
 - T-010 consent repair: supply an explicit Cancel action for modal
   Escape/close handling and approve only the returned Proceed action. Preserve
   late-approval cancellation/disposal guards. Expanded provider tests cover

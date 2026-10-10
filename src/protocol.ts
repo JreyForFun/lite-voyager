@@ -11,7 +11,10 @@ export interface SpikeStatus {
 }
 export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus;
 export type HostToWebviewMessage = { type: 'error'; message: string; context: string }
-  | { type: 'spikeInit'; rowCount: number } | SpikePage;
+  | { type: 'spikeInit'; rowCount: number } | SpikePage
+  // Integration-only no-op for the script-free SQLite editor. Delivery checks
+  // VS Code's outer webview transport readiness, not content rendering.
+  | { type: 'sqliteEditorProbe' };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -30,6 +33,7 @@ export function isWebviewMessage(value: unknown): value is WebviewToHostMessage 
 
 export function isHostMessage(value: unknown): value is HostToWebviewMessage {
   if (!isRecord(value)) { return false; }
+  if (value['type'] === 'sqliteEditorProbe') { return true; }
   if (value['type'] === 'error') {
     return typeof value['message'] === 'string' && typeof value['context'] === 'string';
   }
