@@ -526,6 +526,42 @@ Owner F5 checks (README T-010 report), pushing and fresh three-platform CI remai
 pending. T-010 stays unchecked until owner QA is confirmed. Whole-milestone
 large-file/performance/accessibility/manual validation remains open.
 
+**T-010 Reopen Editor With repair (2026-10-10):** owner reports VS Code
+1.141.0 and PASS for the four default SQLite extensions, but Lite Voyager is
+absent from the picker for another extension. The earlier host test called
+`vscode.openWith` with an explicit view type; it bypassed picker eligibility.
+
+Before changing the manifest, focused session tests fail on two registration
+assertions (10 pass / two fail). One is the new picker regression; the other
+preserves the existing four-default contract using the specified registration.
+After repair, all 23 task unit tests pass. No assertions were skipped or weakened.
+The optional `**/*` selector makes other filenames eligible; contributed
+`workbench.editorAssociations` defaults retain automatic SQLite opening.
+The extension does not write user settings. Two new real-host tests confirm
+CSV keeps its text editor and an explicit user association overrides SQLite
+defaults. They use the existing disposable profile and restore their settings.
+Existing real-host four-extension, both-engine and source-hash tests remain.
+
+Repair `npm run verify:full` passes (exit 0): 298 unit tests, 19 integration
+tests, strict types/lint/builds and 17-file / 480.04 KB VSIX on Windows x64 /
+VS Code 1.140.0. The sole accepted diagnostic is source
+`20261010T130219/window1/renderer.log`, line 10, original severity `warning`,
+rule `VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No unexpected diagnostic is accepted; this full run is not warning-free.
+Compatibility `npm run test:integration` with
+`LITE_VOYAGER_TEST_VSCODE_VERSION=1.141.0` also passes (exit 0, 19 tests).
+Its sole accepted diagnostic is source
+`20261010T130300/window1/renderer.log`, line 10, original severity `warning`,
+rule `VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other diagnostic is accepted; this compatibility run is not warning-free.
+Final standalone `npm run verify` passes (exit 0): 298 unit tests, strict
+host/webview/tooling types, lint, builds and a 17-file / 480.04 KB VSIX.
+This standalone gate has zero errors and zero warnings.
+Picker visibility in the owner's actual menu and the remaining manual checks
+still require owner confirmation. User-created fixture copies are preserved.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -625,6 +661,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-010 picker repair (2026-10-10): Retain the owner's failed picker report, explain the direct-command test gap, record red-first registration coverage and passing 298-unit/19-host full check with its exact approved diagnostic. Owner menu/remaining QA and fresh CI are pending.
 - v0.1 T-010 implementation (2026-10-10): Recorded 22 unit/five new host tests, two red-first lifecycle repairs and passing local full verification with every accepted host warning reported. Owner QA/push/fresh CI and production browsing/performance remain pending; T-010 stays unchecked.
 - v0.1 T-009 completion (2026-10-10): Verified run 38018867617/attempt 1/7114b62 and successful locked installs/full checks on Windows, macOS and Ubuntu. Closed only T-009; preserved failed probes, exact diagnostic policy and later-task/manual QA gaps. No executable changes.
 - v0.1 T-009 colored-console repair (2026-10-10): Preserve failed run 38016821325/ece4194 on all platforms and the incomplete earlier local coverage. Explicit color/agent matrices and segmented-formatting regressions precede scan-only terminal normalization; original output and strict rejection policy remain intact. Canonical verify/full pass with 275 unit/12 integration tests and one reported approved warning; the injected-CI probe fails on host startup/offline diagnostics and is retained. T-009 remains reopened pending fresh three-platform CI.

@@ -71,6 +71,10 @@ The primary engine reports disk-backed access. Table browsing is a later task.
    extensions; open normally and confirm the same editor. For a copy named
    `database.data`, use **Reopen Editor With… → Lite Voyager**. Its header,
    rather than its extension, determines validity.
+   After a registration change, restart the Extension Development Host before
+   checking this menu. Lite Voyager is an optional choice for other file names;
+   only the four SQLite extensions have contributed defaults. Explicit user
+   editor associations take precedence.
 3. Close and reopen a valid file twice. Verify another editor remains responsive.
    Repeat the opening/error checks in light and dark themes.
 4. Start a fresh F5 host with `LITE_VOYAGER_FORCE_FALLBACK=1` using the launch

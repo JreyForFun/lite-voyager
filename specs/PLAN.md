@@ -554,7 +554,10 @@ SQLite files skip the loader and open directly. New formats such as Parquet impl
 
 ## 7. Open behavior (D-5)
 
-- `customEditors` entry for SQLite extensions with `priority: "default"`.
+- One SQLite `customEditors` entry with `selector: [{ "filenamePattern": "**/*" }]`
+  and `priority: "option"`, so Reopen Editor With offers it for any saved local
+  filename. Contribute `workbench.editorAssociations` defaults for `*.db`,
+  `*.sqlite`, `*.sqlite3` and `*.db3`; explicit user associations take precedence.
 - Entries for csv, tsv, json, jsonl, xlsx with `priority: "option"`.
 - Explorer context-menu command "Open in Lite Voyager".
 - Editor-title button when a CSV or JSON text file is active.
@@ -610,6 +613,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-010 picker repair (2026-10-10): Replace extension-limited default registration with one optional all-filename selector and four contributed editor defaults. This preserves default SQLite opening while making Reopen Editor With available for other filenames; user associations retain precedence.
 - v0.4 T-009 read safety (2026-10-10): Red-first regression rejects EXPLAIN PRAGMA before preparing it; SQLite preparation-time PRAGMAs can otherwise change read-only/trusted-schema flags. Query plans remain available for SELECT/WITH.
 - v0.4 T-009 architecture (2026-10-10): Owner-authorized public Engine/helper supervision and native/sql.js backends; documented pre-editor consent UI, threshold, snapshot safety, bounded pages and offset tradeoff. No new dependency or production performance claim.
 - v0.4 T-052 completion (2026-10-10): Verified final fixture-candidate run 37962951570/attempt 1/6b2d665 on all three platforms; completed foundation scope and the local v0.0.1 checkpoint with all later production targets retained.

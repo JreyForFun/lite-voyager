@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-010 repair: offer Lite Voyager in **Reopen Editor With** for saved local
+  files with any name. Keep defaults for the four SQLite extensions, preserve
+  other file types' normal editors and respect explicit user associations.
+  Added a failing registration regression and real-host default/override tests;
+  the earlier direct Open With test bypassed picker eligibility.
+
 - T-010: added a read-only binary custom editor, default SQLite extension
   associations, worker-backed header/database validation, opening/error states,
   persistent fallback notices and large-file consent, cancellation and helper

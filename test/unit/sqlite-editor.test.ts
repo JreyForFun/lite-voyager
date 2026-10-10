@@ -22,9 +22,35 @@ beforeEach(() => { engine = fakeEngine(); });
 test('FR-001: Given the manifest, When opening SQLite extensions, Then the binary editor is the default for all four extensions', async () => {
   const manifest: unknown = JSON.parse(await readFile('package.json', 'utf8'));
   expect(manifest).toMatchObject({ contributes: { customEditors: [{
-    viewType: 'lite-voyager.sqlite', displayName: 'Lite Voyager', priority: 'default',
-    selector: [{ filenamePattern: '*.db' }, { filenamePattern: '*.sqlite' }, { filenamePattern: '*.sqlite3' }, { filenamePattern: '*.db3' }],
-  }] } });
+    viewType: 'lite-voyager.sqlite', displayName: 'Lite Voyager', priority: 'option',
+    selector: [{ filenamePattern: '**/*' }],
+  }], configurationDefaults: { 'workbench.editorAssociations': {
+    '*.db': 'lite-voyager.sqlite', '*.sqlite': 'lite-voyager.sqlite',
+    '*.sqlite3': 'lite-voyager.sqlite', '*.db3': 'lite-voyager.sqlite',
+  } } } });
+});
+
+test('FR-001: Given an arbitrary file name, When VS Code builds the editor picker, Then one optional all-filename registration offers Lite Voyager without changing other defaults', async () => {
+  const manifest: unknown = JSON.parse(await readFile('package.json', 'utf8'));
+  expect(manifest).toMatchObject({ contributes: {
+    customEditors: [{ viewType: 'lite-voyager.sqlite', priority: 'option', selector: [{ filenamePattern: '**/*' }] }],
+    configurationDefaults: { 'workbench.editorAssociations': {
+      '*.db': 'lite-voyager.sqlite', '*.sqlite': 'lite-voyager.sqlite',
+      '*.sqlite3': 'lite-voyager.sqlite', '*.db3': 'lite-voyager.sqlite',
+    } },
+  } });
+  if (typeof manifest !== 'object' || manifest === null || !('contributes' in manifest)) { throw new Error('Missing manifest contributions.'); }
+  const contributes = manifest.contributes;
+  if (typeof contributes !== 'object' || contributes === null || !('customEditors' in contributes)
+    || !('configurationDefaults' in contributes)) { throw new Error('Missing editor contributions.'); }
+  expect(contributes.customEditors).toHaveLength(1);
+  const defaults = contributes.configurationDefaults;
+  if (typeof defaults !== 'object' || defaults === null || !('workbench.editorAssociations' in defaults)) { throw new Error('Missing default associations.'); }
+  expect(Object.keys(defaults)).toEqual(['workbench.editorAssociations']);
+  expect(defaults['workbench.editorAssociations']).toEqual({
+    '*.db': 'lite-voyager.sqlite', '*.sqlite': 'lite-voyager.sqlite',
+    '*.sqlite3': 'lite-voyager.sqlite', '*.db3': 'lite-voyager.sqlite',
+  });
 });
 
 test('FR-001: Given a valid local file, When opening twice, Then one worker Engine opens read-only and browsing is deferred', async () => {

@@ -128,4 +128,50 @@ suite('T-010 SQLite custom editor', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+
+  test('FR-001: Given another extension, When opened normally, Then the optional SQLite editor preserves the text editor default', async function () {
+    this.timeout(15000);
+    const { extension, api } = await editorApi();
+    const path = join(extension.extensionPath, 'test/fixtures/sample.csv');
+    const before = await hash(path);
+    const uri = vscode.Uri.file(path);
+    try {
+      await vscode.commands.executeCommand('vscode.open', uri, { preview: false });
+      assert.ok(vscode.window.tabGroups.activeTabGroup.activeTab?.input instanceof vscode.TabInputText);
+      assert.equal(api.sqliteEditor.getDocument(uri), undefined);
+      const configuration = vscode.workspace.getConfiguration('workbench');
+      assert.deepEqual(configuration.inspect<Record<string, string>>('editorAssociations')?.defaultValue, {
+        '*.db': 'lite-voyager.sqlite', '*.sqlite': 'lite-voyager.sqlite',
+        '*.sqlite3': 'lite-voyager.sqlite', '*.db3': 'lite-voyager.sqlite',
+      });
+      const manifest: unknown = extension.packageJSON;
+      assert.ok(typeof manifest === 'object' && manifest !== null && 'contributes' in manifest);
+      const contributions = manifest.contributes;
+      assert.ok(typeof contributions === 'object' && contributions !== null && 'customEditors' in contributions);
+      assert.deepEqual(contributions.customEditors, [{ viewType: 'lite-voyager.sqlite', displayName: 'Lite Voyager',
+        selector: [{ filenamePattern: '**/*' }], priority: 'option' }]);
+      assert.equal(await hash(path), before);
+    } finally { await vscode.commands.executeCommand('workbench.action.closeAllEditors'); }
+  });
+
+  test('FR-001: Given an explicit user association, When a SQLite extension opens, Then the user choice overrides the contributed default', async function () {
+    this.timeout(15000);
+    const { extension, api } = await editorApi();
+    const configuration = vscode.workspace.getConfiguration('workbench');
+    const previous = configuration.inspect<Record<string, string>>('editorAssociations')?.globalValue;
+    const path = join(extension.extensionPath, 'test/fixtures/sample.sqlite');
+    const uri = vscode.Uri.file(path);
+    const before = await hash(path);
+    try {
+      // The integration runner creates a disposable isolated profile; never updates the owner's profile.
+      await configuration.update('editorAssociations', { ...previous, '*.sqlite': 'default' }, vscode.ConfigurationTarget.Global);
+      await vscode.commands.executeCommand('vscode.open', uri, { preview: false });
+      assert.ok(vscode.window.tabGroups.activeTabGroup.activeTab?.input instanceof vscode.TabInputText);
+      assert.equal(api.sqliteEditor.getDocument(uri), undefined);
+      assert.equal(await hash(path), before);
+    } finally {
+      await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      await configuration.update('editorAssociations', previous, vscode.ConfigurationTarget.Global);
+    }
+  });
 });
