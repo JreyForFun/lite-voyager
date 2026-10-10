@@ -907,6 +907,34 @@ F5 visual/keyboard/theme checks and generation commands. Original owner copies
 and debug.log are untouched. Independent milestone review, manual smoothness/
 theme judgement, source editing, SQL UI and full performance remain later work.
 
+**T-012 CI and owner QA confirmation (2026-10-10):** owner supplies
+[run 38039805436](https://github.com/JreyForFun/lite-voyager/actions/runs/38039805436),
+attempt 1, commit `a72052004ebc8a383e6c195e12956801b101a099`, and reports GOOD
+after the requested F5 fixture checks: distinct NULL/empty/exact integers,
+201-row paging/count, slow-count cancellation/recovery, themes and keyboard
+scrolling. This is owner-reported QA; individual observations were not supplied
+and the assistant did not independently observe the physical desktop.
+
+Public GitHub API metadata independently confirms completed/successful run
+and all three full-verification jobs, locked installations and applicable steps:
+
+- [Ubuntu](https://github.com/JreyForFun/lite-voyager/actions/runs/38039805436/job/114177613090): Linux session-bus/xvfb full verification succeeds.
+- [Windows](https://github.com/JreyForFun/lite-voyager/actions/runs/38039805436/job/114177613233): Windows/macOS full verification succeeds.
+- [macOS](https://github.com/JreyForFun/lite-voyager/actions/runs/38039805436/job/114177613238): Windows/macOS full verification succeeds.
+
+The workflow runs `npm ci` and `npm run verify:full` on each platform, using
+`dbus-run-session -- xvfb-run -a` on Linux. Alternative OS-specific steps are
+skipped by their platform condition, not skipped tests. Remote full logs were
+not independently inspected and remote runs are not claimed warning-free.
+Preserve the exact accepted local host diagnostic and earlier failures above.
+Scoped T-012 remains complete and checked. Independent milestone review,
+cold-disk/multi-GB memory targets, schema panel and whole-milestone QA remain
+open; T-013 is not started and no release tag is claimed. These changes affect
+only PROGRESS.md, TASKS.md and VALIDATION.md; owner pushes the completion record.
+CI-record `npm run verify` passes (exit 0): 357 unit tests in 30 files,
+strict host/webview/tooling types, lint, production builds and a 19-file /
+489.84 KB VSIX; zero errors and zero warnings.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -1006,6 +1034,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-012 CI/owner QA confirmation (2026-10-10): Independently verify public run/job/step metadata for 38039805436/attempt 1/a720520 on Windows/macOS/Ubuntu and record owner-reported GOOD after requested browser checks. Preserve exact local diagnostics, remote-log/manual-observation limits and whole-milestone requirements.
 - v0.1 T-012 browser (2026-10-10): Record scoped acceptance coverage, real-host DOM/source/cancellation evidence and all failed/regression runs. Preserve strict diagnostics and exact host-warning reporting; separate task browser readiness from later manual, CI and whole-milestone performance/review requirements.
 - v0.1 T-011 CI confirmation (2026-10-10): Verify run 38034122214/attempt 1/f49f87d success and successful locked installs/applicable full checks on Windows/macOS/Ubuntu via public API metadata. Preserve exact local host diagnostics, remote-log limitations and later-task/milestone scope.
 - v0.1 T-011 metadata (2026-10-10): Record tests-first metadata implementation, six red-first function-name-collision repairs, 26 task unit/four host cases and passing 330-unit/23-host full gate. Report the exact approved host warning; retain later UI/performance/CI and independent milestone-review limits.
