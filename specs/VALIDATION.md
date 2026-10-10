@@ -740,6 +740,59 @@ Completion edits are records only. Completion-record `npm run verify` passes
 (exit 0): all 304 unit tests, strict host/webview/tooling types, lint, production
 builds and a 17-file / 480.58 KB VSIX; zero errors and zero warnings.
 
+**T-011 worker metadata completion (2026-10-10):** owner authorizes T-011
+alone, judgment on schema details, necessary fixes/fixtures and local validation;
+the owner handles pushing. T-012 remains unstarted. No new dependency, committed
+fixture edit or source-file mutation is introduced. Disposable test databases
+cover schema stress cases; existing owner fixture copies and debug.log remain.
+
+The initial new metadata cases fail before implementation because the Engine
+methods do not exist. The first empty-database test setup accidentally creates
+a zero-byte file; initialize a valid empty SQLite database with VACUUM before
+testing absent metadata. A SQL alias quoting/type-narrowing correction precedes
+the first passing 16-case run. The initial standalone gate passes 324 tests,
+but is not final evidence for the later name-collision repair.
+
+Self-review reproduces main-schema tables hiding PRAGMA functions. Six new
+red-first cases (columns/indexes/indexColumns on each backend) fail before the
+repair. Qualify metadata functions through the empty temp schema and retain
+their explicit main-schema argument. All 26 task unit cases now pass; this is
+local author review, not an independent fresh-chat review.
+
+Acceptance coverage in `test/unit/engine-schema.test.ts`:
+- FR-001: complete paged table/view catalog, real sqlite_sequence exclusion,
+  retained sqliteX/user names, creation SQL and a valid empty database.
+- FR-003: exact types/default SQL/NULLs, NOT NULL, composite primary-key order,
+  generated columns, views, no-key/no-index tables, explicit/implicit/partial/
+  expression indexes, WITHOUT ROWID primary indexes and key/auxiliary terms.
+- FR-003: literal Unicode/quote/injection-like names, missing/wrong-table indexes,
+  invalid identifiers/pages, 1,000 columns, explicit >4 MiB metadata failure,
+  malformed-view error recovery and PRAGMA-function name collisions.
+- FR-016: read-only source, rejected writes, unchanged hashes, no new sidecars,
+  cancel/reopen and pending-request close/overlap handling on both backends.
+
+`src/test/engine-schema.test.ts` adds four real-host cases: native/fallback
+column/index/term pages, unusual names, view and WITHOUT ROWID metadata,
+off-thread execution, source hashes/sidecars, cancel/close and error recovery.
+The final implementation `npm run verify:full` passes (exit 0): 330 unit tests,
+23 integration tests, strict typechecks/lint, builds and a 17-file / 481.24 KB
+VSIX on Windows x64, VS Code 1.140.0, bundled Node 24.21.0.
+
+Exactly one accepted record: source `20261010T144855/window1/renderer.log`,
+line 10, original severity `warning`, rule `VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other warning or error is accepted. This full run is not warning-free.
+Logs remain in `out/integration-profile-MGgJI1/logs`; prior failed evidence and
+the strict host diagnostic policy remain unchanged.
+
+All scoped T-011 acceptance passes locally. Fresh three-platform CI requires
+the owner's push; cross-platform results, independent milestone review,
+visible schema/grid QA and production first-row/multi-GB targets are not claimed.
+Completion-record `npm run verify` passes (exit 0): 330 unit tests, strict
+types/lint/builds and a 17-file / 481.24 KB VSIX, zero errors and warnings.
+Only T-011 is checked in its task commit. No milestone completion or release
+tag is claimed.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -839,6 +892,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-011 metadata (2026-10-10): Record tests-first metadata implementation, six red-first function-name-collision repairs, 26 task unit/four host cases and passing 330-unit/23-host full gate. Report the exact approved host warning; retain later UI/performance/CI and independent milestone-review limits.
 - v0.1 T-010 CI completion (2026-10-10): Independently verify run/job/step metadata for fresh 55e5da0/run 38030277300 success on Windows/macOS/Ubuntu. Close scoped T-010 only; preserve failed CI, exact historical host diagnostics, manually unobserved cancellation and later milestone requirements. Remote logs are not independently retrieved or called warning-free.
 - v0.1 T-010 CI lifecycle follow-up (2026-10-10): Preserve failed macOS run 38029094981/7981bf2 and passing Windows/Ubuntu conclusions. Normal test closure must assert webview transport readiness and await helper exit; four red-first regressions cover ordering and failures. No diagnostic rule is changed; fresh candidate CI remains required.
 - v0.1 T-010 completion QA (2026-10-10): Owner passes repaired Cancel/Proceed after Escape; scoped task acceptance has passing automated/observable manual evidence. Preserve unobserved manual cancellation, its automated coverage, earlier failures, exact host warnings and later milestone/CI gaps. Restore normal F5 engine detection by removing the temporary QA setting.

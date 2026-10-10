@@ -1,12 +1,13 @@
 import { createRequire } from 'node:module';
 import { parentPort, threadId, workerData } from 'node:worker_threads';
-import type { DatabaseQuery, DatabaseResponse, DatabaseWorkerOptions, DatabaseWorkerRequest } from '../protocol';
+import type { DatabaseOperation, DatabaseResponse, DatabaseWorkerOptions, DatabaseWorkerRequest } from '../protocol';
 import type { EngineMode, ReadBackend } from '../engine/engine';
 import { inspectFile } from '../engine/file-snapshot';
 import { NodeSqliteEngine } from '../engine/node-sqlite';
 import { SqlJsEngine } from '../engine/sqljs';
 import { collectPage, checkParameters, checkReadStatement } from '../engine/read-engine';
 import { needsFallbackConsent, selectBuiltin } from '../engine/selection';
+import { metadataPage } from '../engine/schema';
 
 const port = parentPort;
 if (port === null) { throw new Error('The database engine must run in a worker.'); }
@@ -17,17 +18,24 @@ function optionsFrom(value: unknown): DatabaseWorkerOptions {
     || !('forceFallback' in value) || typeof value.forceFallback !== 'boolean') { throw new Error('Invalid database worker options.'); }
   return { path: value.path, directory: value.directory, forceFallback: value.forceFallback };
 }
-function query(backend: ReadBackend, request: DatabaseQuery): void {
+function query(backend: ReadBackend, request: DatabaseOperation): void {
   reply({ type: 'started', id: request.id });
   try {
-    checkReadStatement(request.sql); checkParameters(request.parameters);
-    const value = collectPage(backend.cursor(request.sql, request.parameters), request.page);
+    const value = request.type === 'query'
+      ? readQuery(backend, request) : metadataPage(backend, request);
     reply({ type: 'result', id: request.id, value });
   } catch (error: unknown) {
     const text = error instanceof Error ? error.message : '';
-    const actionable = /^(Invalid |Pass an exact|The result page|Run only one|The read-only|The query has)/u.test(text);
-    reply({ type: 'queryFailed', id: request.id, message: actionable ? text : 'The SQLite query failed. Check the SQL, table names, and read-only mode.' });
+    const actionable = /^(Invalid |Pass an exact|The result page|Run only one|The read-only|The query has|The schema object|The table index)/u.test(text);
+    const failure = request.type === 'metadata'
+      ? 'The SQLite schema could not be read. Refresh the table list, check that the database is still available, or reopen the file.'
+      : 'The SQLite query failed. Check the SQL, table names, and read-only mode.';
+    reply({ type: 'queryFailed', id: request.id, message: actionable ? text : failure });
   }
+}
+function readQuery(backend: ReadBackend, request: Extract<DatabaseOperation, { type: 'query' }>) {
+  checkReadStatement(request.sql); checkParameters(request.parameters);
+  return collectPage(backend.cursor(request.sql, request.parameters), request.page);
 }
 async function start(): Promise<void> {
   const options = optionsFrom(workerData as unknown);
@@ -48,7 +56,7 @@ async function start(): Promise<void> {
   port?.on('message', (request: DatabaseWorkerRequest) => {
     if (request.type === 'consent' && resolveConsent !== undefined) {
       const resolve = resolveConsent; resolveConsent = undefined; resolve(request.approved === true);
-    } else if (request.type === 'query' && backend !== undefined) { query(backend, request); }
+    } else if ((request.type === 'query' || request.type === 'metadata') && backend !== undefined) { query(backend, request); }
   });
   reply({ type: 'mode', value: mode });
   if (consent !== undefined && !await consent) { throw new Error('Memory-limited mode: the file was not loaded because consent was declined.'); }

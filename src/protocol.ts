@@ -63,7 +63,11 @@ export interface DatabaseQuery {
   parameters: import('./engine/engine').Parameter[];
   page: import('./engine/engine').PageAddress;
 }
-export type DatabaseWorkerRequest = DatabaseQuery | { type: 'consent'; approved: boolean };
+export type DatabaseMetadata = {
+  type: 'metadata'; id: number; table: string; page: import('./engine/engine').PageAddress;
+} & ({ kind: 'columns' } | { kind: 'indexes' } | { kind: 'indexColumns'; index: string });
+export type DatabaseOperation = DatabaseQuery | DatabaseMetadata;
+export type DatabaseWorkerRequest = DatabaseOperation | { type: 'consent'; approved: boolean };
 export type DatabaseHelperRequest =
   | { type: 'open'; workerPath: string; options: DatabaseWorkerOptions }
   | { type: 'request'; value: DatabaseWorkerRequest };

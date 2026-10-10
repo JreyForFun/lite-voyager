@@ -12,6 +12,9 @@ function fakeEngine() {
     close: vi.fn<Engine['close']>().mockResolvedValue(undefined),
     cancel: vi.fn<Engine['cancel']>().mockResolvedValue(undefined),
     schema: vi.fn<Engine['schema']>().mockResolvedValue(empty),
+    columns: vi.fn<Engine['columns']>().mockResolvedValue(empty),
+    indexes: vi.fn<Engine['indexes']>().mockResolvedValue(empty),
+    indexColumns: vi.fn<Engine['indexColumns']>().mockResolvedValue(empty),
     page: vi.fn<Engine['page']>().mockResolvedValue(empty),
     query: vi.fn<Engine['query']>().mockResolvedValue(empty),
   };

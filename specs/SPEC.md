@@ -100,6 +100,38 @@ Priority: **P0** first release, **P1** next, **P2** later in v1.
 
 **FR-003 (P0) View schema.** Column name, type, primary key, NOT NULL, default value, and the table's indexes.
 
+**T-011 worker acceptance (owner-authorized, 2026-10-10)**
+
+- Given either production Engine backend and a valid database, when listing
+  objects, then all user tables/views are reachable through bounded pages in
+  name order, with their type and creation SQL. Internal `sqlite_` objects are
+  excluded; ordinary names such as `sqliteX` are retained. An empty database
+  returns an empty page. Opening and metadata work execute in the DB worker.
+- Given a table or view, when requesting column pages, then return SQLite's
+  column ordinal, name, declared type, NOT NULL flag, default SQL (NULL when
+  absent), primary-key position and hidden/generated-column flag in ordinal
+  order. Preserve composite keys, WITHOUT ROWID and generated columns. Report
+  SQLite's declared metadata; do not infer additional constraints for views.
+- Given a table, when requesting index pages, then return index name, uniqueness,
+  origin, partial flag and creation SQL (NULL for implicit indexes) in name order.
+  Index-term pages return ordinal, column ID/name, descending flag, collation and
+  key/auxiliary flag. Preserve expression markers and the original index SQL
+  rather than guessing parsed expressions. WITHOUT ROWID primary-key indexes
+  remain inspectable even when absent from sqlite_schema. Views/no-index tables
+  return empty index pages.
+- Given unusual or injection-like names, when requesting metadata, then treat
+  names literally using bound parameters scoped to the main database. User
+  tables named like PRAGMA functions must not shadow metadata operations.
+  Invalid identifiers, missing objects/indexes and invalid pages fail clearly;
+  failures do not prevent a subsequent valid request. Pages obey the Engine row
+  and byte budgets and fail explicitly rather than truncate oversized metadata.
+- Given read-only metadata requests on either backend, then the source remains
+  byte-identical, no journal/WAL sidecar is created, and write statements remain
+  rejected. Close/cancel/reopen retain the existing supervised worker lifecycle.
+- Tests precede implementation. `npm run verify` must pass with zero errors and
+  warnings; real VS Code host coverage exercises both backends. Visible schema,
+  table-list/grid UI and full FR-001 first-row performance remain later tasks.
+
 **FR-004 (P1) Open CSV / TSV of any size.**
 - First rows are previewed immediately by reading the start of the file, before any import.
 - The full file is streamed into a temporary on-disk SQLite table in the background, with a progress bar and a cancel button.
@@ -232,6 +264,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.7 T-011 scope (2026-10-10): Owner authorizes worker-only paged object/column/index metadata, both-engine tests and necessary scoped fixes. Preserve declared SQLite metadata and source safety; visible browsing and first-row performance remain later tasks.
 - v0.6 T-010 consent dismissal (2026-10-10): Owner confirms Escape dismissed a fresh warning but the editor showed opened. Preserve the failed QA and require explicit Cancel/Escape routing with only Proceed authorizing loading; real desktop retest remains necessary.
 - v0.6 T-010 picker repair (2026-10-10): Owner reported the default extensions pass in VS Code 1.141.0, but Lite Voyager is absent from Reopen Editor With for another extension. Made picker eligibility, preservation of other defaults and user-association precedence explicit; previous direct-command tests did not prove picker availability.
 - v0.6 T-010 scope (2026-10-10): Owner approved the read-only custom-editor opening/validation/fallback/lifecycle scope; full browsing and first-row performance remain T-011/T-012 and later validation.

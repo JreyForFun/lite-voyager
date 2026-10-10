@@ -1,37 +1,36 @@
 # Progress
 
 ## Current phase / task
-Milestone 0, T-009 and T-010 are complete. Milestone 1 continues.
-T-011 is next, not started; no milestone completion or release tag is claimed.
+Milestone 0 and T-009/T-010/T-011 are complete. Milestone 1 continues.
+T-012 is next, not started; no milestone completion or release tag is claimed.
 
 ## Verify status
-- Fresh run 38030277300, attempt 1, SHA 55e5da0fe62d7468f76c213ce3b34fec96849b24 succeeds.
-- Public API confirms successful Windows/macOS/Ubuntu jobs, locked installs and applicable full-verification steps.
-- CI uses the existing strict host-diagnostic policy; metadata is verified, remote full logs are not independently retrieved (HTTP 403).
-- Preserve failed macOS run 38029094981/7981bf2 and its blocked-webview error in VALIDATION.
-- Repaired local `npm run verify:full` passes: 304 unit/19 host tests, strict checks/builds, 17-file/480.52 KB VSIX.
-- Windows x64 / VS Code 1.140.0 / bundled Node 24.21.0; development Node 26.5.0.
-- Accepted local diagnostic: `20261010T140740/window1/renderer.log:10`, warning, VSCODE-HOST-001.
-- Exact message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
-- Full host runs are not claimed warning-free; exact historical diagnostic records remain in VALIDATION.
-- Repair-record standalone `npm run verify` passes: 304 tests and zero errors/warnings.
-- Completion-record `npm run verify` passes: 304 tests, strict checks/builds, 17-file/480.58 KB VSIX; zero errors/warnings.
+- T-011 implementation `npm run verify:full` passes: 330 unit/23 host tests.
+- Strict types/lint/builds pass; 17-file/481.24 KB VSIX.
+- Windows x64 / VS Code 1.140.0 / bundled Node 24.21.0.
+- One accepted host warning: VSCODE-HOST-001, renderer.log line 10.
+- Source: `20261010T144855/window1/renderer.log`.
+- Message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+- Full host run is not warning-free; no other diagnostic is accepted.
+- Completion-record `npm run verify` passes: 330 tests, zero errors/warnings.
+- Earlier T-010 CI success and failed/approved diagnostic records remain in VALIDATION.
 
 ## Last session
-- Confirm fresh repaired-candidate three-platform CI and recheck only T-010.
-- Four red-first regressions cover normal host closure readiness, failed delivery/missing panels and the typed no-op probe.
-- Owner observable QA passes: defaults/picker, invalid/empty, themes/reopen, fallback notice, threshold and Escape/Cancel/Proceed.
-- Early opening cancellation/closure remains manually unobserved; automated cleanup/late-reply coverage satisfies scoped acceptance.
-- Preserve owner's untracked fixture copies and debug.log; no dependency or committed fixture changes.
+- Add paged worker column/index/index-term metadata to the existing Engine.
+- 26 task unit/four real-host tests cover both backends and source safety.
+- Six red-first regressions repair metadata-function shadowing by user tables.
+- Preserve generated columns, composite keys, expression/implicit/WITHOUT ROWID indexes.
+- No new dependency or committed fixture changes; owner copies/debug.log preserved.
 
 ## Decisions made this session
-Owner authorizes necessary repairs/best judgment and handles pushing. Finish T-010 only.
+Owner authorizes T-011 implementation, judgment, scoped fixes and fixtures; owner pushes.
+Worker API only; table-list/grid/schema UI remains T-012.
 
 ## Known issues / blockers
-- No remaining scoped T-010 blocker; successful macOS CI confirms the repaired candidate passes its full gate.
-- Native desktop control is unavailable here; CLI and real Windows host checks are available.
-- Browsing, first-row/multi-GB targets and whole-milestone QA remain later tasks; prior CSV benchmark limitations remain.
+- No remaining local scoped T-011 blocker; fresh three-platform CI awaits owner push.
+- Independent milestone review, visible UI and first-row/multi-GB targets remain open.
+- Native desktop control remains unavailable; CLI/real Windows host checks work.
 
 ## Next
-Owner pushes the completion records with `git push origin main`.
-Start T-011 in a fresh chat using AGENTS.md, CONSTITUTION.md and this PROGRESS.md.
+Owner pushes the T-011 commit with `git push origin main` and checks CI.
+Start T-012 in a fresh chat with AGENTS.md, CONSTITUTION.md and this PROGRESS.md.

@@ -360,6 +360,28 @@ limitations remain open as described above.
 - **Role of spike T-002:** no longer a go/no-go gate. It measures reality (which VS Code versions have `node:sqlite`, whether workers behave) so we can set the documented minimum version and verify the fallback triggers correctly.
 - **Cost:** two engine implementations to test, and the CSV import pipeline needs a fallback path (the sql.js route imports into memory, so it is capped).
 
+### T-011 worker metadata contract (2026-10-10)
+
+The existing `Engine.schema(page)` remains the paged table/view catalog.
+`columns(table, page)`, `indexes(table, page)` and
+`indexColumns(table, index, page)` return the same bounded `EnginePage` shape,
+with strings/NULL preserving metadata exactly. Column layouts are documented
+on the Engine interface. No new dependency or webview feature is introduced.
+
+Typed metadata requests share the existing helper/worker transport and pending
+operation lifecycle. A worker-only schema helper validates main-schema object
+existence, binds canonical object/index names and uses side-effect-free
+`pragma_table_xinfo`, `pragma_index_list` and `pragma_index_xinfo` SELECTs.
+Function resolution uses the empty temp schema to avoid source tables with
+those names hiding the functions; their schema argument remains `main`.
+See the [SQLite PRAGMA documentation](https://www.sqlite.org/pragma.html).
+Index membership is checked through index_list, including WITHOUT ROWID
+primary-key indexes that have no sqlite_schema row. Expression terms retain
+their SQLite markers; index SQL supplies the original expression/partial clause.
+Unknown objects/indexes, unavailable schemas and byte-budget failures return
+actionable messages. Metadata has no row-count or user-table scan operation.
+UI wiring is T-012; production first-row/memory targets remain unproven.
+
 ### T-002 measurements and revised cancellation design (2026-10-09)
 
 - Spike tests cover real worker queries, exact 64-bit integers, NULL/empty
@@ -613,6 +635,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-011 metadata (2026-10-10): Owner authorizes paged worker-side column/index operations on the existing Engine and protocol; document exact declared metadata, parameter binding, implicit/expression indexes and actionable bounded-page failures. UI remains T-012.
 - v0.4 T-010 picker repair (2026-10-10): Replace extension-limited default registration with one optional all-filename selector and four contributed editor defaults. This preserves default SQLite opening while making Reopen Editor With available for other filenames; user associations retain precedence.
 - v0.4 T-009 read safety (2026-10-10): Red-first regression rejects EXPLAIN PRAGMA before preparing it; SQLite preparation-time PRAGMAs can otherwise change read-only/trusted-schema flags. Query plans remain available for SELECT/WITH.
 - v0.4 T-009 architecture (2026-10-10): Owner-authorized public Engine/helper supervision and native/sql.js backends; documented pre-editor consent UI, threshold, snapshot safety, bounded pages and offset tradeoff. No new dependency or production performance claim.

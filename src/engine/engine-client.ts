@@ -1,6 +1,6 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
-import type { DatabaseHelperRequest, DatabaseResponse, DatabaseWorkerRequest } from '../protocol';
+import type { DatabaseHelperRequest, DatabaseMetadata, DatabaseOperation, DatabaseResponse, DatabaseWorkerRequest } from '../protocol';
 import type { Engine, EngineOpened, EnginePage, OpenOptions, PageAddress, Parameter } from './engine';
 import { checkParameters, pageAddress, quoteIdentifier } from './read-engine';
 
@@ -100,19 +100,41 @@ export class EngineClient implements Engine {
     return this.query("SELECT type, name, tbl_name, sql FROM sqlite_schema WHERE type IN ('table', 'view') AND name NOT GLOB 'sqlite_*' ORDER BY name", [], page);
   }
 
+  async columns(table: string, page: PageAddress = {}): Promise<EnginePage> {
+    return this.metadata({ type: 'metadata', id: 0, kind: 'columns', table, page });
+  }
+
+  async indexes(table: string, page: PageAddress = {}): Promise<EnginePage> {
+    return this.metadata({ type: 'metadata', id: 0, kind: 'indexes', table, page });
+  }
+
+  async indexColumns(table: string, index: string, page: PageAddress = {}): Promise<EnginePage> {
+    quoteIdentifier(index);
+    return this.metadata({ type: 'metadata', id: 0, kind: 'indexColumns', table, index, page });
+  }
+
+  private async metadata(request: DatabaseMetadata): Promise<EnginePage> {
+    quoteIdentifier(request.table); pageAddress(request.page);
+    return this.execute(request);
+  }
+
   async page(table: string, page: PageAddress = {}): Promise<EnginePage> {
     return this.query(`SELECT * FROM ${quoteIdentifier(table)}`, [], page);
   }
 
   async query(sql: string, parameters: Parameter[] = [], page: PageAddress = {}, started?: () => void): Promise<EnginePage> {
     pageAddress(page); checkParameters(parameters);
+    return this.execute({ type: 'query', id: 0, sql, parameters, page }, started);
+  }
+
+  private async execute(request: DatabaseOperation, started?: () => void): Promise<EnginePage> {
     const session = this.session;
     if (session === undefined || !session.ready || session.stopping || session.failed) { throw new Error('First open a SQLite file. Reopen it if the database worker stopped.'); }
     if (session.pending !== undefined) { throw new Error('A database query is already running. Wait or cancel it.'); }
     const id = ++this.nextId;
     return new Promise((resolve, reject) => {
       session.pending = { id, resolve, reject, started };
-      this.request(session, { type: 'query', id, sql, parameters, page });
+      this.request(session, { ...request, id });
     });
   }
 

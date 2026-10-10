@@ -24,6 +24,12 @@ export interface OpenOptions {
 export interface Engine {
   open(path: string, options?: OpenOptions): Promise<EngineOpened>;
   schema(page?: PageAddress): Promise<EnginePage>;
+  /** cid, name, type, notNull, defaultValue, primaryKey, hidden; ordered by cid. */
+  columns(table: string, page?: PageAddress): Promise<EnginePage>;
+  /** name, unique, origin, partial, sql; ordered by name, including implicit indexes. */
+  indexes(table: string, page?: PageAddress): Promise<EnginePage>;
+  /** seqno, cid, name, desc, coll, key; includes expression and auxiliary markers. */
+  indexColumns(table: string, index: string, page?: PageAddress): Promise<EnginePage>;
   page(table: string, page?: PageAddress): Promise<EnginePage>;
   query(sql: string, parameters?: Parameter[], page?: PageAddress, started?: () => void): Promise<EnginePage>;
   /** Interrupt execution, confirm helper exit, and reopen a previously opened file. */
