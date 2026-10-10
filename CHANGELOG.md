@@ -26,6 +26,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   Follow-up: normalize terminal formatting only for diagnostic matching, so
   colored CI output cannot hide warnings/errors. Original console output is
   preserved. Regressions explicitly cover color on/off and segmented formatting.
+  T-009 is complete: local verification and fresh Windows/macOS/Ubuntu full
+  [CI](https://github.com/JreyForFun/lite-voyager/actions/runs/38018867617) pass
+  for repaired candidate 7114b62. Later browsing/performance/manual QA stays open.
 
 - T-052: foundation review repairs reject malformed CSV text after a closing
   quote instead of silently discarding it, and allow immediate SQLite spike

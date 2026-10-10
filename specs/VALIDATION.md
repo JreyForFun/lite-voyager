@@ -443,9 +443,36 @@ source `20261010T104857/window1/renderer.log`, line 10, original severity
 `warning`, `VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
 No unexpected warning/error is accepted; this successful full run is not
 warning-free. It does not erase the failed injected-environment probe or prove
-remote platform compatibility. No host/harness settings are changed. Fresh
-three-platform CI for the repaired candidate is still needed before rechecking
-T-009; the Engine implementation's existing coverage remains intact.
+remote platform compatibility by itself. No host/harness settings are changed.
+Fresh three-platform evidence for closure is recorded below; the Engine
+implementation's existing coverage remains intact.
+
+#### T-009 completion (2026-10-10)
+
+The owner supplied green [run 38018867617](https://github.com/JreyForFun/lite-voyager/actions/runs/38018867617).
+Public GitHub API metadata independently confirms attempt 1 on `main` at
+`7114b629eaeaa2fe3ce413ccf3bb5fa93f9b40c6`, completed successfully at
+2026-10-10 03:00:10 UTC. Windows job 114115196917, macOS job 114115196990
+and Ubuntu job 114115197067 each pass locked dependency installation and
+their applicable full-verification step. Ubuntu uses the isolated session bus
+and virtual display; the other platforms use the Windows/macOS step.
+Inapplicable platform steps are skipped as designed.
+
+This verifies the repaired candidate on all three CI platforms. Metadata does
+not enumerate host diagnostic records; remote warning counts are not claimed.
+The strict rejection policy and its two exact approved warning families remain
+unchanged. Earlier failed runs and the failed injected-environment probe above
+remain failures and are not erased by this evidence.
+
+T-009's Engine interface, fallback notice, large-file consent and force-fallback
+hook acceptance are covered by the recorded tests and reviewed implementation,
+canonical local gates and this fresh CI. Only T-009 is checked. Completion
+records change documentation only; full FR-001 editor browsing, production
+performance and the whole-milestone manual QA below remain open.
+
+Completion-record `npm run verify` passes (exit 0): all 275 unit tests in 20
+files, strict host/webview/tooling types, lint, production builds and a 17-file /
+477.23 KB VSIX. This local gate has zero errors and zero warnings.
 
 The following checklist is the remaining whole-milestone QA, not T-009 completion:
 
@@ -546,6 +573,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-009 completion (2026-10-10): Verified run 38018867617/attempt 1/7114b62 and successful locked installs/full checks on Windows, macOS and Ubuntu. Closed only T-009; preserved failed probes, exact diagnostic policy and later-task/manual QA gaps. No executable changes.
 - v0.1 T-009 colored-console repair (2026-10-10): Preserve failed run 38016821325/ece4194 on all platforms and the incomplete earlier local coverage. Explicit color/agent matrices and segmented-formatting regressions precede scan-only terminal normalization; original output and strict rejection policy remain intact. Canonical verify/full pass with 275 unit/12 integration tests and one reported approved warning; the injected-CI probe fails on host startup/offline diagnostics and is retained. T-009 remains reopened pending fresh three-platform CI.
 - v0.1 T-009 CI follow-up (2026-10-10): Recorded failed run 38015468652/4d0d435 and its successful Windows/macOS jobs. Ten real-runner regressions cover the Ubuntu prose false positive and hidden passing diagnostics under automatic agent reporting; explicitly select dot reporting without relaxing rejection policy. Local verify/full pass with 265 unit/12 integration tests and one explicitly reported approved host warning; fresh repair CI remains required.
 - v0.1 T-009 evidence (2026-10-10): Recorded 48 task unit/four production integration cases, red-first reviewed repairs, final local full-check evidence and exact host diagnostics. Preserve the failed startup-warning run; isolate parent cache paths without weakening policy. Saved host results/strict checks recovered after interruption. Later browsing/performance/manual QA and new remote CI remain open.
