@@ -474,7 +474,59 @@ Completion-record `npm run verify` passes (exit 0): all 275 unit tests in 20
 files, strict host/webview/tooling types, lint, production builds and a 17-file /
 477.23 KB VSIX. This local gate has zero errors and zero warnings.
 
-The following checklist is the remaining whole-milestone QA, not T-009 completion:
+**T-010 custom-editor implementation (2026-10-10):** owner approved the explicit
+FR-001 editor opening/validation/fallback/lifecycle scope before coding. Full
+table/view browsing and NFR-004 first-row performance remain later tasks.
+
+- `test/unit/sqlite-editor.test.ts`: 11 FR-001 tests cover manifest association,
+  one Engine per document, mode-before-consent, approval/decline, unsupported
+  resources, visible opening failures, late replies, pre-open cancellation,
+  cleanup failures and confirmed cleanup before opening completion.
+- `test/unit/sqlite-editor-ui.test.ts`: two FR-001 tests cover escaped untrusted
+  names/errors, script-free restrictive CSP and the persistent accessible banner.
+- `test/unit/sqlite-editor-provider.test.ts`: nine FR-001 tests exercise the
+  production provider with typed VS Code/Engine mocks: modal approval/dismissal,
+  progress cancellation, virtual/untitled errors, idempotent disposal, close
+  during a pending prompt, already-cancelled opening and extension shutdown.
+- `src/test/sqlite-editor.test.ts`: five real-host FR-001 tests cover default
+  binary tabs for all four extensions under both engines, invalid/zero-byte
+  inputs and valid empty databases, unchanged source hashes, read-only files,
+  awkward Unicode paths, helper exit, recovery and explicit Open With for a
+  valid database with another extension. Closing/reopening creates fresh helpers.
+- Existing Engine tests retain real fallback loading/decline, the exact decimal
+  threshold, snapshot/WAL rejection, bounded pages and source-safety checks.
+
+Tests were written before implementation; initial suites failed on missing
+modules. Two later failing regressions reproduced repeated disposal removing a
+replacement document and opening completion preceding cancellation cleanup.
+Both are repaired without weakening assertions. Sandbox spawn EPERM prevented
+the first test launch; authorized normal-process runs executed the tests.
+Intermediate lint/typecheck failures in the test mocks were corrected; no rule
+or check was disabled. No dependency or committed fixture change was needed.
+
+Standalone host tests pass (17); the initial full candidate passes 296 unit/17
+host tests. Final repaired `npm run verify:full` passes (exit 0): 297 unit tests
+in 23 files, 17 integration tests, strict types/lint/builds and a 17-file /
+479.70 KB VSIX, Windows x64 / VS Code 1.140.0 / Node 24.21.0 extension host;
+development Node 26.5.0. Each host run accepts only the following renderer
+record, original severity warning, rule `VSCODE-HOST-001`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`:
+
+- Standalone: `20261010T115315/window1/renderer.log:10`.
+- Initial full candidate: `20261010T120017/window1/renderer.log:10`.
+- Final repaired full candidate: `20261010T120259/window1/renderer.log:10`.
+
+No other diagnostic was accepted; these host runs are not warning-free.
+
+Completion-record `npm run verify` passes (exit 0): 297 unit tests, strict
+host/webview/tooling types, lint, production builds and a 17-file / 479.75 KB
+VSIX. This gate has zero errors and zero warnings.
+
+Owner F5 checks (README T-010 report), pushing and fresh three-platform CI remain
+pending. T-010 stays unchecked until owner QA is confirmed. Whole-milestone
+large-file/performance/accessibility/manual validation remains open.
+
+The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
 - [ ] A generated multi-GB database shows its first rows within the NFR-004 target, and memory stays flat while scrolling.
@@ -573,6 +625,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-010 implementation (2026-10-10): Recorded 22 unit/five new host tests, two red-first lifecycle repairs and passing local full verification with every accepted host warning reported. Owner QA/push/fresh CI and production browsing/performance remain pending; T-010 stays unchecked.
 - v0.1 T-009 completion (2026-10-10): Verified run 38018867617/attempt 1/7114b62 and successful locked installs/full checks on Windows, macOS and Ubuntu. Closed only T-009; preserved failed probes, exact diagnostic policy and later-task/manual QA gaps. No executable changes.
 - v0.1 T-009 colored-console repair (2026-10-10): Preserve failed run 38016821325/ece4194 on all platforms and the incomplete earlier local coverage. Explicit color/agent matrices and segmented-formatting regressions precede scan-only terminal normalization; original output and strict rejection policy remain intact. Canonical verify/full pass with 275 unit/12 integration tests and one reported approved warning; the injected-CI probe fails on host startup/offline diagnostics and is retained. T-009 remains reopened pending fresh three-platform CI.
 - v0.1 T-009 CI follow-up (2026-10-10): Recorded failed run 38015468652/4d0d435 and its successful Windows/macOS jobs. Ten real-runner regressions cover the Ubuntu prose false positive and hidden passing diagnostics under automatic agent reporting; explicitly select dot reporting without relaxing rejection policy. Local verify/full pass with 265 unit/12 integration tests and one explicitly reported approved host warning; fresh repair CI remains required.

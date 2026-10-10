@@ -12,8 +12,9 @@ The project also provides **Hello World** and experimental
 T-002 worker/fallback spike commands. The spike runs its worker in a killable
 helper process and passes local open/query/cancel/reopen checks, owner manual QA,
 and recorded three-platform CI.
-Data browsing and querying in editor tabs
-are planned and are not implemented yet.
+T-010 adds a read-only SQLite custom editor with header validation, clear opening
+errors, fallback notices/consent and helper cleanup. Data browsing and querying
+in editor tabs follow in later tasks.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 T-008 now provides an experimental CodeMirror editor and synthetic grid;
 owner manual QA passes and confirms CodeMirror 6 (steps and evidence below).
@@ -55,6 +56,71 @@ npm run package
 The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
+
+## T-010 SQLite editor — owner manual check
+
+Run `npm run verify` and `npm run verify:full`, then press **F5**. Open
+`test/fixtures/sample.sqlite` normally. Expect a **Lite Voyager** editor tab,
+an opening notification and **Opened SQLite. Source file is read-only.**
+The primary engine reports disk-backed access. Table browsing is a later task.
+
+1. Open `corrupt.sqlite`, `truncated.sqlite`, and `zero-byte.sqlite` from
+   `test/fixtures`. Expect a clear valid/complete-database error in the editor.
+   `empty.sqlite` is a valid database with no tables and should open successfully.
+2. Make disposable copies of `sample.sqlite` with `.db`, `.sqlite3` and `.db3`
+   extensions; open normally and confirm the same editor. For a copy named
+   `database.data`, use **Reopen Editor With… → Lite Voyager**. Its header,
+   rather than its extension, determines validity.
+3. Close and reopen a valid file twice. Verify another editor remains responsive.
+   Repeat the opening/error checks in light and dark themes.
+4. Start a fresh F5 host with `LITE_VOYAGER_FORCE_FALLBACK=1` using the launch
+   setting described below. A persistent **Memory-limited mode** banner must
+   appear. Remove that temporary setting after the check.
+5. For fallback consent, use disposable padded copies (PowerShell below).
+   Exactly 200,000,000 bytes opens without a prompt. The larger copy must prompt
+   before loading and explain memory cost and disk-backed recovery. Dismiss the
+   prompt or select Cancel: the file stays unloaded with a clear message.
+   Reopen, select Proceed, and expect successful opening with the banner.
+   Close the editor during opening or cancel its progress notification; reopen
+   to retry. These padded fixtures test consent, not large-database performance.
+
+```powershell
+$taskQaDirectory = Join-Path $env:TEMP ('lite-voyager-t010-' + [guid]::NewGuid())
+New-Item -ItemType Directory -Path $taskQaDirectory | Out-Null
+foreach ($taskBytes in @(200000000, 200000001)) {
+  $taskQaFile = Join-Path $taskQaDirectory ('consent-' + $taskBytes + '.sqlite')
+  Copy-Item -LiteralPath test/fixtures/sample.sqlite -Destination $taskQaFile
+  $taskStream = [System.IO.File]::OpenWrite($taskQaFile)
+  try { $taskStream.SetLength($taskBytes) } finally { $taskStream.Dispose() }
+}
+$taskQaDirectory
+```
+
+Paste the verification conclusions and this report:
+
+```text
+T-010 manual QA
+VS Code version / OS:
+Default editor for .db/.sqlite/.sqlite3/.db3: PASS or issue
+Valid content with another extension via Reopen Editor With: PASS or issue
+Invalid/zero-byte errors and valid empty database: PASS or issue
+Close/reopen, responsive editor, light/dark themes: PASS or issue
+Forced fallback persistent notice: PASS or issue
+Exactly 200 MB without prompt: PASS or issue
+Above 200 MB Cancel/dismiss/Proceed: PASS or issue
+Cancel/close during opening, then reopen: PASS or issue
+```
+
+```sh
+npm test -- test/unit/sqlite-editor.test.ts test/unit/sqlite-editor-ui.test.ts test/unit/sqlite-editor-provider.test.ts
+npm run verify
+npm run verify:full
+```
+
+The read-only binary provider never loads a SQLite file as a text document.
+Header/database validation and all heavy work use the existing Engine worker.
+Explicit Open With supports saved local files; virtual and untitled resources
+are rejected clearly. No multi-GB memory or first-row timing claim is made.
 
 ## T-009 Engine and fallback check
 

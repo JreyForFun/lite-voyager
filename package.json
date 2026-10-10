@@ -19,6 +19,19 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "customEditors": [
+      {
+        "viewType": "lite-voyager.sqlite",
+        "displayName": "Lite Voyager",
+        "selector": [
+          { "filenamePattern": "*.db" },
+          { "filenamePattern": "*.sqlite" },
+          { "filenamePattern": "*.sqlite3" },
+          { "filenamePattern": "*.db3" }
+        ],
+        "priority": "default"
+      }
+    ],
     "commands": [
       {
         "command": "lite-voyager.engineCheck",

@@ -6,6 +6,15 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-010: added a read-only binary custom editor, default SQLite extension
+  associations, worker-backed header/database validation, opening/error states,
+  persistent fallback notices and large-file consent, cancellation and helper
+  cleanup. Explicit Open With also validates local files with other extensions.
+  Added tests for source safety and editor lifecycle. No dependency was added;
+  table browsing and production first-row performance remain later tasks.
+  Red-first lifecycle repairs make document disposal idempotent and wait for
+  confirmed helper cleanup before opening completion after cancellation.
+
 - T-009: added the production asynchronous Engine boundary, native/sql.js worker
   backends, bounded result pages, confirmed helper cancellation/reopening,
   persistent fallback notices, and consent before loading files above decimal
