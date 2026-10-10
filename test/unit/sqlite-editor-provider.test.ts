@@ -7,7 +7,7 @@ type ProgressTask = (progress: vscode.Progress<{ message?: string; increment?: n
 const mocks = vi.hoisted(() => ({
   open: vi.fn<Engine['open']>(), close: vi.fn<Engine['close']>(),
   withProgress: vi.fn<(options: vscode.ProgressOptions, task: ProgressTask) => Promise<void>>(),
-  prompt: vi.fn<(message: string, options: vscode.MessageOptions, item: string) => Promise<string | undefined>>(),
+  prompt: vi.fn<(message: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => Promise<vscode.MessageItem | undefined>>(),
 }));
 vi.mock('vscode', () => ({
   ProgressLocation: { Notification: 15 },
@@ -50,17 +50,19 @@ beforeEach(() => {
   mocks.withProgress.mockImplementation((_options, task) => task({ report: vi.fn() }, cancellation().token));
 });
 
-test.each(['Proceed', undefined])('FR-001: Given the actual provider with prompt result %s, When fallback requests consent, Then the banner precedes the modal and dismissal leaves the file unloaded', async (choice) => {
+test.each(['Proceed', 'Cancel', 'Escape', 'dismissed'])('FR-001: Given consent action %s, When fallback requests consent, Then an explicit close action refuses loading unless Proceed is selected', async (choice) => {
   const provider = new SqliteEditorProvider('/extension');
   const view = panel();
   const document = provider.openCustomDocument(uri(), openContext, cancellation().token);
-  mocks.prompt.mockImplementation((message, options, item) => {
+  mocks.prompt.mockImplementation((message, options, ...items) => {
     expect(view.webview.html).toContain('Memory-limited mode');
     expect(message).toContain('200 MB');
     expect(message).toContain('update VS Code');
     expect(options).toEqual({ modal: true });
-    expect(item).toBe('Proceed');
-    return Promise.resolve(choice);
+    expect(items).toEqual([{ title: 'Proceed' }, { title: 'Cancel', isCloseAffordance: true }]);
+    const selected = choice === 'Escape' ? items.find((item) => item.isCloseAffordance)
+      : items.find((item) => item.title === choice);
+    return Promise.resolve(selected);
   });
   mocks.open.mockImplementation(async (_path: string, options?: OpenOptions) => {
     options?.onMode?.(opened);
@@ -69,6 +71,12 @@ test.each(['Proceed', undefined])('FR-001: Given the actual provider with prompt
   });
   await provider.resolveCustomEditor(document, view, cancellation().token);
   expect(document.session.state.phase).toBe(choice === 'Proceed' ? 'opened' : 'error');
+  if (choice !== 'Proceed') {
+    expect(view.webview.html).toContain('consent was declined');
+    expect(view.webview.html).not.toContain('Opened SQLite.');
+    await document.session.closed;
+    expect(mocks.close).toHaveBeenCalledTimes(1);
+  }
   expect(view.webview.options).toEqual({ enableScripts: false, localResourceRoots: [] });
   view.dispose();
   await document.session.closed;
@@ -120,10 +128,14 @@ test('FR-001: Given a closed document and its replacement, When VS Code disposes
 });
 
 test('FR-001: Given a modal approval in flight, When its panel closes, Then the helper closes immediately and a late Proceed cannot load or render', async () => {
-  let approve!: (choice: string | undefined) => void;
+  let approve!: (choice: vscode.MessageItem | undefined) => void;
+  let proceed: vscode.MessageItem | undefined;
   let prompted!: () => void;
   const promptShown = new Promise<void>((resolve) => { prompted = resolve; });
-  mocks.prompt.mockImplementation(() => { prompted(); return new Promise((resolve) => { approve = resolve; }); });
+  mocks.prompt.mockImplementation((_message, _options, ...items) => {
+    proceed = items.find((item) => item.title === 'Proceed');
+    prompted(); return new Promise((resolve) => { approve = resolve; });
+  });
   mocks.open.mockImplementation(async (_path: string, options?: OpenOptions) => {
     options?.onMode?.(opened);
     expect(await options?.confirmLargeFile?.(opened)).toBe(false);
@@ -137,7 +149,8 @@ test('FR-001: Given a modal approval in flight, When its panel closes, Then the 
   view.dispose();
   await document.session.closed;
   const lastHtml = view.webview.html;
-  approve('Proceed');
+  expect(proceed).toBeDefined();
+  approve(proceed);
   await opening;
   expect(view.webview.html).toBe(lastHtml);
   expect(document.session.state.phase).toBe('closed');

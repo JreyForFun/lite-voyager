@@ -549,6 +549,7 @@ VS Code 1.140.0. The sole accepted diagnostic is source
 rule `VSCODE-HOST-001`, message
 `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
 No unexpected diagnostic is accepted; this full run is not warning-free.
+
 Compatibility `npm run test:integration` with
 `LITE_VOYAGER_TEST_VSCODE_VERSION=1.141.0` also passes (exit 0, 19 tests).
 Its sole accepted diagnostic is source
@@ -559,8 +560,60 @@ No other diagnostic is accepted; this compatibility run is not warning-free.
 Final standalone `npm run verify` passes (exit 0): 298 unit tests, strict
 host/webview/tooling types, lint, builds and a 17-file / 480.04 KB VSIX.
 This standalone gate has zero errors and zero warnings.
-Picker visibility in the owner's actual menu and the remaining manual checks
-still require owner confirmation. User-created fixture copies are preserved.
+Owner now confirms the other-extension Reopen Editor With check PASS after
+repair 9ea86eb. Subsequent QA reports VS Code 1.141 and PASS for defaults,
+picker, invalid/zero-byte errors, valid empty database, close/reopen,
+responsiveness, light/dark themes and exactly 200 MB without a prompt.
+Quoted opened-state text confirms the memory-limited notice persists after
+loading, supporting fallback-notice PASS. Proceed opens the larger fixture.
+Escape reportedly also shows opened; it is unresolved whether a fresh consent
+dialog appeared after closing/reopening the tab. Do not mark dismissal PASS
+or diagnose a code defect without that reproduction. Explicit Cancel was not
+reported. Cancel/close during opening is too quick for manual observation;
+existing automated cancellation/lifecycle tests do not establish manual PASS.
+T-010 stays unchecked. User-created fixture copies and launch settings are preserved.
+QA follow-up reruns `npm test -- test/unit/sqlite-editor-provider.test.ts
+test/unit/sqlite-editor.test.ts test/unit/engine.test.ts`: all 64 tests pass
+(exit 0), including refusal/approval, pending consent closure and late replies.
+This checks extension/Engine behavior with mocked dialog results; it does not
+reproduce the owner's actual Escape key interaction. No executable code changed.
+
+**T-010 fresh-dialog Escape follow-up (2026-10-10):** owner subsequently
+confirms the tab was closed, reopened, and a fresh Proceed/Cancel warning
+appeared before Escape. This confirms failed manual dismissal acceptance;
+it is no longer treated as potentially reopening an already-open tab.
+The source approved only a string Proceed result and relied on VS Code's
+implicit Cancel. Official API docs and local types support an explicit
+`MessageItem.isCloseAffordance` for Escape. The exact native-dialog failure
+has not been reproduced here: native desktop control is unavailable.
+
+Before changing the provider, the expanded suite fails five tests (six pass):
+four consent-action cases reject the missing explicit Cancel contract, and the
+late-approval case requires the actual supplied Proceed action. This is a
+red-first guard for explicit routing, not a reproduction of the desktop key
+event. After repair, 23 provider/session tests pass. Cancel and Escape-route
+results plus undefined dismissal yield declined consent, no opened message
+and helper cleanup; Proceed still opens, and closing during pending consent
+rejects late approval. Existing real Engine consent tests remain intact.
+Actual desktop Escape/Cancel confirmation and fresh CI remain pending.
+Consent-candidate `npm run verify:full` passes (exit 0): 300 unit tests,
+19 integration tests, strict types/lint/builds and a 17-file / 480.33 KB VSIX
+on Windows x64 / VS Code 1.140.0 / bundled Node 24.21.0.
+Its sole accepted record is source `20261010T133634/window1/renderer.log`,
+line 10, original severity `warning`, rule `VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No unexpected diagnostic is accepted; this full run is not warning-free.
+
+Consent-candidate compatibility `npm run test:integration` with
+`LITE_VOYAGER_TEST_VSCODE_VERSION=1.141.0` passes (exit 0, 19 tests).
+Its sole accepted record is source `20261010T133731/window1/renderer.log`,
+line 10, original severity `warning`, rule `VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other diagnostic is accepted; this compatibility run is not warning-free.
+Final consent-candidate `npm run verify` passes (exit 0): 300 unit tests,
+strict host/webview/tooling types, lint, builds and a 17-file / 480.33 KB VSIX.
+This standalone gate has zero errors and zero warnings. Actual desktop
+Escape/Cancel retesting remains required despite the passing automated gates.
 
 The following checklist is the remaining whole-milestone QA:
 
@@ -661,6 +714,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-010 explicit consent candidate (2026-10-10): Owner confirms fresh-dialog Escape failed. Add red-first explicit Cancel/Escape routing and only-Proceed approval tests; candidate full verification passes with 300 unit/19 integration tests and the exact approved host diagnostic recorded. Desktop retest remains required; native root cause is not claimed.
+- v0.1 T-010 QA validation (2026-10-10): Record passing owner checks and opened fallback notice; Proceed succeeds, Escape remains unresolved pending a fresh-dialog reproduction, and Cancel is not reported. Retain cancellation's too-quick manual status and existing automated evidence.
+- v0.1 T-010 owner picker confirmation (2026-10-10): Record actual Reopen Editor With PASS after 9ea86eb; remaining six manual checks and fresh CI remain open. Navigation setup creates separate ignored consent copies of exactly 200,000,000 and 200,000,001 bytes; committed fixtures are untouched.
 - v0.1 T-010 picker repair (2026-10-10): Retain the owner's failed picker report, explain the direct-command test gap, record red-first registration coverage and passing 298-unit/19-host full check with its exact approved diagnostic. Owner menu/remaining QA and fresh CI are pending.
 - v0.1 T-010 implementation (2026-10-10): Recorded 22 unit/five new host tests, two red-first lifecycle repairs and passing local full verification with every accepted host warning reported. Owner QA/push/fresh CI and production browsing/performance remain pending; T-010 stays unchecked.
 - v0.1 T-009 completion (2026-10-10): Verified run 38018867617/attempt 1/7114b62 and successful locked installs/full checks on Windows, macOS and Ubuntu. Closed only T-009; preserved failed probes, exact diagnostic policy and later-task/manual QA gaps. No executable changes.

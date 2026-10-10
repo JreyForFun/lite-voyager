@@ -63,8 +63,10 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
           if (progressToken.isCancellationRequested) { await document.session.cancel(); }
           await document.session.start(async (mode) => {
             if (disposed || token.isCancellationRequested || progressToken.isCancellationRequested) { return false; }
-            const choice = await vscode.window.showWarningMessage(fallbackPrompt(mode), { modal: true }, 'Proceed');
-            return choice === 'Proceed' && !disposed && !token.isCancellationRequested && !progressToken.isCancellationRequested;
+            const proceed: vscode.MessageItem = { title: 'Proceed' };
+            const cancel: vscode.MessageItem = { title: 'Cancel', isCloseAffordance: true };
+            const choice = await vscode.window.showWarningMessage(fallbackPrompt(mode), { modal: true }, proceed, cancel);
+            return choice === proceed && !disposed && !token.isCancellationRequested && !progressToken.isCancellationRequested;
           });
         } finally { listener.dispose(); }
       });

@@ -85,6 +85,10 @@ The primary engine reports disk-backed access. Table browsing is a later task.
    before loading and explain memory cost and disk-backed recovery. Dismiss the
    prompt or select Cancel: the file stays unloaded with a clear message.
    Reopen, select Proceed, and expect successful opening with the banner.
+   Close the file's tab before every consent attempt. The warning has explicit
+   Proceed and Cancel actions; Cancel, Escape and dialog dismissal must leave
+   it unloaded with a declined-consent message. An opened status after dismissing
+   a fresh warning is a failure, even if automated tests pass.
    Close the editor during opening or cancel its progress notification; reopen
    to retry. These padded fixtures test consent, not large-database performance.
 
