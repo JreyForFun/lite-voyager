@@ -11,7 +11,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   now assert webview transport readiness before closing, then await helper
   exit. Four red-first regressions cover ordering, failed delivery, missing
   panels and the typed no-op probe. No scripts, delays, retries or diagnostic
-  exceptions were added; fresh three-platform CI remains required.
+  exceptions were added. Fresh [CI run 38030277300](https://github.com/JreyForFun/lite-voyager/actions/runs/38030277300)
+  at repaired commit 55e5da0 passes full verification on Windows, macOS and
+  Ubuntu. T-010 is complete; browsing/performance and whole-milestone QA remain
+  later work.
 
 - T-010 consent repair: supply an explicit Cancel action for modal
   Escape/close handling and approve only the returned Proceed action. Preserve

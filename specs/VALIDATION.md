@@ -712,6 +712,34 @@ VSIX; zero errors and zero warnings. The lifecycle test additionally drains
 pending promise continuations before asserting that closure still waits for
 helper exit. No new host implementation change follows the passing full run.
 
+**T-010 CI completion (2026-10-10):** owner supplies GREEN
+[run 38030277300](https://github.com/JreyForFun/lite-voyager/actions/runs/38030277300),
+attempt 1 at `55e5da0fe62d7468f76c213ce3b34fec96849b24`. Public GitHub API
+metadata independently confirms the completed/successful run and each job:
+
+- [macOS](https://github.com/JreyForFun/lite-voyager/actions/runs/38030277300/job/114149566616): locked installation and `Verify on Windows and macOS` succeed.
+- [Windows](https://github.com/JreyForFun/lite-voyager/actions/runs/38030277300/job/114149566864): locked installation and `Verify on Windows and macOS` succeed.
+- [Ubuntu](https://github.com/JreyForFun/lite-voyager/actions/runs/38030277300/job/114149566972): locked installation and `Verify with session bus and virtual display on Linux` succeed.
+
+Each applicable workflow verification step runs `npm run verify:full` with
+the existing fail-closed diagnostic policy. The alternative platform-specific
+step is skipped by its OS condition, not a skipped test. The public log archive
+endpoint returns HTTP 403 without authentication; this remote evidence is
+run/job/step metadata, not an independent reading of every remote log record.
+Do not claim these host runs are warning-free; prior exact accepted diagnostic
+records and the failed macOS error remain above.
+
+Fresh repaired-candidate macOS full verification now succeeds, along with
+Windows and Ubuntu. Together with the passing local 304-unit/19-host gate and
+owner observable QA, this closes scoped T-010 acceptance. Early opening
+cancellation/closure remains manually unobserved and covered by automated
+provider/session/real Engine cleanup tests; its manual status is unchanged.
+Only T-010 may be checked. Table/view browsing, first-row/multi-GB performance,
+whole-milestone QA and milestone/release tagging remain later work.
+Completion edits are records only. Completion-record `npm run verify` passes
+(exit 0): all 304 unit tests, strict host/webview/tooling types, lint, production
+builds and a 17-file / 480.58 KB VSIX; zero errors and zero warnings.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -811,6 +839,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-010 CI completion (2026-10-10): Independently verify run/job/step metadata for fresh 55e5da0/run 38030277300 success on Windows/macOS/Ubuntu. Close scoped T-010 only; preserve failed CI, exact historical host diagnostics, manually unobserved cancellation and later milestone requirements. Remote logs are not independently retrieved or called warning-free.
 - v0.1 T-010 CI lifecycle follow-up (2026-10-10): Preserve failed macOS run 38029094981/7981bf2 and passing Windows/Ubuntu conclusions. Normal test closure must assert webview transport readiness and await helper exit; four red-first regressions cover ordering and failures. No diagnostic rule is changed; fresh candidate CI remains required.
 - v0.1 T-010 completion QA (2026-10-10): Owner passes repaired Cancel/Proceed after Escape; scoped task acceptance has passing automated/observable manual evidence. Preserve unobserved manual cancellation, its automated coverage, earlier failures, exact host warnings and later milestone/CI gaps. Restore normal F5 engine detection by removing the temporary QA setting.
 - v0.1 T-010 Escape confirmation (2026-10-10): Owner supplies declined-consent output after Escape in the fresh fd9bd13 fallback QA host. Escape passes; explicit Cancel and Proceed retests remain. Preserve earlier failed QA and automated-run diagnostics.
