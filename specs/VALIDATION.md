@@ -935,6 +935,80 @@ CI-record `npm run verify` passes (exit 0): 357 unit tests in 30 files,
 strict host/webview/tooling types, lint, production builds and a 19-file /
 489.84 KB VSIX; zero errors and zero warnings.
 
+### T-013 SQL editor validation (2026-10-10)
+
+Owner authorizes implementation, scoped fixes and fixture choices; owner pushes.
+Acceptance/decisions are in SPEC.md (T-013) and PLAN.md (production SQL editor).
+No new dependency, static fixture edit or later-task implementation is required.
+
+Coverage:
+- `sql-editor.test.ts`: full-document/caret execution, literal backwards Unicode
+  selection and the Mod-Enter binding. Real shortcut dispatch is verified below.
+- `protocol.test.ts`: bounded literal SQL, exact transport boundary, page/ID
+  validation, invalid timing and sparse result rows.
+- `sqlite-browser.test.ts`: literal Engine dispatch, bounded page address,
+  elapsed time and diagnostic preservation; inherited queue/disposal/cancel tests.
+- `query-view.test.ts` and `browser-view.test.ts`: honest final-page counts/time,
+  zero results, error-preserved DOM/summary/paging SQL, stale replies, explicit
+  return to the same table, SQL limits and restored query/editor/table state.
+  Edits during catalog restoration persist, and oversized text is never saved.
+- `engine.test.ts`: real-worker SQLite missing-table/column and syntax errors,
+  recovery on both backends; original source safety and engine tests remain.
+- `sqlite-editor-ui.test.ts`: accessible controls, nonce-injected CodeMirror
+  styles, local CSP and honest paging/SQL-limit help. Existing package selection
+  tests verify shipped browser JS/CSS; no package whitelist change is required.
+- `src/test/sqlite-browser.test.ts`: real CodeMirror highlighting, Run/backwards
+  selection/keyboard shortcut, 201-row paging, edited/error SQL preserving the
+  previous page and paging SQL, literal hostile diagnostics, duplicate columns,
+  context recreation, exact values/NULL/empty/BLOBs, zero/large/wide results,
+  existing cancel/reopen and unchanged read-only sources on both engines.
+
+Failure history (no test, workload, deadline or diagnostic rule weakened):
+- Red-first tests fail on missing editor/query modules, unrecognized query
+  messages, missing host dispatch and lost SQLite diagnostics on both backends.
+- Browser regressions fail before Browse table wiring, editor edits during
+  restoration and saved table selection are corrected.
+- Initial gate stops at a nullable SQL test argument; narrowing fixes it. A
+  subsequent gate stops at a Vitest matcher's unsafe type; a typed text assertion
+  replaces the matcher. Existing assertions are retained.
+- A full unit run passes 366/374: eight existing recovery tests require query
+  context. Adding a context prefix around the original SQLite diagnostic fixes
+  behavior while retaining every original test unchanged.
+- A later full run passes 375 unit tests and 27/28 host tests. The fallback SQL
+  test receives a late old settled-DOM report during resize/Run, then clicks a
+  disabled Run button before resize completes. Subscribe before awaiting message
+  delivery and require each SQL/resize action's busy-to-settled transition.
+  All original data, paging, error, source, transport and deadline assertions stay.
+
+Standalone `npm run test:integration` then passes (exit 0): 28 real-host tests,
+including both T-013 engine cases, on Windows x64 / VS Code 1.140.0 / bundled
+Node 24.21.0. The run is not warning-free; exactly one accepted diagnostic:
+- source `20261010T181033/window1/renderer.log`, line 10, severity `warning`,
+  rule `VSCODE-HOST-001`:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other diagnostic is accepted.
+
+Final `npm run verify:full` passes (exit 0): 375 unit tests in 32 files,
+28 real-host tests, strict host/webview/tooling/integration types, lint,
+production builds and a 19-file/606.63 KB VSIX including the SQL/browser assets
+and existing dependency notices. The final isolated host/profile
+`out/integration-profile-Zri0f8` has no accepted diagnostic records: this final
+full run has zero errors and zero warnings. Preserve the earlier standalone
+accepted warning and failed runs above; they are not called warning-free.
+Both T-013 host cases pass. Inherited warm ten-million-row first DOM readiness
+is 875.4 ms, 100 cached/15 rendered rows; this is not a cold-disk/physical-paint
+or multi-GB memory measurement. Completion-record `npm run verify` also passes
+(exit 0): 375 tests, strict types/lint/builds and 19-file/606.63 KB VSIX; zero
+errors and zero warnings. Scoped T-013 local acceptance is complete and checked;
+the task changes are committed with T-013 in the message and owner pushes.
+No fresh CI, owner visual QA, milestone closure or release tag is claimed.
+
+Owner fixture: `out/t013-owner-20261010/browser.sqlite` (4,874,240 bytes) and
+`generation.json`, generated/ignored and excluded from the VSIX. README.md has
+exact F5 SQL/theme/keyboard/error/paging/cancel/restoration steps. Fresh remote
+three-platform CI, owner visual judgement, independent milestone review and
+cold-disk/multi-GB memory targets are not claimed. Later tasks remain open.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -1034,6 +1108,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-013 SQL editor (2026-10-10): Record requirement-to-test coverage, preserved red-first/verification failures, stricter host-action synchronization, both-engine SQL UI evidence, exact accepted host diagnostics and remaining owner/milestone checks.
 - v0.1 T-012 CI/owner QA confirmation (2026-10-10): Independently verify public run/job/step metadata for 38039805436/attempt 1/a720520 on Windows/macOS/Ubuntu and record owner-reported GOOD after requested browser checks. Preserve exact local diagnostics, remote-log/manual-observation limits and whole-milestone requirements.
 - v0.1 T-012 browser (2026-10-10): Record scoped acceptance coverage, real-host DOM/source/cancellation evidence and all failed/regression runs. Preserve strict diagnostics and exact host-warning reporting; separate task browser readiness from later manual, CI and whole-milestone performance/review requirements.
 - v0.1 T-011 CI confirmation (2026-10-10): Verify run 38034122214/attempt 1/f49f87d success and successful locked installs/applicable full checks on Windows/macOS/Ubuntu via public API metadata. Preserve exact local host diagnostics, remote-log limitations and later-task/milestone scope.

@@ -50,13 +50,16 @@ export function isHostMessage(value: unknown): value is HostToWebviewMessage {
 }
 
 export const BROWSER_PAGE_SIZE = 100;
+export const MAX_SQL_LENGTH = 4 * 1024 * 1024;
 export interface BrowserObject { name: string; kind: 'table' | 'view'; }
 export type BrowserRequest =
+  | { type: 'browserQuery'; requestId: number; sql: string; offset: number; limit: number }
   | { type: 'browserList'; requestId: number; offset: number }
   | { type: 'browserPage'; requestId: number; table: string; offset: number; limit: number }
   | { type: 'browserCount'; requestId: number; table: string }
   | { type: 'browserCancel'; requestId: number };
 export type BrowserResponse =
+  | { type: 'browserQueryRows'; requestId: number; offset: number; limit: number; ms: number; page: import('./engine/engine').EnginePage }
   | { type: 'browserTables'; requestId: number; offset: number; objects: BrowserObject[]; hasMore: boolean }
   | { type: 'browserRows'; requestId: number; table: string; offset: number; limit: number; page: import('./engine/engine').EnginePage }
   | { type: 'browserCounted'; requestId: number; table: string; count: string }
@@ -68,10 +71,11 @@ export interface BrowserStatus {
   cachedRows: number; renderedRows: number; renderedColumns: number; columns: number;
   hasMore: boolean; count: string | null; busy: boolean; message: string;
   firstRow: { text: string | null; length: number; label: string | null }[];
+  query?: boolean; editorReady?: boolean; sqlLength?: number; selectionLength?: number; highlighted?: boolean; summary?: string;
 }
-/** Local host integration can drive the same controls as a user. No SQL or file access. */
+/** Local host integration drives the same editor/controls as a user; no file access. */
 export interface BrowserExercise {
-  type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell'; value?: string;
+  type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse'; value?: string;
 }
 function identifier(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 4 * 1024 * 1024 && !value.includes('\0');
@@ -79,6 +83,8 @@ function identifier(value: unknown): value is string {
 export function isBrowserRequest(value: unknown): value is BrowserRequest {
   if (!isRecord(value) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   switch (value['type']) {
+    case 'browserQuery': return identifier(value['sql']) && integer(value['limit'], 1, BROWSER_PAGE_SIZE)
+      && integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
     case 'browserCancel': return true;
     case 'browserList': return integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
     case 'browserCount': return identifier(value['table']);
@@ -96,9 +102,12 @@ export function isBrowserResponse(value: unknown): value is BrowserResponse {
     case 'browserTables': return integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE)
       && typeof value['hasMore'] === 'boolean' && Array.isArray(value['objects']) && value['objects'].length <= BROWSER_PAGE_SIZE
       && Array.from(value['objects']).every((object: unknown) => isRecord(object) && identifier(object['name']) && ['table', 'view'].includes(String(object['kind'])));
-    case 'browserRows': {
+    case 'browserRows':
+    case 'browserQueryRows': {
       const page = value['page'];
-      if (!identifier(value['table']) || !integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE)
+      const context = value['type'] === 'browserRows' ? identifier(value['table'])
+        : typeof value['ms'] === 'number' && Number.isFinite(value['ms']) && value['ms'] >= 0;
+      if (!context || !integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE)
         || !integer(value['limit'], 1, BROWSER_PAGE_SIZE) || !isRecord(page) || !Array.isArray(page['columns']) || !Array.isArray(page['rows'])
         || page['rows'].length > value['limit'] || typeof page['hasMore'] !== 'boolean') { return false; }
       const columns = page['columns'];
@@ -123,14 +132,20 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && integer(value['renderedColumns'], 0, 1000) && integer(value['columns'], 0, Number.MAX_SAFE_INTEGER)
     && typeof value['hasMore'] === 'boolean' && (value['count'] === null || decimal(value['count']))
     && typeof value['busy'] === 'boolean' && typeof value['message'] === 'string'
+    && (value['query'] === undefined || typeof value['query'] === 'boolean')
+    && (value['editorReady'] === undefined || typeof value['editorReady'] === 'boolean')
+    && (value['highlighted'] === undefined || typeof value['highlighted'] === 'boolean')
+    && (value['summary'] === undefined || typeof value['summary'] === 'string' && value['summary'].length <= 2048)
+    && (value['sqlLength'] === undefined || integer(value['sqlLength'], 0, Number.MAX_SAFE_INTEGER))
+    && (value['selectionLength'] === undefined || integer(value['selectionLength'], 0, Number.MAX_SAFE_INTEGER))
     && Array.isArray(value['firstRow']) && value['firstRow'].length <= 12 && Array.from(value['firstRow']).every((cell: unknown) =>
       isRecord(cell) && (cell['text'] === null || typeof cell['text'] === 'string' && cell['text'].length <= 128)
       && integer(cell['length'], 0, 4 * 1024 * 1024) && (cell['label'] === null || typeof cell['label'] === 'string'));
 }
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
-    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell'].includes(String(value['action']))
-    && (value['value'] === undefined || typeof value['value'] === 'string');
+    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse'].includes(String(value['action']))
+    && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 
 function integer(value: unknown, min: number, max: number): value is number {

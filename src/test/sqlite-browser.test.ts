@@ -23,12 +23,113 @@ function waitStatus(document: SqliteDocument, predicate: (status: BrowserStatus)
 async function action(document: SqliteDocument, message: BrowserExercise, predicate: (status: BrowserStatus) => boolean): Promise<BrowserStatus> {
   assert.ok(document.panel);
   const revision = document.browserStatus?.revision ?? 0;
-  assert.equal(await document.panel.webview.postMessage(message), true);
-  return waitStatus(document, predicate, revision);
+  // Register before yielding: fast operations can report busy and finish before
+  // postMessage's transport promise resolves. Keep the delivery assertion too.
+  const [, status] = await Promise.all([
+    document.panel.webview.postMessage(message).then((delivered) => { assert.equal(delivered, true); }),
+    waitStatus(document, predicate, revision),
+  ]);
+  return status;
 }
 const settled = (status: BrowserStatus): boolean => !status.busy;
 const rowsPainted = (status: BrowserStatus): boolean => !status.busy && status.renderedRows > 0 && status.firstRow.length > 0;
 const digest = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
+
+suite('T-013 production SQL editor DOM', () => {
+  for (const fallback of [false, true]) {
+    test(`FR-010: Given CodeMirror and fallback=${String(fallback)}, When running selection, shortcuts and paged SQL, Then errors preserve results, restoration works and sources remain unchanged`, async function () {
+      this.timeout(60000);
+      const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>('jreyinnovarev.lite-voyager');
+      assert.ok(extension); const api = await extension.activate();
+      const directory = await mkdtemp(join(extension.extensionPath, 'out', 't013-host-'));
+      const generated = await promisify(execFile)(process.execPath, [join(extension.extensionPath, 'scripts/browser-fixture.mts'), directory], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
+      assert.equal(generated.stderr, '');
+      const path = join(directory, 'browser.sqlite'); await chmod(path, 0o444);
+      const before = await digest(path);
+      const previous = process.env['LITE_VOYAGER_FORCE_FALLBACK']; process.env['LITE_VOYAGER_FORCE_FALLBACK'] = fallback ? '1' : '0';
+      let document: SqliteDocument | undefined;
+      try {
+        const uri = vscode.Uri.file(path);
+        await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        document = api.sqliteEditor.getDocument(uri); assert.ok(document);
+        await waitStatus(document, (status) => rowsPainted(status) && status.editorReady === true);
+        const current = document;
+        const edit = async (sql: string): Promise<BrowserStatus> => action(current, { type: 'browserExercise', action: 'sql', value: sql }, (status) => status.sqlLength === sql.length);
+        const execute = async (predicate: (status: BrowserStatus) => boolean, control: 'run' | 'shortcut' = 'run'): Promise<BrowserStatus> => {
+          const started = await action(current, { type: 'browserExercise', action: control }, (status) => status.busy && /Running SQL/.test(status.message));
+          return waitStatus(current, predicate, started.revision);
+        };
+        const run = async (sql: string): Promise<BrowserStatus> => {
+          await edit(sql);
+          return execute((status) => settled(status) && status.query === true && (status.cachedRows === 0 || status.firstRow.length > 0));
+        };
+        const sql = 'SELECT id, value FROM "b pages" ORDER BY id';
+        const first = await run(sql);
+        assert.equal(first.highlighted, true); assert.equal(first.cachedRows, 100); assert.equal(first.count, null);
+        assert.equal(first.firstRow[0]?.text, '1'); assert.equal(first.hasMore, true);
+        assert.match(first.summary ?? '', /Page execution time: \d+\.\d ms/);
+        // Selection must exclude an invalid surrounding document, including emoji.
+        const selected = "SELECT '🚀' AS duplicate, 2 AS duplicate";
+        const documentSql = `SELECT FROM;\n${selected}\nDELETE FROM "b pages";`;
+        await edit(documentSql);
+        const from = documentSql.indexOf(selected);
+        await action(current, { type: 'browserExercise', action: 'selection', value: `${String(from + selected.length)},${String(from)}` }, (status) => status.selectionLength === selected.length);
+        const selection = await execute((status) => rowsPainted(status) && status.firstRow[0]?.text === '🚀', 'shortcut');
+        assert.equal(selection.columns, 2); assert.equal(selection.count, '1'); assert.equal(selection.firstRow[1]?.text, '2');
+        await run(sql);
+        await edit('SELECT FROM');
+        const failed = await execute((status) => settled(status) && /syntax error/.test(status.message));
+        assert.equal(failed.firstRow[0]?.text, '1'); assert.equal(failed.cachedRows, 100); assert.equal(failed.hasMore, true);
+        const second = await action(current, { type: 'browserExercise', action: 'next' }, (status) => rowsPainted(status) && status.offset === 100);
+        assert.equal(second.firstRow[0]?.text, '101'); assert.equal(second.count, null);
+        const last = await action(current, { type: 'browserExercise', action: 'next' }, (status) => rowsPainted(status) && status.offset === 200);
+        assert.equal(last.firstRow[0]?.text, '201'); assert.equal(last.count, '201'); assert.equal(last.hasMore, false);
+        await action(current, { type: 'browserExercise', action: 'previous' }, (status) => rowsPainted(status) && status.offset === 100);
+        const revision = current.browserStatus?.revision ?? 0;
+        const text = await vscode.workspace.openTextDocument({ content: 'T-013 SQL hide/show restoration' });
+        await vscode.window.showTextDocument(text, { preview: false });
+        assert.equal(current.panel?.visible, false);
+        await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        const restored = await waitStatus(current, (status) => rowsPainted(status) && status.query === true && status.offset === 100, revision);
+        assert.equal(restored.firstRow[0]?.text, '101'); assert.equal(restored.sqlLength, 'SELECT FROM'.length);
+        const fidelity = await run('SELECT nullable, empty, literal, maximum, minimum, bytes FROM "a values"');
+        assert.deepEqual(fidelity.firstRow.map((cell) => [cell.text, cell.label]), [
+          ['NULL', 'SQL NULL'], ['(empty)', 'Empty string'], ['NULL', null], ['9223372036854775807', null], ['-9223372036854775808', null], ['[BLOB 24 bytes]', null],
+        ]);
+        for (const invalid of ['SELECT * FROM "<missing 🚀>"', 'SELECT 1; SELECT 2', 'DELETE FROM "b pages"', 'WITH n AS (SELECT 1) DELETE FROM "b pages"']) {
+          await edit(invalid);
+          const error = await execute((status) => settled(status) && /no such table|read.?only|one read statement/i.test(status.message));
+          if (invalid.includes('<missing')) { assert.ok(error.message.includes('no such table: <missing 🚀>')); }
+          assert.equal(error.firstRow[3]?.text, '9223372036854775807'); assert.equal(error.count, '1');
+        }
+        await edit('SELECT sum(x) FROM "g slow count"');
+        await action(current, { type: 'browserExercise', action: 'run' }, (status) => status.busy && /Running SQL/.test(status.message));
+        const cancelled = await action(current, { type: 'browserExercise', action: 'cancel' }, (status) => settled(status) && /cancelled/.test(status.message));
+        assert.equal(cancelled.firstRow[3]?.text, '9223372036854775807'); assert.equal(cancelled.count, '1');
+        const empty = await run('SELECT 1 AS value WHERE 0');
+        assert.equal(empty.cachedRows, 0); assert.equal(empty.count, '0'); assert.match(empty.summary ?? '', /No rows/);
+        await edit('SELECT * FROM "e large cells"');
+        const oversized = await execute((status) => settled(status) && /No value was truncated/.test(status.message));
+        assert.equal(oversized.count, '0'); assert.equal(oversized.cachedRows, 0);
+        const resizing = await action(current, { type: 'browserExercise', action: 'size', value: '1' }, (status) => status.busy);
+        await waitStatus(current, settled, resizing.revision);
+        const large = await execute((status) => rowsPainted(status) && status.firstRow[0]?.length === 1100000);
+        assert.equal(large.firstRow[0]?.text, null); assert.equal(large.cachedRows, 1);
+        const wide = await run('SELECT * FROM "f wide"');
+        assert.equal(wide.columns, 1000); assert.ok(wide.renderedColumns < 40);
+        const end = await action(current, { type: 'browserExercise', action: 'lastCell' }, (status) => rowsPainted(status) && status.firstRow.some((cell) => cell.text === '999'));
+        assert.ok(end.renderedColumns < 40);
+        await closeEditor(current); assert.equal(await digest(path), before);
+        console.log(`T-013 SQL evidence: ${JSON.stringify({ vscode: vscode.version, engine: fallback ? 'sql.js' : 'node:sqlite', selectionShortcut: true, highlighted: first.highlighted, paging: true, retainedErrors: true, restoredEditorAndQuery: true, sourceUnchanged: true })}`);
+      } finally {
+        document?.dispose(); await document?.session.closed;
+        await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+        if (previous === undefined) { delete process.env['LITE_VOYAGER_FORCE_FALLBACK']; } else { process.env['LITE_VOYAGER_FORCE_FALLBACK'] = previous; }
+        await chmod(path, 0o600); await rm(directory, { recursive: true, force: true });
+      }
+    });
+  }
+});
 
 suite('T-012 production browser DOM', () => {
   for (const fallback of [false, true]) {

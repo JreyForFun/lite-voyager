@@ -12,7 +12,7 @@ export function sqliteEditorHtml(name: string, state: SqliteEditorState, assets?
     : "default-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'";
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp).replaceAll('&#39;', "'")}">
-${browser ? `<link rel="stylesheet" href="${escapeHtml(assets.styleUri)}">` : ''}
+${browser ? `<meta name="style-nonce" content="${escapeHtml(assets.nonce)}"><link rel="stylesheet" href="${escapeHtml(assets.styleUri)}">` : ''}
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Lite Voyager</title></head>
 <body><h1>Lite Voyager</h1><p>${escapeHtml(name)}</p>
 ${state.mode === undefined ? '' : `<aside role="status" aria-label="Database engine mode"><strong>${escapeHtml(state.mode.notice)}</strong></aside>`}
@@ -23,7 +23,16 @@ ${browser ? browserShell(assets) : ''}
 
 function browserShell(assets: SqliteEditorAssets): string {
   return `<section id="browser" aria-label="Table browser">
+<div class="sql-toolbar"><h2>SQL</h2><button id="sql-run" disabled>Run SQL</button><span>Ctrl/Cmd+Enter · selection or whole editor · read-only</span></div>
+<div id="sql-editor"></div>
+<p id="sql-limit-status" role="status" aria-live="polite" hidden></p>
+<p class="browser-help">Run one read-only statement. SQL transport and saved editor state have a 4-Mi-character limit (UTF-16 code units).
+Results are paged; the exact total appears at the final page. Page time includes worker transport and offset traversal.
+Use ORDER BY for predictable paging. Queries are rerun per page; nondeterministic SQL and external file changes may change results.
+On an error, previous results remain. For oversized results, choose fewer rows and Run again.
+Select a table or view to return to table browsing.</p>
 <div class="browser-toolbar"><label for="browser-select">Table or view</label><select id="browser-select" disabled></select>
+<button id="browser-browse" disabled>Browse table</button>
 <button id="browser-list-previous" disabled>Previous objects</button><button id="browser-list-next" disabled>Next objects</button>
 <span id="browser-list-status" role="status"></span></div>
 <div class="browser-toolbar"><button id="browser-previous" disabled>Previous page</button><button id="browser-next" disabled>Next page</button>

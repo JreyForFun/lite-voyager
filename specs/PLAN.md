@@ -428,6 +428,43 @@ in VALIDATION.md. A warm generated 135,122,944-byte/ten-million-row primary tabl
 has been exercised in the real custom editor; this does not establish cold-disk,
 multi-GB memory, physical first-paint or full milestone readiness.
 
+### T-013 production SQL editor (2026-10-10)
+
+Owner authorizes scoped implementation/fixes and fixture choices; owner pushes.
+FR-010/FR-011 acceptance is recorded in SPEC.md before implementation. Reuse
+the approved CodeMirror 6 packages and the production browser grid; no dependency
+or fixture inventory change is needed.
+
+- `webview/sql-editor.ts` owns CodeMirror, SQL highlighting, undo/redo and the
+  Mod-Enter key binding. Run uses the primary nonempty selection or full document.
+  The existing local CSP nonce covers injected styles; closing destroys the editor.
+- `browserQuery`/`browserQueryRows` extend the existing typed protocol and host
+  queue. SQL passes literally to Engine.query with a bounded page address. All
+  database execution and offset traversal stay in the existing supervised worker.
+  Writes/multiple statements retain the existing backend rejection.
+- `webview/query-view.ts` retains only successful SQL and summaries. The browser
+  renders one 100/10/1-row page in the existing two-dimensional virtual grid.
+  Failed runs/pages preserve the previous successful grid, paging SQL and summary.
+  Ordinary query diagnostics retain the SQLite text with a query-context prefix;
+  they are local UI text, never logs. Metadata recovery wording stays unchanged.
+- Counts show the displayed range/more indicator, with an exact total at the
+  final page; there is no eager query count. Page execution time measures host
+  dispatch through Engine resolution, including IPC/offset traversal. It is not
+  a full-result duration or rendering metric. Paging reruns successful SQL; the
+  UI explains ORDER BY and changes from nondeterministic SQL/external writes.
+- Persist editor text and successful SQL/page context, never rows. Saved SQL and
+  transport are bounded to 4 Mi UTF-16 code units. A live notice warns when editor
+  text cannot be persisted; it is never truncated. Edits made during restoration
+  replace the saved text while preserving the original catalog/page context.
+  Browse table explicitly returns to even the already selected table.
+- Integration exercises the real CodeMirror key handler, backwards Unicode
+  selection, literal error display, paging, context restoration, fidelity,
+  large/wide cells, existing cancellation/recovery and source hashes on both
+  engines. Performance, manual visual QA and remote CI claims remain separate.
+
+Validation evidence and remaining owner steps are recorded in VALIDATION.md.
+T-014's cancellation target and later query features are not claimed by T-013.
+
 ### T-002 measurements and revised cancellation design (2026-10-09)
 
 - Spike tests cover real worker queries, exact 64-bit integers, NULL/empty
@@ -681,6 +718,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-013 SQL editor (2026-10-10): Reuse approved CodeMirror and production grid/Engine; document literal selection execution, successful-query paging, diagnostic preservation, timing/count semantics, bounded SQL persistence and restored editing/table state. No new dependency.
 - v0.4 T-012 browser (2026-10-10): Document owner-authorized production browsing, lazy exact counts, bounded two-dimensional rendering, narrow catalog projection, tab-state recovery and disposable fixtures. Preserve existing Engine contracts, no-new-dependency policy and later milestone QA/performance scope.
 - v0.4 T-011 metadata (2026-10-10): Owner authorizes paged worker-side column/index operations on the existing Engine and protocol; document exact declared metadata, parameter binding, implicit/expression indexes and actionable bounded-page failures. UI remains T-012.
 - v0.4 T-010 picker repair (2026-10-10): Replace extension-limited default registration with one optional all-filename selector and four contributed editor defaults. This preserves default SQLite opening while making Reopen Editor With available for other filenames; user associations retain precedence.

@@ -15,7 +15,9 @@ and recorded three-platform CI.
 T-010 adds a read-only SQLite custom editor with header validation, clear opening
 errors, fallback notices/consent and helper cleanup. T-012 adds a paged table/view
 list and virtualized browsing grid with exact cell display and explicit row
-counts. The SQL editor/query UI and schema panel remain later milestone work.
+counts. T-013 adds a CodeMirror SQL editor with selection-only Run, Ctrl/Cmd+Enter,
+paged results, page execution time and SQLite diagnostics that preserve previous
+results. The schema panel remains later milestone work.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 T-008 now provides an experimental CodeMirror editor and synthetic grid;
 owner manual QA passes and confirms CodeMirror 6 (steps and evidence below).
@@ -57,6 +59,49 @@ npm run package
 The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
+
+## T-013 SQL editor — owner visual check
+
+Press **F5** and open `out/t013-owner-20261010/browser.sqlite` in the Extension
+Development Host, or generate a disposable database in a new directory:
+
+```sh
+node scripts/browser-fixture.mts out/t013-qa
+```
+
+Check light and dark themes, keyboard focus, highlighting and undo/redo. Use
+**Run SQL** or **Ctrl/Cmd+Enter**. A nonempty primary selection runs by itself;
+otherwise the entire document runs. Only one read-only statement is accepted.
+
+- Run `SELECT id, value FROM "b pages" ORDER BY id`. Page through rows 1–100,
+  101–200 and 201, then back. The final page shows total 201; page time is in ms.
+- Replace the editor with `SELECT FROM` and Run. The SQLite error appears while
+  the previous grid and paging remain usable. Page again: it uses the successful
+  SQL, even though the editor contains an error.
+- Put `SELECT 1; SELECT '🚀' AS value;` in the editor. Select only the second
+  statement and press Ctrl/Cmd+Enter: exactly one row with the emoji appears.
+  Running both statements is rejected. DELETE/UPDATE are also rejected.
+- Run `SELECT * FROM "a values"`: check NULL/empty/literal NULL, exact signed
+  integers, BLOB placeholders, horizontal keyboard navigation and literal text.
+- Run `SELECT 1 WHERE 0`: zero rows appears. Run `SELECT * FROM "e large cells"`:
+  the oversized page fails explicitly; choose size 1 and Run again. Run
+  `SELECT * FROM "f wide"` and navigate to the final column.
+- Run `SELECT sum(x) FROM "g slow count"`, cancel, then run a simple SELECT.
+  Confirm the editor remains responsive and the previous results survive cancel.
+- With a paged query displayed, change editor text, switch to another tab and
+  back. Editor text and successful query/page restore. **Browse table** returns
+  to the selected table, including when the dropdown choice has not changed.
+
+Results use one bounded page. Total count is unknown until the final page.
+Page execution time includes worker transport and offset traversal; it is not
+the time to produce the entire result. Paging reruns SQL: use ORDER BY and avoid
+nondeterministic expressions when stable pages matter. The SQL transport and
+saved-document limit is 4 Mi UTF-16 code units; oversized editor text remains in
+the current editor with a visible warning and is not saved across tab hiding.
+
+For fallback QA, close the development host and start F5 from a VS Code process
+with `LITE_VOYAGER_FORCE_FALLBACK=1` in its environment. Automated host tests
+exercise both engines; physical theme/scrolling judgement remains owner QA.
 
 ## T-012 table browser — owner visual check
 

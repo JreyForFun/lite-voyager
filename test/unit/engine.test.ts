@@ -31,6 +31,16 @@ test('FR-001: Given module detection, When selecting an engine, Then only built-
 });
 
 describe.each([false, true])('Production Engine, fallback=%s', (fallback) => {
+  test('FR-011: Given invalid SQL, When the real worker reports failure, Then SQLite diagnostics survive and a subsequent read succeeds', async () => {
+    const engine = makeEngine(fallback);
+    try {
+      await engine.open(fixture);
+      await expect(engine.query('SELECT * FROM "<missing 🚀>"')).rejects.toThrow('no such table: <missing 🚀>');
+      await expect(engine.query('SELECT FROM')).rejects.toThrow('syntax error');
+      await expect(engine.query('SELECT unknown_column FROM records')).rejects.toThrow('no such column: unknown_column');
+      expect((await engine.query('SELECT 1')).rows).toEqual([['1']]);
+    } finally { await engine.close(); }
+  });
   test('FR-001: Given ordinary names starting sqlite and a view, When schema is paged, Then no user table or view is omitted', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-engine-schema-'));
     const path = join(directory, 'schema.sqlite');

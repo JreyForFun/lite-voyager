@@ -1,6 +1,18 @@
 import { expect, test } from 'vitest';
 import { sqliteEditorHtml } from '../../src/editor/sqlite-editor-ui';
 
+test('FR-010: Given the production SQL editor shell, When opened, Then Run, the CSP style nonce and honest paging help are present', () => {
+  const html = sqliteEditorHtml('sample.sqlite', { phase: 'opened', message: 'Read-only' }, {
+    scriptUri: 'vscode-webview:/sqlite-browser.js', styleUri: 'vscode-webview:/sqlite-browser.css', nonce: 'test-nonce', cspSource: 'vscode-webview:',
+  });
+  expect(html).toContain('id="sql-editor"');
+  expect(html).toContain('id="sql-run"');
+  expect(html).toContain('name="style-nonce" content="test-nonce"');
+  expect(html).toContain('Ctrl/Cmd+Enter');
+  expect(html).toContain('ORDER BY');
+  expect(html).toContain('4-Mi');
+});
+
 test('FR-001: Given untrusted file names and errors, When rendered, Then the script-free editor escapes text and blocks remote content', () => {
   const html = sqliteEditorHtml('<script>file</script>', { phase: 'error', message: '<img src=x onerror=alert(1)>' });
   expect(html).toContain('&lt;script&gt;file&lt;/script&gt;');

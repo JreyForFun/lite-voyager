@@ -1,6 +1,20 @@
 :root { color-scheme: light dark; }
 body { color: var(--vscode-editor-foreground); background: var(--vscode-editor-background); font-family: var(--vscode-font-family); padding: 12px 20px; }
 h1 { font-size: 20px; margin: 0 0 8px; }
+h2 { font-size: 16px; margin: 0; }
+.sql-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 12px 0 8px; }
+#sql-editor { border: 1px solid var(--vscode-panel-border); }
+#sql-editor .cm-editor { min-height: 100px; }
+#sql-editor .cm-scroller { max-height: 240px; overflow: auto; }
+.tok-keyword { color: var(--vscode-symbolIcon-keywordForeground, #a526a4); }
+.tok-string { color: #a31515; }
+.tok-number, .tok-bool, .tok-null { color: #098658; }
+.tok-comment { color: #008000; }
+.vscode-dark .tok-keyword, .vscode-high-contrast .tok-keyword { color: #c586c0; }
+.vscode-dark .tok-string, .vscode-high-contrast .tok-string { color: #ce9178; }
+.vscode-dark .tok-number, .vscode-dark .tok-bool, .vscode-dark .tok-null,
+.vscode-high-contrast .tok-number, .vscode-high-contrast .tok-bool, .vscode-high-contrast .tok-null { color: #b5cea8; }
+.vscode-dark .tok-comment, .vscode-high-contrast .tok-comment { color: #6a9955; }
 .browser-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
 button, select { color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); padding: 5px 8px; font: inherit; max-width: 100%; }
 button:not(:disabled) { cursor: pointer; }

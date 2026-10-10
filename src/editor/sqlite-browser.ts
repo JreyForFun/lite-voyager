@@ -48,6 +48,12 @@ export class SqliteBrowser {
   private async execute(request: BrowserRequest): Promise<BrowserResponse> {
     const requestId = request.requestId;
     switch (request.type) {
+      case 'browserQuery': {
+        const started = performance.now();
+        const page = await this.engine.query(request.sql, [], { offset: request.offset, limit: request.limit });
+        return { type: 'browserQueryRows', requestId, offset: request.offset, limit: request.limit,
+          ms: performance.now() - started, page };
+      }
       case 'browserList': {
         // The browser needs names/kinds only. Large CREATE statements belong to
         // schema inspection and must not consume a table-list page's byte budget.

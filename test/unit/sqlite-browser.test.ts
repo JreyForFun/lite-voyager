@@ -19,6 +19,26 @@ function fixture() {
   return { engine, browser, sent, send };
 }
 
+test('FR-011: Given selected SQL and a page address, When running in the host, Then the Engine receives literal SQL and returns bounded rows with elapsed time', async () => {
+  const { engine, browser, sent, send } = fixture();
+  const sql = 'SELECT 9223372036854775807 AS "🚀"';
+  await browser.handle({ type: 'browserQuery', requestId: 1, sql, offset: 100, limit: 10 }, send);
+  expect(engine.query).toHaveBeenCalledWith(sql, [], { offset: 100, limit: 10 });
+  expect(sent[0]).toMatchObject({ type: 'browserQueryRows', requestId: 1, offset: 100, limit: 10 });
+  const reply = sent[0];
+  if (reply?.type !== 'browserQueryRows') { throw new Error('Expected query result'); }
+  expect(reply.ms).toBeGreaterThanOrEqual(0);
+});
+
+test('FR-011: Given a failed SQL run, When the host responds, Then the original diagnostic is kept as literal text', async () => {
+  const { engine, browser, sent, send } = fixture();
+  engine.query.mockRejectedValueOnce(new Error('no such table: <script>missing</script>'));
+  await browser.handle({ type: 'browserQuery', requestId: 1, sql: 'SELECT * FROM missing', offset: 0, limit: 100 }, send);
+  const reply = sent[0];
+  if (reply?.type !== 'browserError') { throw new Error('Expected visible query error'); }
+  expect(reply.message).toContain('no such table: <script>missing</script>');
+});
+
 test('FR-002: Given an open Engine, When listing and browsing, Then pages default to 100 and no eager count runs', async () => {
   const { engine, browser, sent, send } = fixture();
   await browser.handle({ type: 'browserList', requestId: 1, offset: 0 }, send);

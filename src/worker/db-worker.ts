@@ -30,7 +30,10 @@ function query(backend: ReadBackend, request: DatabaseOperation): void {
     const failure = request.type === 'metadata'
       ? 'The SQLite schema could not be read. Refresh the table list, check that the database is still available, or reopen the file.'
       : 'The SQLite query failed. Check the SQL, table names, and read-only mode.';
-    reply({ type: 'queryFailed', id: request.id, message: actionable ? text : failure });
+    // Query diagnostics belong to the local editor (FR-011), never an Output
+    // channel. Render them as literal text; metadata keeps its recovery guidance.
+    const message = actionable ? text : request.type === 'query' && text.length > 0 ? `SQLite query error: ${text}` : failure;
+    reply({ type: 'queryFailed', id: request.id, message });
   }
 }
 function readQuery(backend: ReadBackend, request: Extract<DatabaseOperation, { type: 'query' }>) {

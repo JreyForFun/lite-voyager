@@ -6,6 +6,16 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-013: added the production CodeMirror SQL editor with Run and Ctrl/Cmd+Enter,
+  literal selection execution, bounded result paging and page execution time.
+  Exact totals appear at the final page without an eager count. SQLite errors
+  preserve previous results and their paging SQL. Editor text/query context
+  restore across tab hiding without saving rows; oversized SQL is rejected
+  visibly without truncation. Browse table returns to the selected table.
+  Both-engine tests cover real highlighting/shortcuts, fidelity, paging,
+  errors, large/wide cells, cancellation/recovery and unchanged sources.
+  No dependency was added; later query features and milestone QA remain separate.
+
 - T-012: added a 100-object table/view list and virtualized, paginated read-only
   grid (100 rows by default). Distinguish NULL, empty text and literal NULL;
   preserve exact signed int64/REAL/date values and size-only BLOB placeholders.

@@ -208,6 +208,39 @@ file loading remain later tasks.
 
 **FR-011 (P0) Results grid.** Shows row count and execution time. SQL errors show the SQLite message and keep the previous results. Results are paged from the engine, never held whole in the webview.
 
+### T-013 acceptance (owner-authorized scope, 2026-10-10)
+
+- Given an opened SQLite editor, SQL is highlighted with the approved CodeMirror
+  6 dependencies. Run and Ctrl/Cmd+Enter execute the nonempty primary selection,
+  or the whole document when no text is selected. Empty input shows an instruction.
+- Execute one read-only statement through the existing Engine on both backends.
+  A selection is sent literally; it is not concatenated into generated SQL.
+  Multiple statements and writes are rejected visibly; source bytes stay unchanged.
+- Reuse the virtualized grid and 100/10/1-row page controls. Keep only one result
+  page in the webview. Display the row range, more-available indicator, and exact
+  total on the final page (including zero); do not eagerly count the whole query.
+- Show page execution time in milliseconds, measured from host dispatch through
+  the Engine reply, including worker transport and offset traversal. It does not
+  claim full-result execution time or DOM paint time.
+- Next/Previous rerun the last successful SQL at a bounded offset, independent
+  of subsequent editor edits. Explain that ORDER BY is needed for predictable
+  paging and nondeterministic SQL or external file changes may change results.
+- Keep the previous successful page, its paging SQL and summary when a new run
+  or page fails. Show the SQLite diagnostic as literal text with recovery guidance.
+  Large pages fail explicitly without truncation; Run with fewer rows retries.
+- Preserve exact int64, NULL/empty/text-NULL and BLOB display. Cover empty results,
+  duplicate column names, quoted/unicode identifiers, wide and large cells,
+  stale replies, context restoration, disposal and recovery on both backends.
+- Preserve editor text and successful query/page context across tab hiding without
+  persisting result rows. A recreated view reruns the saved read-only page.
+  SQL has a visible 4-Mi UTF-16-code-unit transport/state limit; oversized text is
+  retained in the current editor, rejected without truncation, and is not persisted.
+- Keep existing cancellation available without claiming T-014 acceptance.
+  Autocomplete, history, sorting/filtering, export and write mode remain separate.
+- Test first; npm run verify must have zero errors/warnings. Real-host tests cover
+  CodeMirror, selection, shortcut, paging, errors and unchanged sources. Owner
+  visual/theme/keyboard QA and three-platform CI remain distinct evidence.
+
 **FR-012 (P1) Autocomplete** for table names, column names, and keywords from the loaded schema.
 
 **FR-013 (P2) Query history,** last 50 per file.
@@ -299,6 +332,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.7 T-013 scope (2026-10-10): Owner authorizes production SQL editing/running, bounded result paging, page timing, honest final-page totals, preserved SQLite diagnostics/results and bounded editor/query restoration. Keep later query features and T-014 targets separate.
 - v0.7 T-012 scope (2026-10-10): Owner delegates implementation and scoped fixes/fixtures. Define paged object selection, 100-row browsing, exact cell display, on-demand cancellable counts, two-dimensional virtualization and bounded tab-state restoration. Schema panel remains a milestone follow-up; distinguish measured DOM readiness from universal physical-paint/multi-GB targets.
 - v0.7 T-011 scope (2026-10-10): Owner authorizes worker-only paged object/column/index metadata, both-engine tests and necessary scoped fixes. Preserve declared SQLite metadata and source safety; visible browsing and first-row performance remain later tasks.
 - v0.6 T-010 consent dismissal (2026-10-10): Owner confirms Escape dismissed a fresh warning but the editor showed opened. Preserve the failed QA and require explicit Cancel/Escape routing with only Proceed authorizing loading; real desktop retest remains necessary.
