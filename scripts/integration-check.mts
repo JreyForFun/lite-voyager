@@ -3,6 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runCheck } from './checks.mts';
 import { checkIntegrationLogs, formatApprovedHostDiagnostics } from './integration-logs.mts';
+import { integrationEnvironment } from './integration-environment.mts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -16,7 +17,7 @@ try {
     args: ['node_modules/@vscode/test-cli/out/bin.mjs'],
   }, {
     cwd: root,
-    env: { ...process.env, LITE_VOYAGER_TEST_PROFILE: profile },
+    env: integrationEnvironment(process.env, profile),
   });
   const approved = await checkIntegrationLogs(join(profile, 'logs'));
   process.stdout.write(formatApprovedHostDiagnostics(approved));

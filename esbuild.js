@@ -73,6 +73,13 @@ async function main() {
     external: ['node:sqlite'],
   });
   await mkdir('dist', { recursive: true });
+  for (const name of ['db-process', 'db-worker']) {
+    await buildBundle({
+      entryPoints: [`src/worker/${name}.ts`],
+      platform: 'node', format: 'cjs', target: 'es2022',
+      outfile: `dist/${name}.js`, external: ['node:sqlite'],
+    });
+  }
   await copyFile('node_modules/sql.js/dist/sql-wasm.js', 'dist/sql-wasm.cjs');
   await copyFile('node_modules/sql.js/dist/sql-wasm.wasm', 'dist/sql-wasm.wasm');
   await copyFile('node_modules/sql.js/LICENSE', 'dist/sql.js-LICENSE');

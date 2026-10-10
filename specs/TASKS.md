@@ -97,7 +97,7 @@ v0.0.1. Owner pushes the final records/tag, then starts T-009 in a fresh chat.
 **Exit criteria:** T-002 and T-004 results are written into `PLAN.md`, and CI is green. The `Engine` interface from `PLAN.md` D-3 comes next in T-009. If T-004 shows imports are unacceptably slow, revisit R-1 before Milestone 2.
 
 ## Milestone 1: Read-only SQLite (release 0.1)
-- [ ] **T-009** Define the `Engine` interface and implement the sql.js fallback with the memory-limited banner and large-file prompt. Add a test hook (environment variable `LITE_VOYAGER_FORCE_FALLBACK=1`) that forces the fallback engine, so both engines can be tested on any machine. *(PLAN D-3, FR-001)*
+- [x] **T-009** Define the `Engine` interface and implement the sql.js fallback with the memory-limited banner and large-file prompt. Add a test hook (environment variable `LITE_VOYAGER_FORCE_FALLBACK=1`) that forces the fallback engine, so both engines can be tested on any machine. Implemented and independently reviewed; 46 Engine/UI unit tests, two host-environment regression tests and four production host/panel integration tests cover the clarified T-009 scope. Final local full-check evidence passes with 255 unit / 12 integration tests; saved host results/strict logs recovered after interruption. One explicitly reported approved host warning, no unexpected diagnostic in the final run. Owner pushes; fresh T-009 CI is not yet claimed. *(PLAN D-3, FR-001)*
 - [ ] **T-010** Custom editor for SQLite extensions; header-based detection; invalid-file error. *(FR-001)*
 - [ ] **T-011** DB worker: open read-only, list tables and views, get schema. *(FR-001, FR-003, FR-016)*
 - [ ] **T-012** Table list, paginated grid, NULL styling, BLOB placeholder, lazy row count, exact display of 64-bit integers. *(FR-002, section 4.1)*
@@ -153,6 +153,7 @@ Every milestone ends with a gate (`VALIDATION.md` section 4): green `npm run ver
 When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part of `SPEC.md` and `PLAN.md`, and only the single task you are working on.
 
 ## Changelog
+- v0.6 T-009 completion (2026-10-10): Public Engine and both worker backends, permanent fallback hook and pre-editor banner/consent UI pass local gates. Red-first repairs fix sqliteX schema omission and repeated cancellation; independent review confirms the cancellation repair. Checked only T-009; T-010 and production browsing/performance remain open. Owner pushes.
 - v0.6 T-052 completion (2026-10-10): Verified run 37962951570/attempt 1/6b2d665 and applicable full checks on all three platforms; checked T-052 and completed the foundation checkpoint. T-009 remains unstarted.
 - v0.6 T-052 fixture follow-up (2026-10-10): Recorded passing candidate CI and a subsequent local header-test timeout; fixture efficiency is repaired without reducing data/assertions or extending timeout. Keep closure open for new candidate evidence.
 - v0.6 T-052 local candidate (2026-10-10): Recorded reviewed red-first repairs and passing full local gate; closure remains pending the owner's push, new three-platform CI and final tag. T-009 is not started.

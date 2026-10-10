@@ -288,6 +288,76 @@ Completion-record `npm run verify` also passes with 207 unit tests, strict
 types/lint/build and packaging; zero errors/warnings.
 
 ### Milestone 1 manual QA (read-only SQLite)
+#### T-009 local evidence (2026-10-10)
+
+- Final closure `npm run verify` passes with 255 unit tests, strict types/lint/build
+  and a 17-file / 476.95 KB VSIX; zero errors and zero warnings.
+
+- Owner authorized full implementation, best-judgment clarifications and
+  disposable fixture edits; only T-009 is implemented.
+- `test/unit/engine.test.ts` and `fallback-ui.test.ts` contain 46 Engine/UI tests;
+  `integration-environment.test.ts` adds two launcher regression cases:
+  common Engine/backend operations, real runtime absence and force selection,
+  accessible banner/prompt text, strict decimal consent boundary, decline,
+  missing consent, actual approved load above 200 MB, prompt close/cancel,
+  snapshot changes, WAL/journal rejection, source hashes/read-only files,
+  exact int64/NULL/BLOB values, hostile identifiers/parameters, result paging,
+  1-MB cells/1,000 columns, explicit 4-MiB payload boundary, cancellation,
+  repeated cancellation, explicit close overriding recovery, helper crash,
+  two simultaneous Engines, invalid/empty files, query recovery, and rejection
+  of preparation-time EXPLAIN PRAGMA changes while retaining read-query plans.
+- Initial behavior scaffolding produced 27 failing task tests. Red-first
+  regressions subsequently caught valid `sqliteX` table omission and the
+  concurrent-cancel lifecycle defect; both repairs pass on both backends.
+- A final direct SQLite diagnostic found that EXPLAIN PRAGMA can change safety
+  flags during preparation. Two failing real-backend regressions preceded the
+  repair; only SELECT/WITH may follow EXPLAIN or EXPLAIN QUERY PLAN. The VS Code
+  host query tests also assert rejection; final gates include this repair.
+- `src/test/engine.test.ts` adds four real VS Code integration tests: selected
+  production backend/off-thread querying/exact integers, rendered mode banner,
+  script-free panel and confirmed helper exit on panel disposal, for both engines.
+- Final full-check evidence passes: 255 unit / 12 integration tests,
+  strict types/lint/build, 17-file / 476.89 KB VSIX, Windows x64 / VS Code 1.140.0.
+  The packaged production helpers and local sql.js assets are present.
+  The session was interrupted after the host tests; saved renderer logs contain
+  all 12 passing tests and `12 passing`. Re-running `checkIntegrationLogs` on
+  that profile completes successfully (exit 0), recovering the final strict step.
+- Exactly one accepted host diagnostic: source
+  `20261010T020007/window1/renderer.log`, line 10, severity `warning`,
+  `VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  No unexpected warning/error; this full run is not warning-free.
+- The earlier pre-cancellation-repair full run also passed (247 unit / 12
+  integration tests). Its one accepted record was source
+  `20261010T014129/window1/renderer.log`, line 10, severity `warning`,
+  `VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  That preliminary run was also not warning-free.
+- The pre-EXPLAIN-repair full run passed 251 unit / 12 integration tests with one
+  accepted source `20261010T014555/window1/renderer.log:10`, severity `warning`,
+  `VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  It was not warning-free and does not cover the subsequent guard/launcher repair.
+- Independent review identified one MEDIUM cancellation race and one LOW stale
+  README statement; both are repaired. Focused review confirms the lifecycle fix.
+- The post-EXPLAIN-repair full run passes 253 unit / 12 integration tests but
+  **fails** the unchanged runtime-log gate: source
+  `20261010T015401/window1/renderer.log:2`, severity `warning`,
+  `Creation of workbench contribution 'chat.usagesTool' took 21ms.` is not an
+  approved family. Its accepted `VSCODE-HOST-001` record is at line 11 of that
+  same file, severity `warning`,
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  Neither warning is suppressed. Investigation found the test host inherited
+  `VSCODE_NODE_COMPILE_CACHE_ROOT` from the active 1.141 installation, pointing
+  at an unavailable cache while 1.140 ships its own cache. Two red-first tests
+  now verify removal of the parent's bootstrap/cache paths from the child only.
+  The changed-environment final run reports its own packaged cache enabled,
+  passes the host tests/strict logs, and has no unexpected warning/error.
+  This does not prove host timing warnings cannot recur; every such record
+  still fails unless it matches one of the two exact owner-approved families.
+- No new dependency or committed fixture asset. Full FR-001 editor browsing,
+  multi-GB extension memory/visible-row performance, macOS architectures and
+  milestone manual QA remain open. Fresh T-009 three-platform CI awaits owner push.
+
+The following checklist is the remaining whole-milestone QA, not T-009 completion:
+
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
 - [ ] A generated multi-GB database shows its first rows within the NFR-004 target, and memory stays flat while scrolling.
 - [ ] NULL, empty string, BLOB placeholder, and a 64-bit integer (for example 9223372036854775807) all display correctly.
@@ -385,6 +455,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-009 evidence (2026-10-10): Recorded 48 task unit/four production integration cases, red-first reviewed repairs, final local full-check evidence and exact host diagnostics. Preserve the failed startup-warning run; isolate parent cache paths without weakening policy. Saved host results/strict checks recovered after interruption. Later browsing/performance/manual QA and new remote CI remain open.
 - v0.1 T-052 completion (2026-10-10): Verified run 37962951570/attempt 1/6b2d665 and successful locked installs/full-verification steps on all three platforms; completed the foundation gate and local v0.0.1 checkpoint, preserving production limitations.
 - v0.1 T-052 fixture follow-up (2026-10-10): Verified three-platform candidate run 37961300752/d18e5e6, then recorded a real local quoted-header timeout and preserved its data/assertions/time bound while reducing redundant tiny reads; require fresh verification/CI for the adjusted fixture before tagging.
 - v0.1 T-052 local gate (2026-10-10): Full verification passes with 207 unit/eight integration tests, source/cancellation evidence and one explicitly reported approved host warning; fresh remote candidate evidence and final tag remain required.

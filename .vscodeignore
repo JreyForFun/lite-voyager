@@ -9,6 +9,8 @@
 !dist/codemirror-LICENSES.txt
 !dist/sqlite-spike-worker.js
 !dist/sqlite-spike-process.js
+!dist/db-process.js
+!dist/db-worker.js
 !dist/sql-wasm.cjs
 !dist/sql-wasm.wasm
 !dist/sql.js-LICENSE

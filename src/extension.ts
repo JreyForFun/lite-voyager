@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { join } from 'node:path';
 import { SqliteSpike } from './worker/sqlite-spike';
 import { openWebviewSpike } from './webview-spike-panel';
+import { openEngineCheck } from './engine-panel';
 
 async function runSqliteSpike(context: vscode.ExtensionContext, output: vscode.OutputChannel, simulateUnavailable: boolean): Promise<void> {
 	const selection = await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFolders: false, filters: { SQLite: ['sqlite', 'sqlite3', 'db'] }, title: 'T-002: Choose a small SQLite fixture' });
@@ -89,6 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 	const output = vscode.window.createOutputChannel('Lite Voyager T-002');
 	context.subscriptions.push(output,
+		vscode.commands.registerCommand('lite-voyager.engineCheck', (file?: vscode.Uri) => openEngineCheck(context, file)),
 		vscode.commands.registerCommand('lite-voyager.webviewSpike', () => openWebviewSpike(context)),
 		vscode.commands.registerCommand('lite-voyager.sqliteSpike', () => runSqliteSpike(context, output, false)),
 		vscode.commands.registerCommand('lite-voyager.sqliteSpikeFallback', () => runSqliteSpike(context, output, true)),

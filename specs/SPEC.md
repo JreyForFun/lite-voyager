@@ -90,7 +90,8 @@ Priority: **P0** first release, **P1** next, **P2** later in v1.
 **FR-001 (P0) Open SQLite files.** Opens `.db`, `.sqlite`, `.sqlite3`, `.db3`. Detection uses the file header (`SQLite format 3`), not just the extension. The file is read from disk, never fully loaded into memory.
 - Given a valid SQLite file of any size, when opened, then tables and views are listed and the first rows are visible within the NFR-004 target.
 - Given a file that is not valid SQLite, then a clear error is shown and the file is not modified.
-- Given a host without `node:sqlite` (fallback engine), then a banner explains the memory-limited mode. Files above 200 MB (start) are not loaded silently: the user is told why and how to fix it (update VS Code, or use a host with Node 22+), and may choose to proceed.
+- Given a host without `node:sqlite` (fallback engine), then a banner explains the memory-limited mode. Files above 200 MB (200,000,000 bytes) are not loaded silently: the user is told why and how to fix it (update VS Code, or use a supported Node 22+ host with `node:sqlite` available), and may choose to proceed. Exactly 200 MB does not require the prompt. Declining or closing the prompt leaves the file unloaded.
+- T-009 scope: exercise the production Engine and fallback banner/prompt through the Engine Check command/panel before the T-010 custom editor exists. The permanent fallback hook is `LITE_VOYAGER_FORCE_FALLBACK=1`; other values do not force fallback. Loading a changed fallback snapshot fails clearly and can be retried. WAL-mode files and WAL/journal sidecars are explicitly rejected in fallback because loading only the main file can omit committed data; use the primary engine instead. Full editor browsing and NFR-004 visible-row performance remain later task criteria.
 
 **FR-002 (P0) Browse a table.** Paginated grid (default 100 rows per page). NULL is visually distinct from an empty string. Total row count is computed lazily, with a "count rows" action for huge tables so opening never stalls.
 
@@ -228,6 +229,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.6 T-009 clarification (2026-10-10): Owner authorized best-judgment scope/fixture decisions. Defined decimal fallback consent threshold, decline behavior, pre-editor Engine Check UI, force hook and snapshot/WAL safeguards; retained later browsing/performance acceptance.
 - v0.5 T-052 positioning decision (2026-10-10): Owner delegated closure decisions; accepted focused D-2 positioning based on the completed runtime/import spikes, with no competitive superiority or production performance claim.
 - v0.5 T-008 acceptance (2026-10-09): Owner authorized the editor/grid spike and implementation judgment. Added explicit synthetic-data, bounded paging/rendering, browser-height, lifecycle and manual editor-choice criteria; production query behavior and NFR targets remain later validation.
 - v0.5 T-002 completion (2026-10-09): Recorded fresh three-platform full verification for reviewed fixes at 0e3ec57 (run 37922970386). Both macOS architectures are not separately covered by the current CI matrix.

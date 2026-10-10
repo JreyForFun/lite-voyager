@@ -21,6 +21,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "lite-voyager.engineCheck",
+        "title": "Lite Voyager: T-009 Engine Check"
+      },
+      {
         "command": "lite-voyager.helloWorld",
         "title": "Hello World"
       },

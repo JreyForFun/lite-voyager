@@ -50,3 +50,23 @@ function pageAddress(value: Record<string, unknown>): boolean {
   return integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)
     && integer(value['offset'], 0, SPIKE_ROW_COUNT - 1) && value['offset'] % SPIKE_PAGE_SIZE === 0;
 }
+
+// Production helper/worker messages. The script-free T-009 status panel does
+// not exchange webview messages; future editor messages stay in this file too.
+export interface DatabaseWorkerOptions { path: string; directory: string; forceFallback: boolean; }
+export interface DatabaseQuery {
+  type: 'query'; id: number; sql: string;
+  parameters: import('./engine/engine').Parameter[];
+  page: import('./engine/engine').PageAddress;
+}
+export type DatabaseWorkerRequest = DatabaseQuery | { type: 'consent'; approved: boolean };
+export type DatabaseHelperRequest =
+  | { type: 'open'; workerPath: string; options: DatabaseWorkerOptions }
+  | { type: 'request'; value: DatabaseWorkerRequest };
+export type DatabaseResponse =
+  | { type: 'mode'; value: import('./engine/engine').EngineMode }
+  | { type: 'opened'; value: import('./engine/engine').EngineOpened }
+  | { type: 'failed'; message: string }
+  | { type: 'started'; id: number }
+  | { type: 'result'; id: number; value: import('./engine/engine').EnginePage }
+  | { type: 'queryFailed'; id: number; message: string };

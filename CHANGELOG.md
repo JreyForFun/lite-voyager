@@ -6,6 +6,20 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-009: added the production asynchronous Engine boundary, native/sql.js worker
+  backends, bounded result pages, confirmed helper cancellation/reopening,
+  persistent fallback notices, and consent before loading files above decimal
+  200 MB. The permanent `LITE_VOYAGER_FORCE_FALLBACK=1` hook exercises fallback.
+  Engine Check demonstrates the UX before the custom editor is implemented.
+  Fallback rejects changed and WAL/journal snapshots explicitly. Assets remain
+  local and packaged; no dependency was added. Production browsing/performance
+  acceptance follows in later tasks.
+  Red-first repairs preserve sqliteX tables, coalesce repeated cancellation,
+  and restrict EXPLAIN to read queries so preparation-time PRAGMAs cannot alter
+  safety settings.
+  Test launches isolate inherited VS Code startup/cache paths; all diagnostic
+  checks and the two exact approved host exceptions remain unchanged.
+
 - T-052: foundation review repairs reject malformed CSV text after a closing
   quote instead of silently discarding it, and allow immediate SQLite spike
   recovery after a worker crash while confirming the old helper has exited.

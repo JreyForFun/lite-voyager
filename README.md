@@ -5,10 +5,13 @@ files and querying them with SQL in an editor tab.
 
 ## Current status
 
-This is the foundation scaffold. It provides **Hello World** and experimental
+Milestone 0 is complete. T-009 adds a production, worker-backed `Engine` interface
+with native disk-backed SQLite and the memory-limited sql.js fallback, plus an
+**Engine Check** command to exercise mode notices and large-file consent.
+The project also provides **Hello World** and experimental
 T-002 worker/fallback spike commands. The spike runs its worker in a killable
 helper process and passes local open/query/cancel/reopen checks, owner manual QA,
-and prior three-platform CI. Review fixes are undergoing fresh verification (below).
+and recorded three-platform CI.
 Data browsing and querying in editor tabs
 are planned and are not implemented yet.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
@@ -52,6 +55,50 @@ npm run package
 The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
+
+## T-009 Engine and fallback check
+
+Run **Lite Voyager: T-009 Engine Check** in an F5 Extension Development Host
+and select `test/fixtures/sample.sqlite`. The panel reports the selected engine
+and remains open until closed; closing it releases the database helper.
+Select an invalid or zero-byte fixture to check the clear opening error.
+
+To exercise the permanent force-fallback hook in F5, temporarily add
+`"env": { "LITE_VOYAGER_FORCE_FALLBACK": "1" }` to the **Run Extension**
+configuration in `.vscode/launch.json`, then start a fresh debug host. Remove
+that entry to restore normal runtime detection. Other variable values do not
+force fallback. This hook does not remove the supported VS Code minimum.
+
+Fallback displays a persistent **Memory-limited mode** notice. A file strictly
+above 200,000,000 bytes prompts before reading it into memory; **Proceed**
+allows loading, while Cancel/dismissal leaves it unloaded. The notice explains
+that memory use can exceed the file size and that upgrading VS Code or using a
+supported host with `node:sqlite` enables disk-backed access. WAL-mode files and
+WAL/journal sidecars are rejected explicitly in fallback. Files that change
+while being approved/read must be retried after the writer closes them.
+
+```sh
+npm test -- test/unit/engine.test.ts test/unit/fallback-ui.test.ts
+npm run verify
+npm run verify:full
+```
+
+Tests exercise both real engines, runtime module absence, exact integers,
+source safety, bounded pages, prompt decline/approval (including a disposable
+file above 200 MB), changed snapshots, and cancellation/recovery. Integration
+tests run the production Engine and command/panel in the VS Code host. Test
+fixtures for these runtime conditions are temporary; no large data is committed.
+
+The public async interface is in `src/engine/engine.ts`. `EngineClient` supervises
+both worker backends so cancellation can kill the helper, await exit, and reopen.
+Queries return one page (at most 1,000 rows and 4 MiB); an oversized page gives
+an explicit error without truncation. Offset paging re-executes and skips earlier
+rows with bounded memory, so deep-page latency and stable browsing results remain
+work for subsequent tasks. No multi-GB extension-memory or visible-row performance
+target is claimed by T-009. SQL editor/table browsing belongs to later tasks.
+Read-only queries accept SELECT/WITH, optionally preceded by EXPLAIN or
+EXPLAIN QUERY PLAN; EXPLAIN PRAGMA is rejected because some PRAGMAs take
+effect during preparation (see [SQLite's PRAGMA documentation](https://www.sqlite.org/pragma.html)).
 
 ## T-051 spec tools
 
@@ -185,9 +232,9 @@ verification passes with 103 unit tests, six integration tests, and strict logs;
 VS Code 1.141.0 also passes the integration/log gate. [CI run 37922970386](https://github.com/JreyForFun/lite-voyager/actions/runs/37922970386)
 passes all three Full verification jobs and their applicable verification steps
 for the review fixes at commit 0e3ec57de8254b80a2aa8bc830ea65c527e8301c.
-T-002 is complete; the remaining Milestone 0 tasks and gate are open.
-The production Engine interface,
-fallback banner/large-file prompt, and permanent force-fallback hook remain T-009.
+T-002 is complete; T-052 subsequently closed the foundation gate.
+T-009 now supplies the production Engine interface, fallback banner/large-file
+prompt, and permanent force-fallback hook (see the Engine Check section above).
 
 ## Continuous integration
 
