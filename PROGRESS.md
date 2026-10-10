@@ -3,33 +3,32 @@
 ## Current phase / task
 Milestone 0 is complete; T-052 and all earlier foundation tasks are checked.
 Owner reports pushing closure commit c0b7f3e and tag v0.0.1 on 2026-10-10.
-Milestone 1 / T-009 is complete locally with reviewed implementation and completion records. Owner pushes the task commit.
-T-010 is next in a fresh chat; no other Milestone 1 task is started.
+Milestone 1 / T-009 implementation is complete locally; its CI reporter follow-up is repaired and verified locally. Owner pushes.
+T-010 is next in a fresh chat after the repair's CI evidence; no other task is started.
 
 ## Verify status
-- Final closure `npm run verify` passes with 255 unit tests, strict types/lint/build and 17-file / 476.95 KB packaging; zero errors/warnings (2026-10-10).
-- Final full-check evidence (2026-10-10): 255 unit / 12 integration tests, strict types/lint/build, 17-file / 476.89 KB VSIX, Windows x64 / VS Code 1.140.0. After interruption, saved 12-pass logs and a fresh strict-log check confirm the final host step.
-- One approved VSCODE-HOST-001 warning: `20261010T020007/window1/renderer.log:10`, original severity warning, `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`. No unexpected warning/error in this final run; it is not warning-free.
-- Independent review found a MEDIUM repeated-cancel race and LOW stale README statement; repaired both. Focused review confirms the lifecycle fix.
-- Foundation CI 37962951570/6b2d665 remains historical evidence; fresh T-009 three-platform CI awaits owner push.
+- Repair `npm run verify` passes: 265 unit tests, strict types/lint/build, 17-file / 477.07 KB VSIX; zero errors/warnings (2026-10-10).
+- Repair `npm run verify:full` passes (exit 0): 265 unit / 12 integration tests, same package, Windows x64 / VS Code 1.140.0 and strict runtime logs.
+- Sole accepted record: `20261010T101619/window1/renderer.log:10`, original severity warning, VSCODE-HOST-001, `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`. No unexpected diagnostic; full run is not warning-free.
+- Supplied CI 38015468652, attempt 1, tested 4d0d4358303de5a223c5f379b146cc515a813191: Windows/macOS pass; Ubuntu fails after 255 passing unit tests because successful descriptions contain "error". Fresh repair CI is pending.
+- Independent Engine review repairs and prior local/failed-run evidence remain in VALIDATION; foundation CI 37962951570/6b2d665 is historical.
 
 ## Last session
-- Implemented public Engine, native/sql.js worker backends, helper supervision, bounded paging, exact values, source/snapshot safety and recovery.
-- Added script-free Engine Check panel, persistent fallback notice, large-file consent and permanent force-fallback hook.
-- Added 48 task unit/four production host/panel integration tests; red-first repairs cover sqliteX omission, concurrent cancellation, preparation-time EXPLAIN PRAGMA and stale parent-host startup paths.
-- Updated task/spec/plan/validation/README/changelog. No dependency or committed fixture asset changes.
+- Reproduced the Ubuntu false error rejection with a slow passing real-Vitest test before the fix.
+- Four additional red regressions exposed hidden passing console diagnostics under automatic agent reporting.
+- Explicit dot reporting fixes both cases. Ten new subprocess tests retain stdout/stderr warning/error rejection in CI/agent environments and failed-assertion rejection.
+- Updated configuration, check-runner tests, changelog, task/validation records and this progress file. No dependency or committed fixture changes.
 
 ## Decisions made this session
-- Owner authorized best-judgment implementation/clarifications; only T-009 is completed.
-- Consent applies strictly above decimal 200 MB; decline/dismissal does not load. Reject changed and WAL/journal fallback snapshots explicitly.
-- Public EngineClient supervises both worker ReadBackends. Repeated cancellation coalesces; explicit close overrides recovery.
-- Pages cap at 1,000 rows / 4 MiB with explicit errors, never truncation; offset paging re-executes with bounded memory.
-- Isolate inherited VS Code bootstrap paths for tests. The prior chat.usagesTool 21 ms warning failed the log gate; policy is unchanged and that failed run is recorded in VALIDATION.
+- Owner's full implementation/repair authorization remains active; only the T-009 follow-up is changed.
+- Keep test names and the diagnostic scanner intact; no output filter or warning allowance is added.
+- Engine consent, paging, source safety and recovery decisions remain documented in SPEC/PLAN.
 
 ## Known issues / blockers
-- Custom editor/browsing, stable deep paging, 5 GB / 500 MB extension memory, visible-row performance, broader accessibility and platform/manual QA remain later validation.
+- Fresh three-platform CI for the reporter repair requires owner push and run evidence; no remote success for this repair is claimed.
+- Custom editor/browsing, stable deep paging, large-file memory/visible-row performance and broader platform/accessibility/manual QA remain later validation.
 - R-1: owner 1.26 GB CSV benchmark takes 145.4 s, 223.0 MB standalone RSS and 27.2 ms parsed preview; mitigations remain planned.
 
 ## Next
-Owner runs `git push origin main` and supplies fresh CI evidence if follow-up is needed. Only T-009 is newly checked.
-Close this chat. Start T-010 with the three read-first files and `npm run ctx -- T-010`; restate acceptance/files and wait for OK before coding.
+Owner runs `git push origin main` and supplies the new Actions URL/log if follow-up is needed. Only T-009 remains locally checked.
+After CI passes, start T-010 in a fresh chat with the three read-first files and `npm run ctx -- T-010`; restate acceptance/files before coding.

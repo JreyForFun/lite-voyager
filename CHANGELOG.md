@@ -19,6 +19,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   safety settings.
   Test launches isolate inherited VS Code startup/cache paths; all diagnostic
   checks and the two exact approved host exceptions remain unchanged.
+  CI follow-up: select the dot reporter explicitly so slow passing test names
+  containing "error" do not trigger the diagnostic gate. Real console warnings
+  and errors stay visible in both CI and agent environments; the gate still
+  rejects them and failed assertions.
 
 - T-052: foundation review repairs reject malformed CSV text after a closing
   quote instead of silently discarding it, and allow immediate SQLite spike

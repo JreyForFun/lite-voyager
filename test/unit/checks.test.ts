@@ -1,6 +1,6 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, test } from 'vitest';
 import { runCheck, runChecks } from '../../scripts/checks.mts';
 
@@ -44,5 +44,50 @@ describe('verification gate', () => {
       { name: 'later', command: process.execPath, args: ['-e', 'require("node:fs").writeFileSync(process.argv[1], "ran")', marker] },
     ], { echo: false })).rejects.toThrow('exit code 2');
     await expect(readFile(marker)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+});
+
+describe('unit-test reporter through the verification gate', () => {
+  async function checkFixture(body: string, title = 'T-009: diagnostic fixture', agent = false): Promise<void> {
+    const root = resolve('.');
+    const output = join(root, 'out');
+    await mkdir(output, { recursive: true });
+    const directory = await mkdtemp(join(output, 'reporter-fixture-'));
+    temporaryDirectories.push(directory);
+    const tests = join(directory, 'test', 'unit');
+    await mkdir(tests, { recursive: true });
+    await writeFile(join(tests, 'fixture.test.ts'),
+      `import { setTimeout as delay } from 'node:timers/promises';\nimport { expect, test } from 'vitest';\ntest(${JSON.stringify(title)}, async () => { ${body} });\n`);
+    await runCheck({
+      name: 'fixture unit tests',
+      command: process.execPath,
+      args: [join(root, 'node_modules', 'vitest', 'vitest.mjs'), 'run',
+        '--config', join(root, 'vitest.config.mts'), '--root', directory],
+    }, { cwd: root, echo: false, env: {
+      ...process.env, CI: 'true', GITHUB_ACTIONS: 'true',
+      AI_AGENT: agent ? 'fixture' : undefined,
+      CODEX_THREAD_ID: undefined, CODEX_SANDBOX: undefined,
+    } });
+  }
+
+  test('T-009: Given successful tests mentioning error and warning, When the CI reporter is checked, Then descriptions do not become diagnostics', async () => {
+    // The default reporter prints slow successful titles; Ubuntu hit its 300-ms threshold.
+    await expect(checkFixture('await delay(350); expect(1).toBe(1);',
+      'FR-001: Given truncated.sqlite, When opened, Then a clear error permits recovery without warning diagnostics')).resolves.toBeUndefined();
+  });
+
+  describe.each([false, true])('agent environment: %s', (agent) => {
+    test.each([
+      ['stdout severity warning', 'console.log("Warning: fixture diagnostic");', 'emitted a warning'],
+      ['stderr severity warning', 'console.warn("Warning: fixture diagnostic");', 'emitted a warning'],
+      ['stdout severity error', 'console.log("ERROR fixture diagnostic");', 'emitted an error'],
+      ['stderr severity error', 'console.error("ERROR fixture diagnostic");', 'emitted an error'],
+    ])('T-009: Given a passing test emitting %s, When the reporter is checked, Then verification still rejects the diagnostic', async (_label, body, message) => {
+      await expect(checkFixture(body, undefined, agent)).rejects.toThrow(message);
+    });
+  });
+
+  test('T-009: Given a failed assertion, When the CI reporter is checked, Then verification still rejects the nonzero test exit', async () => {
+    await expect(checkFixture('expect(1).toBe(2);')).rejects.toThrow('exit code 1');
   });
 });

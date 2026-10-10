@@ -354,7 +354,38 @@ types/lint/build and packaging; zero errors/warnings.
   still fails unless it matches one of the two exact owner-approved families.
 - No new dependency or committed fixture asset. Full FR-001 editor browsing,
   multi-GB extension memory/visible-row performance, macOS architectures and
-  milestone manual QA remain open. Fresh T-009 three-platform CI awaits owner push.
+  milestone manual QA remain open. The first T-009 CI evidence and its repair
+  are recorded below; fresh three-platform evidence for the repair remains open.
+
+#### T-009 CI reporter follow-up (2026-10-10)
+
+The owner supplied [run 38015468652](https://github.com/JreyForFun/lite-voyager/actions/runs/38015468652).
+Public GitHub API metadata verifies attempt 1 at commit
+`4d0d4358303de5a223c5f379b146cc515a813191`, with successful macOS
+job 114104635908 and Windows job 114104636063. Ubuntu job 114104636010
+fails its full-verification step. The pasted Ubuntu output passes all 255 unit
+tests, then the console gate mistakes "error" in two slow successful test names
+for a diagnostic. The Ubuntu build/package/integration stages are not reached;
+this run does not establish three-platform success or remote warning counts.
+
+Ten real-Vitest subprocess regressions cover slow successful prose, stdout and
+stderr warnings/errors in CI and agent environments, and failed assertions.
+Before the fix, the slow successful test reproduces the false error rejection;
+four agent-environment diagnostic cases also fail because the automatically
+selected minimal reporter hides passing console output. The configuration now
+explicitly selects the dot reporter. All 18 check-runner tests pass, including
+the ten new cases. No existing test names, diagnostic scanner, runtime-log exception,
+dependency or committed fixture is changed, and no output filter is added.
+Local `npm run verify` passes with 265 unit tests, strict types/lint/build and
+a 17-file / 477.07 KB VSIX; zero errors and zero warnings. Local
+`npm run verify:full` also completes successfully (exit 0) with all 265 unit
+and 12 integration tests, that same package, and strict runtime logs in
+Windows x64 / VS Code 1.140.0. Its sole accepted record is source
+`20261010T101619/window1/renderer.log`, line 10, original severity `warning`,
+`VSCODE-HOST-001`: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No unexpected warning/error is accepted; this full run is not warning-free.
+Fresh three-platform CI for the repair still requires the owner's push and run
+evidence. T-009 remains locally complete; no later task or milestone is closed.
 
 The following checklist is the remaining whole-milestone QA, not T-009 completion:
 
@@ -455,6 +486,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-009 CI follow-up (2026-10-10): Recorded failed run 38015468652/4d0d435 and its successful Windows/macOS jobs. Ten real-runner regressions cover the Ubuntu prose false positive and hidden passing diagnostics under automatic agent reporting; explicitly select dot reporting without relaxing rejection policy. Local verify/full pass with 265 unit/12 integration tests and one explicitly reported approved host warning; fresh repair CI remains required.
 - v0.1 T-009 evidence (2026-10-10): Recorded 48 task unit/four production integration cases, red-first reviewed repairs, final local full-check evidence and exact host diagnostics. Preserve the failed startup-warning run; isolate parent cache paths without weakening policy. Saved host results/strict checks recovered after interruption. Later browsing/performance/manual QA and new remote CI remain open.
 - v0.1 T-052 completion (2026-10-10): Verified run 37962951570/attempt 1/6b2d665 and successful locked installs/full-verification steps on all three platforms; completed the foundation gate and local v0.0.1 checkpoint, preserving production limitations.
 - v0.1 T-052 fixture follow-up (2026-10-10): Verified three-platform candidate run 37961300752/d18e5e6, then recorded a real local quoted-header timeout and preserved its data/assertions/time bound while reducing redundant tiny reads; require fresh verification/CI for the adjusted fixture before tagging.
