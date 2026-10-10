@@ -6,11 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-- T-010 consent repair candidate: supply an explicit Cancel action for modal
+- T-010 consent repair: supply an explicit Cancel action for modal
   Escape/close handling and approve only the returned Proceed action. Preserve
   late-approval cancellation/disposal guards. Expanded provider tests cover
-  Proceed, Cancel, Escape routing and dismissal; the owner's actual desktop
-  Escape interaction still needs retesting.
+  Proceed, Cancel, Escape routing and dismissal. Owner desktop QA now passes
+  Escape, Cancel and Proceed on the repaired build.
 
 - T-010 repair: offer Lite Voyager in **Reopen Editor With** for saved local
   files with any name. Keep defaults for the four SQLite extensions, preserve

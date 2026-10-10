@@ -615,6 +615,41 @@ strict host/webview/tooling types, lint, builds and a 17-file / 480.33 KB VSIX.
 This standalone gate has zero errors and zero warnings. Actual desktop
 Escape/Cancel retesting remains required despite the passing automated gates.
 
+**T-010 Escape retest (2026-10-10):** after candidate fd9bd13, the fresh
+isolated fallback development host opens the 200,000,001-byte fixture. The
+owner supplies its result after Escape:
+`Unable to open: Memory-limited mode: the file was not loaded because consent was declined.`
+The memory-limited notice remains visible, without the earlier opened status.
+This confirms manual Escape PASS and resolves that observed failure. Explicit
+Cancel and Proceed on this build remain to confirm; T-010 stays unchecked.
+No executable change or new test run accompanies this evidence-only update.
+
+**T-010 completion QA (2026-10-10):** owner confirms Cancel PASS and Proceed
+PASS on repaired fd9bd13 after the Escape result above. Observable editor,
+header/error/empty-file, reopening/responsiveness/theme, fallback-notice and
+decimal-threshold/consent checks now pass on VS Code 1.141.0, Windows x64.
+Opening cancellation/closure remains too quick for manual observation; do not
+label it manual PASS. Its task acceptance has automated evidence: provider
+progress cancellation and panel closure reject late replies/approval, session
+tests await helper cleanup, and real Engine pending-consent closure settles
+opening without loading or waiting for late approval. Existing source-hash
+and real-helper exit/reopen tests remain passing. No test/check is skipped.
+
+Under the owner's delegated judgment, this satisfies T-010's scoped task
+acceptance with both automated and owner evidence. Whole-milestone manual QA,
+table/view browsing, first-row/multi-GB performance and fresh three-platform
+CI remain open; no milestone completion or release tag is claimed. Remove
+the temporary fallback launch setting used by the QA guide to restore normal
+runtime detection on subsequent F5 launches. Completion changes are records
+and temporary QA-setting cleanup only; final standalone verification precedes
+the T-010 completion commit.
+
+Completion-record `npm run verify` passes (exit 0): all 300 unit tests,
+strict host/webview/tooling types, lint, builds and a 17-file / 480.32 KB VSIX.
+This final standalone gate has zero errors and zero warnings. Only T-010 is
+checked in its completion commit; prior full/compatibility host warnings stay
+explicitly recorded above, and new remote CI remains pending the owner's push.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -714,6 +749,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-010 completion QA (2026-10-10): Owner passes repaired Cancel/Proceed after Escape; scoped task acceptance has passing automated/observable manual evidence. Preserve unobserved manual cancellation, its automated coverage, earlier failures, exact host warnings and later milestone/CI gaps. Restore normal F5 engine detection by removing the temporary QA setting.
+- v0.1 T-010 Escape confirmation (2026-10-10): Owner supplies declined-consent output after Escape in the fresh fd9bd13 fallback QA host. Escape passes; explicit Cancel and Proceed retests remain. Preserve earlier failed QA and automated-run diagnostics.
 - v0.1 T-010 explicit consent candidate (2026-10-10): Owner confirms fresh-dialog Escape failed. Add red-first explicit Cancel/Escape routing and only-Proceed approval tests; candidate full verification passes with 300 unit/19 integration tests and the exact approved host diagnostic recorded. Desktop retest remains required; native root cause is not claimed.
 - v0.1 T-010 QA validation (2026-10-10): Record passing owner checks and opened fallback notice; Proceed succeeds, Escape remains unresolved pending a fresh-dialog reproduction, and Cancel is not reported. Retain cancellation's too-quick manual status and existing automated evidence.
 - v0.1 T-010 owner picker confirmation (2026-10-10): Record actual Reopen Editor With PASS after 9ea86eb; remaining six manual checks and fresh CI remain open. Navigation setup creates separate ignored consent copies of exactly 200,000,000 and 200,000,001 bytes; committed fixtures are untouched.
