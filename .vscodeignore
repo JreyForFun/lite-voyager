@@ -6,6 +6,8 @@
 !dist/extension.js
 !dist/webview.js
 !dist/webview.css
+!dist/sqlite-browser.js
+!dist/sqlite-browser.css
 !dist/codemirror-LICENSES.txt
 !dist/sqlite-spike-worker.js
 !dist/sqlite-spike-process.js

@@ -22,3 +22,17 @@ test('FR-001: Given fallback opening or cancellation, When rendered, Then the me
     expect(html).toContain('role="status"');
   }
 });
+
+test('FR-002: Given an opened database, When the browser shell is rendered, Then local assets use a nonce CSP and all browsing controls are accessible', () => {
+  const html = sqliteEditorHtml('sample.sqlite', { phase: 'opened', message: 'Read-only' }, {
+    scriptUri: 'vscode-webview:/sqlite-browser.js', styleUri: 'vscode-webview:/sqlite-browser.css', nonce: 'test-nonce', cspSource: 'vscode-webview:',
+  });
+  expect(html).toContain("script-src 'nonce-test-nonce'");
+  expect(html).toContain("style-src vscode-webview: 'nonce-test-nonce'");
+  expect(html).toContain('nonce="test-nonce"');
+  expect(html).toContain('Count rows');
+  expect(html).toContain('Rows per page');
+  expect(html).toContain('role="grid"');
+  expect(html).not.toContain('later release');
+  expect(html).not.toMatch(/https?:\/\//u);
+});

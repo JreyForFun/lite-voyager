@@ -1,5 +1,6 @@
 import type * as vscode from 'vscode';
 import type { Engine, EngineOpened, OpenOptions } from '../../src/engine/engine';
+import type { BrowserStatus } from '../../src/protocol';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { SqliteEditorProvider } from '../../src/editor/sqlite-editor';
 
@@ -10,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   prompt: vi.fn<(message: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => Promise<vscode.MessageItem | undefined>>(),
 }));
 vi.mock('vscode', () => ({
+  Uri: { file: (path: string) => ({ fsPath: path, toString: () => path }) },
   ProgressLocation: { Notification: 15 },
   window: { withProgress: mocks.withProgress, showWarningMessage: mocks.prompt },
 }));
@@ -36,7 +38,11 @@ function uri(scheme = 'file', path = '/fixture.sqlite'): vscode.Uri {
 }
 function panel() {
   const callbacks = new Set<() => void>();
-  const view = { webview: { html: '', options: {} }, onDidDispose(callback: () => void) {
+  const view = { webview: { html: '', options: {}, cspSource: 'vscode-webview:',
+    asWebviewUri: (value: vscode.Uri) => value,
+    postMessage: vi.fn().mockResolvedValue(true),
+    onDidReceiveMessage: vi.fn(() => ({ dispose: vi.fn() })),
+  }, onDidDispose(callback: () => void) {
     callbacks.add(callback); return { dispose: () => { callbacks.delete(callback); } };
   }, dispose() { for (const callback of callbacks) { callback(); } } };
   // Model the provider's WebviewPanel surface; actual binary tabs and webviews are tested in VS Code.
@@ -77,7 +83,8 @@ test.each(['Proceed', 'Cancel', 'Escape', 'dismissed'])('FR-001: Given consent a
     await document.session.closed;
     expect(mocks.close).toHaveBeenCalledTimes(1);
   }
-  expect(view.webview.options).toEqual({ enableScripts: false, localResourceRoots: [] });
+  expect(view.webview.options.enableScripts).toBe(true);
+  expect(view.webview.options.localResourceRoots?.map((root) => root.fsPath)).toEqual([expect.stringMatching(/extension[\\/]dist$/u)]);
   view.dispose();
   await document.session.closed;
   expect(mocks.close).toHaveBeenCalledTimes(1);
@@ -125,6 +132,24 @@ test('FR-001: Given a closed document and its replacement, When VS Code disposes
   expect(provider.getDocument(file)).toBe(replacement);
   provider.dispose();
   await replacement.session.closed;
+});
+
+test('FR-002: Given a recreated webview whose local reports restart, When the document receives DOM status, Then observers see monotonic revisions and disposal suppresses further reports', async () => {
+  const provider = new SqliteEditorProvider('/extension');
+  const document = provider.openCustomDocument(uri(), openContext, cancellation().token);
+  const observed: number[] = [];
+  document.onBrowserStatus((status) => { observed.push(status.revision); });
+  const status: BrowserStatus = { type: 'browserStatus', revision: 10, table: 'data', offset: 100,
+    cachedRows: 1, renderedRows: 1, renderedColumns: 1, columns: 1, hasMore: false, count: null,
+    busy: false, message: 'Showing rows', firstRow: [{ text: '101', length: 3, label: null }] };
+  document.reportBrowserStatus(status);
+  const previous = document.browserStatus?.revision ?? 0;
+  document.reportBrowserStatus({ ...status, revision: 1 });
+  expect(document.browserStatus?.revision).toBeGreaterThan(previous);
+  expect(observed[1]).toBeGreaterThan(observed[0] ?? 0);
+  document.dispose(); await document.session.closed;
+  document.reportBrowserStatus(status);
+  expect(document.browserStatus).toBeUndefined(); expect(observed).toHaveLength(2);
 });
 
 test('FR-001: Given a modal approval in flight, When its panel closes, Then the helper closes immediately and a late Proceed cannot load or render', async () => {

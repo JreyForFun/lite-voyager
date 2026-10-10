@@ -1,4 +1,5 @@
 import type { Engine, EngineMode, EngineOpened } from '../engine/engine';
+import { SqliteBrowser } from './sqlite-browser';
 
 export interface SqliteEditorState {
   phase: 'opening' | 'opened' | 'error' | 'cancelled' | 'closed';
@@ -10,6 +11,7 @@ type Confirm = (mode: EngineMode) => Promise<boolean>;
 
 /** One document owns one worker-backed Engine. No file IO runs in this module. */
 export class SqliteSession {
+  readonly browser: SqliteBrowser;
   state: SqliteEditorState = { phase: 'opening', message: 'Opening SQLite in a worker…' };
   readonly closed: Promise<void>;
   private resolveClosed!: () => void;
@@ -19,6 +21,7 @@ export class SqliteSession {
   private stopped = false;
 
   constructor(private readonly path: string | undefined, private readonly engine: Engine) {
+    this.browser = new SqliteBrowser(engine);
     this.closed = new Promise((resolve) => { this.resolveClosed = resolve; });
   }
 
@@ -70,6 +73,7 @@ export class SqliteSession {
   }
 
   private closeEngine(): Promise<void> {
+    this.browser.dispose();
     this.shutdown ??= (async () => {
       try { await this.engine.close(); }
       catch {

@@ -382,6 +382,52 @@ Unknown objects/indexes, unavailable schemas and byte-budget failures return
 actionable messages. Metadata has no row-count or user-table scan operation.
 UI wiring is T-012; production first-row/memory targets remain unproven.
 
+### T-012 production table browser (2026-10-10)
+
+Owner delegates implementation, scoped fixes and disposable fixtures; owner
+pushes. T-012 implements the FR-002/section 4.1 browser criteria in SPEC.md.
+The schema panel remains a separate milestone follow-up; SQL editor, sort/filter
+and cell details retain their later-task scope. No dependency is added.
+
+- `SqliteSession` owns a `SqliteBrowser` on the existing supervised Engine.
+  Typed browser messages in `src/protocol.ts` validate IDs, dimensions, dense
+  arrays, NULL/string cells and exact decimal counts. The host serializes work,
+  retains at most one superseding request and drops stale replies on disposal.
+- The table/view catalog selects only kind/name from `main.sqlite_schema` in
+  100-object pages. It deliberately excludes CREATE SQL so a large default or
+  view definition cannot prevent listing otherwise small names. The T-011 full
+  schema metadata API is unchanged. Rows use `Engine.page`; explicit counts use
+  quoted identifiers and a one-row COUNT query. Both execute in the worker.
+- The production bundle is separate from the T-008 spike. The webview keeps one
+  page of 100 rows by default (choices 100/10/1), virtualizes visible rows and
+  columns, uses textContent/VS Code theme variables and nonce-protected local
+  assets. NULL/empty markers are styled/labeled separately; strings including
+  exact int64/REAL/date values and size-only BLOB placeholders stay unchanged.
+- Counting has visible loading and Cancel; cancellation reuses Engine recovery.
+  Closing releases queued work, listeners, animation frames and current rows.
+  VS Code getState/setState retain only IDs, selection, offsets and page size,
+  verified against the installed 1.140.0 webview implementation. Hidden contexts
+  may be destroyed; recreating one refetches the saved page with continuing IDs,
+  including a second hide while restoring. No rows or counts are persisted.
+- `scripts/browser-fixture.mts <new-directory> [--large]` generates disposable
+  fidelity/paging/empty/view/1-MiB/wide/slow-count fixtures and 102 extra objects.
+  Exclusive file creation refuses overwriting an existing database. `--large`
+  adds a ten-million-row table. Integration generation is a separate process;
+  generated files are not packaged or committed.
+- Actual VSIX-file selection is tested with the production whitelist and built
+  browser assets in a small staging directory. The full gate packages the real
+  project. Both `sqlite-browser.js` and `sqlite-browser.css` are shipped.
+- Unit file concurrency is bounded to two workers: suites launch additional
+  Engine and nested Vitest processes. This addresses a reproduced nested-runner
+  startup deadline failure under the enlarged task suite without changing any
+  test, workload, deadline or diagnostic rule. Packaging selection tests use a
+  small staging directory to avoid scanning cached VS Code installs/profiles.
+
+Measurement/validation evidence and precise remaining limitations are recorded
+in VALIDATION.md. A warm generated 135,122,944-byte/ten-million-row primary table
+has been exercised in the real custom editor; this does not establish cold-disk,
+multi-GB memory, physical first-paint or full milestone readiness.
+
 ### T-002 measurements and revised cancellation design (2026-10-09)
 
 - Spike tests cover real worker queries, exact 64-bit integers, NULL/empty
@@ -635,6 +681,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-012 browser (2026-10-10): Document owner-authorized production browsing, lazy exact counts, bounded two-dimensional rendering, narrow catalog projection, tab-state recovery and disposable fixtures. Preserve existing Engine contracts, no-new-dependency policy and later milestone QA/performance scope.
 - v0.4 T-011 metadata (2026-10-10): Owner authorizes paged worker-side column/index operations on the existing Engine and protocol; document exact declared metadata, parameter binding, implicit/expression indexes and actionable bounded-page failures. UI remains T-012.
 - v0.4 T-010 picker repair (2026-10-10): Replace extension-limited default registration with one optional all-filename selector and four contributed editor defaults. This preserves default SQLite opening while making Reopen Editor With available for other filenames; user associations retain precedence.
 - v0.4 T-009 read safety (2026-10-10): Red-first regression rejects EXPLAIN PRAGMA before preparing it; SQLite preparation-time PRAGMAs can otherwise change read-only/trusted-schema flags. Query plans remain available for SELECT/WITH.

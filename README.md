@@ -13,8 +13,9 @@ T-002 worker/fallback spike commands. The spike runs its worker in a killable
 helper process and passes local open/query/cancel/reopen checks, owner manual QA,
 and recorded three-platform CI.
 T-010 adds a read-only SQLite custom editor with header validation, clear opening
-errors, fallback notices/consent and helper cleanup. Data browsing and querying
-in editor tabs follow in later tasks.
+errors, fallback notices/consent and helper cleanup. T-012 adds a paged table/view
+list and virtualized browsing grid with exact cell display and explicit row
+counts. The SQL editor/query UI and schema panel remain later milestone work.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 T-008 now provides an experimental CodeMirror editor and synthetic grid;
 owner manual QA passes and confirms CodeMirror 6 (steps and evidence below).
@@ -57,12 +58,51 @@ The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
 
+## T-012 table browser — owner visual check
+
+Press **F5**, then open a SQLite file in the Extension Development Host.
+The first table/view is selected automatically. Use **Previous page** and
+**Next page** to browse 100 rows at a time. **Count rows** is optional and can
+be cancelled. **Previous objects**/**Next objects** page the table/view list.
+NULL is italic with an SQL NULL accessibility label; empty text shows `(empty)`.
+Literal `NULL` stays ordinary text. Int64 values stay exact, and BLOBs show only
+their byte-size placeholders. Hover clipped cells for their stored text.
+For pages exceeding the existing 4 MiB transport budget, choose 10 or 1 under
+**Rows per page**. An oversized individual value fails clearly without truncation.
+
+Generate disposable checks in a fresh directory (existing databases are refused):
+
+```sh
+node scripts/browser-fixture.mts out/t012-qa
+# Optional: adds a ten-million-row table; uses disk space and generation time.
+node scripts/browser-fixture.mts out/t012-large-qa --large
+```
+
+Open `browser.sqlite` in the generated directory. Check light/dark themes and:
+
+- `a values`: NULL, empty text, literal NULL, signed int64 extremes, BLOB/REAL,
+  stored time and script-looking text all display safely.
+- `b pages`: pages contain rows 1–100, 101–200, then 201; count is 201.
+- `c empty` and `d view`: empty state and normal view paging.
+- `e large cells`: a 100-row page fails explicitly; size 1 retains a full cell.
+- `f wide`: horizontal scroll and keyboard movement reach column 999.
+- `g slow count`: select it, click Count rows, cancel, then select `b pages`.
+- `h broken view`: clear error; choosing another table recovers.
+- Page the object list, switch to a text tab and back, and confirm the selected
+  object/page survive. Tab to the grid and use arrows, Page Up/Down, Home/End,
+  and Control+End (Command+End on macOS) to navigate.
+
+Automated tests exercise actual Chromium, both Engine backends, source hashes,
+context restoration and a warm ten-million-row file. Human scrolling/theme
+judgement, physical-paint timing, multi-GB memory and fresh platform CI remain
+separate validation; a measured DOM report does not establish all those targets.
+
 ## T-010 SQLite editor — owner manual check
 
 Run `npm run verify` and `npm run verify:full`, then press **F5**. Open
 `test/fixtures/sample.sqlite` normally. Expect a **Lite Voyager** editor tab,
 an opening notification and **Opened SQLite. Source file is read-only.**
-The primary engine reports disk-backed access. Table browsing is a later task.
+The primary engine reports disk-backed access. T-012 now supplies table browsing.
 
 1. Open `corrupt.sqlite`, `truncated.sqlite`, and `zero-byte.sqlite` from
    `test/fixtures`. Expect a clear valid/complete-database error in the editor.
@@ -169,7 +209,8 @@ Queries return one page (at most 1,000 rows and 4 MiB); an oversized page gives
 an explicit error without truncation. Offset paging re-executes and skips earlier
 rows with bounded memory, so deep-page latency and stable browsing results remain
 work for subsequent tasks. No multi-GB extension-memory or visible-row performance
-target is claimed by T-009. SQL editor/table browsing belongs to later tasks.
+target is claimed by T-009. T-012 adds production browsing with separately
+reported DOM timing; the SQL editor belongs to T-013.
 Read-only queries accept SELECT/WITH, optionally preceded by EXPLAIN or
 EXPLAIN QUERY PLAN; EXPLAIN PRAGMA is rejected because some PRAGMAs take
 effect during preparation (see [SQLite's PRAGMA documentation](https://www.sqlite.org/pragma.html)).

@@ -10,7 +10,7 @@ vi.mock('vscode', () => ({ commands: { executeCommand: mocks.executeCommand } })
 
 function fixture(postMessage: (message: unknown) => Promise<boolean>, closed = Promise.resolve()): SqliteDocument {
   // Model only the test helper's panel/cleanup surface; real webviews stay covered by host tests.
-  return { panel: { webview: { options: { enableScripts: false }, postMessage } }, session: { closed } } as unknown as SqliteDocument;
+  return { panel: { webview: { options: { enableScripts: true }, postMessage } }, session: { closed } } as unknown as SqliteDocument;
 }
 
 beforeEach(() => {

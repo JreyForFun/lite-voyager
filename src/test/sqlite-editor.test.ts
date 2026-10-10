@@ -42,8 +42,8 @@ suite('T-010 SQLite custom editor', () => {
           assert.equal(input.viewType, 'lite-voyager.sqlite');
           assert.ok(document.panel?.webview.html.includes('Source file is read-only.'));
           assert.ok(document.panel?.webview.html.includes(fallback ? 'Memory-limited mode' : 'Primary engine reads from disk.'));
-          assert.equal(document.panel?.webview.options.enableScripts, false);
-          assert.deepEqual(document.panel?.webview.options.localResourceRoots, []);
+          assert.equal(document.panel?.webview.options.enableScripts, true);
+          assert.deepEqual(document.panel?.webview.options.localResourceRoots?.map((root) => root.toString()), [vscode.Uri.file(join(extension.extensionPath, 'dist')).toString()]);
           await closeEditor(document);
           assert.throws(() => process.kill(opened.processId, 0));
           assert.equal(api.sqliteEditor.getDocument(uri), undefined);

@@ -1,0 +1,23 @@
+:root { color-scheme: light dark; }
+body { color: var(--vscode-editor-foreground); background: var(--vscode-editor-background); font-family: var(--vscode-font-family); padding: 12px 20px; }
+h1 { font-size: 20px; margin: 0 0 8px; }
+.browser-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+button, select { color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); padding: 5px 8px; font: inherit; max-width: 100%; }
+button:not(:disabled) { cursor: pointer; }
+button:disabled, select:disabled { opacity: .55; }
+:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: 2px; }
+#browser-select { max-width: 50vw; }
+#browser-status, #browser-list-status, #browser-total { overflow-wrap: anywhere; }
+#browser-status[role="alert"] { color: var(--vscode-errorForeground); }
+aside { border-left: 3px solid var(--vscode-focusBorder); padding: 8px; background: var(--vscode-textBlockQuote-background); overflow-wrap: anywhere; }
+#browser-grid { border: 1px solid var(--vscode-panel-border); overflow: hidden; }
+.browser-header-clip { height: 32px; overflow: hidden; background: var(--vscode-editorGroupHeader-tabsBackground); }
+#browser-header { height: 32px; position: relative; font-weight: bold; }
+#browser-viewport { height: min(55vh, 560px); min-height: 96px; max-height: 560px; overflow: auto; overflow-anchor: none; position: relative; }
+#browser-track { position: relative; min-width: 100%; }
+#browser-rows { position: absolute; top: 0; left: 0; width: 100%; }
+.browser-row { height: 32px; position: absolute; width: 100%; border-bottom: 1px solid var(--vscode-panel-border); }
+.browser-cell { position: absolute; box-sizing: border-box; height: 32px; width: 220px; padding: 6px 8px; border-right: 1px solid var(--vscode-panel-border); white-space: pre; overflow: hidden; text-overflow: ellipsis; font-family: var(--vscode-editor-font-family, monospace); }
+.cell-null { font-style: italic; color: var(--vscode-descriptionForeground); background: var(--vscode-textBlockQuote-background); }
+.cell-empty { font-style: italic; color: var(--vscode-descriptionForeground); }
+.browser-help { font-size: 12px; color: var(--vscode-descriptionForeground); }

@@ -14,5 +14,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["scripts/**/*.mts", "test/unit/**/*.ts", "vitest.config.mts"]
+  "include": ["scripts/**/*.mts", "test/unit/**/*.ts", "webview/styles.d.ts", "vitest.config.mts"]
 }

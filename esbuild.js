@@ -95,6 +95,11 @@ async function main() {
     target: 'es2022',
     outfile: 'dist/webview.js',
   });
+  await buildBundle({
+    entryPoints: ['webview/sqlite-browser.ts'],
+    platform: 'browser', format: 'iife', target: 'es2022',
+    outfile: 'dist/sqlite-browser.js',
+  });
 }
 
 main().catch((error) => {

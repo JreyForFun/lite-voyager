@@ -98,6 +98,41 @@ Priority: **P0** first release, **P1** next, **P2** later in v1.
 
 **FR-002 (P0) Browse a table.** Paginated grid (default 100 rows per page). NULL is visually distinct from an empty string. Total row count is computed lazily, with a "count rows" action for huge tables so opening never stalls.
 
+T-012 acceptance (owner-authorized, 2026-10-10):
+- Given an opened database, when the browser starts, then a paged table/view list
+  appears and the first object's first page is selected automatically. No tables
+  and no rows have separate friendly empty states. List pages contain at most
+  100 objects; row pages default to 100 rows with previous/next navigation.
+- Given fewer, exactly, or more than one page of rows, when navigating, then
+  every row remains reachable, boundaries are accurate, and only the current
+  page is retained. The grid virtualizes both rows and wide column sets.
+- Given NULL, empty text, literal `NULL`, signed int64 extremes, REALs, stored
+  dates/times, BLOBs and script-looking text, when rendered, then values remain
+  exact and safe. NULL has a distinct style/accessible label, empty text has an
+  explicit empty marker, and BLOBs retain the worker's size-only placeholder.
+- Given any table/view, when opening/selecting/paging it, then no COUNT runs.
+  Only Count rows requests a worker count; it displays an exact decimal string,
+  loading feedback and Cancel. Counting never becomes a prerequisite to browse.
+- Given overlapping requests, cancellation or closure, when old replies arrive,
+  then they cannot replace the current selection or revive a disposed browser.
+  Pending work/cache/listeners are bounded and disposed. Cancellation uses the
+  existing supervised Engine recovery; general SQL cancellation UI is T-014.
+  Hiding/revealing a tab may recreate its webview: persist only request sequence,
+  object/page position and page size, then refetch the page without counting.
+- Given a wide table or a cell larger than 1 MiB, when browsing, then horizontal
+  navigation and a smaller-page control preserve access without silent data
+  truncation. The existing 4 MiB Engine page budget fails visibly; page size can
+  be reduced to one. A single value exceeding that budget fails explicitly.
+- Given errors, worker failure or unavailable files, when an operation fails,
+  then a clear retry/reopen message appears. Browse UI uses local nonce-protected
+  assets, VS Code themes and keyboard navigation; both Engine backends and
+  unchanged read-only source bytes are tested.
+- NFR-004 first visible rows are measured in the real custom-editor webview,
+  with file size/row count and timing scope reported. Representative large-file
+  evidence supports only the measured conditions, not a universal cold-disk or
+  multi-GB claim. Whole-milestone performance/QA remain T-016 and the phase gate.
+  Schema panel, SQL editor, sorting/filtering and cell details stay later tasks.
+
 **FR-003 (P0) View schema.** Column name, type, primary key, NOT NULL, default value, and the table's indexes.
 
 **T-011 worker acceptance (owner-authorized, 2026-10-10)**
@@ -264,6 +299,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.7 T-012 scope (2026-10-10): Owner delegates implementation and scoped fixes/fixtures. Define paged object selection, 100-row browsing, exact cell display, on-demand cancellable counts, two-dimensional virtualization and bounded tab-state restoration. Schema panel remains a milestone follow-up; distinguish measured DOM readiness from universal physical-paint/multi-GB targets.
 - v0.7 T-011 scope (2026-10-10): Owner authorizes worker-only paged object/column/index metadata, both-engine tests and necessary scoped fixes. Preserve declared SQLite metadata and source safety; visible browsing and first-row performance remain later tasks.
 - v0.6 T-010 consent dismissal (2026-10-10): Owner confirms Escape dismissed a fresh warning but the editor showed opened. Preserve the failed QA and require explicit Cancel/Escape routing with only Proceed authorizing loading; real desktop retest remains necessary.
 - v0.6 T-010 picker repair (2026-10-10): Owner reported the default extensions pass in VS Code 1.141.0, but Lite Voyager is absent from Reopen Editor With for another extension. Made picker eligibility, preservation of other defaults and user-association precedence explicit; previous direct-command tests did not prove picker availability.

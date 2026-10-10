@@ -816,6 +816,97 @@ These completion-record changes modify only documentation; owner pushes them.
 CI-record `npm run verify` passes (exit 0): 330 unit tests, strict types/lint,
 builds and a 17-file / 481.24 KB VSIX; zero errors and zero warnings.
 
+### T-012 browser validation (2026-10-10)
+
+Owner authorizes implementation, best-judgment scoped repairs and disposable
+fixtures; owner pushes. SPEC.md FR-002 records this task's detailed acceptance.
+The schema panel is an unimplemented milestone follow-up, not claimed here.
+
+Coverage:
+- `sqlite-browser.test.ts`: worker-only paged catalog/rows, no automatic COUNT,
+  quoted hostile names, exact count strings, one superseding request, cancellation,
+  closure and visible metadata/count/recovery errors; dense message guards reject
+  sparse arrays, invalid sizes/IDs and unsafe offsets.
+- `browser-view.test.ts` / `browser-grid.test.ts`: automatic selection, page
+  controls, distinct NULL/empty/literal values and safe text, exact int64/REAL/time,
+  rows/columns virtualized, keyboard edges, 1-MiB cells, stale replies/DOM cleanup,
+  empty/error states and small saved state through repeated context destruction.
+- `browser-engine.test.ts`: both real supervised backends on unchanged read-only
+  sources; empty/exact-100/partial-203 pages, views, hostile identifiers, 103
+  objects, 1,000 columns, full 1.1-million-character cells and explicit 4-MiB
+  failures. A 4.3-million-character schema default cannot prevent name listing.
+- `browser-package.test.ts`: built browser JS/CSS are selected by the actual
+  production VSIX whitelist; generated fixtures are excluded. A small staging
+  directory avoids scanning cached hosts/profiles; no assertion/deadline changed.
+- `src/test/sqlite-browser.test.ts`: actual Chromium/custom-editor messages,
+  DOM labels/values, paging/counting, empty/view/error recovery, list paging,
+  1-MiB text, 1,000-column navigation, both-engine count cancellation/recovery,
+  hide/show state restoration and byte-identical read-only sources. A separate
+  real-host primary case opens a warm ten-million-row/135,122,944-byte file.
+  Existing T-010 consent, opening/disposal, association and transport tests remain.
+
+Red-first/failure history is retained:
+- Initial browser/grid/view suites fail on missing implementation modules.
+  Five new shell/provider expectations fail before production assets are wired.
+- A page-replacement regression reports old DOM under the new page before its
+  frame; replacing DOM/metrics immediately fixes it without dropping cell data.
+- Two real-backend large-schema tests fail on the catalog's unnecessary CREATE
+  SQL. Selecting only names/kinds fixes them without weakening metadata APIs.
+- Actual package-file selection fails because browser assets were omitted.
+  The preceding 350-unit/26-host full run passed but packaged only 17 files;
+  it is not completion evidence. The whitelist now includes both assets.
+- A first host run fails two URI-casing checks and two viewport-width assumptions;
+  URI equality uses canonical Uri serialization and fidelity checks navigate
+  horizontally. Every original value/source/consent assertion remains.
+- Context-recreation tests first lose IDs/selection, then lose selection on a
+  second hide before catalog completion. Small VS Code getState/setState fixes
+  both. A later host run has 24 passing/two failures: native DOM jumps 101→104,
+  fallback DOM report revisions restart. Disabling Chromium scroll anchoring and
+  giving document observers a monotonic report sequence fixes both; a new unit
+  regression first fails on restarted revisions (1 is not greater than 10).
+- A package-test run times out at its original 30 s deadline while traversing
+  the complete development tree. Staging the identical whitelist/real built
+  assets fixes test efficiency; the full gate still packages the real project.
+- A full run passes 356 of 357 unit tests but the unchanged T-009 nested reporter
+  exceeds its existing 5 s deadline under parallel process contention. All 28
+  checks/reporter tests pass in isolation. Two unit file workers bound competing
+  helper processes; no tests, data, deadlines or diagnostic rules are changed.
+
+Latest standalone real-host integration passes (26 tests) in Windows x64 /
+VS Code 1.140.0 / bundled Node 24.21.0. DOM readiness for the 4,874,240-byte fixture
+is 565.1 ms native / 598.1 ms fallback. The warm ten-million-row table is 422.5 ms,
+100 cached rows and 15 rendered rows. Timings include openWith through the first
+rendered-DOM report, excluding fixture generation/hash; physical paint judgement,
+cold-disk behavior, multi-GB flat memory and other OS results are not established.
+One accepted diagnostic is reported explicitly (not warning-free):
+- source `20261010T161717/window1/renderer.log`, line 10, original severity
+  `warning`, rule `VSCODE-HOST-001`:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other diagnostic is accepted.
+
+Final implementation `npm run verify:full` passes (exit 0): 357 unit tests in 30
+files, 26 real-host tests, strict host/webview/tooling types, zero-warning lint,
+production builds and a 19-file/489.84 KB VSIX including browser JS/CSS. In the
+final host run, native/fallback 4,874,240-byte DOM readiness is 593.0/587.5 ms;
+the warm ten-million-row file is 493.3 ms (100 cached / 15 rendered rows).
+No test is skipped; unit concurrency alone is bounded to two file workers.
+The full run is not warning-free: exactly one accepted record is reported:
+- source `20261010T162557/window1/renderer.log`, line 10, original severity
+  `warning`, rule `VSCODE-HOST-001`:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+Every other warning/error fails. Fresh three-platform CI is not yet claimed;
+owner pushes the task commit. Completion-record `npm run verify` also passes
+(exit 0): 357 tests, strict types/lint/builds and 19-file/489.84 KB VSIX;
+zero errors and zero warnings. Only scoped T-012 is checked after local
+acceptance; the whole milestone remains open. Changes are committed with T-012
+in the message; owner pushes and supplies fresh CI/visual QA evidence later.
+
+Owner fixture: `out/t012-owner-20261010/browser.sqlite` (4,874,240 bytes) and
+`generation.json`; generated/ignored, not committed or packaged. README.md gives
+F5 visual/keyboard/theme checks and generation commands. Original owner copies
+and debug.log are untouched. Independent milestone review, manual smoothness/
+theme judgement, source editing, SQL UI and full performance remain later work.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -915,6 +1006,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-012 browser (2026-10-10): Record scoped acceptance coverage, real-host DOM/source/cancellation evidence and all failed/regression runs. Preserve strict diagnostics and exact host-warning reporting; separate task browser readiness from later manual, CI and whole-milestone performance/review requirements.
 - v0.1 T-011 CI confirmation (2026-10-10): Verify run 38034122214/attempt 1/f49f87d success and successful locked installs/applicable full checks on Windows/macOS/Ubuntu via public API metadata. Preserve exact local host diagnostics, remote-log limitations and later-task/milestone scope.
 - v0.1 T-011 metadata (2026-10-10): Record tests-first metadata implementation, six red-first function-name-collision repairs, 26 task unit/four host cases and passing 330-unit/23-host full gate. Report the exact approved host warning; retain later UI/performance/CI and independent milestone-review limits.
 - v0.1 T-010 CI completion (2026-10-10): Independently verify run/job/step metadata for fresh 55e5da0/run 38030277300 success on Windows/macOS/Ubuntu. Close scoped T-010 only; preserve failed CI, exact historical host diagnostics, manually unobserved cancellation and later milestone requirements. Remote logs are not independently retrieved or called warning-free.

@@ -6,6 +6,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-012: added a 100-object table/view list and virtualized, paginated read-only
+  grid (100 rows by default). Distinguish NULL, empty text and literal NULL;
+  preserve exact signed int64/REAL/date values and size-only BLOB placeholders.
+  Counts run only on request in the worker and can be cancelled. Smaller page
+  sizes give access to large cells without truncation. Hidden-tab restoration
+  saves only selection/position/IDs, then refetches rows. Scoped regressions fix
+  stale DOM reports, large schema SQL blocking listing and omitted VSIX assets.
+  No dependency was added. Real-host tests cover both backends and a warm
+  ten-million-row file; milestone manual QA, multi-GB memory and fresh CI remain
+  separate validation.
+
 - T-010 CI follow-up: reopen the task after macOS run 38029094981 rejected
   a blocked webview request despite passing tests. Normal editor host tests
   now assert webview transport readiness before closing, then await helper
