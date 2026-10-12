@@ -1,8 +1,8 @@
 ﻿# Progress
 
 ## Current phase / task
-Milestone 1; T-018 implementation and automated local acceptance pass.
-T-018 remains unchecked pending owner visual QA and fresh-chat review.
+Milestone 1; T-018 implementation, automated acceptance and owner QA 1–6 pass.
+T-018 remains unchecked pending fresh-chat review and post-push CI.
 Prior T-017 repairs/CI remain complete; no milestone closure or release tag.
 
 ## Verify status
@@ -16,10 +16,10 @@ Prior T-017 repairs/CI remain complete; no milestone closure or release tag.
 - Two failed host runs and red-first scoped repairs are preserved in VALIDATION.
 
 ## Last session
-Owner QA (2026-10-13): 1/3 PASS; 2 selection TSV matches, row copy unreported.
-4 scrolling PASS; typing unobserved, Cancel too fast to observe manually.
-5 needs a single-statement retry; 6's supplied NUL query lacks a closing quote.
-Rewrite QA navigation/expected output in VALIDATION; no feature code/test change.
+Owner final QA (2026-10-13): all six numbered checks PASS.
+Check 2 selection matches the earlier two-line TSV; accept the owner's PASS.
+Preserve earlier partial/error observations and automated cancellation evidence.
+Update only PROGRESS/TASKS/VALIDATION; no feature code/test change.
 
 ## Decisions made this session
 Owner delegates implementation/uncertainties/scoped repairs; owner pushes.
@@ -28,12 +28,11 @@ Output budget: 16 Mi characters; oversized JSON shows full raw text with notice.
 No dependency, Engine interface or fixture edit; existing untracked files untouched.
 
 ## Known issues / blockers
-Owner visual QA, independent fresh-chat review and post-push CI are outstanding.
+Independent fresh-chat review and post-push CI are outstanding; owner QA passes.
 Clipboard writes already started cannot be retracted by cancellation; UI says so.
 Schema panel, T-014/later features and whole-milestone performance remain open.
 
 ## Next
-Retry VALIDATION T-018 row copy, typing, JSON/escaping and remaining check 6 steps.
 Fresh chat: review implementation commit 908fb76; keep work scoped to T-018.
 Owner pushes with `git push origin main`; return CI URL/SHA and three outcomes.
 Tick only T-018 after remaining closure checks pass; do not start another task here.

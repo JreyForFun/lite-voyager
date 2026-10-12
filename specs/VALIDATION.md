@@ -1668,6 +1668,23 @@ Owner report (2026-10-13):
   in 39 files (116.77 seconds), all types/lint/build/VSIX checks, zero errors and
   zero warnings. Only PROGRESS.md and VALIDATION.md change; T-018 stays unchecked.
 
+Owner final report (2026-10-13):
+- Owner explicitly reports checks 1, 3, 4, 5 and 6 PASS; check 2 supplies the
+  two-row selection content again and concludes PASS. Together with the earlier
+  exact two-line TSV report, all six owner QA checks are accepted as PASS.
+- Earlier incomplete-query errors and partial observations above remain history;
+  the latest numbered report resolves their pending QA status. No additional
+  timing, per-theme measurements or specific manual Cancel click is fabricated.
+  Cancellation still has its recorded automated evidence; the earlier too-fast
+  manual observation is retained rather than rewritten as a measured interruption.
+- Only the owner-QA gate closes here. Fresh-chat independent review and fresh
+  post-push three-platform CI remain open; T-018 remains unchecked. No source,
+  tests, fixtures, dependencies or milestone/release status change.
+- Owner-QA record `npm run verify` passes on 2026-10-13 (exit 0): 435 tests in
+  39 files (102.00 seconds), all types/lint/build/VSIX checks, zero errors/warnings.
+  Only PROGRESS.md, TASKS.md and VALIDATION.md are updated for this record; the
+  owner's pre-existing one-character QA-setup edit remains unstaged/uncommitted.
+
 Fresh-chat review should inspect implementation commit `908fb76` and any later
 source repairs, not just the documentation-only HEAD, focusing on worker
 lifecycle, exact token/TSV fidelity, clipboard gating and stale page reporting.
@@ -1735,6 +1752,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-018 final owner QA (2026-10-13): Accept the six numbered PASS reports, preserve prior partial/error observations and automated cancellation evidence, and keep only independent review/post-push CI open. T-018 remains unchecked.
 - T-018 owner QA clarification (2026-10-13): Record explicit PASS reports and matching selection TSV; distinguish unobserved typing/cancellation and incomplete SQL retries. Rewrite navigation and complete single-statement examples without claiming missing observations or changing feature code.
 - v0.1 T-018 implementation (2026-10-12): Record tests-first cell details/TSV, worker/clipboard/lifecycle and bounded protocol coverage; preserve lint and two failed host runs. Scoped stale-report/cancellation repairs pass 431 unit/32 host checks with zero errors/warnings. Owner QA, fresh-chat review and post-push CI remain open.
 - v0.1 T-017 final repair CI confirmation (2026-10-12): Confirm successful 38248216036/attempt 1/9f73531 run, locked installs and full steps on all three platforms. Close only scoped T-017, preserve failed evidence and remote-log limits, and hand off T-018 to a fresh chat.
