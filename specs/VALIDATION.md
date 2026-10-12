@@ -1467,6 +1467,140 @@ documents. Final record `npm run verify` passes (exit 0): 401 tests in 35 files
 611.05 KB), zero errors and zero warnings. No further feature change, release
 tag or whole-milestone closure is implied. T-018 belongs in a fresh chat.
 
+### T-018 cell details and TSV (2026-10-12)
+
+Owner approved implementation judgment, resolution of uncertainties and scoped
+repairs/fixtures; owner handles push. FR-018 acceptance and PLAN T-018 describe
+the resulting behavior. No dependency or committed fixture change was needed.
+
+Failing-first evidence is preserved here:
+- The sandbox's first Vitest start failed with spawn EPERM; authorized elevated
+  execution then reached the tests. Initial missing-module failure was followed
+  by executable transformer stubs: 16 behavior tests failed, four existing grid
+  tests passed. Details/TSV and page selection implementations made them pass.
+- Four worker-service tests failed on its not-implemented stub; panel/stale
+  response/shell tests then failed three assertions before their implementation.
+- First-context activation regression failed before the lifecycle fix.
+  Offscreen active-descendant regression failed before clearing absent DOM IDs.
+- First real-host run (`out/integration-profile-SbS6N3`) failed: 23 passing,
+  nine failing. Clearing details synchronously reported old DOM under new page
+  metadata. A red unit regression captured renderedRows=1/first='old' during
+  replacement, rather than zero/undefined, before callback ordering was repaired.
+- Second host run (`out/integration-profile-CiqEjD`) passed both T-018 engine
+  cases and 28 others, but failed two existing empty-page cases: prior 'Row count
+  complete.' appeared instead of 'No rows'. A further failing regression proves
+  details clearing must not emit intermediate settled BrowserView status.
+- Late cancellation status regression failed before requiring the current
+  operation ID. Initial required verify failed five lint errors in new test
+  matcher/Promise code; those were corrected without suppressions or weakened
+  assertions. No timeout, prior assertion or diagnostic policy was changed.
+- Final fidelity audit added a red embedded-NUL copy test (no error before the
+  repair). Engine regression then passed on native but failed on fallback:
+  `before<NUL>after` became `before`, and leading BOM+Unicode lost the BOM.
+  Installed sql.js getBlob(column) was inspected before use; TEXT now decodes
+  its complete byte-length value, preserving NUL/BOM and rejecting invalid UTF-8
+  explicitly. Three focused Engine cases pass; subsequent valid reads recover.
+  Both real-host cases assert a failed NUL copy leaves prior clipboard unchanged.
+
+Coverage:
+- `test/unit/cell-details.test.ts`: exact JSON numbers/escapes/duplicate keys,
+  invalid/raw text, NULL/empty/literal NULL, Unicode, hostile text, BLOB labels,
+  TSV escaping/original JSON, >1-MiB cells, 1,000 columns and budget failures.
+- `test/unit/browser-grid.test.ts` and `browser-view.test.ts`: mouse/keyboard
+  rectangles, offscreen access, replacement/reset, safe panel rendering,
+  stale details/cancellation and atomic page/empty-state reports.
+- `test/unit/cell-service.test.ts`: bounded pending work, independent copy,
+  clipboard rejection, cancellation/disposal/context changes, malformed replies,
+  worker errors and watchdog recovery.
+- `test/unit/cell-worker.test.ts`: real bundled worker thread, 1.1-million-character
+  exact JSON/TSV, host timer progress, clipboard-after-preparation and exit recovery.
+- `test/unit/cell-protocol.test.ts`, editor-shell and browser-package tests:
+  typed/dense/bounded messages, accessible controls/CSP and shipped worker assets.
+- `test/unit/engine.test.ts`: exact NUL/BOM/Unicode TEXT on both engines,
+  unchanged int64/NULL/empty/BLOB types, strict fallback invalid-UTF-8 rejection,
+  successful next read and source hash preservation.
+- `src/test/sqlite-browser.test.ts`: two real-host FR-018 cases, one per Engine;
+  Browse/table/view/SQL details, exact/null/empty/BLOB/JSON/escaped TSV clipboard
+  results, rectangular/row copy, 1.1-million-character cell, column 999,
+  page reset, recreated context and byte-identical read-only sources. Clipboard
+  contents are restored in cleanup. Existing browser/query checks remain intact.
+
+Earlier local verification (before final NUL/BOM/UTF-8 closure):
+- Standalone `npm run verify` passed 431 tests in 39 files (80.30 seconds),
+  types/lint/build/packaging, zero errors/warnings. It included the repaired
+  behavior; a clearer equivalent expected-TSV test literal was then substituted.
+- `npm run verify:full` passed (exit 0): 431 unit tests in 39 files (80.10 seconds),
+  all types/lint/build/VSIX checks and 32 host tests. Windows x64, VS Code 1.140.0,
+  host Node 24.21.0; package 20 files / 617.31 KB.
+- Final host profile `out/integration-profile-HCyxNV`: runtime-log validation
+  passed with no approved exceptions printed, zero errors and zero warnings.
+  No VSCODE-HOST-001/002 allowance was needed for this passing full run.
+- Both T-018 host cases report Browse/view/SQL=true, exact JSON/TSV=true,
+  1,100,000-character cell, 1,000 columns, recreated context and sourceUnchanged=true.
+  Existing warm ten-million-row test still passes (536.519 ms to first DOM rows);
+  this does not establish cold-disk, physical-paint or multi-GB memory targets.
+- Follow-up `npm run verify` passed 432 tests (79.80 seconds), zero errors/warnings.
+  Follow-up full passed 432 unit/32 host checks and included the repaired backend
+  in the build/host stage; its unit suite had loaded before the three new Engine
+  cases were added. A fresh final full gate covers the complete suite separately.
+- Follow-up full profile `out/integration-profile-TcIRRk` has one approved
+  diagnostic and is NOT warning-free: source
+  `logs/20261012T211330/window1/renderer.log:10`, severity `warning`,
+  rule `VSCODE-HOST-001`, original message
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+T-018 implementation and automated local acceptance pass. Its task checkbox
+remains open pending the owner visual QA and fresh-chat review below. Owner push
+and fresh three-platform CI remain outstanding; no milestone closure or tag.
+
+Final repair verification (2026-10-12): `npm run verify:full` passes (exit 0),
+435 unit tests in 39 files (79.29 seconds), 32 real-host tests, all typechecks,
+zero-warning lint/build and VSIX packaging (20 files / 617.67 KB). Both FR-018
+host cases include full NUL details and rejected-copy/unchanged-clipboard checks.
+Windows x64 / VS Code 1.140.0 / host Node 24.21.0. No new test is skipped in the
+full gate; the three-case `-t FR-018` probe did not execute 45 unrelated Engine
+cases, all of which execute in the complete gate.
+
+Final full is NOT warning-free: one approved renderer diagnostic, source
+`out/integration-profile-mvtPq6/logs/20261012T211723/window1/renderer.log:10`,
+original severity `warning`, rule `VSCODE-HOST-001`, original message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+There are zero errors and no other warnings; VSCODE-HOST-002 was not present.
+The earlier TcIRRk warning above is a separate record, not erased or relabeled.
+Final standalone `npm run verify` passes (exit 0): 435 tests in 39 files
+(79.52 seconds), all types/lint/build/VSIX checks, zero errors and zero warnings.
+Only these observed result lines were recorded after that gate; source/tests
+are unchanged. All 31 T-018 files belong in the scoped local implementation
+commit. Existing debug.log, gingTryWan/ and untracked fixture aliases are excluded.
+
+Owner QA: run `npm run build`, then
+`node scripts/browser-fixture.mts out/t018-owner-qa` (use a new directory name if
+that directory already contains a database). Press F5 and open
+`out/t018-owner-qa/browser.sqlite` in the Extension Development Host. Report
+numbered PASS/FAIL results, including any visible error:
+1. In `a values`, click NULL, empty, literal NULL, int64 extremes, BLOB and hostile
+   text. Details are full/safe/distinct; copied integers are exact and BLOBs are
+   placeholders. Paste into a plain text editor to inspect TSV literally.
+2. In `b pages`, click first id, Shift-click second value, Copy selection:
+   `1<TAB>row 1<LF>2<TAB>row 2`. Copy row copies both fields in result order.
+3. Focus grid: arrows/Shift-arrows, Page Up/Down, Home/End, Ctrl/Cmd+End,
+   Ctrl/Cmd+A/C work; headers keep Enter/Space behavior. New page clears details.
+4. Choose page size 1, then `e large cells`; inspect/copy full long text. In
+   `f wide`, reach column 999. Assess scrolling, typing and Cancel preparation.
+5. Run `SELECT '{"n":9223372036854775807,"n":1e999}' AS json, char(9)||char(10)||'"' AS escaped;`.
+   JSON details are formatted with both exact numbers; copy retains the raw
+   stored JSON using TSV quote escaping. Tabs/newlines/quotes copy correctly.
+6. Check light/dark/high-contrast themes, narrow width and keyboard access to
+   details/copy controls. Hide/reopen the tab: query/page restore, cell selection
+   does not. A failed SQL query retains existing results/details.
+   Optionally run `SELECT 'before'||char(0)||'after';`: details retain all 12
+   characters, but Copy shows the NUL limitation and leaves the clipboard intact.
+
+Fresh-chat review should inspect the actual T-018 commit/diff, focusing on worker
+lifecycle, exact token/TSV fidelity, clipboard gating and stale page reporting.
+After owner push, return the CI run URL/tested SHA and all three job outcomes.
+Tests can be rerun with `npm run verify` and `npm run verify:full`.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -1528,6 +1662,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-018 implementation (2026-10-12): Record tests-first cell details/TSV, worker/clipboard/lifecycle and bounded protocol coverage; preserve lint and two failed host runs. Scoped stale-report/cancellation repairs pass 431 unit/32 host checks with zero errors/warnings. Owner QA, fresh-chat review and post-push CI remain open.
 - v0.1 T-017 final repair CI confirmation (2026-10-12): Confirm successful 38248216036/attempt 1/9f73531 run, locked installs and full steps on all three platforms. Close only scoped T-017, preserve failed evidence and remote-log limits, and hand off T-018 to a fresh chat.
 - v0.1 T-017 Windows fixture repair (2026-10-12): Record failing follow-up CI at 4a8be0e, red-first real-SQLite transaction/rollback and in-flight teardown regressions. Batch identical stress data in one durable transaction and await worker completion during test cleanup without changing deadlines or assertions.
 - v0.1 T-017 validation repair (2026-10-12): Add a red-first packaged fallback-startup regression and register the existing message handler before WASM initialization. Preserve failed startup/timeout evidence, independent review, 398-unit/30-host full results and the exact approved renderer diagnostic; follow-up CI awaits owner push.

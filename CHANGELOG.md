@@ -6,6 +6,15 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-018: add full cell details to Browse and SQL results, token-preserving JSON
+  formatting, page-scoped rectangular selection, and copy cell/row/selection as
+  TSV. Worker preparation preserves exact integers and NULL/empty/BLOB fidelity,
+  supports cancellation and reports limits/failures. Scoped regressions keep
+  page reporting atomic and reject stale details/cancellation responses.
+  Preserve embedded NUL/BOM text in fallback reads; reject NUL clipboard copy
+  visibly before write to avoid data loss.
+
+
 - T-013 CI follow-up: correlate test actions and restored DOM with unique
   webview-context identities so old result reports cannot satisfy new queries.
   Batch disposable unit-fixture setup in one transaction while retaining all

@@ -649,6 +649,51 @@ Column options cover the full received schema while headers/rows remain virtuali
 The existing fixture gains a value index without changing its object/row workload.
 No new dependency, SQL-result rewriting or later-task feature is introduced.
 
+### T-018 cell details and TSV (2026-10-12)
+
+Owner delegates selection/serialization decisions, implementation, scoped repairs
+and disposable fixtures; owner pushes. No dependency or Engine interface change.
+An FR-018 red-first regression found that sql.js getString truncates embedded NUL
+and strips a leading BOM. Decode TEXT through its installed getBlob(column)
+byte-length API with strict UTF-8/BOM-preserving decoding; keep all other types.
+Unrepresentable UTF-8 text fails visibly instead of replacement or truncation.
+
+- BrowserGrid owns page-relative active/anchor coordinates. Mouse and keyboard
+  navigation select cells; Shift extends a rectangle and Ctrl/Cmd+A selects the
+  loaded page. Virtualization renders selection styles only for visible cells;
+  active-descendant references exist only while the active cell is rendered.
+  Replacement pages clear details and selection; failed queries keep the page.
+- CellDetails renders raw values with textContent immediately, then requests
+  optional JSON formatting. Copy cell/active row/rectangle retains result column
+  order, duplicate names, exact text/int64 and BLOB placeholders. Selection,
+  result values, formatted details and clipboard text are never saved in state.
+- Typed CellRequest/CellResponse/CellWorkerResponse live in src/protocol.ts.
+  Input is bounded by the existing 4-Mi-character page transport budget (copy
+  accounts for one structural unit per cell); output is bounded to 16 Mi UTF-16
+  characters. Unit tests also exercise lower output budgets to prove failure
+  handling. Oversized JSON expansion returns full raw text with a visible notice;
+  failed TSV preparation leaves the clipboard unchanged.
+- CellService supervises two lazy worker_threads lanes in packaged cell-worker.js:
+  one active and one latest queued details request, and one active copy request.
+  A 10-second preparation watchdog and Cancel terminate transforms; workers
+  recreate after faults. Context changes and disposal invalidate old work;
+  monotonic request IDs reject replay. Clipboard writeText runs only after a
+  validated successful worker reply. Once the platform write has started,
+  cancellation cannot retract it; the UI states this limitation.
+- JSON.parse is validation only: its values are discarded. An iterative formatter
+  copies original tokens, preserving numeric spelling, duplicate keys, key order
+  and escapes. TSV uses unquoted \\N for SQL NULL, quoted empty text/literal \\N,
+  doubled quotes for quoted fields, tabs and LF, without headers or trailing LF.
+  Consumers must honor quoting/NULL tokens; formulas are not rewritten.
+  Embedded NUL is rejected in the worker before clipboard write, with a visible
+  error and unchanged clipboard; full raw details remain available.
+- Grid replacement and BrowserView completion reporting remain atomic. Clearing
+  details emits no intermediate settled status before the page's message/controls
+  commit. Native clipboard tests restore prior clipboard contents in cleanup.
+
+Local evidence and failures are recorded in VALIDATION.md; owner visual QA,
+independent fresh-chat review and fresh three-platform CI remain separate gates.
+
 ## 3. Architecture
 
 ```
@@ -762,6 +807,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-018 (2026-10-12): Add page-scoped cell selection/details, exact JSON whitespace formatting and TSV clipboard preparation in supervised transform workers; preserve atomic page reporting, source safety and packaging without a dependency.
 - v0.4 T-017 independent review repairs (2026-10-12): Fix warning-state page/count actions and SQLite expression-depth overflow with red-first regressions; a separate reviewer confirms both fixes on both backends. Owner delegates local task closure; fresh CI remains tracked at the milestone gate after the owner's push.
 - v0.4 T-017 sort/filter (2026-10-12): Add worker-validated Engine.grid reads/counts, quoted/bound predicates, conservative indexed-plan recognition, native file-backed temporary storage and successful-control persistence. Reuse cancellation, virtualization and existing dependencies.
 - v0.4 T-013 CI repair (2026-10-12): Record transaction-based disposable fixture setup and context/action-correlated DOM observations after the supplied Windows/macOS failures. Preserve original workloads, deadlines, assertions and pending fresh CI.

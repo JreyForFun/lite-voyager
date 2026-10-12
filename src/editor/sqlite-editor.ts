@@ -5,7 +5,8 @@ import { EngineClient } from '../engine/engine-client';
 import { fallbackPrompt } from '../fallback-ui';
 import { sqliteEditorHtml } from './sqlite-editor-ui';
 import { SqliteSession } from './sqlite-session';
-import { isBrowserRequest, isBrowserStatus, type BrowserStatus } from '../protocol';
+import { isBrowserRequest, isBrowserStatus, isCellRequest, type BrowserStatus } from '../protocol';
+import { CellService } from './cell-service';
 
 export const SQLITE_EDITOR_VIEW_TYPE = 'lite-voyager.sqlite';
 
@@ -15,10 +16,15 @@ export class SqliteDocument implements vscode.CustomDocument {
   private browserRevision = 0;
   private readonly browserListeners = new Set<(status: BrowserStatus) => void>();
   private disposed = false;
+  private readonly cleanup = new Set<() => void>();
   constructor(readonly uri: vscode.Uri, readonly session: SqliteSession, private readonly remove: () => void) {}
 
   onBrowserStatus(listener: (status: BrowserStatus) => void): () => void {
     this.browserListeners.add(listener); return () => { this.browserListeners.delete(listener); };
+  }
+  onDispose(listener: () => void): () => void {
+    if (this.disposed) { listener(); return () => {}; }
+    this.cleanup.add(listener); return () => { this.cleanup.delete(listener); };
   }
   reportBrowserStatus(status: BrowserStatus): void {
     if (this.disposed) { return; }
@@ -32,6 +38,7 @@ export class SqliteDocument implements vscode.CustomDocument {
   dispose(): void {
     if (this.disposed) { return; }
     this.disposed = true;
+    for (const listener of this.cleanup) { listener(); } this.cleanup.clear();
     this.browserListeners.clear(); this.browserStatus = undefined;
     this.remove();
     void this.session.close();
@@ -65,6 +72,9 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
       nonce: randomBytes(16).toString('hex'), cspSource: panel.webview.cspSource,
     };
     let disposed = false;
+    const cells = new CellService(join(this.extensionPath, 'dist'), (text) => vscode.env.clipboard.writeText(text),
+      (reply) => { if (!disposed) { void panel.webview.postMessage(reply); } });
+    const removeCellCleanup = document.onDispose(() => { cells.dispose(); });
     let browserRendered = false;
     const render = (): void => {
       // Engine recovery can update its mode; do not reset an initialized browser
@@ -76,7 +86,11 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
     };
     const messages = panel.webview.onDidReceiveMessage((message: unknown) => {
       if (disposed || document.session.state.phase !== 'opened') { return; }
-      if (isBrowserStatus(message)) { document.reportBrowserStatus(message); }
+      if (isBrowserStatus(message)) {
+        if (message.contextId !== undefined) { cells.activate(message.contextId); }
+        document.reportBrowserStatus(message);
+      }
+      else if (isCellRequest(message)) { cells.handle(message); }
       else if (isBrowserRequest(message)) {
         void document.session.browser.handle(message, (reply) => { if (!disposed) { void panel.webview.postMessage(reply); } });
       }
@@ -85,6 +99,8 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
     const cancellation = token.onCancellationRequested(() => { void document.session.cancel(); });
     const disposal = panel.onDidDispose(() => {
       disposed = true;
+      cells.dispose();
+      removeCellCleanup();
       document.panel = undefined;
       unsubscribe();
       messages.dispose();

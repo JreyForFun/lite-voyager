@@ -18,6 +18,7 @@ export class BrowserElement extends EventTarget {
   append(...children: BrowserElement[]): void { this.children.push(...children); }
   replaceChildren(...children: BrowserElement[]): void { this.children.splice(0, this.children.length, ...children); }
   setAttribute(name: string, value: string): void { this.attributes.set(name, value); }
+  removeAttribute(name: string): void { this.attributes.delete(name); }
   getAttribute(name: string): string | null { return this.attributes.get(name) ?? null; }
   get firstElementChild(): BrowserElement | null { return this.children[0] ?? null; }
   focus(): void { this.focused = true; }

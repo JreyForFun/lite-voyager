@@ -17,7 +17,8 @@ errors, fallback notices/consent and helper cleanup. T-012 adds a paged table/vi
 list and virtualized browsing grid with exact cell display and explicit row
 counts. T-013 adds a CodeMirror SQL editor with selection-only Run, Ctrl/Cmd+Enter,
 paged results, page execution time and SQLite diagnostics that preserve previous
-results. The schema panel remains later milestone work.
+results. T-018 adds full cell details, exact JSON formatting and TSV copying.
+The schema panel remains later milestone work.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 T-008 now provides an experimental CodeMirror editor and synthetic grid;
 owner manual QA passes and confirms CodeMirror 6 (steps and evidence below).
@@ -112,6 +113,24 @@ be cancelled. **Previous objects**/**Next objects** page the table/view list.
 NULL is italic with an SQL NULL accessibility label; empty text shows `(empty)`.
 Literal `NULL` stays ordinary text. Int64 values stay exact, and BLOBs show only
 their byte-size placeholders. Hover clipped cells for their stored text.
+Click a cell to inspect its complete value beside the grid. Valid JSON is
+formatted without changing its number tokens, duplicate keys or escapes.
+Use arrows, Page Up/Down, Home/End or Ctrl/Cmd+End to select cells. Shift-click
+or Shift-navigation selects a rectangle within the loaded page; Ctrl/Cmd+A
+selects the page. Selection clears when a replacement page arrives.
+
+**Copy cell**, **Copy row**, **Copy selection**, or Ctrl/Cmd+C in the grid copy
+stored values as TSV without headers. SQL NULL is `\N`, empty text is `""`, and
+literal `\N` is quoted. Fields containing tabs/newlines/quotes are quoted;
+quotes are doubled. BLOBs copy only their placeholders. Copy keeps raw JSON;
+TSV consumers must honor quoting and the NULL token. Spreadsheet formulas are
+copied literally. Worker preparation has visible status and Cancel; a platform
+clipboard write already started may finish after cancellation. JSON expansion
+and copied text have a 16-Mi-character budget; excessive JSON expansion shows
+the complete raw value with a notice, and failed copy never truncates data.
+Embedded NUL text cannot be copied losslessly across platform text clipboards;
+copy reports this explicitly and leaves the clipboard unchanged.
+
 For pages exceeding the existing 4 MiB transport budget, choose 10 or 1 under
 **Rows per page**. An oversized individual value fails clearly without truncation.
 

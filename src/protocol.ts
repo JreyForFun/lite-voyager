@@ -9,12 +9,12 @@ export interface SpikeStatus {
   type: 'spikeStatus'; editorReady: boolean; renderedRows: number;
   cachedRows: number; firstRow: number; requestInFlight: boolean;
 }
-export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus;
+export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest;
 export type HostToWebviewMessage = { type: 'error'; message: string; context: string }
   | { type: 'spikeInit'; rowCount: number } | SpikePage
   // Integration-only no-op for the SQLite editor. Delivery checks
   // VS Code's outer webview transport readiness, not content rendering.
-  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise;
+  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -22,7 +22,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export function isWebviewMessage(value: unknown): value is WebviewToHostMessage {
   if (!isRecord(value)) { return false; }
-  if (isBrowserRequest(value) || isBrowserStatus(value)) { return true; }
+  if (isBrowserRequest(value) || isBrowserStatus(value) || isCellRequest(value)) { return true; }
   if (value['type'] === 'ready') { return true; }
   if (value['type'] === 'spikePageRequest') { return pageAddress(value); }
   return value['type'] === 'spikeStatus' && typeof value['editorReady'] === 'boolean'
@@ -34,7 +34,7 @@ export function isWebviewMessage(value: unknown): value is WebviewToHostMessage 
 
 export function isHostMessage(value: unknown): value is HostToWebviewMessage {
   if (!isRecord(value)) { return false; }
-  if (isBrowserResponse(value) || isBrowserExercise(value)) { return true; }
+  if (isBrowserResponse(value) || isBrowserExercise(value) || isCellResponse(value)) { return true; }
   if (value['type'] === 'sqliteEditorProbe') { return true; }
   if (value['type'] === 'error') {
     return typeof value['message'] === 'string' && typeof value['context'] === 'string';
@@ -52,6 +52,47 @@ export function isHostMessage(value: unknown): value is HostToWebviewMessage {
 export const BROWSER_PAGE_SIZE = 100;
 export const MAX_SQL_LENGTH = 4 * 1024 * 1024;
 export const MAX_FILTER_TEXT = 65_536;
+export const MAX_CELL_OUTPUT = 16 * 1024 * 1024;
+export interface CellDetail { text: string; kind: 'SQL NULL' | 'Empty string' | 'Stored text' | 'JSON'; notice: string; }
+export type CellRequest = { contextId: string; id: number } & (
+  | { type: 'cellDetails'; value: string | null }
+  | { type: 'cellCopy'; rows: (string | null)[][] }
+  | { type: 'cellCancel' });
+export type CellResponse = { contextId: string; id: number } & (
+  | { type: 'cellDetailsResult'; detail: CellDetail }
+  | { type: 'cellCopyResult'; message: string }
+  | { type: 'cellFailed'; operation: 'details' | 'copy' | 'cancel'; message: string });
+export type CellWorkerResponse = Exclude<CellResponse, { type: 'cellCopyResult' }> | { type: 'cellCopyPrepared'; contextId: string; id: number; text: string };
+export function isCellWorkerResponse(value: unknown): value is CellWorkerResponse {
+  return isCellResponse(value) && value.type !== 'cellCopyResult' || isRecord(value) && cellAddress(value)
+    && value['type'] === 'cellCopyPrepared' && typeof value['text'] === 'string' && value['text'].length <= MAX_CELL_OUTPUT;
+}
+export function isCellRequest(value: unknown): value is CellRequest {
+  if (!isRecord(value) || !cellAddress(value)) { return false; }
+  if (value['type'] === 'cellCancel') { return true; }
+  if (value['type'] === 'cellDetails') { return value['value'] === null || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH; }
+  if (value['type'] !== 'cellCopy' || !Array.isArray(value['rows']) || value['rows'].length === 0 || value['rows'].length > BROWSER_PAGE_SIZE) { return false; }
+  let size = 0; let width = -1;
+  return Array.from(value['rows']).every((row: unknown) => {
+    if (!Array.isArray(row) || row.length === 0 || (width !== -1 && row.length !== width)) { return false; }
+    width = row.length;
+    return Array.from(row).every((cell: unknown) => {
+      size += 1 + (typeof cell === 'string' ? cell.length : 0);
+      return size <= MAX_SQL_LENGTH && (cell === null || typeof cell === 'string');
+    });
+  });
+}
+function cellAddress(value: Record<string, unknown>): boolean {
+  return typeof value['contextId'] === 'string' && /^[\da-f-]{36}$/u.test(value['contextId']) && integer(value['id'], 1, Number.MAX_SAFE_INTEGER);
+}
+export function isCellResponse(value: unknown): value is CellResponse {
+  if (!isRecord(value) || !cellAddress(value)) { return false; }
+  if (value['type'] === 'cellCopyResult') { return typeof value['message'] === 'string' && value['message'].length <= 2048; }
+  if (value['type'] === 'cellFailed') { return ['details', 'copy', 'cancel'].includes(String(value['operation'])) && typeof value['message'] === 'string' && value['message'].length <= 2048; }
+  const detail = value['detail'];
+  return value['type'] === 'cellDetailsResult' && isRecord(detail) && typeof detail['text'] === 'string' && detail['text'].length <= MAX_CELL_OUTPUT
+    && ['SQL NULL', 'Empty string', 'Stored text', 'JSON'].includes(String(detail['kind'])) && typeof detail['notice'] === 'string' && detail['notice'].length <= 2048;
+}
 export type GridFilter = { column: string } & ({ operator: 'contains'; value: string } | { operator: 'isNull' | 'isNotNull' });
 export interface GridSort { column: string; direction: 'asc' | 'desc'; }
 export interface GridOptions { sort?: GridSort; filters?: GridFilter[]; allowSlowSort?: boolean; }
@@ -98,10 +139,12 @@ export interface BrowserStatus {
   query?: boolean; editorReady?: boolean; sqlLength?: number; selectionLength?: number; highlighted?: boolean; summary?: string;
   /** Local integration correlation only; neither value is persisted. */
   contextId?: string; exerciseId?: number;
+  cell?: { row: number | null; column: number | null; length: number; preview: string | null; kind: string; busy: boolean; message: string };
 }
 /** Local host integration drives the same editor/controls as a user; no file access. */
 export interface BrowserExercise {
-  type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse' | 'sort' | 'filter' | 'removeFilter' | 'clearGrid' | 'continueSort' | 'dismissSort'; value?: string; exerciseId?: number;
+  type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse' | 'sort' | 'filter' | 'removeFilter' | 'clearGrid' | 'continueSort' | 'dismissSort'
+    | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'; value?: string; exerciseId?: number;
 }
 function identifier(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 4 * 1024 * 1024 && !value.includes('\0');
@@ -168,14 +211,22 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && (value['summary'] === undefined || typeof value['summary'] === 'string' && value['summary'].length <= 2048)
     && (value['sqlLength'] === undefined || integer(value['sqlLength'], 0, Number.MAX_SAFE_INTEGER))
     && (value['selectionLength'] === undefined || integer(value['selectionLength'], 0, Number.MAX_SAFE_INTEGER))
+    && (value['cell'] === undefined || isCellSummary(value['cell']))
     && Array.isArray(value['firstRow']) && value['firstRow'].length <= 12 && Array.from(value['firstRow']).every((cell: unknown) =>
       isRecord(cell) && (cell['text'] === null || typeof cell['text'] === 'string' && cell['text'].length <= 128)
       && integer(cell['length'], 0, 4 * 1024 * 1024) && (cell['label'] === null || typeof cell['label'] === 'string'));
 }
+function isCellSummary(value: unknown): boolean {
+  return isRecord(value) && (value['row'] === null || integer(value['row'], 0, BROWSER_PAGE_SIZE - 1))
+    && (value['column'] === null || integer(value['column'], 0, Number.MAX_SAFE_INTEGER)) && integer(value['length'], 0, MAX_CELL_OUTPUT)
+    && (value['preview'] === null || typeof value['preview'] === 'string' && value['preview'].length <= 128)
+    && typeof value['kind'] === 'string' && value['kind'].length <= 64 && typeof value['busy'] === 'boolean'
+    && typeof value['message'] === 'string' && value['message'].length <= 2048;
+}
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
-    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort'].includes(String(value['action']))
+    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 

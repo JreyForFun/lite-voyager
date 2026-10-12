@@ -1,37 +1,39 @@
 ﻿# Progress
 
 ## Current phase / task
-Milestone 1 continues; T-009 through T-013 and T-017 are complete.
-T-017 acceptance/owner QA 1–6 pass; separate review and scoped repairs pass.
-Final repair commit 9f73531 has confirmed passing three-platform CI.
+Milestone 1; T-018 implementation and automated local acceptance pass.
+T-018 remains unchecked pending owner visual QA and fresh-chat review.
+Prior T-017 repairs/CI remain complete; no milestone closure or release tag.
 
 ## Verify status
-- Run 38248216036 / attempt 1 / 9f73531: Windows/macOS/Ubuntu success.
-- All locked installs and applicable full-verification steps succeed.
-- Repaired local verify: 401 tests, zero errors/warnings; full adds 30 host tests.
-- Closure-document verify passes 401 tests with zero errors/warnings.
-- Prior full warning: VSCODE-HOST-001, severity warning; not warning-free.
-- Source: `out/integration-profile-5XhnQo/logs/20261012T200630/window1/renderer.log:10`.
-- Message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
-- Windows x64 / VS Code 1.140.0 / Node 24.21.0; VSIX 19 files / 611.05 KB.
-- Failed runs and red-first evidence remain in VALIDATION; remote logs uninspected.
+- Final `npm run verify`: 435 tests / 39 files, zero errors/warnings.
+- `npm run verify:full`: 435 unit / 32 host tests; exit 0, one approved warning.
+- Profile `out/integration-profile-mvtPq6`, renderer.log:10, VSCODE-HOST-001.
+- Exact warning in VALIDATION; final full is not warning-free, zero errors.
+- Windows x64 / VS Code 1.140.0 / host Node 24.21.0.
+- VSIX: 20 files / 617.67 KB; transform worker ships.
+- Both backends: exact JSON/TSV, 1.1M-character cell, 1000 columns, source unchanged.
+- Two failed host runs and red-first scoped repairs are preserved in VALIDATION.
 
 ## Last session
-Verify successful run/job/step metadata for the startup and fixture repairs.
-Update only PROGRESS.md, TASKS.md and VALIDATION.md; preserve failure history.
-No new code, dependency, fixture edits, test weakening or deadline changes.
+Add cell details, page-scoped mouse/keyboard rectangles and TSV clipboard copy.
+Preserve JSON numeric tokens/duplicate keys; distinguish NULL/empty/literal values.
+Use supervised workers for formatting/copy, bounded queues, Cancel and recovery.
+Fix page/accessibility/stale cancel reports and fallback NUL/BOM TEXT fidelity.
 
 ## Decisions made this session
-Owner delegates scoped completion judgment and handles push.
-T-017 feature and follow-up repair CI gates pass; checkbox remains checked.
-No whole-milestone closure or release tag; next task needs a fresh chat.
+Owner delegates implementation/uncertainties/scoped repairs; owner pushes.
+TSV: unquoted `\N` NULL; empty/literal `\N` quoted; raw JSON, no headers.
+Output budget: 16 Mi characters; oversized JSON shows full raw text with notice.
+No dependency, Engine interface or fixture edit; existing untracked files untouched.
 
 ## Known issues / blockers
-Historical disk latency and earlier timeout causes are not fully captured.
-Whole-milestone QA, schema panel, T-014/later features remain open.
-Cold-disk/multi-GB/physical-paint targets remain later validation.
+Owner visual QA, independent fresh-chat review and post-push CI are outstanding.
+Clipboard writes already started cannot be retracted by cancellation; UI says so.
+Schema panel, T-014/later features and whole-milestone performance remain open.
 
 ## Next
-Owner pushes the documentation closure commit with `git push origin main`.
-Start a fresh chat for T-018: cell details and copy as TSV (FR-018).
-Read AGENTS.md, Constitution and PROGRESS.md; work on exactly that task.
+Perform VALIDATION T-018 owner QA 1–6 and return numbered PASS/FAIL observations.
+Fresh chat: review the actual T-018 diff; keep work scoped to this task.
+Owner pushes with `git push origin main`; return CI URL/SHA and three outcomes.
+Tick only T-018 after remaining closure checks pass; do not start another task here.

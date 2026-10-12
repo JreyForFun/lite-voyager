@@ -73,7 +73,7 @@ async function main() {
     external: ['node:sqlite'],
   });
   await mkdir('dist', { recursive: true });
-  for (const name of ['db-process', 'db-worker']) {
+  for (const name of ['db-process', 'db-worker', 'cell-worker']) {
     await buildBundle({
       entryPoints: [`src/worker/${name}.ts`],
       platform: 'node', format: 'cjs', target: 'es2022',

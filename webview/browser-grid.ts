@@ -4,6 +4,8 @@ import type { GridSort } from '../src/protocol';
 const ROW_HEIGHT = 32;
 const COLUMN_WIDTH = 220;
 const OVERSCAN = 3;
+export interface GridSelection { row: number; column: number; rowNumber: number; name: string; value: string | null; }
+export type CopyMode = 'cell' | 'row' | 'selection';
 
 export class BrowserGrid {
   private page: EnginePage = { columns: [], rows: [], hasMore: false };
@@ -21,8 +23,11 @@ export class BrowserGrid {
   private sort: GridSort | undefined;
   private sortingEnabled = false;
   private readonly headerButtons = new Map<string, HTMLButtonElement>();
+  private active: { row: number; column: number } | null = null;
+  private anchor: { row: number; column: number } | null = null;
 
-  constructor(private readonly root: HTMLElement, private readonly changed: () => void = () => {}, private readonly sortRequested: (column: string) => void = () => {}) {
+  constructor(private readonly root: HTMLElement, private readonly changed: () => void = () => {}, private readonly sortRequested: (column: string) => void = () => {},
+    private readonly selected: (selection: GridSelection | null) => void = () => {}, private readonly copyRequested: () => void = () => {}) {
     this.viewport = this.element('browser-viewport'); this.track = this.element('browser-track');
     this.rows = this.element('browser-rows'); this.header = this.element('browser-header');
     this.viewport.addEventListener('scroll', () => { this.schedule(); }, { signal: this.events.signal });
@@ -50,6 +55,7 @@ export class BrowserGrid {
 
   setPage(page: EnginePage, offset: number): void {
     this.page = page; this.offset = offset;
+    this.active = null; this.anchor = null; this.root.removeAttribute('aria-activedescendant');
     this.rows.replaceChildren(); this.header.replaceChildren();
     this.renderedRows = 0; this.renderedColumns = 0;
     this.viewport.scrollTop = 0; this.viewport.scrollLeft = 0;
@@ -58,6 +64,8 @@ export class BrowserGrid {
     this.root.setAttribute('aria-label', `Rows on this page, starting at row ${String(offset + 1)}. Use arrow keys, Page Up/Down, Home/End; Control+End reaches the last cell.`);
     this.track.style.height = `${String(page.rows.length * ROW_HEIGHT)}px`;
     this.track.style.width = `${String(page.columns.length * COLUMN_WIDTH)}px`;
+    // Clear old DOM/metrics before the details callback can report this page.
+    this.selected(null);
     this.schedule();
   }
 
@@ -95,12 +103,21 @@ export class BrowserGrid {
       element.setAttribute('role', 'row'); element.setAttribute('aria-rowindex', String(row + 2));
       element.setAttribute('aria-label', `Row ${String(this.offset + row + 1)}`);
       element.style.top = `${String(row * ROW_HEIGHT)}px`;
-      for (let column = colStart; column < colEnd; column++) { element.append(this.cell(this.page.rows[row]?.[column] ?? null, column)); }
+      for (let column = colStart; column < colEnd; column++) {
+        const cell = this.cell(this.page.rows[row]?.[column] ?? null, column);
+        cell.id = `browser-cell-${String(row)}-${String(column)}`;
+        cell.setAttribute('aria-selected', String(this.includes(row, column)));
+        cell.addEventListener('click', (event) => { this.root.focus(); this.selectCell(row, column, event.shiftKey); });
+        element.append(cell);
+      }
       rowElements.push(element);
     }
     this.header.style.width = this.track.style.width ?? '';
     this.header.style.transform = `translateX(-${String(this.viewport.scrollLeft)}px)`;
     this.header.replaceChildren(...headers); this.rows.replaceChildren(...rowElements);
+    if (this.active !== null && this.active.row >= rowStart && this.active.row < rowEnd && this.active.column >= colStart && this.active.column < colEnd) {
+      this.root.setAttribute('aria-activedescendant', `browser-cell-${String(this.active.row)}-${String(this.active.column)}`);
+    } else { this.root.removeAttribute('aria-activedescendant'); }
     if (focused !== null && focused !== undefined) { this.headerButtons.get(focused)?.focus(); }
     this.renderedRows = rowElements.length; this.renderedColumns = headers.length;
     this.changed();
@@ -117,22 +134,55 @@ export class BrowserGrid {
     return cell;
   }
 
-  lastCell(): void { this.move(this.page.rows.length * ROW_HEIGHT, this.page.columns.length * COLUMN_WIDTH); }
+  lastCell(): void { this.selectCell(this.page.rows.length - 1, this.page.columns.length - 1); }
+
+  selection(): GridSelection | null {
+    return this.active === null ? null : { ...this.active, rowNumber: this.offset + this.active.row + 1,
+      name: this.page.columns[this.active.column] ?? '', value: this.page.rows[this.active.row]?.[this.active.column] ?? null };
+  }
+
+  selectCell(row: number, column: number, extend = false): void {
+    if (this.disposed || !Number.isInteger(row) || !Number.isInteger(column) || row < 0 || column < 0 || row >= this.page.rows.length || column >= this.page.columns.length) { return; }
+    this.active = { row, column }; if (!extend || this.anchor === null) { this.anchor = { row, column }; }
+    const top = row * ROW_HEIGHT; const left = column * COLUMN_WIDTH;
+    const scrollRow = top < this.viewport.scrollTop ? top : top + ROW_HEIGHT > this.viewport.scrollTop + this.viewport.clientHeight ? top + ROW_HEIGHT - this.viewport.clientHeight : this.viewport.scrollTop;
+    const scrollColumn = left < this.viewport.scrollLeft ? left : left + COLUMN_WIDTH > this.viewport.scrollLeft + this.viewport.clientWidth ? left + COLUMN_WIDTH - this.viewport.clientWidth : this.viewport.scrollLeft;
+    this.move(scrollRow, scrollColumn); this.selected(this.selection());
+  }
+
+  private includes(row: number, column: number): boolean {
+    return this.active !== null && this.anchor !== null && row >= Math.min(this.active.row, this.anchor.row) && row <= Math.max(this.active.row, this.anchor.row)
+      && column >= Math.min(this.active.column, this.anchor.column) && column <= Math.max(this.active.column, this.anchor.column);
+  }
+
+  copyRows(mode: CopyMode): (string | null)[][] | null {
+    if (this.active === null || this.anchor === null || this.disposed) { return null; }
+    if (mode === 'cell') { return [[this.selection()?.value ?? null]]; }
+    if (mode === 'row') { return [this.page.rows[this.active.row]?.slice() ?? []]; }
+    const start = Math.min(this.active.column, this.anchor.column); const end = Math.max(this.active.column, this.anchor.column) + 1;
+    return this.page.rows.slice(Math.min(this.active.row, this.anchor.row), Math.max(this.active.row, this.anchor.row) + 1).map((row) => row.slice(start, end));
+  }
 
   private key(event: KeyboardEvent): void {
-    let row = this.viewport.scrollTop; let column = this.viewport.scrollLeft;
+    // Header buttons keep native Space/Enter and browser shortcuts.
+    if (event.target !== this.root || this.page.rows.length === 0 || this.page.columns.length === 0) { return; }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') { event.preventDefault(); this.copyRequested(); return; }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
+      event.preventDefault(); this.selectCell(0, 0); this.selectCell(this.page.rows.length - 1, this.page.columns.length - 1, true); return;
+    }
+    let row = this.active?.row ?? 0; let column = this.active?.column ?? 0;
     switch (event.key) {
-      case 'ArrowDown': row += ROW_HEIGHT; break;
-      case 'ArrowUp': row -= ROW_HEIGHT; break;
-      case 'ArrowRight': column += COLUMN_WIDTH; break;
-      case 'ArrowLeft': column -= COLUMN_WIDTH; break;
-      case 'PageDown': row += this.viewport.clientHeight; break;
-      case 'PageUp': row -= this.viewport.clientHeight; break;
+      case 'ArrowDown': row++; break;
+      case 'ArrowUp': row--; break;
+      case 'ArrowRight': column++; break;
+      case 'ArrowLeft': column--; break;
+      case 'PageDown': row += Math.max(1, Math.floor(this.viewport.clientHeight / ROW_HEIGHT)); break;
+      case 'PageUp': row -= Math.max(1, Math.floor(this.viewport.clientHeight / ROW_HEIGHT)); break;
       case 'Home': row = 0; if (event.ctrlKey || event.metaKey) { column = 0; } break;
-      case 'End': row = this.page.rows.length * ROW_HEIGHT; if (event.ctrlKey || event.metaKey) { column = this.page.columns.length * COLUMN_WIDTH; } break;
+      case 'End': row = this.page.rows.length - 1; if (event.ctrlKey || event.metaKey) { column = this.page.columns.length - 1; } break;
       default: return;
     }
-    event.preventDefault(); this.move(row, column);
+    event.preventDefault(); this.selectCell(Math.max(0, Math.min(row, this.page.rows.length - 1)), Math.max(0, Math.min(column, this.page.columns.length - 1)), event.shiftKey);
   }
 
   private move(row: number, column: number): void {
@@ -157,5 +207,6 @@ export class BrowserGrid {
   dispose(): void {
     this.disposed = true; this.events.abort(); this.observer.disconnect(); cancelAnimationFrame(this.frame); this.frame = 0;
     this.headerButtons.clear(); this.page = { columns: [], rows: [], hasMore: false }; this.rows.replaceChildren(); this.header.replaceChildren();
+    this.active = null; this.anchor = null; this.root.removeAttribute('aria-activedescendant'); this.selected(null);
   }
 }

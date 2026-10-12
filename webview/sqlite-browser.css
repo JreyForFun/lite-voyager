@@ -40,3 +40,10 @@ aside { border-left: 3px solid var(--vscode-focusBorder); padding: 8px; backgrou
 #browser-grid-summary, #browser-sort-warning { overflow-wrap: anywhere; }
 #browser-sort-warning { color: var(--vscode-editorWarning-foreground, var(--vscode-editor-foreground)); }
 .browser-sort { width: 100%; height: 100%; padding: 0; border: 0; text-align: left; font: inherit; font-weight: bold; background: transparent; overflow: hidden; text-overflow: ellipsis; }
+.browser-results { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 32%); gap: 12px; align-items: start; }
+#cell-details { min-width: 0; border: 1px solid var(--vscode-panel-border); border-left: 3px solid var(--vscode-focusBorder); }
+#cell-title, #cell-kind, #cell-status { overflow-wrap: anywhere; }
+#cell-value { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height: 38vh; min-height: 48px; font-family: var(--vscode-editor-font-family, monospace); }
+#cell-status[role="alert"] { color: var(--vscode-errorForeground); }
+.browser-cell[aria-selected="true"] { background: var(--vscode-editor-selectionBackground); outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+@media (max-width: 700px) { .browser-results { grid-template-columns: minmax(0, 1fr); } }

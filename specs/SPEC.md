@@ -305,6 +305,47 @@ file loading remain later tasks.
 
 **FR-018 (P1) Cell details and copy.** Selecting a cell shows its full value in a side panel (long text, JSON pretty-printed). Copy a cell, row, or selection as TSV.
 
+### T-018 acceptance (owner-authorized judgment, 2026-10-12)
+
+- Given Browse table/view or SQL results, clicking a cell or navigating with
+  arrows, Home/End or Page Up/Down selects it and shows its full stored value
+  in an accessible, scrollable side panel. Shift-click/Shift-navigation extends
+  a rectangular selection within the loaded page; Ctrl/Cmd+A selects that page.
+  Virtualized offscreen cells remain selectable. Header controls keep their
+  keyboard behavior. Replacement pages clear selection/details; failed queries
+  retain the displayed page. Selection and values are never persisted.
+- Given valid JSON, details pretty-print whitespace while preserving every
+  numeric token, string escape, duplicate key and key order. Invalid JSON stays
+  literal. NULL, empty text and text `NULL` remain visibly distinct; int64,
+  Unicode, dates/REALs, script-looking text and BLOB size placeholders remain
+  exact and safe. No BLOB bytes are requested.
+- Copy cell, active row or rectangular selection using explicit buttons;
+  Ctrl/Cmd+C in the grid copies the selection. TSV has no headers/trailing
+  newline, columns in result order, tabs between fields and LF between rows.
+  SQL NULL is the unquoted token `\N`; empty text is `""`; literal `\N` is
+  quoted. Fields containing tabs, CR/LF or quotes are quoted with doubled quotes.
+  Copy uses original stored text, including JSON; BLOBs copy placeholders only.
+  Spreadsheet consumers must honor quoting and the documented NULL token;
+  no spreadsheet formula rewriting or lossy coercion is performed.
+  Text containing an embedded NUL is rejected visibly before clipboard write:
+  cross-platform text clipboards cannot promise a lossless NUL representation.
+  Details still show the full raw value; no silent NUL removal/escaping is allowed.
+  Fallback reads preserve NUL and a leading BOM in valid UTF-8 TEXT. Invalid
+  UTF-8 TEXT fails explicitly instead of replacing bytes and claiming fidelity.
+- Given large/wide pages, formatting and TSV generation run in a worker with
+  bounded pending work. Existing Engine page limits apply; formatting/TSV output
+  is bounded to 16 Mi UTF-16 characters. If pretty-print expansion exceeds that
+  limit, show complete raw text and an explanation. Copy failure/oversize,
+  worker failure and cancellation show actionable status without truncation or
+  modifying the clipboard on a failed preparation. Operations expose progress
+  and Cancel; late responses cannot replace newer details or revived contexts.
+- Test first: exact/NULL/empty/BLOB/JSON/escaped TSV, >1-MiB cells, 1,000 columns,
+  selection across virtualized cells, stale replies, disposal, worker recovery,
+  clipboard failure and unchanged sources. Both Engine backends get real-host
+  Browse/SQL/copy tests. `npm run verify` must have zero errors/warnings;
+  real-host warning exceptions are reported separately. Owner visual QA,
+  post-push three-platform CI and whole-milestone targets stay separate.
+
 ### Editing
 
 **FR-020 (P1) Inline edit (SQLite).** Edits are staged, shown with VS Code's dirty indicator, and applied in a single transaction on save. Undo / revert discards staged changes. Tables are addressed by primary key, else by `rowid`. SQLite requires a primary key on every valid `WITHOUT ROWID` table; address these tables by that key, including every component of a composite key.
@@ -367,6 +408,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-018 fidelity repair (2026-10-12): Preserve complete fallback UTF-8 TEXT including NUL/BOM, reject invalid encoding visibly, and reject embedded NUL clipboard text before write rather than risk silent loss.
+- v0.5 T-018 acceptance (2026-10-12): Owner delegates selection, JSON and TSV decisions. Define page-scoped rectangles, token-preserving JSON, NULL/empty/escaping rules, cancellable worker preparation, explicit expansion budgets and separate owner/CI/milestone evidence.
 - v0.5 T-017 review repairs (2026-10-12): Clarify pending-confirmation controls after a reproduced page/filter/count mismatch. Preserve the accepted 1,000-filter limit with balanced engine predicates; no acceptance or test is weakened.
 - v0.5 T-017 acceptance (2026-10-12): Owner delegates remaining decisions; define Browse sort cycling, literal/NULL filters, filtered lazy counts, conservative per-page sort confirmation, bounded controls and successful-state restoration. Preserve SQLite tie-order semantics and separate owner/CI/milestone evidence.
 - v0.7 T-013 scope (2026-10-10): Owner authorizes production SQL editing/running, bounded result paging, page timing, honest final-page totals, preserved SQLite diagnostics/results and bounded editor/query restoration. Keep later query features and T-014 targets separate.

@@ -16,12 +16,15 @@ test('FR-002: Given a built extension, When listing actual VSIX contents, Then b
     await mkdir(join(directory, 'dist'));
     const built = await build({ entryPoints: [resolve('webview/sqlite-browser.ts')], outfile: join(directory, 'dist/sqlite-browser.js'), bundle: true, platform: 'browser', format: 'iife', target: 'es2022', logLevel: 'silent' });
     expect(built.warnings).toEqual([]);
+    const cellWorker = await build({ entryPoints: [resolve('src/worker/cell-worker.ts')], outfile: join(directory, 'dist/cell-worker.js'), bundle: true, platform: 'node', format: 'cjs', target: 'es2022', logLevel: 'silent' });
+    expect(cellWorker.warnings).toEqual([]);
     await copyFile('scripts/browser-fixture.mts', join(directory, 'browser-fixture.mts'));
     const packaged = await execute(process.execPath, [resolve('node_modules/@vscode/vsce/vsce'), 'ls', '--no-dependencies'], { cwd: directory });
     expect(packaged.stderr).toBe('');
     const files = packaged.stdout.trim().split(/\r?\n/u);
     expect(files).toContain('dist/sqlite-browser.js');
     expect(files).toContain('dist/sqlite-browser.css');
+    expect(files).toContain('dist/cell-worker.js');
     expect(files.some((file) => file.includes('browser-fixture') || file.endsWith('.sqlite'))).toBe(false);
   } finally { await rm(directory, { recursive: true, force: true }); }
 }, 30000);

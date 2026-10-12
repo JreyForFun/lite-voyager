@@ -1,6 +1,15 @@
 import { expect, test } from 'vitest';
 import { sqliteEditorHtml } from '../../src/editor/sqlite-editor-ui';
 
+test('FR-018: Given the editor shell, When rendered, Then details, copy controls, selection help and TSV limits are accessible', () => {
+  const html = sqliteEditorHtml('sample.sqlite', { phase: 'opened', message: 'Read-only' }, {
+    scriptUri: 'local:browser', styleUri: 'local:styles', nonce: 'nonce', cspSource: 'local:',
+  });
+  for (const id of ['cell-details', 'cell-title', 'cell-kind', 'cell-value', 'cell-status', 'cell-copy-cell', 'cell-copy-row', 'cell-copy-selection', 'cell-cancel']) { expect(html).toContain(`id="${id}"`); }
+  expect(html).toContain('Shift'); expect(html).toContain('16 Mi'); expect(html).toContain('\\N');
+  expect(html).toContain('aria-labelledby="cell-title"'); expect(html).toContain('aria-multiselectable="true"');
+});
+
 test('FR-010: Given the production SQL editor shell, When opened, Then Run, the CSP style nonce and honest paging help are present', () => {
   const html = sqliteEditorHtml('sample.sqlite', { phase: 'opened', message: 'Read-only' }, {
     scriptUri: 'vscode-webview:/sqlite-browser.js', styleUri: 'vscode-webview:/sqlite-browser.css', nonce: 'test-nonce', cspSource: 'vscode-webview:',

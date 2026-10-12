@@ -10,6 +10,7 @@ interface WasmStatement {
   bind(parameters: Parameter[]): void;
   step(): boolean;
   get(parameters: null, options: { useBigInt: true }): unknown[];
+  getBlob(column: number): Uint8Array;
   getColumnNames(): string[];
   free(): boolean;
 }
@@ -40,7 +41,18 @@ export class SqlJsEngine implements ReadBackend {
       return {
         columns: statement.getColumnNames(),
         rows: (function* () {
-          while (statement.step()) { yield statement.get(null, { useBigInt: true }); }
+          // sql.js' getString uses a NUL-terminated C string conversion, which
+          // also strips a leading UTF-8 BOM. Its installed public getBlob(column)
+          // reads sqlite3_column_bytes, preserving full TEXT bytes. Only TEXT
+          // values take this path; integers and BLOB placeholders stay unchanged.
+          const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+          while (statement.step()) {
+            yield statement.get(null, { useBigInt: true }).map((value, column) => {
+              if (typeof value !== 'string') { return value; }
+              try { return decoder.decode(statement.getBlob(column)); }
+              catch { throw new Error('Memory-limited mode cannot display SQLite text that is not valid UTF-8 without data loss. Use the primary engine or inspect the source encoding. No value was truncated.'); }
+            });
+          }
         })(),
         close: () => { statement.free(); },
       };

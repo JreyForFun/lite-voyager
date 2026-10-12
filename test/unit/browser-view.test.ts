@@ -1,18 +1,19 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { BrowserView, readSavedState } from '../../webview/sqlite-browser';
 import { BrowserElement, browserRoot } from './browser-dom';
-import type { BrowserRequest, BrowserStatus } from '../../src/protocol';
+import type { BrowserRequest, BrowserStatus, CellRequest } from '../../src/protocol';
 
 let view: BrowserView;
 let root: BrowserElement;
-let sent: (BrowserRequest | BrowserStatus)[];
+let sent: (BrowserRequest | BrowserStatus | CellRequest)[];
 let frames: FrameRequestCallback[];
 const flush = (): void => { const queued = frames; frames = []; for (const callback of queued) { callback(0); } };
-const requests = () => sent.filter((message): message is BrowserRequest => message.type !== 'browserStatus');
+const requests = () => sent.filter((message): message is BrowserRequest => message.type.startsWith('browser') && message.type !== 'browserStatus');
 beforeEach(() => {
   root = browserRoot(['browser-grid', 'browser-viewport', 'browser-track', 'browser-rows', 'browser-header', 'browser-select', 'browser-list-previous', 'browser-list-next', 'browser-previous', 'browser-next', 'browser-count', 'browser-cancel', 'browser-size', 'browser-status', 'browser-total', 'browser-list-status', 'browser-browse', 'sql-limit-status']);
   for (const id of ['browser-filter-column', 'browser-filter-operator', 'browser-filter-value', 'browser-filter-apply', 'browser-filter-remove', 'browser-grid-clear', 'browser-grid-summary', 'browser-sort-warning', 'browser-sort-continue', 'browser-sort-dismiss']) { root.elements.set(id, new BrowserElement()); }
   root.elements.get('browser-filter-operator')?.setAttribute('value', 'contains');
+  for (const id of ['cell-details', 'cell-title', 'cell-kind', 'cell-value', 'cell-status', 'cell-copy-cell', 'cell-copy-row', 'cell-copy-selection', 'cell-cancel']) { root.elements.set(id, new BrowserElement()); }
   const operator = root.elements.get('browser-filter-operator'); if (operator !== undefined) { operator.value = 'contains'; }
   root.elements.get('browser-grid')?.elements.clear();
   const grid = root.elements.get('browser-grid');
@@ -28,6 +29,66 @@ beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe(): void {} disconnect(): void {} });
   view = new BrowserView(root as unknown as HTMLElement, (message) => { sent.push(message); });
   view.start();
+});
+
+test('FR-018: Given Browse cells, When selected and copied, Then full raw values appear safely and typed worker requests preserve original TSV data', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['same', 'same'], rows: [[null, '{"n":9223372036854775807}'], ['<script>x</script>', '']], hasMore: true } }); flush();
+  view.exercise({ type: 'browserExercise', action: 'cell', value: '0,1' });
+  const request = sent.slice().reverse().find((message): message is Extract<CellRequest, { type: 'cellDetails' }> => message.type === 'cellDetails');
+  expect(request).toMatchObject({ value: '{"n":9223372036854775807}' });
+  expect(root.elements.get('cell-value')?.textContent).toBe('{"n":9223372036854775807}');
+  view.exercise({ type: 'browserExercise', action: 'copyCell' });
+  expect(sent.at(-1)).toMatchObject({ type: 'browserStatus' });
+  expect(sent.slice().reverse().find((message) => message.type === 'cellCopy')).toMatchObject({ rows: [['{"n":9223372036854775807}']] });
+  view.exercise({ type: 'browserExercise', action: 'extendCell', value: '1,0' });
+  expect(root.elements.get('cell-value')?.textContent).toBe('<script>x</script>');
+  expect(root.elements.get('cell-value')?.children).toEqual([]);
+});
+
+test('FR-018: Given changing selection and page replacement, When stale details arrive, Then they cannot overwrite current details or persist values', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['a'], rows: [['old'], ['new']], hasMore: true } }); flush();
+  view.exercise({ type: 'browserExercise', action: 'cell', value: '0,0' });
+  const old = sent.slice().reverse().find((message) => message.type === 'cellDetails');
+  view.exercise({ type: 'browserExercise', action: 'cell', value: '1,0' });
+  const next = sent.slice().reverse().find((message) => message.type === 'cellDetails');
+  if (old?.type !== 'cellDetails' || next?.type !== 'cellDetails') { throw new Error('Missing details requests'); }
+  view.receiveCell({ type: 'cellDetailsResult', id: old.id, contextId: old.contextId, detail: { text: 'stale', kind: 'Stored text', notice: '' } });
+  expect(root.elements.get('cell-value')?.textContent).toBe('new');
+  view.receiveCell({ type: 'cellDetailsResult', id: next.id, contextId: next.contextId, detail: { text: 'new', kind: 'Stored text', notice: '' } });
+  expect(root.elements.get('cell-status')?.textContent).toContain('complete');
+  expect(view.savedState()).not.toHaveProperty('cell'); expect(view.savedState()).not.toHaveProperty('rows');
+  view.exercise({ type: 'browserExercise', action: 'next' });
+  view.receive({ type: 'browserRows', requestId: 3, table: 'data', offset: 100, limit: 100, page: { columns: ['a'], rows: [['replacement']], hasMore: false } });
+  expect(root.elements.get('cell-value')?.textContent).toBe('');
+  expect(root.elements.get('cell-copy-cell')?.disabled).toBe(true);
+  view.receiveCell({ type: 'cellDetailsResult', id: next.id, contextId: next.contextId, detail: { text: 'stale', kind: 'Stored text', notice: '' } });
+  expect(root.elements.get('cell-value')?.textContent).toBe('');
+});
+
+test('FR-018: Given cancelled preparation followed by a new selection, When late cancellation arrives, Then the newer details status survives', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['a'], rows: [['old'], ['new']], hasMore: false } }); flush();
+  view.exercise({ type: 'browserExercise', action: 'cell', value: '0,0' });
+  view.exercise({ type: 'browserExercise', action: 'cancelCell' });
+  const cancelled = sent.slice().reverse().find((message) => message.type === 'cellCancel');
+  if (cancelled?.type !== 'cellCancel') { throw new Error('Missing cancel request'); }
+  view.exercise({ type: 'browserExercise', action: 'cell', value: '1,0' });
+  view.receiveCell({ type: 'cellFailed', operation: 'cancel', contextId: cancelled.contextId, id: cancelled.id, message: 'Cell operation cancelled.' });
+  expect(root.elements.get('cell-value')?.textContent).toBe('new');
+  expect(root.elements.get('cell-status')?.textContent).toContain('Preparing details');
+});
+
+test('FR-018: Given a counted page, When an empty replacement clears details, Then no settled report carries the previous operation message', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }, { name: 'empty', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['a'], rows: [['old']], hasMore: false } }); flush();
+  view.exercise({ type: 'browserExercise', action: 'count' }); view.receive({ type: 'browserCounted', requestId: 3, table: 'data', count: '1' });
+  sent.length = 0; view.exercise({ type: 'browserExercise', action: 'select', value: 'empty' });
+  view.receive({ type: 'browserRows', requestId: 4, table: 'empty', offset: 0, limit: 100, page: { columns: ['a'], rows: [], hasMore: false } });
+  const settled = sent.filter((message): message is BrowserStatus => message.type === 'browserStatus' && !message.busy && message.table === 'empty');
+  expect(settled.length).toBeGreaterThan(0);
+  expect(settled.every((status) => status.message === 'No rows on this page.')).toBe(true);
 });
 afterEach(() => { view.dispose(); vi.unstubAllGlobals(); });
 

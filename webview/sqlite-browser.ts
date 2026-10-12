@@ -1,10 +1,11 @@
-import { BROWSER_PAGE_SIZE, MAX_SQL_LENGTH, isBrowserExercise, isBrowserResponse, isGridOptions, type GridFilter, type GridOptions, type BrowserExercise, type BrowserRequest, type BrowserResponse, type BrowserStatus } from '../src/protocol';
+import { BROWSER_PAGE_SIZE, MAX_SQL_LENGTH, isBrowserExercise, isBrowserResponse, isCellResponse, isGridOptions, type CellRequest, type CellResponse, type GridFilter, type GridOptions, type BrowserExercise, type BrowserRequest, type BrowserResponse, type BrowserStatus } from '../src/protocol';
 import { BrowserGrid } from './browser-grid';
 import { QueryView } from './query-view';
 import { SqlEditor } from './sql-editor';
+import { CellDetails } from './cell-details';
 import './sqlite-browser.css';
 
-type Post = (message: BrowserRequest | BrowserStatus) => void;
+type Post = (message: BrowserRequest | BrowserStatus | CellRequest) => void;
 type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'>;
 export interface BrowserSavedState { requestId: number; table: string | null; offset: number; listOffset: number; limit: number; sqlText?: string; querySql?: string; grid?: GridOptions; }
 const INITIAL_STATE: BrowserSavedState = { requestId: 0, table: null, offset: 0, listOffset: 0, limit: BROWSER_PAGE_SIZE };
@@ -30,6 +31,7 @@ function savedGrid(grid: GridOptions): GridOptions {
 
 export class BrowserView {
   private readonly grid: BrowserGrid;
+  private readonly details: CellDetails;
   private readonly select: HTMLSelectElement;
   private readonly size: HTMLSelectElement;
   private readonly status: HTMLElement;
@@ -97,7 +99,9 @@ export class BrowserView {
     this.applyFilter = find('browser-filter-apply'); this.removeFilter = find('browser-filter-remove'); this.clearGrid = find('browser-grid-clear');
     this.gridSummary = find('browser-grid-summary'); this.sortWarning = find('browser-sort-warning');
     this.continueSort = find('browser-sort-continue'); this.dismissSort = find('browser-sort-dismiss');
-    this.grid = new BrowserGrid(find('browser-grid'), () => { this.report(); }, (column) => { this.sortColumn(column); });
+    this.details = new CellDetails(root, this.contextId, (message) => { this.post(message); }, (mode) => this.grid.copyRows(mode), () => { this.report(); });
+    this.grid = new BrowserGrid(find('browser-grid'), () => { this.report(); }, (column) => { this.sortColumn(column); },
+      (selection) => { this.details.select(selection); }, () => { this.details.copy('selection'); });
     const options = { signal: this.events.signal };
     this.select.addEventListener('change', () => { this.choose(this.select.value); }, options);
     this.size.addEventListener('change', () => { this.changeSize(this.size.value); }, options);
@@ -115,6 +119,7 @@ export class BrowserView {
   }
 
   start(): void { this.list(this.listOffset); }
+  receiveCell(message: CellResponse): void { this.details.receive(message); }
 
   attachEditor(editor: BrowserSqlEditor): void { this.editor = editor; this.controls(); this.editorChanged(); }
   editorChanged(): void {
@@ -337,6 +342,16 @@ export class BrowserView {
       } break;
       case 'cancel': if (!this.cancelButton.disabled) { this.request({ type: 'browserCancel', requestId: ++this.requestId }); } break;
       case 'lastCell': this.grid.lastCell(); break;
+      case 'cell': case 'extendCell': {
+        const coordinates = message.value?.split(',').map(Number) ?? [];
+        const [row, column] = coordinates;
+        if (coordinates.length === 2 && row !== undefined && column !== undefined) { this.grid.selectCell(row, column, message.action === 'extendCell'); }
+        break;
+      }
+      case 'copyCell': this.details.copy('cell'); break;
+      case 'copyRow': this.details.copy('row'); break;
+      case 'copySelection': this.details.copy('selection'); break;
+      case 'cancelCell': this.details.cancel(); break;
       case 'browse': if (!this.browseButton.disabled) { this.choose(this.select.value); } break;
       case 'sql': if (message.value !== undefined) { this.editor?.setText(message.value); } break;
       case 'selection': {
@@ -375,16 +390,17 @@ export class BrowserView {
     if (!this.disposed) {
       this.post({ type: 'browserStatus', revision: ++this.revision, table: this.query.sql === null ? this.table : null, offset: this.offset, ...this.grid.metrics(),
         contextId: this.contextId, exerciseId: this.exerciseId,
+        cell: this.details.summary(),
         query: this.query.sql !== null, summary: this.total.textContent ?? '', ...this.editor?.metrics(),
         hasMore: this.hasMore, count: this.count, busy: this.pending !== null, message: this.status.textContent ?? '', firstRow: this.grid.firstRow() });
     }
   }
 
-  dispose(): void { this.disposed = true; this.events.abort(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
+  dispose(): void { this.disposed = true; this.events.abort(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
 }
 
 declare function acquireVsCodeApi(): {
-  postMessage(message: BrowserRequest | BrowserStatus): void;
+  postMessage(message: BrowserRequest | BrowserStatus | CellRequest): void;
   getState(): unknown;
   setState(state: BrowserSavedState): BrowserSavedState;
 };
@@ -409,6 +425,7 @@ if (typeof acquireVsCodeApi === 'function') {
       browser.attachEditor(editor);
       window.addEventListener('message', (event: MessageEvent<unknown>) => {
         if (isBrowserResponse(event.data)) { browser.receive(event.data); }
+        else if (isCellResponse(event.data)) { browser.receiveCell(event.data); }
         else if (isBrowserExercise(event.data)) { browser.exercise(event.data); }
       }, { signal: events.signal });
       window.addEventListener('pagehide', () => { events.abort(); browser.dispose(); }, { once: true });

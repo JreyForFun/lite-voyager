@@ -39,6 +39,83 @@ const settled = (status: BrowserStatus): boolean => !status.busy;
 const rowsPainted = (status: BrowserStatus): boolean => !status.busy && status.renderedRows > 0 && status.firstRow.length > 0;
 const digest = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
 
+suite('T-018 production cell details and clipboard', () => {
+  for (const fallback of [false, true]) {
+    test(`FR-018: Given the real editor and fallback=${String(fallback)}, When inspecting Browse/SQL cells and copying TSV, Then exact details, selection and source safety survive`, async function () {
+      this.timeout(60000);
+      const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>('jreyinnovarev.lite-voyager');
+      assert.ok(extension); const api = await extension.activate();
+      const directory = await mkdtemp(join(extension.extensionPath, 'out', 't018-host-'));
+      const generated = await promisify(execFile)(process.execPath, [join(extension.extensionPath, 'scripts/browser-fixture.mts'), directory], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
+      assert.equal(generated.stderr, '');
+      const path = join(directory, 'browser.sqlite'); await chmod(path, 0o444); const before = await digest(path);
+      const previous = process.env['LITE_VOYAGER_FORCE_FALLBACK']; process.env['LITE_VOYAGER_FORCE_FALLBACK'] = fallback ? '1' : '0';
+      const previousClipboard = await vscode.env.clipboard.readText();
+      let document: SqliteDocument | undefined;
+      try {
+        const uri = vscode.Uri.file(path);
+        await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        document = api.sqliteEditor.getDocument(uri); assert.ok(document); await waitStatus(document, rowsPainted);
+        const detailsDone = (status: BrowserStatus): boolean => status.cell?.row !== null && status.cell?.busy === false;
+        const inspect = (value: string) => action(document!, { type: 'browserExercise', action: 'cell', value }, detailsDone);
+        const copy = async (command: 'copyCell' | 'copyRow' | 'copySelection'): Promise<string> => {
+          await action(document!, { type: 'browserExercise', action: command }, (status) => status.cell?.message === 'Copied as TSV.');
+          return vscode.env.clipboard.readText();
+        };
+        let status = await inspect('0,0'); assert.equal(status.cell?.kind, 'SQL NULL'); assert.equal(await copy('copyCell'), '\\N');
+        status = await inspect('0,1'); assert.equal(status.cell?.kind, 'Empty string'); assert.equal(status.cell?.length, 0); assert.equal(await copy('copyCell'), '""');
+        status = await inspect('0,2'); assert.equal(status.cell?.preview, 'NULL'); assert.equal(await copy('copyCell'), 'NULL');
+        status = await inspect('0,3'); assert.equal(status.cell?.preview, '9223372036854775807'); assert.equal(await copy('copyCell'), '9223372036854775807');
+        status = await inspect('0,5'); assert.equal(status.cell?.preview, '[BLOB 24 bytes]'); assert.equal(await copy('copyCell'), '[BLOB 24 bytes]');
+        await action(document, { type: 'browserExercise', action: 'select', value: 'b pages' }, rowsPainted);
+        await inspect('0,0');
+        await action(document, { type: 'browserExercise', action: 'extendCell', value: '1,1' }, detailsDone);
+        assert.equal(await copy('copySelection'), '1\trow 1\n2\trow 2');
+        assert.equal(await copy('copyRow'), '2\trow 2');
+        await action(document, { type: 'browserExercise', action: 'next' }, (status) => rowsPainted(status) && status.offset === 100);
+        assert.equal(document.browserStatus?.cell?.row, null); assert.equal(document.browserStatus?.cell?.length, 0);
+        await action(document, { type: 'browserExercise', action: 'select', value: 'd view' }, rowsPainted);
+        await inspect('0,1'); assert.equal(await copy('copyCell'), 'row 1');
+        await action(document, { type: 'browserExercise', action: 'select', value: 'f wide' }, rowsPainted);
+        await inspect('0,999'); assert.equal(await copy('copyCell'), '999');
+        assert.ok((document.browserStatus?.renderedColumns ?? 1000) < 30);
+        await action(document, { type: 'browserExercise', action: 'size', value: '1' }, rowsPainted);
+        await action(document, { type: 'browserExercise', action: 'select', value: 'e large cells' }, rowsPainted);
+        status = await inspect('0,0'); assert.equal(status.cell?.length, 1100000); assert.equal(status.cell?.preview, null);
+        assert.equal(await copy('copyCell'), 'x'.repeat(1100000));
+        const sql = `SELECT '{"n":9223372036854775807,"n":1e999,"s":"<script>x</script>"}' AS v, char(9)||char(10)||'"' AS v, NULL AS n, '' AS e, '\\N' AS marker`;
+        await action(document, { type: 'browserExercise', action: 'sql', value: sql }, (status) => status.sqlLength === sql.length);
+        await action(document, { type: 'browserExercise', action: 'run' }, (status) => rowsPainted(status) && status.query === true);
+        status = await inspect('0,0');
+        assert.equal(status.cell?.kind, 'JSON'); assert.ok(status.cell?.preview?.includes('9223372036854775807')); assert.ok(status.cell?.preview?.includes('1e999'));
+        assert.equal(await copy('copyCell'), '"{""n"":9223372036854775807,""n"":1e999,""s"":""<script>x</script>""}"');
+        assert.equal(await copy('copyRow'), '"{""n"":9223372036854775807,""n"":1e999,""s"":""<script>x</script>""}"\t"\t\n"""\t\\N\t""\t"\\N"');
+        const oldContext = status.contextId;
+        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument({ content: 'T-018 context restoration' }), { preview: false });
+        await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        const restored = await waitStatus(document, (status) => rowsPainted(status) && status.contextId !== oldContext && status.query === true);
+        assert.equal(restored.cell?.row, null); assert.equal(restored.cell?.length, 0);
+        await inspect('0,0'); assert.ok((await copy('copyCell')).includes('9223372036854775807'));
+        const beforeNul = await vscode.env.clipboard.readText();
+        const nulSql = "SELECT 'before'||char(0)||'after' AS value";
+        await action(document, { type: 'browserExercise', action: 'sql', value: nulSql }, (status) => status.sqlLength === nulSql.length);
+        await action(document, { type: 'browserExercise', action: 'run' }, (status) => rowsPainted(status) && status.query === true);
+        status = await inspect('0,0'); assert.equal(status.cell?.length, 12);
+        await action(document, { type: 'browserExercise', action: 'copyCell' }, (status) => status.cell?.busy === false && /NUL.*clipboard/.test(status.cell.message));
+        assert.equal(await vscode.env.clipboard.readText(), beforeNul);
+        await closeEditor(document); assert.equal(await digest(path), before);
+        console.log(`T-018 host evidence: ${JSON.stringify({ engine: fallback ? 'sql.js' : 'node:sqlite', browseAndViewAndSql: true, exactJsonAndTsv: true, largeCellCharacters: 1100000, columns: 1000, contextRestored: true, sourceUnchanged: true })}`);
+      } finally {
+        document?.dispose(); await document?.session.closed;
+        await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+        await vscode.env.clipboard.writeText(previousClipboard);
+        if (previous === undefined) { delete process.env['LITE_VOYAGER_FORCE_FALLBACK']; } else { process.env['LITE_VOYAGER_FORCE_FALLBACK'] = previous; }
+        await chmod(path, 0o600); await rm(directory, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 suite('T-017 production sort and filter DOM', () => {
   for (const fallback of [false, true]) {
     test(`FR-017: Given the real grid and fallback=${String(fallback)}, When sorting, filtering, restoring and cancelling, Then engine-backed pages and controls recover without changing the source`, async function () {

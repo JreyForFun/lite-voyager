@@ -30,7 +30,26 @@ test('FR-001: Given module detection, When selecting an engine, Then only built-
   expect(() => selectBuiltin(() => { throw new Error('broken module'); }, undefined)).toThrow('broken module');
 });
 
+test('FR-018: Given invalid UTF-8 TEXT in fallback, When reading details, Then lossless decoding fails visibly and the next valid read still succeeds', async () => {
+  const engine = makeEngine(true); const before = await hash(fixture);
+  try {
+    await engine.open(fixture);
+    await expect(engine.query("SELECT CAST(x'80' AS TEXT)")).rejects.toThrow('not valid UTF-8');
+    expect((await engine.query("SELECT 'before'||char(0)||'after'")).rows).toEqual([['before\0after']]);
+  } finally { await engine.close(); }
+  expect(await hash(fixture)).toBe(before);
+});
+
 describe.each([false, true])('Production Engine, fallback=%s', (fallback) => {
+  test('FR-018: Given SQLite text with NUL, BOM and Unicode, When reading full cell details, Then both engines preserve every character without changing other types or the source', async () => {
+    const engine = makeEngine(fallback); const before = await hash(fixture);
+    try {
+      await engine.open(fixture);
+      expect((await engine.query("SELECT 'before'||char(0)||'after', char(65279)||'🚀', 9223372036854775807, NULL, '', zeroblob(3)")).rows)
+        .toEqual([['before\0after', '\uFEFF🚀', '9223372036854775807', null, '', '[BLOB 3 bytes]']]);
+    } finally { await engine.close(); }
+    expect(await hash(fixture)).toBe(before);
+  });
   test('FR-011: Given invalid SQL, When the real worker reports failure, Then SQLite diagnostics survive and a subsequent read succeeds', async () => {
     const engine = makeEngine(fallback);
     try {

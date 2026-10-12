@@ -50,11 +50,25 @@ Select a table or view to return to table browsing.</p>
 <div class="browser-toolbar" aria-label="Sort confirmation"><span id="browser-sort-warning" role="alert" hidden></span>
 <button id="browser-sort-continue" hidden disabled>Continue sort</button><button id="browser-sort-dismiss" hidden disabled>Dismiss sort</button></div>
 <p id="browser-status" role="status" aria-live="polite">Loading tables and views…</p>
-<div id="browser-grid" role="grid" tabindex="0" aria-label="Table rows" aria-readonly="true">
+<div class="browser-results">
+<div id="browser-grid" role="grid" tabindex="0" aria-label="Table rows" aria-readonly="true" aria-multiselectable="true">
 <div class="browser-header-clip"><div id="browser-header" role="row" aria-rowindex="1"></div></div>
 <div id="browser-viewport"><div id="browser-track"><div id="browser-rows"></div></div></div></div>
+<aside id="cell-details" aria-labelledby="cell-title">
+<h2 id="cell-title">Cell details</h2><p id="cell-kind"></p>
+<pre id="cell-value" tabindex="0" aria-label="Complete cell value"></pre>
+<div class="browser-toolbar"><button id="cell-copy-cell" disabled>Copy cell</button><button id="cell-copy-row" disabled>Copy row</button>
+<button id="cell-copy-selection" disabled>Copy selection</button><button id="cell-cancel" disabled>Cancel preparation</button></div>
+<p id="cell-status" role="status" aria-live="polite">Select a cell to see its complete value.</p>
+<p class="browser-help">Copy as TSV: no headers; SQL NULL is \\N, empty text is "", and literal \\N is quoted.
+Tabs, newlines and quotes inside fields use double-quote escaping. Copy keeps stored JSON text and BLOB placeholders.
+Copy/JSON expansion is limited to 16 Mi characters; oversized JSON stays complete as raw text.
+TSV consumers must honor quoting and the NULL token; spreadsheet formulas are copied literally.</p></aside></div>
+<p class="browser-help">Embedded NUL text is rejected by Copy to avoid clipboard data loss; details retain the full raw value.</p>
 <p class="browser-help">NULL is italic; empty strings show (empty). Long values are clipped visually; hover for their stored text.
 Use arrow keys, Page Up/Down and Home/End in the grid; Control+End reaches the last cell on this page.
+Click a cell to inspect it; Shift-click or Shift-navigation extends a rectangle on this page.
+Ctrl/Cmd+A selects the loaded page; Ctrl/Cmd+C copies its selection. Page replacement clears selection.
 Click a column header (or focus it and press Enter/Space) to cycle ascending, descending and unsorted.
 Equal sort keys have no guaranteed tie order. Filters combine with AND; contains is literal and case-sensitive,
 uses the stored numeric text and excludes BLOBs. Filter text is limited to 65,536 total UTF-16 characters across 1,000 columns.
