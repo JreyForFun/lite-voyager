@@ -1,15 +1,28 @@
 import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { promisify } from 'node:util';
 import { afterEach, expect, test } from 'vitest';
-import { generateLargeFixtures, generateStressFixtures } from '../../scripts/fixtures.mts';
+import { generateLargeFixtures as generateLarge, generateStressFixtures as generateStress } from '../../scripts/fixtures.mts';
 
 const execute = promisify(execFile);
 const directories: string[] = [];
-afterEach(async () => { await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true }))); });
+const pendingGenerations: Promise<unknown>[] = [];
+function trackGeneration<T>(generation: Promise<T>): Promise<T> {
+  pendingGenerations.push(generation);
+  return generation;
+}
+const generateLargeFixtures = (...args: Parameters<typeof generateLarge>): ReturnType<typeof generateLarge> => trackGeneration(generateLarge(...args));
+const generateStressFixtures = (directory: string): Promise<void> => trackGeneration(generateStress(directory));
+async function cleanOutput(): Promise<void> {
+  // A Vitest timeout does not cancel its async body. Generators resolve only
+  // after worker exit; wait before unlinking SQLite output, even after failure.
+  await Promise.allSettled(pendingGenerations.splice(0));
+  await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true })));
+}
+afterEach(cleanOutput);
 async function outputPath(): Promise<string> {
   const parent = await mkdtemp(join(tmpdir(), 'lite-voyager-generator-test-'));
   directories.push(parent);
@@ -56,6 +69,17 @@ test('T-005: Given stress fixtures, When generated, Then a greater-than-1-MB cel
     expect(db.prepare('PRAGMA table_info(wide)').all()).toHaveLength(1000);
     expect(db.prepare('SELECT length(value) AS size FROM large_cell').get()).toMatchObject({ size: 1_048_577 });
   } finally { db.close(); }
+});
+
+test('T-005: Given stress generation still in flight, When teardown starts, Then it waits for the real worker to finish before removing output', async () => {
+  const output = await outputPath();
+  try {
+    const generation = generateStressFixtures(output);
+    const cleanup = cleanOutput();
+    const outcomes = await Promise.allSettled([generation, cleanup]);
+    expect(outcomes.map((outcome) => outcome.status)).toEqual(['fulfilled', 'fulfilled']);
+    await expect(stat(output)).rejects.toMatchObject({ code: 'ENOENT' });
+  } finally { await rm(dirname(output), { recursive: true, force: true }); }
 });
 
 test.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1])(

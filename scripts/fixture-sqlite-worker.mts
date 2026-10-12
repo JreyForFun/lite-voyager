@@ -64,11 +64,15 @@ function largeDatabase(job: SqliteFixtureJob): void {
 function stressDatabase(directory: string): void {
   const db = new DatabaseSync(join(directory, 'stress.sqlite'));
   try {
+    // One durable commit for the disposable snapshot, rather than one per write.
+    // Closing on a failure rolls back the entire incomplete fixture.
+    db.exec('BEGIN');
     db.exec('CREATE TABLE large_cell(value TEXT)');
     db.prepare('INSERT INTO large_cell VALUES (?)').run('x'.repeat(1_048_577));
     const columns = Array.from({ length: 1000 }, (_, index) => `column_${String(index)}`);
     db.exec(`CREATE TABLE wide(${columns.map((name) => `${quoteIdentifier(name)} INTEGER`).join(',')})`);
     db.prepare(`INSERT INTO wide VALUES (${columns.map(() => '?').join(',')})`).run(...columns.map((_, index) => index));
+    db.exec('COMMIT');
   } finally { db.close(); }
 }
 

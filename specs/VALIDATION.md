@@ -1395,6 +1395,48 @@ T-017 CI-record validation startup repair (2026-10-12):
   `dbf76f8`, before this legacy-spike startup repair; post-push CI for the follow-up
   commit is reported separately and is not inferred from that run.
 
+T-017 Windows follow-up CI fixture repair (2026-10-12):
+
+- Owner supplies [run 38245178358](https://github.com/JreyForFun/lite-voyager/actions/runs/38245178358)
+  and the failing Windows unit log. Public run/job metadata confirms attempt 1,
+  tested commit `4a8be0e5e9457a9e1f3408f547a45ac8be36760c`, overall failure,
+  Windows job `114797153052` failure, macOS `114797153360` success and Ubuntu
+  `114797153430` success. Remote logs beyond the pasted Windows output are not
+  independently inspected. The log reports 397 pass / one failure of 398 tests
+  (38.07 seconds): stress fixture generation exceeds its unchanged 5-second
+  deadline; teardown also fails with EBUSY unlinking the active `stress.sqlite`.
+  The unit gate stops before build/package/host stages.
+- Inspection finds four separately committed stress SQLite writes. The exact
+  runner disk latency is not captured; unnecessary durable commits are observed,
+  not a proven explanation for every earlier timeout. Two new real-SQLite worker
+  regressions fail before repair because writes are outside a transaction.
+  A third regression starts teardown while actual generation runs; it also fails
+  before repair with cleanup rejecting. Preserve these failures as red evidence.
+- Wrap the same stress CREATE/INSERT workload in one BEGIN/COMMIT transaction.
+  The existing finally-close rolls back incomplete generation on failure. Track
+  test generation promises and await settlement before removing disposable output:
+  a test timeout does not cancel its asynchronous body, and generation settles
+  after worker exit. Original test failures remain failures; teardown never turns
+  a timeout or rejected generation into a passing test.
+- All 15 fixture tests pass after repair (2.51 seconds). New checks cover actual
+  transaction state for every write, one commit, exact 1,048,577-byte cell, all
+  1,000 column values, integrity, rollback after injected late failure, database
+  closure and cleanup during real in-flight generation. Existing workloads,
+  assertions, five-second deadlines, SQLite durability and warning rules remain;
+  no dependency or production grid changes.
+- `npm run verify:full` passes (exit 0): 401 unit tests in 35 files (77.79 seconds),
+  all typechecks, zero-warning lint, production build, VSIX dry run (19 files,
+  611.05 KB), integration compilation and 30 real-host tests on Windows x64 /
+  VS Code 1.140.0 / host Node 24.21.0. T-017 real-host behavior passes on both
+  engines. This full run is not warning-free: its sole approved diagnostic is
+  source `out/integration-profile-5XhnQo/logs/20261012T200630/window1/renderer.log`,
+  line 10, severity `warning`, rule `VSCODE-HOST-001`, message
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  Final `npm run verify` also passes (exit 0): 401 tests in 35 files (82.07 seconds),
+  all typechecks, lint, build and VSIX dry run (19 files, 611.05 KB), zero errors
+  and zero warnings. Fresh three-platform CI for this repair awaits the owner's
+  push. The supplied failed run remains a failure.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -1456,6 +1498,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-017 Windows fixture repair (2026-10-12): Record failing follow-up CI at 4a8be0e, red-first real-SQLite transaction/rollback and in-flight teardown regressions. Batch identical stress data in one durable transaction and await worker completion during test cleanup without changing deadlines or assertions.
 - v0.1 T-017 validation repair (2026-10-12): Add a red-first packaged fallback-startup regression and register the existing message handler before WASM initialization. Preserve failed startup/timeout evidence, independent review, 398-unit/30-host full results and the exact approved renderer diagnostic; follow-up CI awaits owner push.
 - v0.1 T-017 CI confirmation (2026-10-12): Verify owner-supplied successful 38239600604/attempt 1/dbf76f8 run/job/step metadata on Windows/macOS/Ubuntu. Record confirmed locked installs/full steps, preserve failed evidence and remote-log limits, and keep only scoped T-017 complete.
 - v0.1 T-017 independent review/local completion (2026-10-12): Owner delegates completion judgment. Record two reproduced MEDIUM findings, failing-first repairs and independent confirmation. Final verify/full pass 397 unit/30 host tests under the exact reported host-warning policy; standalone verify has zero errors/warnings. Close scoped T-017 in its local task commit; preserve prior evidence and keep post-push CI/milestone gates open.
