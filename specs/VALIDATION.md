@@ -1079,6 +1079,32 @@ T-013 is reopened/unchecked until the repair has fresh passing three-platform
 CI. T-012's historical completion and the nine owner-reported T-013 QA passes
 remain recorded; no macOS/remote Windows fix is claimed from local tests alone.
 
+**T-013 repaired CI confirmation (2026-10-12):** owner supplies PASS and
+[run 38206014267](https://github.com/JreyForFun/lite-voyager/actions/runs/38206014267).
+Public GitHub API metadata independently confirms completed/successful,
+attempt 1, tested repair commit `88e8a510338e0c0cd2be5bfe408e3a118cb67959`,
+matching the local implementation commit. Locked installs and applicable full
+verification steps succeed on all three jobs:
+
+- [Windows](https://github.com/JreyForFun/lite-voyager/actions/runs/38206014267/job/114669562817): Windows/macOS verification step succeeds.
+- [macOS](https://github.com/JreyForFun/lite-voyager/actions/runs/38206014267/job/114669562906): Windows/macOS verification step succeeds.
+- [Ubuntu](https://github.com/JreyForFun/lite-voyager/actions/runs/38206014267/job/114669562767): Linux session-bus/xvfb verification step succeeds.
+
+Alternate OS-specific steps are skipped by their platform condition; they do
+not substitute for the applicable verification step. Remote full logs are not
+independently inspected and these remote runs are not called warning-free.
+Preserve the failed run/excerpts, red-first regressions and exact accepted local
+host warning above. Scoped T-013 is complete and checked again, with local
+381-unit/28-host evidence, repaired three-platform CI and the nine owner-reported
+SQL/Browse table PASS results. Unreported manual theme/shortcut/restoration/
+fallback details, independent review, full milestone QA and performance targets
+remain open; no milestone closure or release tag is claimed.
+This follow-up changes only PROGRESS.md, TASKS.md and VALIDATION.md.
+Completion-record `npm run verify` passes (exit 0): 381 tests in 33 files,
+strict host/webview/tooling types, lint, production builds and a 19-file /
+606.91 KB VSIX; zero errors and zero warnings. Changes are committed with
+T-013 in the message; owner pushes the completion record.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -1178,6 +1204,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-013 repaired CI confirmation (2026-10-12): Independently verify successful 38206014267/attempt 1/88e8a51 run/job/step metadata on Windows/macOS/Ubuntu and close scoped T-013 again. Preserve failed CI, exact local diagnostics, remote-log limits and remaining milestone/manual QA.
 - v0.1 T-013 failed CI/repair (2026-10-12): Verify failed 38204288838/attempt 1/92c12e9 metadata and preserve supplied Windows/macOS failures plus Ubuntu's successful job. Reopen T-013; record red-first fixture atomicity and context/action correlation with unchanged deadlines/workloads and fresh CI required.
 - v0.1 T-013 owner QA report (2026-10-12): Record the owner's nine explicit SQL/Browse table PASS results; distinguish supplied observations from unreported theme/shortcut/restoration/fallback checks and pending remote CI. Preserve existing local verification and diagnostic evidence.
 - v0.1 T-013 SQL editor (2026-10-10): Record requirement-to-test coverage, preserved red-first/verification failures, stricter host-action synchronization, both-engine SQL UI evidence, exact accepted host diagnostics and remaining owner/milestone checks.
