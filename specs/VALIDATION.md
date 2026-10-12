@@ -1573,28 +1573,99 @@ Only these observed result lines were recorded after that gate; source/tests
 are unchanged. All 31 T-018 files belong in the scoped local implementation
 commit. Existing debug.log, gingTryWan/ and untracked fixture aliases are excluded.
 
-Owner QA: run `npm run build`, then
-`node scripts/browser-fixture.mts out/t018-owner-qa` (use a new directory name if
-that directory already contains a database). Press F5 and open
-`out/t018-owner-qa/browser.sqlite` in the Extension Development Host. Report
-numbered PASS/FAIL results, including any visible error:
-1. In `a values`, click NULL, empty, literal NULL, int64 extremes, BLOB and hostile
-   text. Details are full/safe/distinct; copied integers are exact and BLOBs are
-   placeholders. Paste into a plain text editor to inspect TSV literally.
-2. In `b pages`, click first id, Shift-click second value, Copy selection:
-   `1<TAB>row 1<LF>2<TAB>row 2`. Copy row copies both fields in result order.
-3. Focus grid: arrows/Shift-arrows, Page Up/Down, Home/End, Ctrl/Cmd+End,
-   Ctrl/Cmd+A/C work; headers keep Enter/Space behavior. New page clears details.
-4. Choose page size 1, then `e large cells`; inspect/copy full long text. In
-   `f wide`, reach column 999. Assess scrolling, typing and Cancel preparation.
-5. Run `SELECT '{"n":9223372036854775807,"n":1e999}' AS json, char(9)||char(10)||'"' AS escaped;`.
-   JSON details are formatted with both exact numbers; copy retains the raw
-   stored JSON using TSV quote escaping. Tabs/newlines/quotes copy correctly.
-6. Check light/dark/high-contrast themes, narrow width and keyboard access to
-   details/copy controls. Hide/reopen the tab: query/page restore, cell selection
-   does not. A failed SQL query retains existing results/details.
-   Optionally run `SELECT 'before'||char(0)||'after';`: details retain all 12
-   characters, but Copy shows the NUL limitation and leaves the clipboard intact.
+Owner QA setup: if the development window is already open with the generated
+fixture, continue there. Otherwise run `npm run build`, then
+`node scripts/browser-fixture.mts out/t018-owner-qa` using a new directory name
+if a database already exists there. In the project VS Code window press F5.
+In the new Extension Development Host window press Ctrl+O and open the generated
+`out/t018-owner-qa/browser.sqlite` using its full project path. If it opens as
+text, right-click its tab, choose Reopen Editor With, then Lite Voyager.
+
+For EVERY SQL check below: inside the Lite Voyager tab, click in the text box
+directly below the SQL heading/Run SQL button. Press Ctrl+A THERE (not in the
+results grid), then paste only the complete SQL statement shown. This replaces
+the default/previous SQL; do not append to it and do not paste surrounding
+Markdown backticks. Click Run SQL. An empty selection runs all editor text;
+a selection runs just the selected text. Each check uses one statement.
+To inspect copied text, press Ctrl+N in the Development Host, then Ctrl+V in
+that new plain text editor tab. Return by clicking the browser.sqlite tab.
+
+Report numbered PASS/FAIL or NOT OBSERVED, including visible errors:
+1. Open the Table or view dropdown above the grid and choose `a values (table)`.
+   Click row 1's nullable, empty, literal, maximum, minimum, bytes and hostile
+   cells one at a time. Inspect the Cell details panel beside/below the grid.
+   NULL/empty/literal NULL remain distinct; integers are exact, bytes shows only
+   the BLOB placeholder, and hostile text is literal. Click Copy cell in that
+   panel and paste in the plain text tab to verify the copied value.
+2. Choose `b pages (table)`. Click the row 1 cell under id (value 1). Hold Shift
+   and click row 2 under value (row 2). Click Copy selection in Cell details.
+   Pasted output is `1<TAB>row 1<LF>2<TAB>row 2`, without outer enclosing quotes.
+   Return to browser.sqlite, click Copy row, and paste again: expect
+   `2<TAB>row 2`. This last step independently checks copying the active row.
+3. Click a data cell to focus the grid. Arrows move the active cell; Shift-arrows
+   extend the rectangle. Page Up/Down, Home/End and Ctrl+End navigate. Ctrl+A
+   selects the current loaded page and Ctrl+C copies it. Press Tab to reach a
+   column header button; Enter/Space cycles sorting. Click Next page: cell
+   selection/details clear. Do not use Ctrl+A in the SQL editor for this check.
+4. Set Rows per page to 1, then choose `e large cells (table)`. Click its x-filled
+   cell; scroll inside Cell details and use Copy cell to inspect full long text.
+   With the long value still displayed, click inside the SQL editor and type
+   `-- QA typing` on a new line WITHOUT running it. Letters should appear promptly
+   with no frozen UI; this checks typing responsiveness, not data loading.
+   Choose `f wide (table)`, click a data cell and press Ctrl+End to reach column 999.
+   Assess scrolling. If Cancel preparation stays enabled long enough, click it
+   during a fresh cell/copy operation and verify cancellation status/retry. If
+   preparation finishes before you can click, report NOT OBSERVED (too fast);
+   no manual failure or fabricated manual pass. Automated cancellation evidence
+   remains separate; no artificial delay is needed.
+5. Replace all SQL text using the instructions above and run
+   `SELECT '{"n":9223372036854775807,"n":1e999}' AS json;`.
+   Click row 1 under json. Cell details should show an indented JSON object with
+   BOTH n keys and the exact tokens 9223372036854775807 and 1e999.
+   Click Copy cell, then paste: expect
+   `"{""n"":9223372036854775807,""n"":1e999}"`, one line, preserving stored JSON.
+   Return to the database tab, replace all SQL again, and run
+   `SELECT 'left' || char(9) || 'middle' || char(10) || 'right "quoted"' AS escaped;`.
+   Click row 1 under escaped, Copy cell, and paste. Expect two lines: first
+   `"left<TAB>middle`, second `right ""quoted"""`; the tab/newline are actual
+   characters, not the angle-bracket labels, and embedded quotes are doubled.
+6. Press Ctrl+K then Ctrl+T in the Development Host to choose light/dark/high
+   contrast themes. Inspect readable details/copy controls in each, then narrow
+   the window: the details panel may move below the grid. Use Tab to reach and
+   activate copy controls with Enter. With a cell selected, create a text tab
+   (Ctrl+N), then click browser.sqlite again: query/page restore but cell selection
+   clears. For error retention, first run `SELECT 1 AS retained;`, click its cell,
+   then replace SQL with `SELECT FROM;` and Run SQL. The error must leave the
+   previous value/details visible.
+   For the optional NUL check, replace ALL SQL and run the complete statement
+   `SELECT 'before' || char(0) || 'after' AS value;` (including the quote after after).
+   After it runs, click inside the SQL editor, Ctrl+A then Ctrl+C to put that
+   complete statement on the clipboard as a known baseline. Click the result
+   cell. Details contain before and after separated by an invisible NUL (12
+   stored characters). Click Copy cell: expect a visible NUL clipboard limitation.
+   Press Ctrl+N, then Ctrl+V: expect the full SQL statement copied as the baseline,
+   proving the rejected cell copy did not overwrite the clipboard.
+
+Owner report (2026-10-13):
+- 1: explicit PASS. 2: supplied two rows match selection TSV; selection copy PASS,
+  assuming the message's enclosing quotes are narration, not copied characters.
+  Copy row output was not supplied. 3: explicit PASS.
+- 4: scrolling PASS. Typing responsiveness not yet observed: owner interpreted
+  typing as data loading. Manual Cancel NOT OBSERVED because preparation finished
+  too fast to click; automated cancellation tests remain passing evidence.
+- 5: submitted text was rejected as more than one read statement; JSON/escaping
+  QA is not yet verified. Actual full editor/selection contents were not supplied,
+  so appending to the default SQL is a possibility, not an established cause.
+- 6: supplied SQL `SELECT 'before'||char(0)||'after` lacks the closing single quote.
+  Its unrecognized-token error is consistent with malformed SQL. Optional NUL
+  check awaits a complete-statement retry; themes/restoration/error-retention
+  observations were not supplied. Do not claim these checks PASS.
+- Owner requests more specific navigation; revised steps identify exact controls,
+  editor focus, full replacement, complete SQL and expected clipboard output.
+  No feature code/test change is warranted by the supplied reports so far.
+- Documentation-record `npm run verify` passes on 2026-10-13 (exit 0): 435 tests
+  in 39 files (116.77 seconds), all types/lint/build/VSIX checks, zero errors and
+  zero warnings. Only PROGRESS.md and VALIDATION.md change; T-018 stays unchecked.
 
 Fresh-chat review should inspect the actual T-018 commit/diff, focusing on worker
 lifecycle, exact token/TSV fidelity, clipboard gating and stale page reporting.
@@ -1662,6 +1733,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-018 owner QA clarification (2026-10-13): Record explicit PASS reports and matching selection TSV; distinguish unobserved typing/cancellation and incomplete SQL retries. Rewrite navigation and complete single-statement examples without claiming missing observations or changing feature code.
 - v0.1 T-018 implementation (2026-10-12): Record tests-first cell details/TSV, worker/clipboard/lifecycle and bounded protocol coverage; preserve lint and two failed host runs. Scoped stale-report/cancellation repairs pass 431 unit/32 host checks with zero errors/warnings. Owner QA, fresh-chat review and post-push CI remain open.
 - v0.1 T-017 final repair CI confirmation (2026-10-12): Confirm successful 38248216036/attempt 1/9f73531 run, locked installs and full steps on all three platforms. Close only scoped T-017, preserve failed evidence and remote-log limits, and hand off T-018 to a fresh chat.
 - v0.1 T-017 Windows fixture repair (2026-10-12): Record failing follow-up CI at 4a8be0e, red-first real-SQLite transaction/rollback and in-flight teardown regressions. Batch identical stress data in one durable transaction and await worker completion during test cleanup without changing deadlines or assertions.

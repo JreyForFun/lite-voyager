@@ -16,10 +16,10 @@ Prior T-017 repairs/CI remain complete; no milestone closure or release tag.
 - Two failed host runs and red-first scoped repairs are preserved in VALIDATION.
 
 ## Last session
-Add cell details, page-scoped mouse/keyboard rectangles and TSV clipboard copy.
-Preserve JSON numeric tokens/duplicate keys; distinguish NULL/empty/literal values.
-Use supervised workers for formatting/copy, bounded queues, Cancel and recovery.
-Fix page/accessibility/stale cancel reports and fallback NUL/BOM TEXT fidelity.
+Owner QA (2026-10-13): 1/3 PASS; 2 selection TSV matches, row copy unreported.
+4 scrolling PASS; typing unobserved, Cancel too fast to observe manually.
+5 needs a single-statement retry; 6's supplied NUL query lacks a closing quote.
+Rewrite QA navigation/expected output in VALIDATION; no feature code/test change.
 
 ## Decisions made this session
 Owner delegates implementation/uncertainties/scoped repairs; owner pushes.
@@ -33,7 +33,7 @@ Clipboard writes already started cannot be retracted by cancellation; UI says so
 Schema panel, T-014/later features and whole-milestone performance remain open.
 
 ## Next
-Perform VALIDATION T-018 owner QA 1–6 and return numbered PASS/FAIL observations.
+Retry VALIDATION T-018 row copy, typing, JSON/escaping and remaining check 6 steps.
 Fresh chat: review the actual T-018 diff; keep work scoped to this task.
 Owner pushes with `git push origin main`; return CI URL/SHA and three outcomes.
 Tick only T-018 after remaining closure checks pass; do not start another task here.
