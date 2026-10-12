@@ -1600,7 +1600,8 @@ Report numbered PASS/FAIL or NOT OBSERVED, including visible errors:
 2. Choose `b pages (table)`. Click the row 1 cell under id (value 1). Hold Shift
    and click row 2 under value (row 2). Click Copy selection in Cell details.
    Pasted output is `1<TAB>row 1<LF>2<TAB>row 2`, without outer enclosing quotes.
-   Return to browser.sqlite, click Copy row, and paste again: expect
+   Return to browser.sqlite, click row 2 under value again (tab hiding clears
+   selection), then click Copy row and paste again: expect
    `2<TAB>row 2`. This last step independently checks copying the active row.
 3. Click a data cell to focus the grid. Arrows move the active cell; Shift-arrows
    extend the rectangle. Page Up/Down, Home/End and Ctrl+End navigate. Ctrl+A
@@ -1667,7 +1668,8 @@ Owner report (2026-10-13):
   in 39 files (116.77 seconds), all types/lint/build/VSIX checks, zero errors and
   zero warnings. Only PROGRESS.md and VALIDATION.md change; T-018 stays unchecked.
 
-Fresh-chat review should inspect the actual T-018 commit/diff, focusing on worker
+Fresh-chat review should inspect implementation commit `908fb76` and any later
+source repairs, not just the documentation-only HEAD, focusing on worker
 lifecycle, exact token/TSV fidelity, clipboard gating and stale page reporting.
 After owner push, return the CI run URL/tested SHA and all three job outcomes.
 Tests can be rerun with `npm run verify` and `npm run verify:full`.

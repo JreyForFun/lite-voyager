@@ -34,6 +34,6 @@ Schema panel, T-014/later features and whole-milestone performance remain open.
 
 ## Next
 Retry VALIDATION T-018 row copy, typing, JSON/escaping and remaining check 6 steps.
-Fresh chat: review the actual T-018 diff; keep work scoped to this task.
+Fresh chat: review implementation commit 908fb76; keep work scoped to T-018.
 Owner pushes with `git push origin main`; return CI URL/SHA and three outcomes.
 Tick only T-018 after remaining closure checks pass; do not start another task here.
