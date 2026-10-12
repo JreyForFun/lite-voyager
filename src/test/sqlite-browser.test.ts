@@ -297,11 +297,20 @@ suite('T-012 production browser DOM', () => {
         const firstPaintMs = performance.now() - started;
         assert.equal(first.table, 'a values'); assert.equal(first.count, null);
         assert.ok(first.renderedRows > 0 && first.renderedRows <= first.cachedRows);
-        assert.deepEqual(first.firstRow.slice(0, 5).map((cell) => [cell.text, cell.label]), [
+        // The details sidebar reduces available grid width. Read every cell
+        // from the real DOM after navigation, using its actual column ordinal;
+        // an unrendered column is not a missing SQLite value.
+        const fidelity: [string | null, string | null][] = [];
+        for (let column = 0; column < 9; column++) {
+          const painted = await action(document, { type: 'browserExercise', action: 'cell', value: `0,${String(column)}` },
+            (status) => rowsPainted(status) && status.firstRow.some((cell) => cell.column === column));
+          const cell = painted.firstRow.find((cell) => cell.column === column); assert.ok(cell);
+          fidelity.push([cell.text, cell.label]);
+        }
+        assert.deepEqual(fidelity, [
           ['NULL', 'SQL NULL'], ['(empty)', 'Empty string'], ['NULL', null], ['9223372036854775807', null], ['-9223372036854775808', null],
+          ['[BLOB 24 bytes]', null], ['1e-200', null], ['2026-10-10T12:00:00+08:00', null], ['<script>literal</script>', null],
         ]);
-        assert.equal(first.firstRow[5]?.text, '[BLOB 24 bytes]');
-        assert.equal(first.firstRow[6]?.text, '1e-200');
         const right = await action(document, { type: 'browserExercise', action: 'lastCell' }, (status) => rowsPainted(status) && status.firstRow.some((cell) => cell.text === '<script>literal</script>'));
         assert.ok(right.firstRow.some((cell) => cell.text === '2026-10-10T12:00:00+08:00'));
         const page = await action(document, { type: 'browserExercise', action: 'select', value: 'b pages' }, (status) => rowsPainted(status) && status.table === 'b pages');

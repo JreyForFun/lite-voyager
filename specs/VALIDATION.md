@@ -1703,11 +1703,12 @@ Next, open a fresh chat in this workspace and paste this prompt:
 
 ```text
 Read AGENTS.md, specs/CONSTITUTION.md and PROGRESS.md in that order.
-Review only T-018 / FR-018. Read its acceptance, plan and validation sections.
-Owner QA 1–6 passes. Local verification passes 435 unit and 32 host tests;
+Review only T-018 / FR-018 and its scoped CI repairs. Read its acceptance,
+plan and validation sections.
+Owner QA 1–6 passes. Repaired local verification passes 437 unit and 32 host tests;
 the approved full-run renderer warning is recorded in VALIDATION.md.
 Inspect the actual implementation diff:
-git show 908fb76 -- src webview test esbuild.js .vscodeignore
+git diff 5ebbe7f HEAD -- src webview test esbuild.js .vscodeignore
 Read relevant current code and tests as needed. Do not review only the
 documentation-only HEAD. Do not modify files or tick a task checkbox.
 Report concrete HIGH / MEDIUM / LOW defects with file/line, why they violate
@@ -1725,6 +1726,58 @@ repair changes an observed behavior. Once review/fixes pass, owner runs
 tab and select the run for that pushed commit. Return the run URL, tested
 commit SHA and Windows/macOS/Ubuntu job conclusions. For a failure, supply
 the failing step's first error/warning and its surrounding log.
+
+T-018 CI viewport repair (2026-10-13):
+- Owner supplied run https://github.com/JreyForFun/lite-voyager/actions/runs/38289818635
+  and Windows/macOS Full verification excerpts. GitHub REST run/job metadata
+  confirms attempt 1, main, tested SHA d29dfff9355bbb02f1d191c59df1d7053a8ce23d:
+  Windows and macOS failure; Ubuntu success. Locked dependency installs pass
+  on all three; Windows/macOS full steps fail, Linux session-bus/xvfb full step
+  succeeds. The web page fetch missed its cache; Node HTTPS fetched REST metadata.
+- Both supplied failing excerpts pass 435 unit tests and both T-018 host cases,
+  but finish with 30 host tests passing / two FR-002 cases failing: expected
+  `firstRow[6].text === '1e-200'`, actual undefined, on native and fallback.
+  Windows reports 35.60-second units, macOS 26.82-second units. This run is not
+  a passing three-platform gate and is not erased by local repair evidence.
+- Cause reproduced with a 620px grid: the T-018 sidebar leaves six initial
+  virtualized columns. The REAL column at ordinal 6 is offscreen; firstRow
+  summarizes actual rendered cells, not the entire result row. No data loss
+  was observed, and both T-018 clipboard/source-safety cases pass in the excerpts.
+- Two failing-first regressions capture missing DOM column identities and
+  acceptance of malformed/out-of-range ordinals. Both fail before the repair;
+  the focused grid/protocol command then passes all 29 tests.
+- Read aria-colindex into bounded DOM summaries and validate optional ordinals
+  against the result-column count. The host navigates to all nine fidelity cells
+  and compares exact text/labels from each actual rendered column. All earlier
+  values remain asserted, including NULL/empty/literal NULL, int64 extremes,
+  BLOB, REAL, stored date and hostile text. No fixture, timeout, CSS, Engine,
+  expected value, test weakening, dependency or diagnostic-policy change.
+- Pasted macOS console contains the known CloudSandbox and 74ms chat-model
+  contribution diagnostics. The failed host gate did not reach renderer-log
+  validation; no remote approved-warning count or warning-free claim is made.
+  Ubuntu run metadata confirms success; its raw logs were not inspected here.
+- Owner QA 1–6 remains passing evidence for the visible feature, which this
+  report/navigation repair does not change. Independent review must include
+  the implementation and this repair: use the cumulative diff in the prompt
+  above, not only the older 908fb76 feature commit. Fresh repaired three-platform
+  CI and review remain required; no T-018 checkbox, milestone closure or tag.
+- Repaired `npm run verify:full` passes (exit 0): 437 unit tests in 39 files
+  (102.19 seconds), all types/lint/build/VSIX checks (20 files / 617.71 KB) and
+  32 real-host tests. Both previously failing FR-002 engine cases now pass while
+  asserting all nine exact DOM values/labels and unchanged sources. Windows x64,
+  VS Code 1.140.0 / host Node 24.21.0. The existing warm ten-million-row probe
+  passes at 780.2938 ms to first DOM rows; no new broader performance claim.
+- Repaired full is NOT warning-free: exactly one accepted diagnostic, source
+  `out/integration-profile-xLQJr4/logs/20261013T023925/window1/renderer.log:10`,
+  original severity `warning`, rule `VSCODE-HOST-001`, original message
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  Zero errors/other warnings; no VSCODE-HOST-002 record. Prior failures and exact
+  earlier warning records remain intact.
+- Final standalone `npm run verify` passes (exit 0): 437 tests in 39 files
+  (99.52 seconds), all types/lint/build/VSIX checks, zero errors and zero warnings.
+  Only observed result lines are added afterward; the repaired source/tests
+  remain unchanged. Owner pushes the scoped T-018 CI repair and returns the new
+  CI URL/tested SHA/three job outcomes. Existing untracked files stay excluded.
 
 Only after review and fresh CI pass may T-018 be checked. This does not close
 Milestone 1 or authorize a release tag. The next feature task is T-014 in a new
@@ -1791,6 +1844,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-018 failed CI/viewport repair (2026-10-13): Record 38289818635/attempt 1/d29dfff Windows/macOS fidelity failures and Ubuntu success. Preserve both failing excerpts; add red-first actual-column/validation regressions and retain every fidelity value, fixture, deadline and source assertion. Repair CI/review remain open.
 - T-018 handoff (2026-10-13): Provide a precise fresh-chat review prompt and push/CI return instructions; correct the stray QA-heading character under the owner's documentation-update request. Preserve all evidence and keep T-018 unchecked.
 - T-018 final owner QA (2026-10-13): Accept the six numbered PASS reports, preserve prior partial/error observations and automated cancellation evidence, and keep only independent review/post-push CI open. T-018 remains unchecked.
 - T-018 owner QA clarification (2026-10-13): Record explicit PASS reports and matching selection TSV; distinguish unobserved typing/cancellation and incomplete SQL retries. Rewrite navigation and complete single-statement examples without claiming missing observations or changing feature code.

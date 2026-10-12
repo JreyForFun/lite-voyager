@@ -121,3 +121,18 @@ test('FR-018: Given an old painted page, When replacement clears selection, Then
   grid.setPage({ columns: ['a'], rows: [['new']], hasMore: false }, 100);
   expect(observed).toEqual([{ renderedRows: 0, first: undefined }]);
 });
+
+test('FR-018: Given the narrowed details layout, When navigating offscreen fidelity columns, Then DOM summaries identify every exact cell by its actual column', () => {
+  element('browser-viewport').clientWidth = 620;
+  const values = [null, '', 'NULL', '9223372036854775807', '-9223372036854775808', '[BLOB 24 bytes]', '1e-200', '2026-10-10T12:00:00+08:00', '<script>literal</script>'];
+  grid.setPage({ columns: values.map((_, i) => `c${String(i)}`), rows: [values], hasMore: false }, 0); flush();
+  expect(grid.firstRow()).toHaveLength(6);
+  const observed: (string | null | undefined)[] = [];
+  for (let column = 0; column < values.length; column++) {
+    grid.selectCell(0, column); flush();
+    const cell = grid.firstRow().find((cell) => cell.column === column);
+    expect(cell).toBeDefined(); observed.push(cell?.text);
+  }
+  expect(observed).toEqual(['NULL', '(empty)', ...values.slice(2)]);
+  expect(grid.metrics().renderedColumns).toBeLessThan(values.length);
+});

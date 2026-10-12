@@ -690,6 +690,13 @@ Unrepresentable UTF-8 text fails visibly instead of replacement or truncation.
 - Grid replacement and BrowserView completion reporting remain atomic. Clearing
   details emits no intermediate settled status before the page's message/controls
   commit. Native clipboard tests restore prior clipboard contents in cleanup.
+- T-018 CI follow-up: the details sidebar narrows the initial grid viewport.
+  DOM summaries include validated optional zero-based column ordinals read from
+  aria-colindex. Host fidelity tests navigate to each of all nine fixture cells
+  before reading its actual DOM value/label; a visible-array index is not an
+  absolute result-column index. Keep virtualization, values, fixtures, deadlines
+  and source-safety assertions unchanged. A 620px regression reproduces the
+  initial six-column render without assuming every fidelity column is visible.
 
 Local evidence and failures are recorded in VALIDATION.md; owner visual QA,
 independent fresh-chat review and fresh three-platform CI remain separate gates.
@@ -807,6 +814,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-018 CI viewport repair (2026-10-13): Reproduce the sidebar-width fidelity failure; identify visible DOM cells by validated column ordinals and navigate to every asserted cell without changing fixtures, deadlines or expected values.
 - T-018 (2026-10-12): Add page-scoped cell selection/details, exact JSON whitespace formatting and TSV clipboard preparation in supervised transform workers; preserve atomic page reporting, source safety and packaging without a dependency.
 - v0.4 T-017 independent review repairs (2026-10-12): Fix warning-state page/count actions and SQLite expression-depth overflow with red-first regressions; a separate reviewer confirms both fixes on both backends. Owner delegates local task closure; fresh CI remains tracked at the milestone gate after the owner's push.
 - v0.4 T-017 sort/filter (2026-10-12): Add worker-validated Engine.grid reads/counts, quoted/bound predicates, conservative indexed-plan recognition, native file-backed temporary storage and successful-control persistence. Reuse cancellation, virtualization and existing dependencies.

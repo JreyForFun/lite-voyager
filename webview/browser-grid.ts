@@ -199,6 +199,7 @@ export class BrowserGrid {
   firstRow() {
     const row = this.rows.firstElementChild;
     return row === null ? [] : Array.from(row.children).slice(0, 12).map((cell) => ({
+      column: Number(cell.getAttribute('aria-colindex')) - 1,
       text: (cell.textContent?.length ?? 0) <= 128 ? cell.textContent : null,
       length: cell.textContent?.length ?? 0, label: cell.getAttribute('aria-label'),
     }));

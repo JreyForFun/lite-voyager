@@ -135,7 +135,7 @@ export interface BrowserStatus {
   type: 'browserStatus'; revision: number; table: string | null; offset: number;
   cachedRows: number; renderedRows: number; renderedColumns: number; columns: number;
   hasMore: boolean; count: string | null; busy: boolean; message: string;
-  firstRow: { text: string | null; length: number; label: string | null }[];
+  firstRow: { text: string | null; length: number; label: string | null; column?: number }[];
   query?: boolean; editorReady?: boolean; sqlLength?: number; selectionLength?: number; highlighted?: boolean; summary?: string;
   /** Local integration correlation only; neither value is persisted. */
   contextId?: string; exerciseId?: number;
@@ -214,7 +214,8 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && (value['cell'] === undefined || isCellSummary(value['cell']))
     && Array.isArray(value['firstRow']) && value['firstRow'].length <= 12 && Array.from(value['firstRow']).every((cell: unknown) =>
       isRecord(cell) && (cell['text'] === null || typeof cell['text'] === 'string' && cell['text'].length <= 128)
-      && integer(cell['length'], 0, 4 * 1024 * 1024) && (cell['label'] === null || typeof cell['label'] === 'string'));
+      && integer(cell['length'], 0, 4 * 1024 * 1024) && (cell['label'] === null || typeof cell['label'] === 'string')
+      && (cell['column'] === undefined || typeof value['columns'] === 'number' && integer(cell['column'], 0, value['columns'] - 1)));
 }
 function isCellSummary(value: unknown): boolean {
   return isRecord(value) && (value['row'] === null || integer(value['row'], 0, BROWSER_PAGE_SIZE - 1))

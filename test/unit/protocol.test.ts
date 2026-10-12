@@ -1,6 +1,16 @@
 import { describe, expect, test } from 'vitest';
 import { isHostMessage, isWebviewMessage } from '../../src/protocol';
 
+test('FR-018: Given visible-cell column ordinals, When validating DOM reports, Then in-range ordinals survive and malformed or out-of-range positions fail', () => {
+  const cell = { text: '1e-200', length: 6, label: null, column: 6 };
+  const status = { type: 'browserStatus', revision: 1, table: 'a values', offset: 0, cachedRows: 1, renderedRows: 1, renderedColumns: 6, columns: 9,
+    hasMore: false, count: null, busy: false, message: '', firstRow: [cell] };
+  expect(isWebviewMessage(status)).toBe(true);
+  for (const column of [-1, 9, 0.5, '6', null, NaN, Infinity]) {
+    expect(isWebviewMessage({ ...status, firstRow: [{ ...cell, column }] })).toBe(false);
+  }
+});
+
 test('FR-010: Given integration action correlation, When validating the protocol, Then invalid tokens are rejected', () => {
   const exercise = { type: 'browserExercise', action: 'run', exerciseId: 1 };
   expect(isHostMessage(exercise)).toBe(true);
