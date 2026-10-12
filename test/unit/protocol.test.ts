@@ -1,6 +1,23 @@
 import { describe, expect, test } from 'vitest';
 import { isHostMessage, isWebviewMessage } from '../../src/protocol';
 
+test('FR-010: Given integration action correlation, When validating the protocol, Then invalid tokens are rejected', () => {
+  const exercise = { type: 'browserExercise', action: 'run', exerciseId: 1 };
+  expect(isHostMessage(exercise)).toBe(true);
+  for (const exerciseId of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '1', null]) {
+    expect(isHostMessage({ ...exercise, exerciseId })).toBe(false);
+  }
+});
+
+test('FR-010: Given correlated DOM status, When validating it, Then malformed context identities and acknowledgements are rejected', () => {
+  const status = { type: 'browserStatus', revision: 1, table: null, offset: 0, cachedRows: 0, renderedRows: 0, renderedColumns: 0, columns: 0,
+    hasMore: false, count: null, busy: false, message: '', firstRow: [], contextId: '00000000-0000-4000-8000-000000000000', exerciseId: 0 };
+  expect(isWebviewMessage(status)).toBe(true);
+  for (const changes of [{ contextId: '' }, { contextId: 1 }, { contextId: 'x'.repeat(100) }, { exerciseId: -1 }, { exerciseId: 1.5 }, { exerciseId: '0' }]) {
+    expect(isWebviewMessage({ ...status, ...changes })).toBe(false);
+  }
+});
+
 test('FR-010: Given literal selected SQL, When validating query messages, Then bounded SQL and page addresses are accepted and malformed inputs rejected', () => {
   const message = { type: 'browserQuery', requestId: 1, sql: 'SELECT \'🚀;\' AS "select"', offset: 0, limit: 100 };
   expect(isWebviewMessage(message)).toBe(true);

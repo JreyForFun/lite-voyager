@@ -53,6 +53,8 @@ export class BrowserView {
   private readonly query = new QueryView();
   private pendingSql: string | null = null;
   private editor: BrowserSqlEditor | undefined;
+  private readonly contextId = crypto.randomUUID();
+  private exerciseId = 0;
 
   constructor(private readonly root: HTMLElement, private readonly post: Post, private readonly saved: BrowserSavedState = INITIAL_STATE) {
     this.requestId = saved.requestId; this.listOffset = saved.listOffset; this.limit = saved.limit;
@@ -219,7 +221,8 @@ export class BrowserView {
   }
 
   exercise(message: BrowserExercise): void {
-    if (this.disposed) { return; }
+    if (this.disposed || !isBrowserExercise(message)) { return; }
+    if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
       case 'select': if (!this.select.disabled && message.value !== undefined) { this.choose(message.value); } break;
       case 'size': if (!this.size.disabled && message.value !== undefined) { this.changeSize(message.value); } break;
@@ -240,11 +243,13 @@ export class BrowserView {
       case 'run': this.editor?.clickRun(); break;
       case 'shortcut': this.editor?.shortcut(); break;
     }
+    if (message.exerciseId !== undefined) { this.report(); }
   }
 
   private report(): void {
     if (!this.disposed) {
       this.post({ type: 'browserStatus', revision: ++this.revision, table: this.query.sql === null ? this.table : null, offset: this.offset, ...this.grid.metrics(),
+        contextId: this.contextId, exerciseId: this.exerciseId,
         query: this.query.sql !== null, summary: this.total.textContent ?? '', ...this.editor?.metrics(),
         hasMore: this.hasMore, count: this.count, busy: this.pending !== null, message: this.status.textContent ?? '', firstRow: this.grid.firstRow() });
     }

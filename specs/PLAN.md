@@ -465,6 +465,18 @@ or fixture inventory change is needed.
 Validation evidence and remaining owner steps are recorded in VALIDATION.md.
 T-014's cancellation target and later query features are not claimed by T-013.
 
+T-013 CI follow-up (2026-10-12): failed run 38204288838/attempt 1/92c12e9
+shows a Windows fixture-setup timeout and macOS stale restored-context rows.
+Disposable unit fixtures now execute their unchanged CREATE/INSERT workload in
+one transaction; a real-SQLite regression proves late errors leave no partial
+schema. Browser DOM status has a per-context random UUID and acknowledges unique
+integration exercise IDs. Neither is persisted or shown in the product UI.
+Host tests correlate action replies and wait for a different, settled context
+after hide/show; SQL edits wait for ongoing restoration before clicking Run.
+Keep all data/source assertions, timeouts, worker concurrency and diagnostic
+rules unchanged. No dependency or static fixture change is needed. Fresh repaired
+three-platform CI is required before closing this follow-up.
+
 ### T-002 measurements and revised cancellation design (2026-10-09)
 
 - Spike tests cover real worker queries, exact 64-bit integers, NULL/empty
@@ -718,6 +730,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-013 CI repair (2026-10-12): Record transaction-based disposable fixture setup and context/action-correlated DOM observations after the supplied Windows/macOS failures. Preserve original workloads, deadlines, assertions and pending fresh CI.
 - v0.4 T-013 SQL editor (2026-10-10): Reuse approved CodeMirror and production grid/Engine; document literal selection execution, successful-query paging, diagnostic preservation, timing/count semantics, bounded SQL persistence and restored editing/table state. No new dependency.
 - v0.4 T-012 browser (2026-10-10): Document owner-authorized production browsing, lazy exact counts, bounded two-dimensional rendering, narrow catalog projection, tab-state recovery and disposable fixtures. Preserve existing Engine contracts, no-new-dependency policy and later milestone QA/performance scope.
 - v0.4 T-011 metadata (2026-10-10): Owner authorizes paged worker-side column/index operations on the existing Engine and protocol; document exact declared metadata, parameter binding, implicit/expression indexes and actionable bounded-page failures. UI remains T-012.

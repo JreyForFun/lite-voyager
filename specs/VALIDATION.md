@@ -1034,6 +1034,51 @@ QA-record `npm run verify` passes (exit 0): 375 tests in 32 files, strict
 host/webview/tooling types, lint, production builds and 19-file/606.63 KB VSIX;
 zero errors and zero warnings. No new full-host or remote CI run is claimed.
 
+**T-013 failed CI and repair candidate (2026-10-12):** owner supplies
+[run 38204288838](https://github.com/JreyForFun/lite-voyager/actions/runs/38204288838)
+and Windows/macOS failure excerpts. Public GitHub API metadata independently
+confirms attempt 1, tested commit `92c12e98224edb31f75ad50407c0538bc8f0cf1e`,
+and completed/failure. Locked installs succeed on all three jobs:
+
+- [Windows](https://github.com/JreyForFun/lite-voyager/actions/runs/38204288838/job/114664224611): applicable verification fails; 374/375 unit tests pass, with the original five-second wide-browser fixture test timing out.
+- [macOS](https://github.com/JreyForFun/lite-voyager/actions/runs/38204288838/job/114664224825): applicable verification fails; 375 unit tests pass, but native T-013 fidelity assertions see the previous `101`/`row 101` page. Host results are 27/28.
+- [Ubuntu](https://github.com/JreyForFun/lite-voyager/actions/runs/38204288838/job/114664224869): applicable session-bus/xvfb verification succeeds according to public job/step metadata; full logs are not independently inspected or claimed warning-free.
+
+The Windows fixture previously committed each of 102 CREATE statements
+separately. Batching the unchanged SQL workload into one explicit transaction
+removes that avoidable synchronous disk work; repaired Windows CI is still
+needed to establish the deadline on the runner. Red-first real-SQLite fixture
+tests prove rollback leaves no partial schema and successful creation preserves
+all 103 objects, 1,000 columns and the final value. No deadline is extended.
+
+The host observer previously accepted old-context rows after hide/show. A late
+report could satisfy restoration, causing Run to target a still-restoring view;
+generic busy/settled status could then belong to that restoration query. New
+red-first protocol/view regressions require fresh context identity, exact action
+acknowledgements and rejection of malformed tokens. Host tests wait for a new
+settled context and match each unique action; edits wait for restoration to finish.
+Every original value, paging, delivery, source-hash and timing assertion remains.
+
+Targeted regressions pass: 42 tests across browser fixture/Engine/view/protocol
+suites. The atomicity test first fails against the original auto-commit setup
+with a persisted `first` table; context/token tests fail before their wiring.
+Candidate `npm run verify:full` passes (exit 0): 381 unit tests in 33 files,
+28 real-host tests, strict types/lint/builds and a 19-file/606.76 KB VSIX. Both
+T-013 SQL cases pass, and inherited browser hide/show also waits for the actual
+new context. Warm ten-million-row first DOM report is 430.7 ms with 100 cached /
+15 rendered rows; cold-disk, physical paint and multi-GB targets are not claimed.
+The candidate full run is not warning-free; exactly one accepted record:
+- source `20261012T125026/window1/renderer.log`, line 10, original severity
+  `warning`, rule `VSCODE-HOST-001`:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other diagnostic is accepted. Candidate standalone `npm run verify` also
+passes (exit 0): 381 tests, strict types/lint/builds and 19-file/606.91 KB VSIX
+with the final changelog; zero errors and zero warnings. The repair candidate
+is committed with T-013 in the message; owner pushes and supplies fresh CI.
+T-013 is reopened/unchecked until the repair has fresh passing three-platform
+CI. T-012's historical completion and the nine owner-reported T-013 QA passes
+remain recorded; no macOS/remote Windows fix is claimed from local tests alone.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -1133,6 +1178,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-013 failed CI/repair (2026-10-12): Verify failed 38204288838/attempt 1/92c12e9 metadata and preserve supplied Windows/macOS failures plus Ubuntu's successful job. Reopen T-013; record red-first fixture atomicity and context/action correlation with unchanged deadlines/workloads and fresh CI required.
 - v0.1 T-013 owner QA report (2026-10-12): Record the owner's nine explicit SQL/Browse table PASS results; distinguish supplied observations from unreported theme/shortcut/restoration/fallback checks and pending remote CI. Preserve existing local verification and diagnostic evidence.
 - v0.1 T-013 SQL editor (2026-10-10): Record requirement-to-test coverage, preserved red-first/verification failures, stricter host-action synchronization, both-engine SQL UI evidence, exact accepted host diagnostics and remaining owner/milestone checks.
 - v0.1 T-012 CI/owner QA confirmation (2026-10-10): Independently verify public run/job/step metadata for 38039805436/attempt 1/a720520 on Windows/macOS/Ubuntu and record owner-reported GOOD after requested browser checks. Preserve exact local diagnostics, remote-log/manual-observation limits and whole-milestone requirements.

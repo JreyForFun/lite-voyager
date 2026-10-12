@@ -72,10 +72,12 @@ export interface BrowserStatus {
   hasMore: boolean; count: string | null; busy: boolean; message: string;
   firstRow: { text: string | null; length: number; label: string | null }[];
   query?: boolean; editorReady?: boolean; sqlLength?: number; selectionLength?: number; highlighted?: boolean; summary?: string;
+  /** Local integration correlation only; neither value is persisted. */
+  contextId?: string; exerciseId?: number;
 }
 /** Local host integration drives the same editor/controls as a user; no file access. */
 export interface BrowserExercise {
-  type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse'; value?: string;
+  type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse'; value?: string; exerciseId?: number;
 }
 function identifier(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 4 * 1024 * 1024 && !value.includes('\0');
@@ -132,6 +134,8 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && integer(value['renderedColumns'], 0, 1000) && integer(value['columns'], 0, Number.MAX_SAFE_INTEGER)
     && typeof value['hasMore'] === 'boolean' && (value['count'] === null || decimal(value['count']))
     && typeof value['busy'] === 'boolean' && typeof value['message'] === 'string'
+    && (value['contextId'] === undefined || typeof value['contextId'] === 'string' && /^[\da-f-]{36}$/u.test(value['contextId']))
+    && (value['exerciseId'] === undefined || integer(value['exerciseId'], 0, Number.MAX_SAFE_INTEGER))
     && (value['query'] === undefined || typeof value['query'] === 'boolean')
     && (value['editorReady'] === undefined || typeof value['editorReady'] === 'boolean')
     && (value['highlighted'] === undefined || typeof value['highlighted'] === 'boolean')
@@ -144,6 +148,7 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
 }
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
+    && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
     && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }

@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-013 CI follow-up: correlate test actions and restored DOM with unique
+  webview-context identities so old result reports cannot satisfy new queries.
+  Batch disposable unit-fixture setup in one transaction while retaining all
+  103 objects, 1,000 columns, values and original test deadlines. No user-source
+  or dependency change; fresh repaired three-platform CI remains required.
+
 - T-013: added the production CodeMirror SQL editor with Run and Ctrl/Cmd+Enter,
   literal selection execution, bounded result paging and page execution time.
   Exact totals appear at the final page without an eager count. SQLite errors

@@ -20,14 +20,18 @@ function waitStatus(document: SqliteDocument, predicate: (status: BrowserStatus)
     });
   });
 }
+let nextExerciseId = 0;
 async function action(document: SqliteDocument, message: BrowserExercise, predicate: (status: BrowserStatus) => boolean): Promise<BrowserStatus> {
   assert.ok(document.panel);
   const revision = document.browserStatus?.revision ?? 0;
+  const exerciseId = ++nextExerciseId;
   // Register before yielding: fast operations can report busy and finish before
   // postMessage's transport promise resolves. Keep the delivery assertion too.
   const [, status] = await Promise.all([
-    document.panel.webview.postMessage(message).then((delivered) => { assert.equal(delivered, true); }),
-    waitStatus(document, predicate, revision),
+    document.panel.webview.postMessage({ ...message, exerciseId } satisfies BrowserExercise).then((delivered) => { assert.equal(delivered, true); }),
+    // The receiving view acknowledges this globally unique action. A cached
+    // status may still belong to an old context during re-creation.
+    waitStatus(document, (status) => status.contextId !== undefined && status.exerciseId === exerciseId && predicate(status), revision),
   ]);
   return status;
 }
@@ -54,10 +58,13 @@ suite('T-013 production SQL editor DOM', () => {
         document = api.sqliteEditor.getDocument(uri); assert.ok(document);
         await waitStatus(document, (status) => rowsPainted(status) && status.editorReady === true);
         const current = document;
-        const edit = async (sql: string): Promise<BrowserStatus> => action(current, { type: 'browserExercise', action: 'sql', value: sql }, (status) => status.sqlLength === sql.length);
+        const edit = async (sql: string): Promise<BrowserStatus> => {
+          const edited = await action(current, { type: 'browserExercise', action: 'sql', value: sql }, (status) => status.sqlLength === sql.length);
+          return edited.busy ? waitStatus(current, (status) => status.contextId === edited.contextId && status.exerciseId === edited.exerciseId && settled(status), edited.revision) : edited;
+        };
         const execute = async (predicate: (status: BrowserStatus) => boolean, control: 'run' | 'shortcut' = 'run'): Promise<BrowserStatus> => {
           const started = await action(current, { type: 'browserExercise', action: control }, (status) => status.busy && /Running SQL/.test(status.message));
-          return waitStatus(current, predicate, started.revision);
+          return waitStatus(current, (status) => status.contextId === started.contextId && status.exerciseId === started.exerciseId && predicate(status), started.revision);
         };
         const run = async (sql: string): Promise<BrowserStatus> => {
           await edit(sql);
@@ -86,11 +93,12 @@ suite('T-013 production SQL editor DOM', () => {
         assert.equal(last.firstRow[0]?.text, '201'); assert.equal(last.count, '201'); assert.equal(last.hasMore, false);
         await action(current, { type: 'browserExercise', action: 'previous' }, (status) => rowsPainted(status) && status.offset === 100);
         const revision = current.browserStatus?.revision ?? 0;
+        const previousContext = current.browserStatus?.contextId; assert.ok(previousContext);
         const text = await vscode.workspace.openTextDocument({ content: 'T-013 SQL hide/show restoration' });
         await vscode.window.showTextDocument(text, { preview: false });
         assert.equal(current.panel?.visible, false);
         await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
-        const restored = await waitStatus(current, (status) => rowsPainted(status) && status.query === true && status.offset === 100, revision);
+        const restored = await waitStatus(current, (status) => status.contextId !== undefined && status.contextId !== previousContext && rowsPainted(status) && status.query === true && status.offset === 100, revision);
         assert.equal(restored.firstRow[0]?.text, '101'); assert.equal(restored.sqlLength, 'SELECT FROM'.length);
         const fidelity = await run('SELECT nullable, empty, literal, maximum, minimum, bytes FROM "a values"');
         assert.deepEqual(fidelity.firstRow.map((cell) => [cell.text, cell.label]), [
@@ -169,11 +177,12 @@ suite('T-012 production browser DOM', () => {
         const back = await action(document, { type: 'browserExercise', action: 'previous' }, (status) => rowsPainted(status) && status.offset === 100);
         assert.equal(back.firstRow[0]?.text, '101');
         const revision = document.browserStatus?.revision ?? 0;
+        const previousContext = document.browserStatus?.contextId; assert.ok(previousContext);
         const text = await vscode.workspace.openTextDocument({ content: 'T-012 hide/show browser context regression' });
         await vscode.window.showTextDocument(text, { preview: false });
         assert.equal(document.panel?.visible, false);
         await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
-        const restored = await waitStatus(document, (status) => rowsPainted(status) && status.table === 'b pages' && status.offset === 100, revision);
+        const restored = await waitStatus(document, (status) => status.contextId !== undefined && status.contextId !== previousContext && rowsPainted(status) && status.table === 'b pages' && status.offset === 100, revision);
         assert.equal(restored.firstRow[0]?.text, '101');
         await action(document, { type: 'browserExercise', action: 'next' }, (status) => rowsPainted(status) && status.offset === 200);
         await action(document, { type: 'browserExercise', action: 'previous' }, (status) => rowsPainted(status) && status.offset === 100);

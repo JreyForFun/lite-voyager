@@ -9,6 +9,7 @@ import { beforeAll, describe, expect, test } from 'vitest';
 import { EngineClient } from '../../src/engine/engine-client';
 import { SqliteBrowser } from '../../src/editor/sqlite-browser';
 import type { BrowserRequest, BrowserResponse } from '../../src/protocol';
+import { populateBrowserFixture } from './browser-fixture';
 
 beforeAll(async () => {
   const built = await promisify(execFile)(process.execPath, ['esbuild.js', '--production']);
@@ -19,7 +20,7 @@ async function withBrowser(fallback: boolean, sql: string, run: (request: (messa
   const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-t012-'));
   const path = join(directory, 'browser.sqlite');
   const db = new DatabaseSync(path);
-  try { db.exec(sql); } finally { db.close(); }
+  populateBrowserFixture(db, sql);
   await chmod(path, 0o444);
   const before = createHash('sha256').update(await readFile(path)).digest('hex');
   const engine = new EngineClient({ directory: resolve('dist'), forceFallback: fallback });

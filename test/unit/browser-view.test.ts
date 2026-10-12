@@ -28,6 +28,31 @@ beforeEach(() => {
 });
 afterEach(() => { view.dispose(); vi.unstubAllGlobals(); });
 
+test('FR-010: Given a recreated webview, When observing its DOM, Then its identity differs from the destroyed context', () => {
+  const old = sent.find((message) => message.type === 'browserStatus');
+  if (old?.type !== 'browserStatus') { throw new Error('Expected old DOM status'); }
+  expect(old.contextId).toMatch(/^[\da-f-]{36}$/u);
+  view.dispose(); sent = [];
+  view = new BrowserView(root as unknown as HTMLElement, (message) => { sent.push(message); });
+  view.start();
+  const fresh = sent.find((message) => message.type === 'browserStatus');
+  if (fresh?.type !== 'browserStatus') { throw new Error('Expected recreated DOM status'); }
+  expect(fresh.contextId).toMatch(/^[\da-f-]{36}$/u);
+  expect(fresh.contextId).not.toBe(old.contextId);
+});
+
+test('FR-010: Given previous result frames and a new host action, When it is processed, Then every subsequent status acknowledges that exact action', () => {
+  view.exercise({ type: 'browserExercise', action: 'run', exerciseId: 71 });
+  const acknowledgement = sent.at(-1);
+  if (acknowledgement?.type !== 'browserStatus') { throw new Error('Expected action acknowledgement'); }
+  expect(acknowledgement.exerciseId).toBe(71);
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [], hasMore: false }); flush();
+  const settled = sent.at(-1);
+  if (settled?.type !== 'browserStatus') { throw new Error('Expected settled DOM status'); }
+  expect(settled.exerciseId).toBe(71);
+  expect(settled.contextId).toBe(acknowledgement.contextId);
+});
+
 test('FR-011: Given query results for an already selected table, When Browse table is clicked, Then returning to that same table is possible', () => {
   view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
   view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['v'], rows: [['old']], hasMore: false } });
