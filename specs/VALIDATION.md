@@ -1437,6 +1437,36 @@ T-017 Windows follow-up CI fixture repair (2026-10-12):
   and zero warnings. Fresh three-platform CI for this repair awaits the owner's
   push. The supplied failed run remains a failure.
 
+T-017 final repair CI confirmation (2026-10-12):
+
+The owner supplies [run 38248216036](https://github.com/JreyForFun/lite-voyager/actions/runs/38248216036)
+and reports pass. Public GitHub run/job/step metadata confirms attempt 1, push
+on main, completed/success, tested commit
+`9f73531fdb30eb93b7b2997e7267dba9c13a7c6f`, matching the local fixture repair.
+All three jobs, locked installs and applicable full-verification steps succeed:
+
+- [Windows job 114807400454](https://github.com/JreyForFun/lite-voyager/actions/runs/38248216036/job/114807400454):
+  `Install locked dependencies` and `Verify on Windows and macOS` succeed.
+- [Ubuntu job 114807400823](https://github.com/JreyForFun/lite-voyager/actions/runs/38248216036/job/114807400823):
+  `Install locked dependencies` and `Verify with session bus and virtual display on Linux` succeed.
+- [macOS job 114807401038](https://github.com/JreyForFun/lite-voyager/actions/runs/38248216036/job/114807401038):
+  `Install locked dependencies` and `Verify on Windows and macOS` succeed.
+
+Alternate platform steps are intentionally skipped. Remote full logs are not
+independently inspected; no remote test count or warning-free claim is inferred
+from metadata. The supplied Windows failure at 4a8be0e, red-first regressions,
+prior local failures, exact approved local diagnostic and unresolved historical
+timeout causes remain recorded. The failed web fetch is followed by an approved
+public metadata read outside the network sandbox, without credentials or writes.
+
+This confirms fresh three-platform CI for the startup and fixture repairs.
+T-017 acceptance, owner QA, review and repaired local/CI gates are satisfied;
+its checkbox remains checked. This closure changes only the three evidence/status
+documents. Final record `npm run verify` passes (exit 0): 401 tests in 35 files
+(92.00 seconds), all typechecks, lint, production build and VSIX dry run (19 files,
+611.05 KB), zero errors and zero warnings. No further feature change, release
+tag or whole-milestone closure is implied. T-018 belongs in a fresh chat.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -1498,6 +1528,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-017 final repair CI confirmation (2026-10-12): Confirm successful 38248216036/attempt 1/9f73531 run, locked installs and full steps on all three platforms. Close only scoped T-017, preserve failed evidence and remote-log limits, and hand off T-018 to a fresh chat.
 - v0.1 T-017 Windows fixture repair (2026-10-12): Record failing follow-up CI at 4a8be0e, red-first real-SQLite transaction/rollback and in-flight teardown regressions. Batch identical stress data in one durable transaction and await worker completion during test cleanup without changing deadlines or assertions.
 - v0.1 T-017 validation repair (2026-10-12): Add a red-first packaged fallback-startup regression and register the existing message handler before WASM initialization. Preserve failed startup/timeout evidence, independent review, 398-unit/30-host full results and the exact approved renderer diagnostic; follow-up CI awaits owner push.
 - v0.1 T-017 CI confirmation (2026-10-12): Verify owner-supplied successful 38239600604/attempt 1/dbf76f8 run/job/step metadata on Windows/macOS/Ubuntu. Record confirmed locked installs/full steps, preserve failed evidence and remote-log limits, and keep only scoped T-017 complete.
