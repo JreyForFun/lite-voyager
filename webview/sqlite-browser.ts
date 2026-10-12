@@ -1,4 +1,4 @@
-import { BROWSER_PAGE_SIZE, MAX_SQL_LENGTH, isBrowserExercise, isBrowserResponse, type BrowserExercise, type BrowserRequest, type BrowserResponse, type BrowserStatus } from '../src/protocol';
+import { BROWSER_PAGE_SIZE, MAX_SQL_LENGTH, isBrowserExercise, isBrowserResponse, isGridOptions, type GridFilter, type GridOptions, type BrowserExercise, type BrowserRequest, type BrowserResponse, type BrowserStatus } from '../src/protocol';
 import { BrowserGrid } from './browser-grid';
 import { QueryView } from './query-view';
 import { SqlEditor } from './sql-editor';
@@ -6,7 +6,7 @@ import './sqlite-browser.css';
 
 type Post = (message: BrowserRequest | BrowserStatus) => void;
 type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'>;
-export interface BrowserSavedState { requestId: number; table: string | null; offset: number; listOffset: number; limit: number; sqlText?: string; querySql?: string; }
+export interface BrowserSavedState { requestId: number; table: string | null; offset: number; listOffset: number; limit: number; sqlText?: string; querySql?: string; grid?: GridOptions; }
 const INITIAL_STATE: BrowserSavedState = { requestId: 0, table: null, offset: 0, listOffset: 0, limit: BROWSER_PAGE_SIZE };
 
 export function readSavedState(value: unknown): BrowserSavedState {
@@ -18,7 +18,14 @@ export function readSavedState(value: unknown): BrowserSavedState {
   const result: BrowserSavedState = { requestId: state['requestId'], table: state['table'], offset: state['offset'], listOffset: state['listOffset'], limit: state['limit'] };
   if (typeof state['sqlText'] === 'string' && state['sqlText'].length <= MAX_SQL_LENGTH) { result.sqlText = state['sqlText']; }
   if (typeof state['querySql'] === 'string' && state['querySql'].length > 0 && state['querySql'].length <= MAX_SQL_LENGTH && !state['querySql'].includes('\0')) { result.querySql = state['querySql']; }
+  if (isGridOptions(state['grid'])) { result.grid = savedGrid(state['grid']); }
   return result;
+}
+
+function savedGrid(grid: GridOptions): GridOptions {
+  return { ...(grid.sort === undefined ? {} : { sort: { column: grid.sort.column, direction: grid.sort.direction } }),
+    ...(grid.filters === undefined ? {} : { filters: grid.filters.map((filter) => filter.operator === 'contains'
+      ? { column: filter.column, operator: filter.operator, value: filter.value } : { column: filter.column, operator: filter.operator }) }) };
 }
 
 export class BrowserView {
@@ -36,6 +43,21 @@ export class BrowserView {
   private readonly cancelButton: HTMLButtonElement;
   private readonly browseButton: HTMLButtonElement;
   private readonly sqlLimitStatus: HTMLElement;
+  private readonly filterColumn: HTMLSelectElement;
+  private readonly filterOperator: HTMLSelectElement;
+  private readonly filterValue: HTMLInputElement;
+  private readonly applyFilter: HTMLButtonElement;
+  private readonly removeFilter: HTMLButtonElement;
+  private readonly clearGrid: HTMLButtonElement;
+  private readonly gridSummary: HTMLElement;
+  private readonly sortWarning: HTMLElement;
+  private readonly continueSort: HTMLButtonElement;
+  private readonly dismissSort: HTMLButtonElement;
+  private gridOptions: GridOptions = {};
+  private shownGrid: GridOptions = {};
+  private columns: string[] = [];
+  private pendingPage: Extract<BrowserRequest, { type: 'browserPage' }> | undefined;
+  private warningPage: Extract<BrowserRequest, { type: 'browserPage' }> | undefined;
   private readonly events = new AbortController();
   private objects: string[] = [];
   private table: string | null = null;
@@ -71,10 +93,21 @@ export class BrowserView {
     this.countButton = find('browser-count'); this.cancelButton = find('browser-cancel');
     this.browseButton = find('browser-browse');
     this.sqlLimitStatus = find('sql-limit-status');
-    this.grid = new BrowserGrid(find('browser-grid'), () => { this.report(); });
+    this.filterColumn = find('browser-filter-column'); this.filterOperator = find('browser-filter-operator'); this.filterValue = find('browser-filter-value');
+    this.applyFilter = find('browser-filter-apply'); this.removeFilter = find('browser-filter-remove'); this.clearGrid = find('browser-grid-clear');
+    this.gridSummary = find('browser-grid-summary'); this.sortWarning = find('browser-sort-warning');
+    this.continueSort = find('browser-sort-continue'); this.dismissSort = find('browser-sort-dismiss');
+    this.grid = new BrowserGrid(find('browser-grid'), () => { this.report(); }, (column) => { this.sortColumn(column); });
     const options = { signal: this.events.signal };
     this.select.addEventListener('change', () => { this.choose(this.select.value); }, options);
     this.size.addEventListener('change', () => { this.changeSize(this.size.value); }, options);
+    this.filterColumn.addEventListener('change', () => { this.loadFilter(); }, options);
+    this.filterOperator.addEventListener('change', () => { this.controls(); }, options);
+    this.applyFilter.addEventListener('click', () => { this.applyColumnFilter(); }, options);
+    this.filterValue.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); this.applyColumnFilter(); } }, options);
+    for (const [button, action] of [[this.removeFilter, 'removeFilter'], [this.clearGrid, 'clearGrid'], [this.continueSort, 'continueSort'], [this.dismissSort, 'dismissSort']] as const) {
+      button.addEventListener('click', () => { this.exercise({ type: 'browserExercise', action }); }, options);
+    }
     for (const [button, action] of [[this.previous, 'previous'], [this.next, 'next'], [this.listPrevious, 'listPrevious'], [this.listNext, 'listNext'], [this.countButton, 'count'], [this.cancelButton, 'cancel'], [this.browseButton, 'browse']] as const) {
       button.addEventListener('click', () => { this.exercise({ type: 'browserExercise', action }); }, options);
     }
@@ -114,12 +147,15 @@ export class BrowserView {
     const text = this.editor?.text ?? this.saved.sqlText;
     if (text !== undefined && text.length <= MAX_SQL_LENGTH) { state.sqlText = text; }
     else { delete state.sqlText; }
+    if (!this.restoring && (this.shownGrid.sort !== undefined || (this.shownGrid.filters?.length ?? 0) > 0)) { state.grid = savedGrid(this.shownGrid); }
     return state;
   }
 
   private request(message: BrowserRequest): void {
     if (this.disposed) { return; }
     this.pending = message.type;
+    this.warningPage = undefined;
+    this.pendingPage = message.type === 'browserPage' ? message : undefined;
     this.pendingSql = message.type === 'browserQuery' ? message.sql : null;
     const label = message.type === 'browserCount' ? 'Counting rows in the worker. You can cancel.'
       : message.type === 'browserCancel' ? 'Cancelling and reopening the database…'
@@ -130,16 +166,51 @@ export class BrowserView {
   private list(offset: number): void {
     this.request({ type: 'browserList', requestId: ++this.requestId, offset });
   }
-  private page(offset: number): void {
+  private page(offset: number, allowSlowSort = false): void {
     if (this.query.sql !== null) { this.queryPage(this.query.sql, offset); }
-    else if (this.table !== null) { this.request({ type: 'browserPage', requestId: ++this.requestId, table: this.table, offset, limit: this.limit }); }
+    else if (this.table !== null) {
+      const grid = this.gridOptions.sort === undefined && (this.gridOptions.filters?.length ?? 0) === 0 ? {} : { grid: { ...this.gridOptions, ...(allowSlowSort ? { allowSlowSort: true } : {}) } };
+      this.request({ type: 'browserPage', requestId: ++this.requestId, table: this.table, offset, limit: this.limit, ...grid });
+    }
   }
-  private choose(table: string, offset = 0): void {
+  private choose(table: string, offset = 0, restoredGrid?: GridOptions): void {
     if (!this.objects.includes(table)) { return; }
     this.query.reset();
+    this.gridOptions = savedGrid(restoredGrid ?? {}); this.shownGrid = savedGrid(this.gridOptions);
+    this.columns = []; this.filterColumn.replaceChildren();
     this.table = table; this.select.value = table; this.offset = offset; this.count = null; this.hasMore = false;
     this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0);
     this.total.textContent = 'Total rows: not counted'; this.page(offset);
+  }
+
+  private gridEnabled(): boolean { return this.pending === null && this.query.sql === null && this.table !== null && this.columns.length > 0; }
+
+  private sortColumn(column: string): void {
+    if (!this.gridEnabled() || !this.columns.includes(column)) { return; }
+    const current = this.gridOptions.sort;
+    const next: GridOptions = savedGrid(this.gridOptions);
+    if (current?.column === column && current.direction === 'desc') { delete next.sort; }
+    else { next.sort = { column, direction: current?.column === column ? 'desc' : 'asc' }; }
+    this.changeGrid(next);
+  }
+
+  private changeGrid(next: unknown): void {
+    if (!isGridOptions(next)) { this.message('Invalid filters: at most 1,000 columns and 65,536 total text characters. Nothing was truncated.', true); this.report(); return; }
+    this.gridOptions = next; this.count = null; this.total.textContent = 'Total rows: not counted'; this.page(0);
+  }
+
+  private loadFilter(): void {
+    const filter = this.gridOptions.filters?.find((item) => item.column === this.filterColumn.value);
+    this.filterOperator.value = filter?.operator ?? 'contains';
+    this.filterValue.value = filter?.operator === 'contains' ? filter.value : '';
+    this.controls();
+  }
+
+  private applyColumnFilter(): void {
+    if (!this.gridEnabled() || !this.columns.includes(this.filterColumn.value)) { return; }
+    const column = this.filterColumn.value; const operator = this.filterOperator.value;
+    const filter: GridFilter = operator === 'isNull' || operator === 'isNotNull' ? { column, operator } : { column, operator: 'contains', value: this.filterValue.value };
+    this.changeGrid({ ...savedGrid(this.gridOptions), filters: [...(this.gridOptions.filters ?? []).filter((item) => item.column !== column), filter] });
   }
   private changeSize(value: string): void {
     const size = Number(value);
@@ -150,9 +221,11 @@ export class BrowserView {
   receive(message: BrowserResponse): void {
     if (this.disposed || message.requestId !== this.requestId || this.pending === null || !isBrowserResponse(message)) { return; }
     const sql = this.pendingSql;
+    const pendingPage = this.pendingPage;
     if (message.type === 'browserQueryRows' && (this.pending !== 'browserQuery' || sql === null)) { return; }
     this.pending = null;
     this.pendingSql = null;
+    this.pendingPage = undefined;
     switch (message.type) {
       case 'browserTables': {
         this.listOffset = message.offset; this.listHasMore = message.hasMore;
@@ -171,7 +244,7 @@ export class BrowserView {
           this.table = restore ? this.saved.table : first ?? null;
           this.select.value = this.table ?? ''; this.queryPage(savedQuery, this.saved.offset); return;
         }
-        if (first !== undefined) { this.choose(restore ? this.saved.table ?? first : first, restore ? this.saved.offset : 0); return; }
+        if (first !== undefined) { this.choose(restore ? this.saved.table ?? first : first, restore ? this.saved.offset : 0, restore ? this.saved.grid : undefined); return; }
         this.table = null; this.hasMore = false; this.count = null; this.offset = 0;
         this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0);
         this.message('No tables or views in this database.'); this.total.textContent = ''; break;
@@ -179,6 +252,15 @@ export class BrowserView {
       case 'browserRows': {
         if (message.table !== this.table) { return; }
         this.offset = message.offset; this.hasMore = message.page.hasMore;
+        this.gridOptions = savedGrid(pendingPage?.grid ?? {}); this.shownGrid = savedGrid(this.gridOptions);
+        const selected = this.filterColumn.value;
+        this.columns = message.page.columns;
+        this.filterColumn.replaceChildren(...this.columns.map((column) => {
+          const option = document.createElement('option'); option.value = column; option.textContent = column; return option;
+        }));
+        this.filterColumn.value = this.columns.includes(selected) ? selected
+          : this.gridOptions.filters?.find((filter) => this.columns.includes(filter.column))?.column ?? this.columns[0] ?? '';
+        this.loadFilter();
         this.grid.setPage(message.page, message.offset);
         this.message(message.page.rows.length === 0 ? 'No rows on this page.'
           : `Showing rows ${String(message.offset + 1)}–${String(message.offset + message.page.rows.length)}${message.page.hasMore ? ' · more rows available' : ' · end of table'}`);
@@ -196,8 +278,14 @@ export class BrowserView {
       case 'browserCounted':
         if (message.table !== this.table) { return; }
         this.count = message.count; this.total.textContent = `Total rows: ${message.count}`; this.message('Row count complete.'); break;
-      case 'browserCancelled': this.message('Operation cancelled. The database is ready; select a table or change page size to retry.'); break;
-      case 'browserError': this.message(message.message, true); break;
+      case 'browserSortWarning':
+        if (message.table !== this.table || pendingPage === undefined) { return; }
+        this.warningPage = pendingPage; this.sortWarning.textContent = message.message;
+        this.message('Sort needs confirmation. Continue sort or dismiss it; the previous page is retained.'); break;
+      case 'browserCancelled':
+        this.gridOptions = savedGrid(this.shownGrid); this.loadFilter();
+        this.message('Operation cancelled. The database is ready; select a table or change page size to retry.'); break;
+      case 'browserError': this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
     }
     this.controls(); this.report();
   }
@@ -206,18 +294,30 @@ export class BrowserView {
 
   private controls(): void {
     const busy = this.pending !== null;
+    const pageBlocked = busy || this.warningPage !== undefined;
     this.root.setAttribute('aria-busy', String(busy));
     const results = this.table !== null || this.query.sql !== null;
     this.select.disabled = this.objects.length === 0 || this.pending === 'browserList' || this.pending === 'browserCancel';
-    this.size.disabled = busy;
-    this.previous.disabled = !results || busy || this.offset === 0;
-    this.next.disabled = !results || busy || !this.hasMore;
-    this.countButton.disabled = this.table === null || this.query.sql !== null || busy;
+    this.size.disabled = pageBlocked;
+    this.previous.disabled = !results || pageBlocked || this.offset === 0;
+    this.next.disabled = !results || pageBlocked || !this.hasMore;
+    this.countButton.disabled = this.table === null || this.query.sql !== null || pageBlocked;
     this.listPrevious.disabled = busy || this.listOffset === 0;
     this.listNext.disabled = busy || !this.listHasMore;
     this.cancelButton.disabled = !busy || this.pending === 'browserCancel';
     this.browseButton.disabled = busy || !this.objects.includes(this.select.value);
     this.editor?.setDisabled(busy);
+    const enabled = this.gridEnabled() && this.warningPage === undefined;
+    this.grid.setSort(this.gridOptions.sort, enabled);
+    this.filterColumn.disabled = !enabled; this.filterOperator.disabled = !enabled;
+    this.filterValue.disabled = !enabled || this.filterOperator.value !== 'contains';
+    this.applyFilter.disabled = !enabled; this.removeFilter.disabled = !enabled || !this.gridOptions.filters?.some((filter) => filter.column === this.filterColumn.value);
+    this.clearGrid.disabled = !enabled || (this.gridOptions.sort === undefined && (this.gridOptions.filters?.length ?? 0) === 0);
+    const warning = !busy && this.warningPage !== undefined;
+    this.sortWarning.hidden = !warning; this.continueSort.hidden = !warning; this.dismissSort.hidden = !warning;
+    this.continueSort.disabled = !warning; this.dismissSort.disabled = !warning;
+    this.gridSummary.textContent = this.query.sql !== null ? 'Sort/filter SQL results with ORDER BY / WHERE in the editor.'
+      : `Sort: ${this.gridOptions.sort === undefined ? 'none' : `${this.gridOptions.sort.column} ${this.gridOptions.sort.direction}`}. Filters (AND): ${this.gridOptions.filters?.map((filter) => `${filter.column}: ${filter.operator === 'contains' ? `contains ${JSON.stringify(filter.value)}` : filter.operator === 'isNull' ? 'is NULL' : 'is not NULL'}`).join('; ') || 'none'}.`;
   }
 
   exercise(message: BrowserExercise): void {
@@ -230,7 +330,11 @@ export class BrowserView {
       case 'previous': if (!this.previous.disabled) { this.page(Math.max(0, this.offset - this.limit)); } break;
       case 'listNext': if (!this.listNext.disabled) { this.list(this.listOffset + BROWSER_PAGE_SIZE); } break;
       case 'listPrevious': if (!this.listPrevious.disabled) { this.list(Math.max(0, this.listOffset - BROWSER_PAGE_SIZE)); } break;
-      case 'count': if (!this.countButton.disabled && this.table !== null) { this.request({ type: 'browserCount', requestId: ++this.requestId, table: this.table }); } break;
+      case 'count': if (!this.countButton.disabled && this.table !== null) {
+        const filters = this.shownGrid.filters ?? [];
+        const grid = filters.length === 0 ? {} : { grid: { filters } };
+        this.request({ type: 'browserCount', requestId: ++this.requestId, table: this.table, ...grid });
+      } break;
       case 'cancel': if (!this.cancelButton.disabled) { this.request({ type: 'browserCancel', requestId: ++this.requestId }); } break;
       case 'lastCell': this.grid.lastCell(); break;
       case 'browse': if (!this.browseButton.disabled) { this.choose(this.select.value); } break;
@@ -242,6 +346,27 @@ export class BrowserView {
       }
       case 'run': this.editor?.clickRun(); break;
       case 'shortcut': this.editor?.shortcut(); break;
+      case 'sort': if (message.value !== undefined) { this.grid.clickHeader(message.value); } break;
+      case 'filter': {
+        if (!this.gridEnabled() || message.value === undefined) { break; }
+        try {
+          const parsed: unknown = JSON.parse(message.value);
+          if (typeof parsed !== 'object' || parsed === null || !('column' in parsed) || typeof parsed.column !== 'string' || !this.columns.includes(parsed.column)) { break; }
+          if (!isGridOptions({ filters: [parsed] })) { this.changeGrid({ filters: [parsed] }); break; }
+          const filter = parsed as GridFilter;
+          this.filterColumn.value = filter.column; this.filterOperator.value = filter.operator;
+          this.filterValue.value = filter.operator === 'contains' ? filter.value : ''; this.applyFilter.click();
+        } catch { this.message('Invalid filter control.', true); }
+        break;
+      }
+      case 'removeFilter': if (!this.removeFilter.disabled) { this.changeGrid({ ...savedGrid(this.gridOptions), filters: (this.gridOptions.filters ?? []).filter((filter) => filter.column !== this.filterColumn.value) }); } break;
+      case 'clearGrid': if (!this.clearGrid.disabled) { this.changeGrid({}); } break;
+      case 'continueSort': if (!this.continueSort.disabled && this.warningPage !== undefined) {
+        this.request({ ...this.warningPage, requestId: ++this.requestId, grid: { ...this.warningPage.grid, allowSlowSort: true } });
+      } break;
+      case 'dismissSort': if (!this.dismissSort.disabled) {
+        this.warningPage = undefined; this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message('Sort dismissed. Previous results retained.'); this.controls(); this.report();
+      } break;
     }
     if (message.exerciseId !== undefined) { this.report(); }
   }

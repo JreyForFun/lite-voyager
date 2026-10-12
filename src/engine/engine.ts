@@ -6,7 +6,7 @@ export type EngineName = 'node:sqlite' | 'sql.js';
 export type Parameter = string | number | null | Uint8Array;
 export type Cell = string | null;
 export interface PageAddress { offset?: number; limit?: number; }
-export interface EnginePage { columns: string[]; rows: Cell[][]; hasMore: boolean; }
+export interface EnginePage { columns: string[]; rows: Cell[][]; hasMore: boolean; sortWarning?: string; }
 export interface EngineMode {
   engine: EngineName;
   memoryLimited: boolean;
@@ -31,6 +31,8 @@ export interface Engine {
   /** seqno, cid, name, desc, coll, key; includes expression and auxiliary markers. */
   indexColumns(table: string, index: string, page?: PageAddress): Promise<EnginePage>;
   page(table: string, page?: PageAddress): Promise<EnginePage>;
+  /** Worker-side validated sort/filter reads, preflight warning or filtered count. */
+  grid(table: string, options: import('../protocol').GridOptions, page?: PageAddress, kind?: 'rows' | 'count'): Promise<EnginePage>;
   query(sql: string, parameters?: Parameter[], page?: PageAddress, started?: () => void): Promise<EnginePage>;
   /** Interrupt execution, confirm helper exit, and reopen a previously opened file. */
   cancel(): Promise<void>;

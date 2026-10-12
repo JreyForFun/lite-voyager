@@ -21,6 +21,7 @@ export class BrowserElement extends EventTarget {
   getAttribute(name: string): string | null { return this.attributes.get(name) ?? null; }
   get firstElementChild(): BrowserElement | null { return this.children[0] ?? null; }
   focus(): void { this.focused = true; }
+  click(): void { if (!this.disabled) { this.dispatchEvent(new Event('click')); } }
   querySelector(selector: string): BrowserElement | null { return this.elements.get(selector.slice(1)) ?? null; }
   readonly elements = new Map<string, BrowserElement>();
 }

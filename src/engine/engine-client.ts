@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { DatabaseHelperRequest, DatabaseMetadata, DatabaseOperation, DatabaseResponse, DatabaseWorkerRequest } from '../protocol';
 import type { Engine, EngineOpened, EnginePage, OpenOptions, PageAddress, Parameter } from './engine';
 import { checkParameters, pageAddress, quoteIdentifier } from './read-engine';
+import { isGridOptions, type GridOptions } from '../protocol';
 
 interface ClientOptions { directory: string; workerPath?: string; forceFallback?: boolean; }
 interface Pending {
@@ -120,6 +121,12 @@ export class EngineClient implements Engine {
 
   async page(table: string, page: PageAddress = {}): Promise<EnginePage> {
     return this.query(`SELECT * FROM ${quoteIdentifier(table)}`, [], page);
+  }
+
+  async grid(table: string, options: GridOptions, page: PageAddress = {}, kind: 'rows' | 'count' = 'rows'): Promise<EnginePage> {
+    quoteIdentifier(table); pageAddress(page);
+    if (!isGridOptions(options) || !['rows', 'count'].includes(kind)) { throw new Error('Invalid grid controls. Filter text is limited to 65,536 characters across at most 1,000 columns. Nothing was truncated.'); }
+    return this.execute({ type: 'grid', id: 0, table, options, page, kind });
   }
 
   async query(sql: string, parameters: Parameter[] = [], page: PageAddress = {}, started?: () => void): Promise<EnginePage> {

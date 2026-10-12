@@ -39,12 +39,25 @@ Select a table or view to return to table browsing.</p>
 <label for="browser-size">Rows per page</label><select id="browser-size"><option value="100">100</option><option value="10">10</option><option value="1">1</option></select>
 <button id="browser-count" disabled>Count rows</button><button id="browser-cancel" disabled>Cancel operation</button>
 <span id="browser-total">Total rows: not counted</span></div>
+<div class="browser-toolbar" aria-label="Column filters">
+<label for="browser-filter-column">Filter column</label><select id="browser-filter-column" disabled></select>
+<label for="browser-filter-operator">Condition</label><select id="browser-filter-operator" disabled>
+<option value="contains">Contains (case-sensitive)</option><option value="isNull">Is NULL</option><option value="isNotNull">Is not NULL</option></select>
+<label for="browser-filter-value">Literal text</label><input id="browser-filter-value" type="text" disabled>
+<button id="browser-filter-apply" disabled>Apply filter</button><button id="browser-filter-remove" disabled>Remove column filter</button>
+<button id="browser-grid-clear" disabled>Clear sort and filters</button></div>
+<p id="browser-grid-summary" role="status" aria-live="polite"></p>
+<div class="browser-toolbar" aria-label="Sort confirmation"><span id="browser-sort-warning" role="alert" hidden></span>
+<button id="browser-sort-continue" hidden disabled>Continue sort</button><button id="browser-sort-dismiss" hidden disabled>Dismiss sort</button></div>
 <p id="browser-status" role="status" aria-live="polite">Loading tables and views…</p>
 <div id="browser-grid" role="grid" tabindex="0" aria-label="Table rows" aria-readonly="true">
 <div class="browser-header-clip"><div id="browser-header" role="row" aria-rowindex="1"></div></div>
 <div id="browser-viewport"><div id="browser-track"><div id="browser-rows"></div></div></div></div>
 <p class="browser-help">NULL is italic; empty strings show (empty). Long values are clipped visually; hover for their stored text.
 Use arrow keys, Page Up/Down and Home/End in the grid; Control+End reaches the last cell on this page.
+Click a column header (or focus it and press Enter/Space) to cycle ascending, descending and unsorted.
+Equal sort keys have no guaranteed tie order. Filters combine with AND; contains is literal and case-sensitive,
+uses the stored numeric text and excludes BLOBs. Filter text is limited to 65,536 total UTF-16 characters across 1,000 columns.
 If a page exceeds 4 MiB, choose fewer rows. No stored value is truncated.</p></section>
 <script nonce="${escapeHtml(assets.nonce)}" src="${escapeHtml(assets.scriptUri)}"></script>`;
 }

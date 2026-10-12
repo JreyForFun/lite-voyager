@@ -65,10 +65,17 @@ export class SqliteBrowser {
         });
         return { type: 'browserTables', requestId, offset: request.offset, objects, hasMore: page.hasMore };
       }
-      case 'browserPage': return { type: 'browserRows', requestId, table: request.table, offset: request.offset, limit: request.limit,
-        page: await this.engine.page(request.table, { offset: request.offset, limit: request.limit }) };
+      case 'browserPage': {
+        const address = { offset: request.offset, limit: request.limit };
+        const page = request.grid === undefined ? await this.engine.page(request.table, address)
+          : await this.engine.grid(request.table, request.grid, address);
+        return page.sortWarning === undefined
+          ? { type: 'browserRows', requestId, table: request.table, offset: request.offset, limit: request.limit, page }
+          : { type: 'browserSortWarning', requestId, table: request.table, message: page.sortWarning };
+      }
       case 'browserCount': {
-        const page = await this.engine.query(`SELECT COUNT(*) FROM ${quoteIdentifier(request.table)}`, [], { limit: 1 });
+        const page = request.grid === undefined ? await this.engine.query(`SELECT COUNT(*) FROM ${quoteIdentifier(request.table)}`, [], { limit: 1 })
+          : await this.engine.grid(request.table, request.grid, { limit: 1 }, 'count');
         const count = page.rows[0]?.[0];
         if (typeof count !== 'string' || !/^(0|[1-9]\d{0,18})$/u.test(count)) { throw new Error('The row count was not an exact nonnegative integer.'); }
         return { type: 'browserCounted', requestId, table: request.table, count };

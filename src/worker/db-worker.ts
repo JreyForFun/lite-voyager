@@ -8,6 +8,7 @@ import { SqlJsEngine } from '../engine/sqljs';
 import { collectPage, checkParameters, checkReadStatement } from '../engine/read-engine';
 import { needsFallbackConsent, selectBuiltin } from '../engine/selection';
 import { metadataPage } from '../engine/schema';
+import { gridPage } from '../engine/grid-query';
 
 const port = parentPort;
 if (port === null) { throw new Error('The database engine must run in a worker.'); }
@@ -22,7 +23,7 @@ function query(backend: ReadBackend, request: DatabaseOperation): void {
   reply({ type: 'started', id: request.id });
   try {
     const value = request.type === 'query'
-      ? readQuery(backend, request) : metadataPage(backend, request);
+      ? readQuery(backend, request) : request.type === 'grid' ? gridPage(backend, request) : metadataPage(backend, request);
     reply({ type: 'result', id: request.id, value });
   } catch (error: unknown) {
     const text = error instanceof Error ? error.message : '';
@@ -59,7 +60,7 @@ async function start(): Promise<void> {
   port?.on('message', (request: DatabaseWorkerRequest) => {
     if (request.type === 'consent' && resolveConsent !== undefined) {
       const resolve = resolveConsent; resolveConsent = undefined; resolve(request.approved === true);
-    } else if ((request.type === 'query' || request.type === 'metadata') && backend !== undefined) { query(backend, request); }
+    } else if ((request.type === 'query' || request.type === 'metadata' || request.type === 'grid') && backend !== undefined) { query(backend, request); }
   });
   reply({ type: 'mode', value: mode });
   if (consent !== undefined && !await consent) { throw new Error('Memory-limited mode: the file was not loaded because consent was declined.'); }

@@ -20,6 +20,7 @@ try {
     INSERT INTO "a values" VALUES(NULL, '', 'NULL', 9223372036854775807, -9223372036854775808, zeroblob(24), 1e-200, '2026-10-10T12:00:00+08:00', '<script>literal</script>');
     CREATE TABLE "b pages"(id INTEGER PRIMARY KEY, value TEXT);
     WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<201) INSERT INTO "b pages" SELECT x, 'row ' || x FROM n;
+    CREATE INDEX "b pages value" ON "b pages"(value);
     CREATE TABLE "c empty"(value);
     CREATE VIEW "d view" AS SELECT * FROM "b pages";
     CREATE TABLE "e large cells"(value);

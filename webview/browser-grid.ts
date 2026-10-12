@@ -1,4 +1,5 @@
 import type { EnginePage } from '../src/engine/engine';
+import type { GridSort } from '../src/protocol';
 
 const ROW_HEIGHT = 32;
 const COLUMN_WIDTH = 220;
@@ -17,8 +18,11 @@ export class BrowserGrid {
   private disposed = false;
   private renderedRows = 0;
   private renderedColumns = 0;
+  private sort: GridSort | undefined;
+  private sortingEnabled = false;
+  private readonly headerButtons = new Map<string, HTMLButtonElement>();
 
-  constructor(private readonly root: HTMLElement, private readonly changed: () => void = () => {}) {
+  constructor(private readonly root: HTMLElement, private readonly changed: () => void = () => {}, private readonly sortRequested: (column: string) => void = () => {}) {
     this.viewport = this.element('browser-viewport'); this.track = this.element('browser-track');
     this.rows = this.element('browser-rows'); this.header = this.element('browser-header');
     this.viewport.addEventListener('scroll', () => { this.schedule(); }, { signal: this.events.signal });
@@ -26,6 +30,17 @@ export class BrowserGrid {
     this.observer = new ResizeObserver(() => { this.schedule(); });
     this.observer.observe(this.viewport);
   }
+
+  setSort(sort: GridSort | undefined, enabled: boolean): void {
+    this.sort = sort; this.sortingEnabled = enabled;
+    for (const [column, button] of this.headerButtons) {
+      button.disabled = !enabled;
+      button.textContent = `${column}${sort?.column === column ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}`;
+      button.parentElement?.setAttribute('aria-sort', sort?.column === column ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none');
+    }
+  }
+
+  clickHeader(column: string): void { this.headerButtons.get(column)?.click(); }
 
   private element(id: string): HTMLElement {
     const result = this.root.querySelector<HTMLElement>(`#${id}`);
@@ -53,6 +68,8 @@ export class BrowserGrid {
   }
 
   private render(): void {
+    const focused = document.activeElement?.getAttribute('data-sort-column');
+    this.headerButtons.clear();
     const height = Math.min(560, this.viewport.clientHeight);
     const width = Math.min(4096, this.viewport.clientWidth);
     const rowStart = Math.max(0, Math.floor(this.viewport.scrollTop / ROW_HEIGHT) - OVERSCAN);
@@ -63,7 +80,15 @@ export class BrowserGrid {
     const headers: HTMLElement[] = [];
     for (let column = colStart; column < colEnd; column++) {
       const cell = this.cell(this.page.columns[column] ?? '', column);
-      cell.setAttribute('role', 'columnheader'); headers.push(cell);
+      const name = this.page.columns[column] ?? '';
+      cell.setAttribute('role', 'columnheader');
+      cell.setAttribute('aria-sort', this.sort?.column === name ? this.sort.direction === 'asc' ? 'ascending' : 'descending' : 'none');
+      const button = document.createElement('button'); button.className = 'browser-sort';
+      button.textContent = `${name}${this.sort?.column === name ? this.sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}`;
+      button.title = `Sort ${name}: ascending, descending, unsorted. Equal keys have no guaranteed tie order.`;
+      button.setAttribute('data-sort-column', name); button.disabled = !this.sortingEnabled;
+      button.addEventListener('click', () => { if (this.sortingEnabled) { this.sortRequested(name); } });
+      cell.replaceChildren(button); this.headerButtons.set(name, button); headers.push(cell);
     }
     for (let row = rowStart; row < rowEnd; row++) {
       const element = document.createElement('div'); element.className = 'browser-row';
@@ -76,6 +101,7 @@ export class BrowserGrid {
     this.header.style.width = this.track.style.width ?? '';
     this.header.style.transform = `translateX(-${String(this.viewport.scrollLeft)}px)`;
     this.header.replaceChildren(...headers); this.rows.replaceChildren(...rowElements);
+    if (focused !== null && focused !== undefined) { this.headerButtons.get(focused)?.focus(); }
     this.renderedRows = rowElements.length; this.renderedColumns = headers.length;
     this.changed();
   }
@@ -130,6 +156,6 @@ export class BrowserGrid {
 
   dispose(): void {
     this.disposed = true; this.events.abort(); this.observer.disconnect(); cancelAnimationFrame(this.frame); this.frame = 0;
-    this.page = { columns: [], rows: [], hasMore: false }; this.rows.replaceChildren(); this.header.replaceChildren();
+    this.headerButtons.clear(); this.page = { columns: [], rows: [], hasMore: false }; this.rows.replaceChildren(); this.header.replaceChildren();
   }
 }

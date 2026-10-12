@@ -11,6 +11,9 @@ const flush = (): void => { const queued = frames; frames = []; for (const callb
 const requests = () => sent.filter((message): message is BrowserRequest => message.type !== 'browserStatus');
 beforeEach(() => {
   root = browserRoot(['browser-grid', 'browser-viewport', 'browser-track', 'browser-rows', 'browser-header', 'browser-select', 'browser-list-previous', 'browser-list-next', 'browser-previous', 'browser-next', 'browser-count', 'browser-cancel', 'browser-size', 'browser-status', 'browser-total', 'browser-list-status', 'browser-browse', 'sql-limit-status']);
+  for (const id of ['browser-filter-column', 'browser-filter-operator', 'browser-filter-value', 'browser-filter-apply', 'browser-filter-remove', 'browser-grid-clear', 'browser-grid-summary', 'browser-sort-warning', 'browser-sort-continue', 'browser-sort-dismiss']) { root.elements.set(id, new BrowserElement()); }
+  root.elements.get('browser-filter-operator')?.setAttribute('value', 'contains');
+  const operator = root.elements.get('browser-filter-operator'); if (operator !== undefined) { operator.value = 'contains'; }
   root.elements.get('browser-grid')?.elements.clear();
   const grid = root.elements.get('browser-grid');
   if (grid === undefined) { throw new Error('Missing grid'); }
@@ -27,6 +30,120 @@ beforeEach(() => {
   view.start();
 });
 afterEach(() => { view.dispose(); vi.unstubAllGlobals(); });
+
+test('FR-017: Given a painted page, When its header sorts and filters change, Then engine requests reset paging/counts and include literal controls', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  const page = { columns: ['id', 'text'], rows: [['1', 'old']], hasMore: true };
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page }); flush();
+  view.exercise({ type: 'browserExercise', action: 'sort', value: 'id' });
+  expect(requests().at(-1)).toMatchObject({ type: 'browserPage', offset: 0, grid: { sort: { column: 'id', direction: 'asc' } } });
+  view.receive({ type: 'browserSortWarning', requestId: 3, table: 'data', message: 'Potentially slow sort' }); flush();
+  expect(root.elements.get('browser-rows')?.children).toHaveLength(1);
+  expect(root.elements.get('browser-sort-continue')?.disabled).toBe(false);
+  view.exercise({ type: 'browserExercise', action: 'continueSort' });
+  expect(requests().at(-1)).toMatchObject({ grid: { allowSlowSort: true } });
+  view.receive({ type: 'browserRows', requestId: 4, table: 'data', offset: 0, limit: 100, page }); flush();
+  expect(view.savedState()).toMatchObject({ grid: { sort: { column: 'id', direction: 'asc' } } });
+  expect(view.savedState().grid).not.toHaveProperty('allowSlowSort');
+  view.exercise({ type: 'browserExercise', action: 'filter', value: JSON.stringify({ column: 'text', operator: 'contains', value: "%_'🚀" }) });
+  expect(requests().at(-1)).toMatchObject({ offset: 0, grid: { filters: [{ column: 'text', operator: 'contains', value: "%_'🚀" }] } });
+  view.receive({ type: 'browserRows', requestId: 5, table: 'data', offset: 0, limit: 100, page }); flush();
+  view.exercise({ type: 'browserExercise', action: 'count' });
+  expect(requests().at(-1)).toMatchObject({ type: 'browserCount', grid: { filters: [{ column: 'text', operator: 'contains', value: "%_'🚀" }] } });
+});
+
+test('FR-017: Given an unapproved sort, When dismissed or an operation fails, Then the prior page and successful controls survive', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 100, limit: 100, page: { columns: ['id'], rows: [['101']], hasMore: true } }); flush();
+  view.exercise({ type: 'browserExercise', action: 'sort', value: 'id' });
+  view.receive({ type: 'browserSortWarning', requestId: 3, table: 'data', message: 'Slow' });
+  view.exercise({ type: 'browserExercise', action: 'dismissSort' }); flush();
+  expect(view.savedState().offset).toBe(100);
+  expect(view.savedState().grid?.sort).toBeUndefined();
+  expect(root.elements.get('browser-rows')?.children[0]?.children[0]?.textContent).toBe('101');
+  view.exercise({ type: 'browserExercise', action: 'filter', value: JSON.stringify({ column: 'id', operator: 'contains', value: 'x'.repeat(65537) }) });
+  expect(requests()).toHaveLength(3);
+  expect(root.elements.get('browser-status')?.textContent).toContain('Nothing was truncated');
+});
+
+test('FR-017: Given persisted filters and a sort, When recreating a view, Then controls restore but rows, counts and slow-sort consent do not', () => {
+  const grid = { sort: { column: 'id', direction: 'desc' as const }, filters: [{ column: 'id', operator: 'contains' as const, value: '2' }] };
+  const saved = { requestId: 6, table: 'data', offset: 100, listOffset: 0, limit: 100, grid: { ...grid, allowSlowSort: true }, rows: [['secret']] };
+  const restored = readSavedState(saved);
+  expect(restored.grid).toEqual(grid); expect(restored).not.toHaveProperty('rows');
+  view.dispose(); sent = [];
+  view = new BrowserView(root as unknown as HTMLElement, (message) => { sent.push(message); }, restored); view.start();
+  view.receive({ type: 'browserTables', requestId: 7, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  expect(requests().at(-1)).toMatchObject({ type: 'browserPage', offset: 100, grid });
+});
+
+test('FR-017: Given extra data inside saved controls, When restoring state, Then only known control fields survive', () => {
+  const saved = readSavedState({ requestId: 1, table: 'data', offset: 0, listOffset: 0, limit: 100,
+    grid: { sort: { column: 'id', direction: 'asc', rows: [['secret']] }, filters: [{ column: 'id', operator: 'isNull', rows: [['secret']] }] } });
+  expect(saved.grid).toEqual({ sort: { column: 'id', direction: 'asc' }, filters: [{ column: 'id', operator: 'isNull' }] });
+});
+
+test('FR-017: Given a restored filter on a later column, When the page paints, Then the active column is selected and its filter can be removed', () => {
+  view.dispose(); sent = [];
+  view = new BrowserView(root as unknown as HTMLElement, (message) => { sent.push(message); }, {
+    requestId: 4, table: 'data', offset: 0, listOffset: 0, limit: 100, grid: { filters: [{ column: 'text', operator: 'contains', value: 'match' }] },
+  }); view.start();
+  view.receive({ type: 'browserTables', requestId: 5, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 6, table: 'data', offset: 0, limit: 100, page: { columns: ['id', 'text'], rows: [['1', 'match']], hasMore: false } }); flush();
+  expect(root.elements.get('browser-filter-column')?.value).toBe('text');
+  expect(root.elements.get('browser-filter-remove')?.disabled).toBe(false);
+  view.exercise({ type: 'browserExercise', action: 'removeFilter' });
+  expect(requests().at(-1)).toEqual({ type: 'browserPage', requestId: 7, table: 'data', offset: 0, limit: 100 });
+});
+
+test('FR-017: Given successful filters and paging, When an attempted replacement fails or cancels, Then stale replies and failed controls cannot replace the successful page', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  const page = { columns: ['id'], rows: [['101']], hasMore: true };
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 100, limit: 100, page }); flush();
+  view.exercise({ type: 'browserExercise', action: 'filter', value: JSON.stringify({ column: 'id', operator: 'contains', value: 'x' }) });
+  view.receive({ type: 'browserError', requestId: 3, message: 'The worker failed. Reopen.' }); flush();
+  expect(view.savedState().grid).toBeUndefined(); expect(view.savedState().offset).toBe(100);
+  view.exercise({ type: 'browserExercise', action: 'filter', value: JSON.stringify({ column: 'id', operator: 'contains', value: 'y' }) });
+  view.exercise({ type: 'browserExercise', action: 'cancel' });
+  view.receive({ type: 'browserRows', requestId: 4, table: 'data', offset: 0, limit: 100, page: { ...page, rows: [['stale']] } });
+  view.receive({ type: 'browserCancelled', requestId: 5 }); flush();
+  expect(view.savedState().grid).toBeUndefined(); expect(view.savedState().offset).toBe(100);
+  expect(root.elements.get('browser-rows')?.children[0]?.children[0]?.textContent).toBe('101');
+});
+
+test('FR-017: Given a changed filter awaiting sort confirmation, When counting or paging is attempted, Then the warning survives and continuation resets the page and count', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  const page = { columns: ['id'], rows: [['1']], hasMore: true };
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page }); flush();
+  view.exercise({ type: 'browserExercise', action: 'sort', value: 'id' });
+  view.receive({ type: 'browserSortWarning', requestId: 3, table: 'data', message: 'Slow sort' });
+  view.exercise({ type: 'browserExercise', action: 'continueSort' });
+  view.receive({ type: 'browserRows', requestId: 4, table: 'data', offset: 0, limit: 100, page }); flush();
+  view.exercise({ type: 'browserExercise', action: 'next' });
+  view.receive({ type: 'browserRows', requestId: 5, table: 'data', offset: 100, limit: 100, page: { ...page, rows: [['101']] } }); flush();
+  view.exercise({ type: 'browserExercise', action: 'count' });
+  view.receive({ type: 'browserCounted', requestId: 6, table: 'data', count: '205' });
+  view.exercise({ type: 'browserExercise', action: 'filter', value: JSON.stringify({ column: 'id', operator: 'contains', value: '9' }) });
+  view.receive({ type: 'browserSortWarning', requestId: 7, table: 'data', message: 'Slow filtered sort' });
+  for (const id of ['browser-count', 'browser-next', 'browser-previous', 'browser-size']) {
+    expect(root.elements.get(id)?.disabled).toBe(true);
+  }
+  for (const action of ['count', 'next', 'previous', 'size'] as const) {
+    view.exercise({ type: 'browserExercise', action, value: '10' });
+  }
+  expect(requests()).toHaveLength(7);
+  expect(root.elements.get('browser-sort-warning')?.hidden).toBe(false);
+  expect(view.savedState()).toMatchObject({ offset: 100, grid: { sort: { column: 'id', direction: 'asc' } } });
+  view.exercise({ type: 'browserExercise', action: 'continueSort' });
+  expect(requests().at(-1)).toMatchObject({ requestId: 8, offset: 0, limit: 100, grid: { filters: [{ column: 'id', operator: 'contains', value: '9' }], allowSlowSort: true } });
+  view.receive({ type: 'browserRows', requestId: 8, table: 'data', offset: 0, limit: 100, page: { ...page, rows: [['9']], hasMore: false } }); flush();
+  expect(view.savedState().offset).toBe(0);
+  expect(root.elements.get('browser-total')?.textContent).toBe('Total rows: not counted');
+  view.exercise({ type: 'browserExercise', action: 'count' });
+  expect(requests().at(-1)).toMatchObject({ requestId: 9, grid: { filters: [{ column: 'id', operator: 'contains', value: '9' }] } });
+  view.receive({ type: 'browserCounted', requestId: 9, table: 'data', count: '1' });
+  expect(root.elements.get('browser-total')?.textContent).toBe('Total rows: 1');
+});
 
 test('FR-010: Given a recreated webview, When observing its DOM, Then its identity differs from the destroyed context', () => {
   const old = sent.find((message) => message.type === 'browserStatus');

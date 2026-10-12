@@ -5,6 +5,7 @@ import { isBrowserRequest, isBrowserResponse, type BrowserResponse } from '../..
 
 function fixture() {
   const engine = {
+    grid: vi.fn<Engine['grid']>(),
     open: vi.fn<Engine['open']>(), close: vi.fn<Engine['close']>(), cancel: vi.fn<Engine['cancel']>().mockResolvedValue(undefined),
     schema: vi.fn<Engine['schema']>().mockResolvedValue({ columns: ['type', 'name', 'tbl_name', 'sql'], rows: [['table', 'select "🚀', 'select "🚀', 'CREATE TABLE...']], hasMore: false }),
     page: vi.fn<Engine['page']>().mockResolvedValue({ columns: ['value'], rows: [['9223372036854775807'], [null], [''], ['NULL']], hasMore: false }),

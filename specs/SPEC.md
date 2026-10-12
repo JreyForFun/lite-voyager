@@ -268,6 +268,41 @@ file loading remain later tasks.
 
 **FR-017 (P1) Sort and filter the grid.** Click a column header to sort; add a simple per-column filter. Sorting and filtering run in the engine, not in the webview, so they work on huge tables. Sorting a large table on an unindexed column shows a warning and can be cancelled.
 
+**T-017 acceptance (owner-authorized, 2026-10-12)**
+
+- Given Browse table (tables or views), clicking/keyboard-activating a column
+  header cycles one sort through ascending, descending and unsorted. SQLite
+  orders the stored values, including exact int64, NULL and BLOB values.
+  Equal sort keys have SQLite's unspecified tie order; no stable tie-break is
+  promised. Arbitrary SQL result controls remain SQL-driven.
+- Per-column filters offer case-sensitive literal text contains, is NULL and
+  is not NULL. Active filters combine with AND. Contains uses SQLite's text
+  representation of numeric values; BLOBs do not match contains. Empty search
+  matches every non-NULL, non-BLOB value. Percent, underscore, quotes, Unicode
+  and SQL-looking text are literal data, never wildcard or executable SQL.
+- Apply/remove/clear resets the page to zero and invalidates the lazy count.
+  Paging and explicit counts use the same filters. Controls survive tab hiding
+  without persisting rows/counts or approval to execute a potentially slow sort.
+  Changing objects clears their controls; SQL editor/results retain T-013 behavior.
+- Sorting checks the plan in the worker before executing. Only a recognized
+  single indexed scan/search with no temporary sort establishes indexed ordering;
+  unknown plans and views warn conservatively. No eager row count or guessed
+  large-table threshold is used. The warning requires Continue sort; dismissing
+  it leaves the successful page intact. Each page can require fresh continuation.
+  Count, paging and page-size changes wait for Continue/Dismiss while the warning
+  is pending, preserving the successful page and the new filter's reset offset.
+  Running sort/filter/count has Cancel; confirmed helper exit/reopen permits retry.
+- Typed messages reject malformed controls, unknown columns and duplicate filters.
+  At most 1,000 column filters and 65,536 total UTF-16 code units of filter text
+  are accepted, with visible rejection and no truncation. Identifiers are quoted,
+  values bound; worker work and bounded virtualized pages preserve source bytes.
+- Test first on both backends: full-dataset ordering/filtering across pages,
+  indexed/unindexed/view plans, exact/NULL/empty/BLOB fidelity, quoted names,
+  wide/large cells, stale responses, restoration, cancellation and recovery.
+  npm run verify must pass with zero errors/warnings. Real-host controls and
+  source safety are tested; owner visual QA and fresh three-platform CI are
+  reported separately from local evidence and whole-milestone performance.
+
 **FR-018 (P1) Cell details and copy.** Selecting a cell shows its full value in a side panel (long text, JSON pretty-printed). Copy a cell, row, or selection as TSV.
 
 ### Editing
@@ -332,6 +367,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- v0.5 T-017 review repairs (2026-10-12): Clarify pending-confirmation controls after a reproduced page/filter/count mismatch. Preserve the accepted 1,000-filter limit with balanced engine predicates; no acceptance or test is weakened.
+- v0.5 T-017 acceptance (2026-10-12): Owner delegates remaining decisions; define Browse sort cycling, literal/NULL filters, filtered lazy counts, conservative per-page sort confirmation, bounded controls and successful-state restoration. Preserve SQLite tie-order semantics and separate owner/CI/milestone evidence.
 - v0.7 T-013 scope (2026-10-10): Owner authorizes production SQL editing/running, bounded result paging, page timing, honest final-page totals, preserved SQLite diagnostics/results and bounded editor/query restoration. Keep later query features and T-014 targets separate.
 - v0.7 T-012 scope (2026-10-10): Owner delegates implementation and scoped fixes/fixtures. Define paged object selection, 100-row browsing, exact cell display, on-demand cancellable counts, two-dimensional virtualization and bounded tab-state restoration. Schema panel remains a milestone follow-up; distinguish measured DOM readiness from universal physical-paint/multi-GB targets.
 - v0.7 T-011 scope (2026-10-10): Owner authorizes worker-only paged object/column/index metadata, both-engine tests and necessary scoped fixes. Preserve declared SQLite metadata and source safety; visible browsing and first-row performance remain later tasks.

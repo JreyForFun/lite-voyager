@@ -7,7 +7,9 @@ export class NodeSqliteEngine implements ReadBackend {
 
   constructor(sqlite: typeof import('node:sqlite'), path: string) {
     this.database = new sqlite.DatabaseSync(path, { readOnly: true, allowExtension: false });
-    try { this.database.exec('PRAGMA trusted_schema=OFF; PRAGMA query_only=ON'); }
+    // Connection-local temporary sort storage may spill to disk. This never
+    // writes the read-only source. https://www.sqlite.org/pragma.html#pragma_temp_store
+    try { this.database.exec('PRAGMA temp_store=FILE; PRAGMA trusted_schema=OFF; PRAGMA query_only=ON'); }
     catch (error: unknown) { this.database.close(); throw error; }
   }
 

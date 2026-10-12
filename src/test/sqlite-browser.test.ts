@@ -39,6 +39,66 @@ const settled = (status: BrowserStatus): boolean => !status.busy;
 const rowsPainted = (status: BrowserStatus): boolean => !status.busy && status.renderedRows > 0 && status.firstRow.length > 0;
 const digest = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
 
+suite('T-017 production sort and filter DOM', () => {
+  for (const fallback of [false, true]) {
+    test(`FR-017: Given the real grid and fallback=${String(fallback)}, When sorting, filtering, restoring and cancelling, Then engine-backed pages and controls recover without changing the source`, async function () {
+      this.timeout(60000);
+      const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>('jreyinnovarev.lite-voyager');
+      assert.ok(extension); const api = await extension.activate();
+      const directory = await mkdtemp(join(extension.extensionPath, 'out', 't017-host-'));
+      const generated = await promisify(execFile)(process.execPath, [join(extension.extensionPath, 'scripts/browser-fixture.mts'), directory], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
+      assert.equal(generated.stderr, '');
+      const path = join(directory, 'browser.sqlite'); await chmod(path, 0o444); const before = await digest(path);
+      const previous = process.env['LITE_VOYAGER_FORCE_FALLBACK']; process.env['LITE_VOYAGER_FORCE_FALLBACK'] = fallback ? '1' : '0';
+      let document: SqliteDocument | undefined;
+      try {
+        const uri = vscode.Uri.file(path);
+        await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        document = api.sqliteEditor.getDocument(uri); assert.ok(document);
+        await waitStatus(document, rowsPainted);
+        await action(document, { type: 'browserExercise', action: 'select', value: 'b pages' }, (status) => rowsPainted(status) && status.table === 'b pages');
+        const ascending = await action(document, { type: 'browserExercise', action: 'sort', value: 'value' }, (status) => rowsPainted(status) && /end of table|Showing rows/.test(status.message));
+        assert.equal(ascending.firstRow[1]?.text, 'row 1'); assert.equal(ascending.hasMore, true);
+        const descending = await action(document, { type: 'browserExercise', action: 'sort', value: 'value' }, rowsPainted);
+        assert.equal(descending.firstRow[1]?.text, 'row 99');
+        const filtered = await action(document, { type: 'browserExercise', action: 'filter', value: JSON.stringify({ column: 'value', operator: 'contains', value: 'row 20' }) }, rowsPainted);
+        assert.equal(filtered.offset, 0); assert.equal(filtered.cachedRows, 3); assert.equal(filtered.firstRow[0]?.text, '201'); assert.equal(filtered.count, null);
+        const count = await action(document, { type: 'browserExercise', action: 'count' }, (status) => settled(status) && status.count === '3');
+        assert.equal(count.cachedRows, 3);
+        const previousContext = document.browserStatus?.contextId; assert.ok(previousContext);
+        const text = await vscode.workspace.openTextDocument({ content: 'T-017 filter restoration' });
+        await vscode.window.showTextDocument(text, { preview: false });
+        await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        const restored = await waitStatus(document, (status) => rowsPainted(status) && status.contextId !== previousContext && status.table === 'b pages');
+        assert.equal(restored.cachedRows, 3); assert.equal(restored.firstRow[0]?.text, '201'); assert.equal(restored.count, null);
+        const removed = await action(document, { type: 'browserExercise', action: 'removeFilter' }, (status) => rowsPainted(status) && status.cachedRows === 100);
+        assert.equal(removed.cachedRows, 100); assert.equal(removed.firstRow[1]?.text, 'row 99');
+        await action(document, { type: 'browserExercise', action: 'clearGrid' }, rowsPainted);
+        await action(document, { type: 'browserExercise', action: 'select', value: 'g slow count' }, (status) => rowsPainted(status) && status.table === 'g slow count');
+        const warning = await action(document, { type: 'browserExercise', action: 'sort', value: 'x' }, (status) => settled(status) && /confirmation/.test(status.message));
+        assert.equal(warning.firstRow[0]?.text, '1');
+        const countBlocked = await action(document, { type: 'browserExercise', action: 'count' }, (status) => settled(status) && /confirmation/.test(status.message));
+        assert.equal(countBlocked.count, null); assert.equal(countBlocked.offset, 0);
+        const pageBlocked = await action(document, { type: 'browserExercise', action: 'next' }, (status) => settled(status) && /confirmation/.test(status.message));
+        assert.equal(pageBlocked.firstRow[0]?.text, '1'); assert.equal(pageBlocked.offset, 0);
+        const running = await action(document, { type: 'browserExercise', action: 'continueSort' }, (status) => status.busy);
+        assert.ok(running.busy);
+        const cancelled = await action(document, { type: 'browserExercise', action: 'cancel' }, (status) => settled(status) && /Operation cancelled/.test(status.message));
+        assert.equal(cancelled.firstRow[0]?.text, '1');
+        const recovered = await action(document, { type: 'browserExercise', action: 'select', value: 'b pages' }, (status) => rowsPainted(status) && status.table === 'b pages');
+        assert.equal(recovered.firstRow[0]?.text, '1'); assert.equal(recovered.count, null);
+        await closeEditor(document); assert.equal(await digest(path), before);
+        console.log(`T-017 browser evidence: ${JSON.stringify({ engine: fallback ? 'sql.js' : 'node:sqlite', indexedSort: true, filteredCount: '3', restored: true, sortCancelledAndRecovered: true, sourceUnchanged: true })}`);
+      } finally {
+        document?.dispose(); await document?.session.closed;
+        await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+        if (previous === undefined) { delete process.env['LITE_VOYAGER_FORCE_FALLBACK']; } else { process.env['LITE_VOYAGER_FORCE_FALLBACK'] = previous; }
+        await chmod(path, 0o600); await rm(directory, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 suite('T-013 production SQL editor DOM', () => {
   for (const fallback of [false, true]) {
     test(`FR-010: Given CodeMirror and fallback=${String(fallback)}, When running selection, shortcuts and paged SQL, Then errors preserve results, restoration works and sources remain unchanged`, async function () {

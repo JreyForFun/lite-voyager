@@ -1143,6 +1143,181 @@ The following checklist is the remaining whole-milestone QA:
 
 ---
 
+### T-017 sort/filter implementation and validation (2026-10-12)
+
+Owner authorizes full scoped implementation, judgment on unspecified behavior,
+fixes and disposable fixture edits; owner pushes. SPEC's T-017 acceptance and
+PLAN's T-017 section record the chosen behavior. No dependency added.
+
+Acceptance-to-test evidence:
+
+- `test/unit/grid-query.test.ts`: quoted identifiers, bound literal values,
+  count predicates without ORDER BY, malformed/sparse/duplicate controls,
+  aggregate filter-text limit and conservative unknown/temp-sort plan detection.
+- `test/unit/browser-engine.test.ts`: both actual backends order/filter the
+  full 207-row dataset before bounded paging; second filtered page and count
+  agree. Exact int64, case-sensitive literal percent/underscore/quote/emoji,
+  NULL, empty/non-NULL and BLOB exclusion are covered. Quoted composite
+  WITHOUT ROWID keys, 1.1-MB text, partial/expression/composite indexes, views,
+  unknown columns and native FILE temp_store are checked with source hashes.
+  Existing 1,000-column/page-budget fixtures remain unchanged.
+- `test/unit/browser-view.test.ts`: actual rendered header activation and
+  filter controls, count requests, warning/continuation/dismissal, stale replies,
+  errors/cancellation retaining the successful page, controls-only state and
+  restored active filter selection. Existing SQL/browser restoration stays covered.
+- `src/test/sqlite-browser.test.ts`: two FR-017 real-host cases drive physical
+  header buttons and filter controls on both engines, indexed ascending/descending
+  order, three filtered rows/count, destroyed-tab restoration, filter removal,
+  slow-view warning/continuation/Cancel, recovery and unchanged source hashes.
+  No T-014 timing claim or universal large-file sorting benchmark is made.
+
+Retained failures and repairs:
+
+- The initial sandboxed focused test command failed at startup with `spawn EPERM`;
+  approved execution outside the sandbox runs the same real child-process tests.
+- Initial engine tests fail on both backends because controls were ignored
+  (expected first matching descending ID `205`, got `-9223372036854775808`).
+  Grid-helper tests initially fail to import the unimplemented module.
+- Three initial DOM tests fail on missing sort/filter requests and persistence.
+- Native temporary-storage regression expects `1` (FILE), gets `0` (DEFAULT);
+  configure connection-local FILE storage, keeping the source read-only.
+- State allowlisting regression reproduces unexpected `rows` fields surviving
+  inside saved controls; reconstruct known fields only, including no sort consent.
+- Initial real-host run: 28 pass / two T-017 failures because the disposable
+  fixture's value column lacked the tested index. Both stop at the correct warning.
+  Add only that index; preserve all rows/table/view workload and deadlines.
+  Logs: `out/integration-profile-vgCwVb/logs/20261012T132708`.
+- First full gate: 393 unit tests pass, 28 host tests pass / two T-017 failures
+  (`3 !== 100` after filter removal). Restoration had selected the first column
+  instead of the restored active filter. A new red-first unit test reproduces
+  `id` instead of `text`; prefer the active filter column when no selection exists.
+  The host assertion now waits for the unchanged expected 100 rows after removal.
+  All 19 view tests pass after the repair. Logs:
+  `out/integration-profile-69RAqg/logs/20261012T133201`.
+- Earlier strict typecheck/lint failures (literal union widening, exact optional
+  properties and unsafe library matcher values) were fixed without suppressions.
+
+Initial candidate local `npm run verify:full` passes on Windows x64 / VS Code 1.140.0 /
+bundled Node 24.21.0: 394 unit / 30 real-host tests, strict types/lint/builds and
+19-file / 610.99-KB VSIX packaging. Both T-017 host cases report indexed sorting,
+filtered count `3`, restored controls, sort cancellation/recovery and unchanged
+source hashes. Existing SQL/editor/browser/metadata tests pass. The existing
+warm generated ten-million-row browse measurement is 808.0 ms to first DOM rows,
+100 cached / 15 rendered; this does not measure sorting or physical paint.
+
+Exactly one approved host diagnostic is accepted, and explicitly reported:
+
+- Source: `out/integration-profile-DEruJR/logs/20261012T133704/window1/renderer.log`.
+- Line: `10`; original severity: `warning`; rule: `VSCODE-HOST-001`.
+- Message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+This full run is **not warning-free**. No error or other warning is accepted;
+the diagnostic policy is unchanged. Final standalone `npm run verify` also passes:
+394 unit tests, strict types/lint/build and 19-file / 610.99-KB packaging, with
+zero errors and zero warnings. Subsequent independent-review repairs are recorded below.
+Owner reports all six numbered T-017 QA checks PASS (record below). Fresh Windows /
+macOS / Ubuntu CI was not yet supplied at that checkpoint; independent review
+and delegated local closure are recorded below. Later tasks and the whole
+milestone remain open. There is no multi-GB sort memory/performance claim.
+
+Owner QA commands (choose a new fixture directory if this already exists):
+
+```powershell
+npm run verify
+npm run verify:full
+node scripts/browser-fixture.mts out/t017-owner-qa
+```
+
+Press F5 (`Run Extension`; its existing prelaunch task compiles), then open the
+printed `browser.sqlite` path in the Extension Development Host. Report PASS /
+FAIL and observations for each check:
+
+1. On `b pages`, click `value` three times: first row `row 1`, then `row 99`,
+   then unsorted `row 1`. The arrow and ascending/descending state agree.
+2. Filter `value` contains `row 20`: three rows. Count rows shows `3`.
+   Hide/reopen the tab: the filter survives, total returns to not counted;
+   Remove column filter returns to 100 rows on page one.
+3. On `a values`, nullable is NULL matches its row; empty contains empty text
+   matches; bytes contains empty text matches no rows. Maximum contains
+   `9223372036854775807` matches and displays that exact integer.
+4. On `d view`, sort a header: warning appears before execution. Dismiss keeps
+   the previous page; repeat and Continue sort succeeds.
+5. On `g slow count`, sort `x`, Continue sort, then Cancel operation. Controls
+   stay responsive; selecting `b pages` afterwards succeeds. Do not count the
+   billion-row view as part of manual QA.
+6. Use Tab and Enter/Space on headers/filter controls; inspect light, dark and
+   high-contrast themes. Confirm readable controls, focus indicators and NULL/empty
+   styling; verify existing SQL Run/shortcut/Browse table behavior still works.
+
+Owner QA report (2026-10-12): the owner supplied `1 - PASS`, `2 - PASS`,
+`3 - PASS`, `4 - PASS`, `5 - PASS`, and `6 - PASS`, corresponding to the six
+checks above. This covers the reported sorting cycle, filter/count/restoration/
+removal, NULL/empty/BLOB/int64 checks, view warning/dismissal/continuation,
+slow-sort cancellation/recovery, and keyboard/theme/existing-SQL checks.
+No additional observations, host version, backend or screenshots were supplied;
+manual coverage of both engines is not inferred. Both-engine automated evidence,
+earlier failures and the exact accepted host diagnostic remain recorded above.
+The QA-record update changed no executable code; subsequent independent-review
+repairs are recorded below. The whole milestone remains open.
+Owner-QA-record `npm run verify` passes: 394 tests, strict types/lint/build and
+19-file / 610.99-KB packaging, with zero errors and zero warnings.
+
+T-017 independent review and delegated local closure (2026-10-12):
+
+The owner asks the assistant to use its best judgment to complete the remaining
+work and move on; the owner retains pushing. A separate Bugbot reviewer, with
+no implementation chat history, reviews the actual scoped uncommitted diff and
+both new files under section 6. It finds two concrete MEDIUM defects:
+
+- Pending sort confirmation left Count/paging/page-size controls enabled. Count
+  cleared the warning while unexecuted filters stayed active, permitting a new
+  filtered page at the old offset with an unfiltered count. A red-first view test
+  reproduces the enabled controls. They now wait for Continue/Dismiss; continuation
+  retains the requested reset offset and invalidated count. Both real-host cases
+  also exercise Count/Next while waiting and assert the warning/page remain intact.
+- A flat AND chain exceeds SQLite's expression-depth limit with valid 1,000-filter
+  controls. New real-engine tests fail on both backends before the fix. Balanced
+  conjunctions preserve every predicate, bound value and the full accepted limit.
+  Tests check all 1,000 returned values, the last nonmatching predicate, matching
+  row counts, 1,000 NULL predicates and validator rejection at 1,001 filters.
+
+The same independent reviewer rechecks both repairs read-only using executed
+in-memory tests and both actual backends, confirms both findings resolved and
+reports no remaining concrete defect. No existing assertion, workload, timeout,
+limit or diagnostic policy was weakened; no dependency was added.
+Canonical repaired `npm run verify:full` passes: 397 unit / 30 real-host tests,
+strict types/lint/builds and 19-file / 611.06-KB VSIX packaging on Windows x64 /
+VS Code 1.140.0 / bundled Node 24.21.0. Both T-017 host cases also confirm
+Count/Next cannot dismiss a pending warning or change its retained page.
+Exactly one approved host diagnostic is accepted:
+
+- Source: `out/integration-profile-twKf13/logs/20261012T151223/window1/renderer.log`.
+- Line: `10`; original severity: `warning`; rule: `VSCODE-HOST-001`.
+- Message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+This repaired full run is **not warning-free**; all other warnings and every error
+remain failures. Prior failed runs and the earlier candidate's diagnostic remain
+recorded. Completion-record standalone `npm run verify` passes: 397 unit tests,
+strict types/lint/build and 19-file / 611.06-KB packaging, zero errors/warnings.
+Local completion records belong to the task-named T-017 commit; owner pushes.
+No fresh remote CI result is claimed.
+
+Under the owner's delegated judgment, local T-017 closure follows the per-task
+Definition of Done in section 2: tests/verify, source safety, current specs/plan,
+updated progress and a local commit naming T-017. Fresh three-platform CI remains
+required for the Milestone 1 gate after the owner's push. This does not close a
+milestone, waive CI or authorize a release tag. Owner QA PASS reports are retained
+for the earlier candidate; the edge-case repairs have independent and automated
+validation rather than a fabricated new manual QA report.
+Scoped T-017 acceptance, source-safety checks, owner QA, independent review,
+current specs/plan and the required local verification pass. T-017 is checked
+as complete in the local task commit. Start T-018 in a fresh chat; the remaining
+milestone requirements and post-push CI confirmation stay open.
+
+Push only the reviewed T-017 files; existing untracked `debug.log`, `gingTryWan/`
+and fixture aliases were not changed. Return the CI run URL / tested commit SHA
+and per-check QA results. No release tag or milestone closure is authorized here.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -1204,6 +1379,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-017 independent review/local completion (2026-10-12): Owner delegates completion judgment. Record two reproduced MEDIUM findings, failing-first repairs and independent confirmation. Final verify/full pass 397 unit/30 host tests under the exact reported host-warning policy; standalone verify has zero errors/warnings. Close scoped T-017 in its local task commit; preserve prior evidence and keep post-push CI/milestone gates open.
+- v0.1 T-017 owner QA report (2026-10-12): Record six explicit numbered PASS results against the supplied checklist and passing 394-test standalone verification with zero errors/warnings. Update progress/task status without closing T-017; preserve prior failures, exact automated diagnostics and remaining fresh CI/independent review requirements.
+- v0.1 T-017 implementation (2026-10-12): Record tests-first sort/filter acceptance, scoped fixture/native-storage/persistence/restoration repairs and failed host/full runs. Repaired full gate passes 394 unit/30 host tests with the exact approved renderer warning reported; standalone verify passes with zero errors/warnings. Owner/CI/review closure remains pending.
 - v0.1 T-013 repaired CI confirmation (2026-10-12): Independently verify successful 38206014267/attempt 1/88e8a51 run/job/step metadata on Windows/macOS/Ubuntu and close scoped T-013 again. Preserve failed CI, exact local diagnostics, remote-log limits and remaining milestone/manual QA.
 - v0.1 T-013 failed CI/repair (2026-10-12): Verify failed 38204288838/attempt 1/92c12e9 metadata and preserve supplied Windows/macOS failures plus Ubuntu's successful job. Reopen T-013; record red-first fixture atomicity and context/action correlation with unchanged deadlines/workloads and fresh CI required.
 - v0.1 T-013 owner QA report (2026-10-12): Record the owner's nine explicit SQL/Browse table PASS results; distinguish supplied observations from unreported theme/shortcut/restoration/fallback checks and pending remote CI. Preserve existing local verification and diagnostic evidence.

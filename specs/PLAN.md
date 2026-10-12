@@ -617,6 +617,38 @@ three-platform CI is required before closing this follow-up.
 
 **D-8 Edits are staged in the extension, applied on save.** The grid shows staged changes. Save runs them in one transaction.
 
+### T-017 production sort and filter (2026-10-12)
+
+Owner authorizes implementation, scoped fixes and disposable fixture edits;
+owner pushes. Browse table/view headers cycle one SQLite sort; the column-filter
+toolbar applies case-sensitive literal contains or NULL predicates, combined
+with AND. Quoted identifiers and bound values are built by `engine/grid-query.ts`
+and checked against worker-side column metadata (never execute a view just to
+discover its column names). Numeric contains uses SQLite CAST text; BLOB bytes
+are excluded. `Engine.grid` shares helper supervision, page collection and both
+backends; explicit filtered counts use the same predicates without ORDER BY.
+
+Preflight reads at most two EQP rows and only a recognized single indexed
+scan/search establishes ordering. Views, temporary sorts, multi-node/unknown
+plans warn before execution. SQLite documents EQP as unstable diagnostic text:
+[EXPLAIN QUERY PLAN](https://www.sqlite.org/eqp.html). Recognition is deliberately
+conservative and both actual backend plans are tested; a future format change
+adds a warning, never silently removes confirmation. No eager count is needed.
+Continue authorizes one page only; approval and rows/counts are not persisted.
+Count, paging and page-size changes wait for Continue/Dismiss so a retained page
+cannot inherit pending filters or a mismatched count. Filter conjunctions are
+balanced to keep all 1,000 accepted filters within SQLite's expression-depth limit.
+Native connection-local `temp_store=FILE` allows disk-backed temporary sorting;
+the fallback retains its explicit memory-limited notice. See
+[SQLite temp_store](https://www.sqlite.org/pragma.html#pragma_temp_store).
+
+Successful control/page context is retained when a requested sort/filter errors,
+is dismissed or is cancelled. Changed filters invalidate lazy counts. Saved
+controls contain only known fields, bounded filter text and no execution approval.
+Column options cover the full received schema while headers/rows remain virtualized.
+The existing fixture gains a value index without changing its object/row workload.
+No new dependency, SQL-result rewriting or later-task feature is introduced.
+
 ## 3. Architecture
 
 ```
@@ -730,6 +762,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- v0.4 T-017 independent review repairs (2026-10-12): Fix warning-state page/count actions and SQLite expression-depth overflow with red-first regressions; a separate reviewer confirms both fixes on both backends. Owner delegates local task closure; fresh CI remains tracked at the milestone gate after the owner's push.
+- v0.4 T-017 sort/filter (2026-10-12): Add worker-validated Engine.grid reads/counts, quoted/bound predicates, conservative indexed-plan recognition, native file-backed temporary storage and successful-control persistence. Reuse cancellation, virtualization and existing dependencies.
 - v0.4 T-013 CI repair (2026-10-12): Record transaction-based disposable fixture setup and context/action-correlated DOM observations after the supplied Windows/macOS failures. Preserve original workloads, deadlines, assertions and pending fresh CI.
 - v0.4 T-013 SQL editor (2026-10-10): Reuse approved CodeMirror and production grid/Engine; document literal selection execution, successful-query paging, diagnostic preservation, timing/count semantics, bounded SQL persistence and restored editing/table state. No new dependency.
 - v0.4 T-012 browser (2026-10-10): Document owner-authorized production browsing, lazy exact counts, bounded two-dimensional rendering, narrow catalog projection, tab-state recovery and disposable fixtures. Preserve existing Engine contracts, no-new-dependency policy and later milestone QA/performance scope.
