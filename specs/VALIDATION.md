@@ -1009,6 +1009,31 @@ exact F5 SQL/theme/keyboard/error/paging/cancel/restoration steps. Fresh remote
 three-platform CI, owner visual judgement, independent milestone review and
 cold-disk/multi-GB memory targets are not claimed. Later tasks remain open.
 
+**T-013 owner QA report (2026-10-12):** owner reports PASS for all nine
+listed SQL/browser checks against the T-013 handoff:
+
+- `SELECT id, value FROM "b pages" ORDER BY id` — PASS.
+- `SELECT FROM` — PASS.
+- `SELECT 1; SELECT '🚀' AS value;` — PASS.
+- `SELECT * FROM "a values"` — PASS.
+- `SELECT 1 WHERE 0` — PASS.
+- `SELECT * FROM "e large cells"` — PASS.
+- `SELECT * FROM "f wide"` — PASS.
+- `SELECT sum(x) FROM "g slow count"` — PASS.
+- Browse table — PASS.
+
+These are owner-reported results, not independently observed desktop QA.
+Individual paging/value/error/cancellation observations were not supplied.
+Light/dark themes, focus/highlighting/undo-redo, selection/shortcut details,
+tab restoration and forced-fallback manual checks were not explicitly reported.
+Do not infer a backend, tested commit SHA, or passing remote CI from this report.
+Fresh three-platform CI and the remaining milestone checks stay open.
+Only the T-013 completion/progress/validation records change in this follow-up;
+implementation, tests, fixtures and other task checkboxes stay unchanged.
+QA-record `npm run verify` passes (exit 0): 375 tests in 32 files, strict
+host/webview/tooling types, lint, production builds and 19-file/606.63 KB VSIX;
+zero errors and zero warnings. No new full-host or remote CI run is claimed.
+
 The following checklist is the remaining whole-milestone QA:
 
 - [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
@@ -1108,6 +1133,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-013 owner QA report (2026-10-12): Record the owner's nine explicit SQL/Browse table PASS results; distinguish supplied observations from unreported theme/shortcut/restoration/fallback checks and pending remote CI. Preserve existing local verification and diagnostic evidence.
 - v0.1 T-013 SQL editor (2026-10-10): Record requirement-to-test coverage, preserved red-first/verification failures, stricter host-action synchronization, both-engine SQL UI evidence, exact accepted host diagnostics and remaining owner/milestone checks.
 - v0.1 T-012 CI/owner QA confirmation (2026-10-10): Independently verify public run/job/step metadata for 38039805436/attempt 1/a720520 on Windows/macOS/Ubuntu and record owner-reported GOOD after requested browser checks. Preserve exact local diagnostics, remote-log/manual-observation limits and whole-milestone requirements.
 - v0.1 T-012 browser (2026-10-10): Record scoped acceptance coverage, real-host DOM/source/cancellation evidence and all failed/regression runs. Preserve strict diagnostics and exact host-warning reporting; separate task browser readiness from later manual, CI and whole-milestone performance/review requirements.
