@@ -1699,7 +1699,8 @@ No feature source/test/fixture change or new QA observation is introduced.
 Handoff-document `npm run verify` passes (exit 0): 435 tests in 39 files
 (98.47 seconds), all types/lint/build/VSIX checks, zero errors and zero warnings.
 
-Next, open a fresh chat in this workspace and paste this prompt:
+Historical review handoff prompt (superseded by the owner's in-chat review
+preference and completed isolated review recorded below):
 
 ```text
 Read AGENTS.md, specs/CONSTITUTION.md and PROGRESS.md in that order.
@@ -1802,9 +1803,41 @@ T-018 green CI confirmation (2026-10-13):
   all types/lint/build/VSIX checks (20 files / 617.71 KB), zero errors and warnings.
   Only this observed result is added after the run; feature source/tests stay unchanged.
 
-Only after independent review passes may T-018 be checked; repaired CI now passes.
-This does not close Milestone 1 or authorize a release tag. The next feature task is T-014 in a new
-chat after T-018 closure; do not start it in the current chat.
+T-018 independent review (2026-10-13):
+- Owner explicitly wants a new chat only when proceeding to another task. For
+  this task, that instruction overrides the separate user-created review-chat
+  workflow. Keep T-018 review/closure here; start T-014 in a new chat afterward.
+- The dedicated Bugbot tool is unavailable. One isolated read-only reviewer,
+  `/root/bugbot`, starts with fresh context (`fork_turns: none`) and independently
+  computes the cumulative 25-file source/test/build diff from `5ebbe7f` to
+  `b2ecd2af430b30486f7fb8acb493ebfc928ba97b`. This is a review subagent fallback,
+  not a claim that an external Bugbot service ran.
+- Review reports no concrete HIGH, MEDIUM or LOW defects. It inspects exact
+  JSON tokens and TSV escaping, NUL/BOM/UTF-8 decoding, clipboard gating,
+  worker lanes/queues/watchdog/cancellation/recovery, stale details/page responses,
+  virtualized selection, actual DOM column identities and worker packaging.
+  No review repair is needed; no source/test/build/fixture file changes.
+- Reviewer execution limitation: its focused existing-test command cannot start
+  because Vite/Vitest reports `spawn EPERM` in the sandbox. No test executes in
+  that attempt; it is not counted as a passing test run. The reviewer does not
+  retry alongside root verification, rerun real-host tests, or fetch raw remote
+  CI logs. Its independent source/test inspection supplements the separate
+  observed local gates, owner QA and repaired three-platform CI above.
+
+T-018 closure (2026-10-13):
+- Root `npm run verify` passes (exit 0): 437 tests in 39 files (106.05 seconds),
+  all types/lint/build checks and VSIX package dry run (20 files / 617.71 KB),
+  zero errors and zero warnings. Final documentation adds only these observed
+  results and task status after the run; no implementation/test changes.
+- Independent inspection, local acceptance/gates, owner QA 1–6 and repaired
+  three-platform CI pass. Check only T-018. The exact prior full-run approved
+  renderer warning and failed CI remain recorded; full is not called warning-free.
+- Owner pushes the documentation commit with `git push origin main`. No source
+  repairs follow the successful CI commit, so its implementation gate remains
+  applicable. Untracked files remain untouched and excluded from staging.
+
+This does not close Milestone 1 or authorize a release tag. The next feature task
+is T-014 in a new chat after T-018 closure; do not start it in the current chat.
 
 ## 5. Edge cases every format must be tested against
 
@@ -1867,6 +1900,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-018 closure (2026-10-13): Check the task after observed final 437-test zero-error/zero-warning verify and independent isolated review, owner QA and repaired three-platform CI. Update the handoff to T-014 in a new chat; preserve all earlier evidence and limits.
+- T-018 independent review (2026-10-13): Honor the owner's preference to finish this task in the current chat. Record one fresh-context isolated review of cumulative implementation/CI repair with no concrete findings, preserving its sandbox execution limitation and separate gate evidence.
 - T-018 green CI confirmation (2026-10-13): Verify 38293986528/attempt 1/0004369 and all three successful jobs, locked installs and applicable full checks. Record metadata-only remote evidence, preserve failed CI/exact local renderer warning history, and leave only independent review open for task closure.
 - T-018 failed CI/viewport repair (2026-10-13): Record 38289818635/attempt 1/d29dfff Windows/macOS fidelity failures and Ubuntu success. Preserve both failing excerpts; add red-first actual-column/validation regressions and retain every fidelity value, fixture, deadline and source assertion. Repair CI/review remain open.
 - T-018 handoff (2026-10-13): Provide a precise fresh-chat review prompt and push/CI return instructions; correct the stray QA-heading character under the owner's documentation-update request. Preserve all evidence and keep T-018 unchecked.
