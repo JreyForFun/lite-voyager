@@ -1719,13 +1719,15 @@ Do not invent problems. If no concrete findings remain, say so explicitly.
 Keep review results separate from owner QA and CI evidence.
 ```
 
-For each confirmed review defect, authorize a scoped T-018 failing-test-first
-repair, then rerun the required verification. Repeat owner QA only where a
-repair changes an observed behavior. Once review/fixes pass, owner runs
-`git push origin main` in the project terminal. Open the repository's Actions
-tab and select the run for that pushed commit. Return the run URL, tested
-commit SHA and Windows/macOS/Ubuntu job conclusions. For a failure, supply
-the failing step's first error/warning and its surrounding log.
+For each confirmed review defect, make a scoped T-018 failing-test-first
+repair under the owner's existing repair authorization, then rerun the required
+verification. Repeat owner QA only where a repair changes an observed behavior.
+Repaired commit 0004369 already passes three-platform CI (record below). If the
+review requires further source repairs, owner runs `git push origin main` in
+the project terminal. Open the repository's Actions tab and select the run for
+that pushed commit. Return the run URL, tested commit SHA and Windows/macOS/Ubuntu
+job conclusions. For a failure, supply the failing step's first error/warning
+and its surrounding log.
 
 T-018 CI viewport repair (2026-10-13):
 - Owner supplied run https://github.com/JreyForFun/lite-voyager/actions/runs/38289818635
@@ -1779,8 +1781,29 @@ T-018 CI viewport repair (2026-10-13):
   remain unchanged. Owner pushes the scoped T-018 CI repair and returns the new
   CI URL/tested SHA/three job outcomes. Existing untracked files stay excluded.
 
-Only after review and fresh CI pass may T-018 be checked. This does not close
-Milestone 1 or authorize a release tag. The next feature task is T-014 in a new
+T-018 green CI confirmation (2026-10-13):
+- Owner reports GREEN CHECK for
+  https://github.com/JreyForFun/lite-voyager/actions/runs/38293986528.
+  GitHub REST run/job metadata confirms attempt 1, main, tested SHA
+  `00043694905b03973fb82a7513436ccd031f6467`, completed/success.
+- Full verification jobs on Windows, macOS and Ubuntu all succeed. Each locked
+  dependency install succeeds. Windows/macOS applicable full-verification steps
+  succeed; Ubuntu's session-bus/virtual-display full-verification step succeeds.
+  The opposite-platform steps are skipped as intended by the workflow.
+- The supplied web-page fetch missed its cache; Node HTTPS fetched REST metadata.
+  Raw logs for this successful remote run were not inspected: no remote test
+  totals, warning counts or warning-free claim are inferred from the green jobs.
+- This satisfies the repaired three-platform CI gate. Failed run 38289818635,
+  all prior evidence and the exact approved local full-run warning remain history.
+  Owner QA 1–6 remains passing; no source/test/fixture changes or new QA claims.
+  Independent fresh-chat review must include the feature and viewport repair.
+  T-018 stays unchecked; further source repairs require new verification and CI.
+- CI-record `npm run verify` passes (exit 0): 437 tests in 39 files (104.49 seconds),
+  all types/lint/build/VSIX checks (20 files / 617.71 KB), zero errors and warnings.
+  Only this observed result is added after the run; feature source/tests stay unchanged.
+
+Only after independent review passes may T-018 be checked; repaired CI now passes.
+This does not close Milestone 1 or authorize a release tag. The next feature task is T-014 in a new
 chat after T-018 closure; do not start it in the current chat.
 
 ## 5. Edge cases every format must be tested against
@@ -1844,6 +1867,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-018 green CI confirmation (2026-10-13): Verify 38293986528/attempt 1/0004369 and all three successful jobs, locked installs and applicable full checks. Record metadata-only remote evidence, preserve failed CI/exact local renderer warning history, and leave only independent review open for task closure.
 - T-018 failed CI/viewport repair (2026-10-13): Record 38289818635/attempt 1/d29dfff Windows/macOS fidelity failures and Ubuntu success. Preserve both failing excerpts; add red-first actual-column/validation regressions and retain every fidelity value, fixture, deadline and source assertion. Repair CI/review remain open.
 - T-018 handoff (2026-10-13): Provide a precise fresh-chat review prompt and push/CI return instructions; correct the stray QA-heading character under the owner's documentation-update request. Preserve all evidence and keep T-018 unchecked.
 - T-018 final owner QA (2026-10-13): Accept the six numbered PASS reports, preserve prior partial/error observations and automated cancellation evidence, and keep only independent review/post-push CI open. T-018 remains unchecked.
