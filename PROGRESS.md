@@ -16,10 +16,10 @@ Prior T-017 repairs/CI remain complete; no milestone closure or release tag.
 - Two failed host runs and red-first scoped repairs are preserved in VALIDATION.
 
 ## Last session
-Owner final QA (2026-10-13): all six numbered checks PASS.
-Check 2 selection matches the earlier two-line TSV; accept the owner's PASS.
-Preserve earlier partial/error observations and automated cancellation evidence.
-Update only PROGRESS/TASKS/VALIDATION; no feature code/test change.
+Owner final QA (2026-10-13): all six numbered checks PASS; evidence preserved.
+Make the review/push/CI handoff explicit; review prompt is in VALIDATION T-018.
+Correct the stray QA-heading character under the owner's update request.
+Only PROGRESS/VALIDATION change; no feature code, test or fixture change.
 
 ## Decisions made this session
 Owner delegates implementation/uncertainties/scoped repairs; owner pushes.
@@ -33,6 +33,7 @@ Clipboard writes already started cannot be retracted by cancellation; UI says so
 Schema panel, T-014/later features and whole-milestone performance remain open.
 
 ## Next
-Fresh chat: review implementation commit 908fb76; keep work scoped to T-018.
-Owner pushes with `git push origin main`; return CI URL/SHA and three outcomes.
-Tick only T-018 after remaining closure checks pass; do not start another task here.
+Fresh chat: paste VALIDATION's T-018 prompt; review implementation 908fb76.
+After review, owner pushes with `git push origin main` in the project terminal.
+Return CI run URL, tested SHA and Windows/macOS/Ubuntu job conclusions.
+Tick T-018 only after review/CI pass; then start T-014 in a fresh chat.

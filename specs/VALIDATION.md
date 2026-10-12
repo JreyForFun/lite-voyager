@@ -1691,6 +1691,45 @@ lifecycle, exact token/TSV fidelity, clipboard gating and stale page reporting.
 After owner push, return the CI run URL/tested SHA and all three job outcomes.
 Tests can be rerun with `npm run verify` and `npm run verify:full`.
 
+T-018 handoff (2026-10-13): implementation and owner QA 1–6 pass; independent
+review and fresh post-push CI are the only remaining T-018 closure checks.
+The stray x in the QA setup heading is corrected in this owner-requested
+documentation update; earlier records of its preservation remain history.
+No feature source/test/fixture change or new QA observation is introduced.
+Handoff-document `npm run verify` passes (exit 0): 435 tests in 39 files
+(98.47 seconds), all types/lint/build/VSIX checks, zero errors and zero warnings.
+
+Next, open a fresh chat in this workspace and paste this prompt:
+
+```text
+Read AGENTS.md, specs/CONSTITUTION.md and PROGRESS.md in that order.
+Review only T-018 / FR-018. Read its acceptance, plan and validation sections.
+Owner QA 1–6 passes. Local verification passes 435 unit and 32 host tests;
+the approved full-run renderer warning is recorded in VALIDATION.md.
+Inspect the actual implementation diff:
+git show 908fb76 -- src webview test esbuild.js .vscodeignore
+Read relevant current code and tests as needed. Do not review only the
+documentation-only HEAD. Do not modify files or tick a task checkbox.
+Report concrete HIGH / MEDIUM / LOW defects with file/line, why they violate
+the requirements, and a reproduction or failing test that would catch them.
+Focus on exact JSON/TSV fidelity, NUL/BOM decoding, clipboard gating, worker
+lifecycle/cancellation, bounded work and stale page/detail responses.
+Do not invent problems. If no concrete findings remain, say so explicitly.
+Keep review results separate from owner QA and CI evidence.
+```
+
+For each confirmed review defect, authorize a scoped T-018 failing-test-first
+repair, then rerun the required verification. Repeat owner QA only where a
+repair changes an observed behavior. Once review/fixes pass, owner runs
+`git push origin main` in the project terminal. Open the repository's Actions
+tab and select the run for that pushed commit. Return the run URL, tested
+commit SHA and Windows/macOS/Ubuntu job conclusions. For a failure, supply
+the failing step's first error/warning and its surrounding log.
+
+Only after review and fresh CI pass may T-018 be checked. This does not close
+Milestone 1 or authorize a release tag. The next feature task is T-014 in a new
+chat after T-018 closure; do not start it in the current chat.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -1752,6 +1791,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-018 handoff (2026-10-13): Provide a precise fresh-chat review prompt and push/CI return instructions; correct the stray QA-heading character under the owner's documentation-update request. Preserve all evidence and keep T-018 unchecked.
 - T-018 final owner QA (2026-10-13): Accept the six numbered PASS reports, preserve prior partial/error observations and automated cancellation evidence, and keep only independent review/post-push CI open. T-018 remains unchecked.
 - T-018 owner QA clarification (2026-10-13): Record explicit PASS reports and matching selection TSV; distinguish unobserved typing/cancellation and incomplete SQL retries. Rewrite navigation and complete single-statement examples without claiming missing observations or changing feature code.
 - v0.1 T-018 implementation (2026-10-12): Record tests-first cell details/TSV, worker/clipboard/lifecycle and bounded protocol coverage; preserve lint and two failed host runs. Scoped stale-report/cancellation repairs pass 431 unit/32 host checks with zero errors/warnings. Owner QA, fresh-chat review and post-push CI remain open.
