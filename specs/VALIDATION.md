@@ -1318,6 +1318,83 @@ Push only the reviewed T-017 files; existing untracked `debug.log`, `gingTryWan/
 and fixture aliases were not changed. Return the CI run URL / tested commit SHA
 and per-check QA results. No release tag or milestone closure is authorized here.
 
+T-017 repaired CI confirmation (2026-10-12):
+
+The owner supplies [run 38239600604](https://github.com/JreyForFun/lite-voyager/actions/runs/38239600604)
+and reports GOOD. Public GitHub API run/job/step metadata confirms attempt `1`,
+event `push`, branch `main`, status `completed`, conclusion `success`, tested
+commit `dbf76f8808048d3407a25049cd95d7a5d87bfca0`, matching the local T-017 commit.
+All three jobs and their locked-install/applicable full-verification steps succeed:
+
+- [macOS job 114778656026](https://github.com/JreyForFun/lite-voyager/actions/runs/38239600604/job/114778656026):
+  `Install locked dependencies` and `Verify on Windows and macOS` succeed.
+- [Ubuntu job 114778656373](https://github.com/JreyForFun/lite-voyager/actions/runs/38239600604/job/114778656373):
+  `Install locked dependencies` and `Verify with session bus and virtual display on Linux` succeed.
+- [Windows job 114778656437](https://github.com/JreyForFun/lite-voyager/actions/runs/38239600604/job/114778656437):
+  `Install locked dependencies` and `Verify on Windows and macOS` succeed.
+
+The alternate platform-specific step is intentionally skipped in each job, as
+defined by the verified workflow. Remote full logs are not independently fetched
+or inspected; no remote warning count or warning-free claim is made. The exact
+local host diagnostic and all earlier failed evidence remain recorded above.
+The web fetch initially fails; an approved public read outside the restricted
+network sandbox obtains the metadata, without authentication or writes.
+
+This confirms fresh three-platform CI for implementation `dbf76f8`. T-017's
+sorting/filtering acceptance remains complete; the whole Milestone 1 gate and
+later tasks remain open, with no release tag. The record initially changes only
+documentation; its required local check then exposes the startup defect below.
+
+T-017 CI-record validation startup repair (2026-10-12):
+
+- The first record `npm run verify` fails: 396 pass / one failure in the unchanged
+  fallback `NFR-001: Given a source file, When querying or attempting a write,
+  Then its bytes remain unchanged` spike test. Opening rejects with
+  `The SQLite spike worker stopped. Reopen the file to recover.` The exact timing
+  of that original exit was not captured. An isolated unchanged 35-test spike
+  suite passes; this alone is not treated as resolution or a retry-to-green.
+- Inspection finds the spike's message listener registered only after awaiting
+  WASM initialization. A new deterministic NFR-002 test copies the actual bundled
+  worker/engine to an isolated directory and delays its initializer with a
+  100-ms unreferenced timer. It fails before the fix with the same worker-stopped
+  error: the pending promise cannot keep the worker alive.
+- Move the existing handler registration before the await, as the production
+  DB worker already does. The host still sends queries only after `opened`;
+  initialization failures close the database and port. The new regression checks
+  opening, real fallback queries, unchanged source hashes and confirmed helper
+  shutdown. All 36 spike tests pass after the fix.
+- The separate reviewer independently runs the packaged worker three times with
+  the unreferenced delay, confirms safety flags/queries/source hashes and reports
+  no concrete defect. No assertions, timeouts, limits or warning rules change;
+  no dependency or T-017 grid behavior changes. This is a scoped validation repair
+  required to finish the record, rather than a new feature task.
+- The first repaired full gate fails in the unit stage: 396 pass / two failures
+  out of 398 tests, in 383.48 seconds. Both are unchanged 5-second timeouts:
+  `checks.test.ts` agent=true/colors=false stderr-severity-error reporter case,
+  and `csv-import-spike.test.ts` malformed closing-quote case `"a" ,b`.
+  No host/build/package stages run after that unit failure. Inspection finds no
+  concrete defect in these cases; host contention is possible but not proven.
+  The two unchanged suites pass together (73 tests, 34.46 seconds). A sandboxed
+  diagnostic invocation cannot load the config (`spawn EPERM`); the successful
+  invocation uses approved process access. No deadlines or assertions change.
+- After inspection and the unchanged targeted suites, full verification passes:
+  398 unit tests in 34 files (77.23 seconds), strict types/lint, production build,
+  VSIX dry run (19 files, 611.05 KB), integration compilation and 30 real-host
+  tests on Windows x64 / VS Code 1.140.0 / host Node 24.21.0. Both real engine
+  modes pass T-017 sorting/filtering/restoration/cancellation/source-safety checks.
+  The earlier timeout run remains a failure with its cause unresolved; this later
+  result establishes a passing run, not proof that those timeouts cannot recur.
+  The full run is not warning-free: its only approved diagnostic is source
+  `out/integration-profile-37FTid/logs/20261012T192908/window1/renderer.log`,
+  line 10, severity `warning`, rule `VSCODE-HOST-001`, message
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+- Final standalone `npm run verify` passes (exit 0): 398 tests in 34 files
+  (80.49 seconds), all three typechecks, zero-warning lint, production build and
+  VSIX dry run (19 files, 611.05 KB), with zero errors and zero warnings.
+  The known passing CI above tests
+  `dbf76f8`, before this legacy-spike startup repair; post-push CI for the follow-up
+  commit is reported separately and is not inferred from that run.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -1379,6 +1456,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- v0.1 T-017 validation repair (2026-10-12): Add a red-first packaged fallback-startup regression and register the existing message handler before WASM initialization. Preserve failed startup/timeout evidence, independent review, 398-unit/30-host full results and the exact approved renderer diagnostic; follow-up CI awaits owner push.
+- v0.1 T-017 CI confirmation (2026-10-12): Verify owner-supplied successful 38239600604/attempt 1/dbf76f8 run/job/step metadata on Windows/macOS/Ubuntu. Record confirmed locked installs/full steps, preserve failed evidence and remote-log limits, and keep only scoped T-017 complete.
 - v0.1 T-017 independent review/local completion (2026-10-12): Owner delegates completion judgment. Record two reproduced MEDIUM findings, failing-first repairs and independent confirmation. Final verify/full pass 397 unit/30 host tests under the exact reported host-warning policy; standalone verify has zero errors/warnings. Close scoped T-017 in its local task commit; preserve prior evidence and keep post-push CI/milestone gates open.
 - v0.1 T-017 owner QA report (2026-10-12): Record six explicit numbered PASS results against the supplied checklist and passing 394-test standalone verification with zero errors/warnings. Update progress/task status without closing T-017; preserve prior failures, exact automated diagnostics and remaining fresh CI/independent review requirements.
 - v0.1 T-017 implementation (2026-10-12): Record tests-first sort/filter acceptance, scoped fixture/native-storage/persistence/restoration repairs and failed host/full runs. Repaired full gate passes 394 unit/30 host tests with the exact approved renderer warning reported; standalone verify passes with zero errors/warnings. Owner/CI/review closure remains pending.

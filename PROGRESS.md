@@ -1,37 +1,37 @@
-# Progress
+﻿# Progress
 
 ## Current phase / task
 Milestone 1 continues; T-009 through T-013 and T-017 are complete.
-T-017 is checked with owner-authorized local closure and a task-named commit.
-Owner reports six QA checks PASS; independent reviewed repairs pass.
+T-017 implementation dbf76f8 passes three-platform CI; owner QA 1–6 PASS.
+Scoped fallback-startup repair and separate review pass; owner pushes follow-up.
 
 ## Verify status
-- `npm run verify` passes: 397 tests; zero errors/warnings.
-- `npm run verify:full` passes: 397 unit / 30 real-host tests.
-- Windows x64 / VS Code 1.140.0 / bundled Node 24.21.0; VSIX 19 files / 611.06 KB.
-- One accepted warning: VSCODE-HOST-001; this full run is not warning-free.
-- Source: `20261012T151223/window1/renderer.log:10`, severity warning.
-- Message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
-- Prior failures and candidate evidence remain in VALIDATION T-017.
+- Final verify passes 398 unit tests, zero errors/warnings; full adds 30 host tests.
+- Windows x64 / VS Code 1.140.0 / Node 24.21.0; VSIX 19 files / 611.05 KB.
+- One approved warning; full run is not warning-free: VSCODE-HOST-001.
+- Source: `out/integration-profile-37FTid/logs/20261012T192908/window1/renderer.log:10`.
+- Severity warning; message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+- Run 38239600604 / attempt 1 / dbf76f8 passes Windows/macOS/Ubuntu.
+- Locked installs/full steps pass; remote logs not independently inspected.
+- Startup failure and later two timeout failures remain recorded in VALIDATION.
+- Timeout cause unresolved; unchanged affected suites pass 73 tests together.
 
 ## Last session
-- Separate reviewer examines the actual diff and both new files.
-- Fix pending-warning count/paging state and 1,000-filter expression depth.
-- Red-first regressions pass; reviewer confirms fixes with no concrete defect left.
-- Complete local gates and scoped T-017 completion records; owner pushes.
+Confirm owner-supplied CI metadata and record it in task/progress/validation.
+Reproduce fallback startup exit with a failing packaged-worker regression.
+Register the message handler before WASM await; 36 spike tests/review pass.
 
 ## Decisions made this session
-Owner delegates completion judgment and scoped fixes; owner pushes.
-Close scoped T-017 after acceptance, review, local verification and task commit.
-Fresh three-platform CI stays required at the milestone gate after owner push.
-No dependency, test weakening, warning-policy change or release tag.
+Owner delegates scoped completion/fixes and retains push responsibility.
+T-017 acceptance and QA pass; no dependencies, weakened tests or release tag.
+Passing CI predates startup repair; follow-up CI awaits owner push.
 
 ## Known issues / blockers
-Fresh CI for this candidate awaits owner push; whole-milestone QA stays open.
-Manual QA host/backend were not separately specified; both backends are tested.
-Schema panel, T-014/later features and whole-milestone performance remain open.
+Whole-milestone QA, schema panel, T-014/later features remain open.
+Manual QA host/backend unspecified; both engines pass automated checks.
+Cold-disk/multi-GB/physical-paint targets remain later validation.
 
 ## Next
-Owner pushes the local T-017 commit with `git push origin main` and supplies CI URL.
-Start a fresh chat for T-018: cell details panel and copy as TSV (FR-018).
+Owner runs `git push origin main` and supplies follow-up CI URL.
+Start a fresh chat for T-018: cell details and copy as TSV (FR-018).
 Read AGENTS.md, Constitution and PROGRESS.md; work on exactly that task.

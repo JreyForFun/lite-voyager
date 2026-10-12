@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -17,6 +17,33 @@ beforeAll(async () => {
   const { stderr } = await execute(process.execPath, ['esbuild.js', '--production']);
   expect(stderr).toBe('');
 }, 30000);
+
+test('NFR-002: Given fallback initialization waiting without referenced handles, When the real worker opens, Then its message port keeps it alive until ready and source bytes stay unchanged', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-spike-startup-'));
+  const path = join(directory, 'source.sqlite');
+  for (const name of ['sqlite-spike-process.js', 'sqlite-spike-worker.js', 'sql-wasm.wasm']) {
+    await copyFile(resolve('dist', name), join(directory, name));
+  }
+  await copyFile(resolve('dist/sql-wasm.cjs'), join(directory, 'sql-real.cjs'));
+  await writeFile(path, await readFile(fixture));
+  const before = await hash(path);
+  // A pending promise does not keep a worker alive. Deterministically defer the
+  // actual packaged initializer without a referenced timer or additional I/O.
+  await writeFile(join(directory, 'sql-wasm.cjs'), `const initialize = require('./sql-real.cjs');
+module.exports = (options) => new Promise((resolve, reject) => {
+  const timer = setTimeout(() => { initialize(options).then(resolve, reject); }, 100);
+  timer.unref();
+});\n`);
+  const spike = new SqliteSpike(join(directory, 'sqlite-spike-worker.js'), { simulateUnavailable: true, fallbackDirectory: directory });
+  try {
+    const opened = await spike.open(path);
+    expect(opened.engine).toBe('sql.js');
+    expect((await spike.query('SELECT count(*) FROM records')).rows).toEqual([['1']]);
+    await spike.close();
+    expect(await hash(path)).toBe(before);
+    expect(() => process.kill(opened.processId, 0)).toThrow();
+  } finally { await spike.close(); await rm(directory, { recursive: true, force: true }); }
+});
 
 describe.each([false, true])('SQLite spike, missing built-in = %s', (simulateUnavailable) => {
   const makeSpike = (): SqliteSpike => new SqliteSpike(resolve('dist/sqlite-spike-worker.js'), {

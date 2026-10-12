@@ -199,6 +199,27 @@ async function start(): Promise<void> {
   checkHeader(options.path);
   let native: DatabaseSync | undefined;
   let wasm: WasmDatabase | undefined;
+  const query = (sql: string, parameters: SpikeParameter[]): SpikeResult => {
+    if (native !== undefined) { return collect(nativeCursor(native, sql, parameters)); }
+    if (wasm !== undefined) { return collect(wasmCursor(wasm, sql, parameters)); }
+    throw new Error('No spike database is open.');
+  };
+  // A listener keeps the message port referenced while async WASM initialization
+  // waits. The supervised host sends queries only after receiving "opened".
+  port?.on('message', (request: SpikeRequest) => {
+    const started: SpikeResponse = { type: 'started', id: request.id };
+    port.postMessage(started);
+    try {
+      checkReadStatement(request.sql);
+      const result: SpikeResponse = { type: 'result', id: request.id, value: query(request.sql, request.parameters) };
+      port.postMessage(result);
+    } catch (error: unknown) {
+      const text = error instanceof Error ? error.message : '';
+      const actionable = /^(Run only one|The read-only|The spike)/.test(text);
+      const response: SpikeResponse = { type: 'queryFailed', id: request.id, message: actionable ? text : 'The SQLite spike query failed. Check the SQL and keep it read-only.' };
+      port.postMessage(response);
+    }
+  });
   try {
     if (sqlite !== undefined) {
       native = new sqlite.DatabaseSync(options.path, { readOnly: true, allowExtension: false });
@@ -211,11 +232,6 @@ async function start(): Promise<void> {
       wasm = new module.Database(bytes);
       wasm.run('PRAGMA trusted_schema=OFF; PRAGMA query_only=ON');
     }
-    const query = (sql: string, parameters: SpikeParameter[]): SpikeResult => {
-      if (native !== undefined) { return collect(nativeCursor(native, sql, parameters)); }
-      if (wasm !== undefined) { return collect(wasmCursor(wasm, sql, parameters)); }
-      throw new Error('No spike database is open.');
-    };
     // Reading sqlite_schema forces validation; open alone may accept truncated files.
     query('SELECT name FROM sqlite_schema LIMIT 1', []);
     const trustedSchemaOff = query('PRAGMA trusted_schema', []).rows[0]?.[0] === '0';
@@ -230,20 +246,6 @@ async function start(): Promise<void> {
       },
     };
     port?.postMessage(response);
-    port?.on('message', (request: SpikeRequest) => {
-      const started: SpikeResponse = { type: 'started', id: request.id };
-      port.postMessage(started);
-      try {
-        checkReadStatement(request.sql);
-        const result: SpikeResponse = { type: 'result', id: request.id, value: query(request.sql, request.parameters) };
-        port.postMessage(result);
-      } catch (error: unknown) {
-        const text = error instanceof Error ? error.message : '';
-        const actionable = /^(Run only one|The read-only|The spike)/.test(text);
-        const response: SpikeResponse = { type: 'queryFailed', id: request.id, message: actionable ? text : 'The SQLite spike query failed. Check the SQL and keep it read-only.' };
-        port.postMessage(response);
-      }
-    });
   } catch (error: unknown) {
     native?.close(); wasm?.close();
     throw error;
