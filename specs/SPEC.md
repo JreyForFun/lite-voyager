@@ -247,6 +247,40 @@ file loading remain later tasks.
 
 **FR-014 (P1) Export results** to CSV or JSON, streamed so large results do not exhaust memory.
 
+#### T-015 acceptance (owner-delegated decisions, 2026-10-13)
+
+- Given a successful SQL result, Export CSV/JSON reruns that successful SQL once,
+  from the beginning, using one cursor/read snapshot. All rows and duplicate or
+  blank column names survive in order, including empty results. Edited or failed
+  SQL does not replace the successful export context. Table browsing has no export.
+  Nondeterministic SQL/external changes may differ from the displayed page; say so.
+- CSV is UTF-8 without BOM, comma-delimited with CRLF records and a header.
+  All non-NULL fields/headers are quoted and quotes doubled. NULL is unquoted
+  `\N`; empty text is `""`, and literal `\N` is quoted. Consumers must honor
+  this NULL convention. Spreadsheet formulas are literal; explain this beforehand.
+- JSON is UTF-8 `{ "columns": [...], "rows": [[...], ...] }`. Non-NULL values
+  are strings, including exact INTEGER/REAL representations; NULL is JSON null.
+  This avoids ordinary JSON parsers rounding 64-bit numbers. Stored JSON TEXT
+  remains TEXT. BLOBs use `[BLOB N bytes]` only; explain omitted binary contents.
+- The database worker reads/serializes/writes sequentially with awaited writes,
+  at most a 64-KiB output buffer, plus the backend's current row/column metadata.
+  Memory does not grow with result row count. A large individual SQLite row may
+  itself require memory; no export row/cell cap or page-size cap is imposed.
+  Report scoped measurements without claiming the separate T-016 memory target.
+- A local Save dialog authorizes a destination. Never overwrite the source,
+  its symlink/hard-link aliases or SQLite WAL/SHM/journal sidecars. Write a private
+  temporary sibling, sync/close it, then atomically rename at the explicit save
+  commit point. No delete-then-rename workaround. Existing output survives every
+  pre-commit failure/cancellation; failed rename gives actionable guidance.
+- During execution/writing, show bounded row/byte progress and allow Cancel.
+  Cancellation uses existing helper termination/recovery, waits for temporary
+  cleanup, and preserves successful rows/editor/paging. Save-dialog dismissal is
+  harmless. Final atomic commit shows Saving and disables Cancel. Closure before
+  commit cancels/cleans output; closure after commit begins may finish that save.
+- Worker, filesystem, cleanup and recovery failures are visible without contents
+  in logs. Exercise both engines, empty/wide/large/fidelity results, bounded
+  backpressure, cancellation, stale messages, closure and unchanged source hashes.
+
 **FR-015 (P0) Cancel a running query.** The UI stays responsive and the user can stop any query.
 
 - T-002 cancellation acceptance (owner-authorized design revision, 2026-10-09):
@@ -429,6 +463,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-015 (2026-10-13): Specify delegated successful-query streaming, exact JSON strings, CSV NULL convention, BLOB disclosure, bounded worker writes, atomic publication and cancellation safety.
 - T-014 CI probe route (2026-10-13): Replace warning-producing Chromium launch flags with bounded opt-in host pulses plus native webview samples. Preserve full monotonic gaps, sample minimum, workloads and action/context correlation.
 - T-014 scope (2026-10-13): Owner delegates implementation and uncertainties. Apply the existing helper-exit bound to production SQL cancellation, preserve successful context, and define scoped host/webview responsiveness evidence on both engines.
 - v0.5 T-018 fidelity repair (2026-10-12): Preserve complete fallback UTF-8 TEXT including NUL/BOM, reject invalid encoding visibly, and reject embedded NUL clipboard text before write rather than risk silent loss.

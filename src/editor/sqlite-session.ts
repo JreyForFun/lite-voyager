@@ -1,5 +1,7 @@
 import type { Engine, EngineMode, EngineOpened } from '../engine/engine';
 import { SqliteBrowser } from './sqlite-browser';
+import { ExportService } from './export-service';
+import type { ExportFormat } from '../engine/engine';
 
 export interface SqliteEditorState {
   phase: 'opening' | 'opened' | 'error' | 'cancelled' | 'closed';
@@ -28,6 +30,10 @@ export class SqliteSession {
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => { this.listeners.delete(listener); };
+  }
+
+  configureExport(choose: (format: ExportFormat) => Promise<string | undefined>): void {
+    if (this.path !== undefined) { this.browser.setExporter(new ExportService(this.path, this.engine, choose)); }
   }
 
   start(confirm: Confirm): Promise<void> {
@@ -78,7 +84,11 @@ export class SqliteSession {
       try { await this.engine.close(); }
       catch {
         this.update({ ...this.state, phase: 'error', message: `${this.state.message} The database helper could not be closed. Close the editor and reload VS Code.` });
-      } finally { this.resolveClosed(); }
+      } finally {
+        try { await this.browser.finishExportCleanup(); }
+        catch { this.update({ ...this.state, phase: 'error', message: 'Export temporary files could not be removed. Check the .lite-voyager-export- folder beside the chosen destination.' }); }
+        this.resolveClosed();
+      }
     })();
     return this.shutdown;
   }

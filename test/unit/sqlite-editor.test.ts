@@ -8,6 +8,7 @@ const opened: EngineOpened = { ...mode, sqlite: 'test', threadId: 1, processId: 
 const empty = { columns: [], rows: [], hasMore: false };
 function fakeEngine() {
   return {
+    exportResults: vi.fn<Engine['exportResults']>(),
     open: vi.fn<Engine['open']>().mockResolvedValue(opened),
     close: vi.fn<Engine['close']>().mockResolvedValue(undefined),
     cancel: vi.fn<Engine['cancel']>().mockResolvedValue(undefined),

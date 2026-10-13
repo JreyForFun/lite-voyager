@@ -9,11 +9,12 @@ const mocks = vi.hoisted(() => ({
   open: vi.fn<Engine['open']>(), close: vi.fn<Engine['close']>(),
   withProgress: vi.fn<(options: vscode.ProgressOptions, task: ProgressTask) => Promise<void>>(),
   prompt: vi.fn<(message: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => Promise<vscode.MessageItem | undefined>>(),
+  error: vi.fn<(message: string) => Promise<undefined>>(),
 }));
 vi.mock('vscode', () => ({
   Uri: { file: (path: string) => ({ fsPath: path, toString: () => path }) },
   ProgressLocation: { Notification: 15 },
-  window: { withProgress: mocks.withProgress, showWarningMessage: mocks.prompt },
+  window: { withProgress: mocks.withProgress, showWarningMessage: mocks.prompt, showErrorMessage: mocks.error },
 }));
 vi.mock('../../src/engine/engine-client', () => ({ EngineClient: vi.fn(function () { return { open: mocks.open, close: mocks.close }; }) }));
 
@@ -54,6 +55,16 @@ beforeEach(() => {
   mocks.close.mockResolvedValue(undefined);
   mocks.prompt.mockResolvedValue(undefined);
   mocks.withProgress.mockImplementation((_options, task) => task({ report: vi.fn() }, cancellation().token));
+});
+
+test('FR-014: Given export cleanup failure during editor closure, When the document finishes closing, Then a user notification names the cleanup action', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const view = panel();
+  const document = provider.openCustomDocument(uri(), openContext, cancellation().token);
+  await provider.resolveCustomEditor(document, view, cancellation().token);
+  document.session.browser.setExporter({ run: () => Promise.resolve(undefined), abort: () => {},
+    settled: () => Promise.reject(new Error('Export temporary files could not be removed.')) });
+  view.dispose(); await document.session.closed;
+  expect(mocks.error).toHaveBeenCalledWith(expect.stringContaining('.lite-voyager-export-'));
 });
 
 test.each(['Proceed', 'Cancel', 'Escape', 'dismissed'])('FR-001: Given consent action %s, When fallback requests consent, Then an explicit close action refuses loading unless Proceed is selected', async (choice) => {

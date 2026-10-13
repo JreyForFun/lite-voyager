@@ -1,39 +1,39 @@
-# Progress
+﻿# Progress
 
 ## Current phase / task
-Milestone 1; T-014 is complete at the owner's direction.
-Implementation, local gates, owner QA 1-6 and repaired three-platform CI pass.
-Next chat: T-015 streamed export of results to CSV / JSON (FR-014).
+Milestone 1; T-015 streamed CSV/JSON result export is implemented.
+Local acceptance and owner QA 1–6 PASS; unchecked for fresh review/candidate CI.
+Do not start T-016 in this chat.
 
 ## Verify status
-- Final local verify: 447 tests / 39 files, zero errors/warnings (unit 161.37 s).
-- Local full: 447 unit / 36 host, exit 0; one approved host warning.
-- pubCu0, 20261013T121620/window1/renderer.log:10, VSCODE-HOST-001.
-- Full is not warning-free; exact message remains in VALIDATION.
-- Repair CI: run 38346736300/attempt 1/780f974 succeeds on all 3 platforms.
-- Locked installs and applicable full checks independently verified via API.
-- Raw remote logs/warning counts were not retrieved or called warning-free.
-- Prior failed CI 38341388121/21da760 and local failures remain recorded.
+- Repaired local full: 478 unit /44 files and 38 real-host tests, exit 0.
+- Unit stage 195.39 s; VS Code 1.140.0 /Node 24.21.0 /Windows x64.
+- One approved warning; full is not warning-free.
+- WfSRTK, 20261013T132107/window1/renderer.log:10, VSCODE-HOST-001.
+- Exact source/message and failed candidate are in VALIDATION T-015.
+- Latest standalone verify: 478 tests /44 files, zero errors/warnings; 217.06 s.
 
 ## Last session
-Owner confirms T-014 checked and directs the next chat to T-015.
-Update PLAN, VALIDATION, TASKS and this handoff; no code/test changes.
+Owner reports all six QA checks PASS and supplies run 38352950470 as CI PASS.
+API confirms attempt 1, all three platforms and applicable verification steps.
+It tests 6e25977cc72c6d879b4b49919ff631b5492cb8bd, the T-014 handoff commit.
+Its tree excludes T-015; actual export changes were uncommitted at audit time.
 
 ## Decisions made this session
-Use keyed opt-in host pulses plus native webview event observations.
-At most one API delivery promise pending; stop clears its timer/awaits delivery.
-Stale/stopped pulses do not count or change action acknowledgements.
-Keep 5 samples, 100 ms gaps, 150 ms SQL and 1000 ms helper-exit bounds.
-Serialize unit files; within-test concurrency/workloads/deadlines unchanged.
-Retain all failed candidates and the originating-cause uncertainty.
-Close T-014 per owner direction; no separate task-review result is claimed.
+Export complete last successful SQL once; edited/failed SQL cannot replace it.
+CSV quotes non-NULL fields; unquoted NULL is \N. JSON uses columns/row arrays,
+with exact non-NULL strings. BLOB placeholders only; explain conventions in UI.
+Sequential 64-KiB worker writes; host owns destination checks and atomic rename.
+Cancel before commit cleans after helper exit; late Cancel gets save outcome.
+No dependency; existing untracked files were not intentionally edited.
 
 ## Known issues / blockers
-Original timer-starvation cause is supported, not uniquely proven.
-T-015/T-016, schema follow-up, milestone QA and milestone review remain open.
-Existing untracked files remain untouched.
+Fresh-chat review and CI on a commit containing T-015 remain pending.
+Serializer and host timer measurements are scoped, not T-016 proof.
+Local T-015 candidate commit follows this passing gate; owner controls its push.
 
 ## Next
-Read AGENTS, CONSTITUTION, PROGRESS, then only the T-015 linked spec/plan.
-Restate T-015 acceptance, proposed files and uncertainties before coding.
-Follow test-first implementation and required gates. Owner pushes documentation.
+Review the cumulative T-015 diff from 6e25977 in a fresh chat.
+Owner pushes the local T-015 candidate and supplies new three-platform CI.
+Include all eight new source/test files; do not reuse old-run CI as export proof.
+Reconcile evidence before checking T-015; T-016 starts only in a new task chat.

@@ -780,6 +780,26 @@ DB worker thread (node:sqlite or sql.js, queries, paging)
 
 ## 4. Message protocol (draft)
 
+### T-015 streamed result export (2026-10-13)
+
+Reuse ReadBackend.cursor and the existing killable database helper. Add one
+Engine export operation that writes only a host-selected private temporary file
+inside the worker. A sequential 64-KiB writer handles partial writes and awaits
+each chunk; only bounded counters cross IPC, never result rows. No dependency.
+The host export service owns destination checks, Save dialog, cancellation token,
+temporary-directory cleanup and final atomic rename. Validate destination again
+at commit. Browser requests contain format only; the host retains successful SQL.
+Use the existing browser operation queue/recovery and typed protocol for progress,
+Saving and completion. UTF-8 CSV NULL convention and exact string-valued JSON are
+defined in SPEC T-015. Fallback retains its existing memory-limited warning.
+Late Cancel at/after atomic commit receives the actual save outcome under its
+own request ID; it cannot leave the webview waiting or report a saved file as
+cancelled. Repaired full local gate passes 478 unit /38 host tests with one
+explicitly reported approved renderer warning (not warning-free). Owner reports
+all native-dialog/visual QA 1–6 PASS. Run 38352950470 succeeds on all three
+platforms at 6e25977, but that commit excludes the T-015 implementation.
+Fresh-chat review and CI on the actual T-015 candidate remain open.
+
 Webview to host: `ready`, `listTables`, `getRows {table, offset, limit, sort?, filter?}`, `getSchema {table}`, `countRows {table}`, `runQuery {sql}`, `cancel`, `stageEdit {table, key, column, value}`, `save`, `revert`, `exportResults {format}`, `setWriteMode {on}`.
 
 Host to webview: `tables`, `rows {columns, rows, hasMore}`, `schema`, `rowCount`, `queryResult {columns, rows, ms, hasMore}`, `importProgress {done, total?}`, `dirtyState`, `error {message, context}`.
@@ -869,6 +889,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-015 owner QA/CI audit (2026-10-13): Record all six owner QA checks PASS. Verify supplied green run 38352950470 at 6e25977, which predates T-015; retain candidate CI and fresh review as pending.
+- T-015 (2026-10-13): Stream one backend cursor through 64-KiB worker writes; host owns destination protection, temporary cleanup and atomic publication. Reuse helper recovery and typed progress without dependencies.
 - T-014 owner-directed closure (2026-10-13): Accept the owner's completed checks and green CI as task closure; hand off T-015 to the next chat. Preserve the absence of a separate task-review result and the milestone review requirement.
 - T-014 green repair CI (2026-10-13): Record independently verified three-platform success for 780f974/run 38346736300. Preserve failed CI/candidate evidence and leave independent review as the remaining closure step.
 - T-014 final pulse repair (2026-10-13): Reject the warning-producing switch candidate; implement keyed local host pulses with retained native observations and raw failure metrics. Preserve every target/workload and report passing 447-unit/36-host local evidence separately from pending CI/review.

@@ -3,6 +3,20 @@ import type { DatabaseHelperRequest, DatabaseResponse } from '../protocol';
 
 let worker: Worker | undefined;
 let failed = false;
+let progressSending = false;
+let latestProgress: Extract<DatabaseResponse, { type: 'exportProgress' }> | undefined;
+function progress(message: Extract<DatabaseResponse, { type: 'exportProgress' }>): void {
+  // Coalesce counters while IPC is backpressured: one delivery plus one latest.
+  if (progressSending) { latestProgress = message; return; }
+  if (!process.connected || process.send === undefined) { stop(); return; }
+  progressSending = true;
+  process.send(message, (error) => {
+    progressSending = false;
+    if (error !== null) { stop(); return; }
+    const next = latestProgress; latestProgress = undefined;
+    if (next !== undefined) { progress(next); }
+  });
+}
 function stop(): void { process.kill(process.pid, 'SIGKILL'); }
 function reply(message: DatabaseResponse, stopAfterReply = false): void {
   if (!process.connected || process.send === undefined) { stop(); return; }
@@ -19,7 +33,10 @@ process.on('message', (request: DatabaseHelperRequest) => {
   try {
     if (request.type === 'open' && worker === undefined) {
       worker = new Worker(request.workerPath, { workerData: request.options });
-      worker.on('message', (message: DatabaseResponse) => reply(message));
+      worker.on('message', (message: DatabaseResponse) => {
+        if (message.type === 'exportProgress') { progress(message); }
+        else { if (message.type === 'exported' || message.type === 'queryFailed') { latestProgress = undefined; } reply(message); }
+      });
       worker.on('error', () => fail('The database worker failed. Reopen the file to recover.'));
       worker.on('exit', () => fail('The database worker stopped. Reopen the file to recover.'));
     } else if (request.type === 'request' && worker !== undefined) { worker.postMessage(request.value); }

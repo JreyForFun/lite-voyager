@@ -11,6 +11,7 @@ const flush = (): void => { const queued = frames; frames = []; for (const callb
 const requests = () => sent.filter((message): message is BrowserRequest => message.type.startsWith('browser') && message.type !== 'browserStatus');
 beforeEach(() => {
   root = browserRoot(['browser-grid', 'browser-viewport', 'browser-track', 'browser-rows', 'browser-header', 'browser-select', 'browser-list-previous', 'browser-list-next', 'browser-previous', 'browser-next', 'browser-count', 'browser-cancel', 'browser-size', 'browser-status', 'browser-total', 'browser-list-status', 'browser-browse', 'sql-limit-status']);
+  for (const id of ['browser-export-csv', 'browser-export-json']) { root.elements.set(id, new BrowserElement()); }
   for (const id of ['browser-filter-column', 'browser-filter-operator', 'browser-filter-value', 'browser-filter-apply', 'browser-filter-remove', 'browser-grid-clear', 'browser-grid-summary', 'browser-sort-warning', 'browser-sort-continue', 'browser-sort-dismiss']) { root.elements.set(id, new BrowserElement()); }
   root.elements.get('browser-filter-operator')?.setAttribute('value', 'contains');
   for (const id of ['cell-details', 'cell-title', 'cell-kind', 'cell-value', 'cell-status', 'cell-copy-cell', 'cell-copy-row', 'cell-copy-selection', 'cell-cancel']) { root.elements.set(id, new BrowserElement()); }
@@ -29,6 +30,38 @@ beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe(): void {} disconnect(): void {} });
   view = new BrowserView(root as unknown as HTMLElement, (message) => { sent.push(message); });
   view.start();
+});
+
+test('FR-014: Given successful SQL results, When exporting, Then counters remain busy until commit, Cancel disables during Saving and the page survives', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['v'], rows: [['old']], hasMore: true } });
+  expect(root.elements.get('browser-export-csv')?.disabled).toBe(true);
+  view.runSql('SELECT 42');
+  view.receive({ type: 'browserQueryRows', requestId: 3, offset: 0, limit: 100, ms: 1, page: { columns: ['v'], rows: [['42']], hasMore: true } }); flush();
+  root.elements.get('browser-export-json')?.click();
+  expect(requests().at(-1)).toEqual({ type: 'browserExport', requestId: 4, format: 'json' });
+  view.receive({ type: 'browserExportProgress', requestId: 4, phase: 'writing', rows: '200', bytes: '65536', blobs: '2' });
+  expect(root.elements.get('browser-status')?.textContent).toContain('200'); expect(root.elements.get('browser-cancel')?.disabled).toBe(false);
+  expect(root.attributes.get('aria-busy')).toBe('true'); expect(root.elements.get('browser-select')?.disabled).toBe(true);
+  view.receive({ type: 'browserExportProgress', requestId: 4, phase: 'saving', rows: '205', bytes: '70000', blobs: '2' });
+  expect(root.elements.get('browser-cancel')?.disabled).toBe(true);
+  view.receive({ type: 'browserExportDone', requestId: 4, report: { rows: '205', bytes: '70000', blobs: '2' } }); flush();
+  expect(root.attributes.get('aria-busy')).toBe('false'); expect(root.elements.get('browser-status')?.textContent).toContain('205');
+  expect(view.savedState()).toMatchObject({ querySql: 'SELECT 42', offset: 0 });
+  expect(root.elements.get('browser-export-csv')?.disabled).toBe(false);
+  view.receive({ type: 'browserExportProgress', requestId: 4, phase: 'writing', rows: '999', bytes: '9', blobs: '0' });
+  expect(root.elements.get('browser-status')?.textContent).not.toContain('999');
+});
+
+test('FR-014: Given Cancel clicked before the Saving message is delivered, When the host reports completed save on the Cancel request, Then the UI settles with the saved outcome', () => {
+  view.runSql('SELECT 42');
+  view.receive({ type: 'browserQueryRows', requestId: 2, offset: 0, limit: 100, ms: 1, page: { columns: ['v'], rows: [['42']], hasMore: false } });
+  root.elements.get('browser-export-csv')?.click();
+  root.elements.get('browser-cancel')?.click();
+  expect(requests().at(-1)).toEqual({ type: 'browserCancel', requestId: 4 });
+  view.receive({ type: 'browserExportDone', requestId: 4, report: { rows: '1', bytes: '10', blobs: '0' } });
+  expect(root.attributes.get('aria-busy')).toBe('false');
+  expect(root.elements.get('browser-status')?.textContent).toContain('Export saved: 1');
 });
 
 test('FR-018: Given Browse cells, When selected and copied, Then full raw values appear safely and typed worker requests preserve original TSV data', () => {

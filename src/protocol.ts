@@ -117,12 +117,15 @@ export function isGridOptions(value: unknown): value is GridOptions {
 }
 export interface BrowserObject { name: string; kind: 'table' | 'view'; }
 export type BrowserRequest =
+  | { type: 'browserExport'; requestId: number; format: import('./engine/engine').ExportFormat }
   | { type: 'browserQuery'; requestId: number; sql: string; offset: number; limit: number }
   | { type: 'browserList'; requestId: number; offset: number }
   | { type: 'browserPage'; requestId: number; table: string; offset: number; limit: number; grid?: GridOptions }
   | { type: 'browserCount'; requestId: number; table: string; grid?: GridOptions }
   | { type: 'browserCancel'; requestId: number };
 export type BrowserResponse =
+  | ({ type: 'browserExportProgress'; requestId: number } & import('./engine/engine').ExportProgress)
+  | { type: 'browserExportDone'; requestId: number; report?: import('./engine/engine').ExportReport }
   | { type: 'browserQueryStarted'; requestId: number }
   | { type: 'browserQueryRows'; requestId: number; offset: number; limit: number; ms: number; page: import('./engine/engine').EnginePage }
   | { type: 'browserTables'; requestId: number; offset: number; objects: BrowserObject[]; hasMore: boolean }
@@ -148,6 +151,7 @@ export interface BrowserStatus {
 export interface BrowserExercise {
   type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse' | 'sort' | 'filter' | 'removeFilter' | 'clearGrid' | 'continueSort' | 'dismissSort'
     | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'
+    | 'exportCsv' | 'exportJson'
     | 'startResponsiveness' | 'stopResponsiveness' | 'pulseResponsiveness'; value?: string; exerciseId?: number;
 }
 function identifier(value: unknown): value is string {
@@ -156,6 +160,7 @@ function identifier(value: unknown): value is string {
 export function isBrowserRequest(value: unknown): value is BrowserRequest {
   if (!isRecord(value) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   switch (value['type']) {
+    case 'browserExport': return value['format'] === 'csv' || value['format'] === 'json';
     case 'browserQuery': return identifier(value['sql']) && integer(value['limit'], 1, BROWSER_PAGE_SIZE)
       && integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
     case 'browserCancel': return true;
@@ -170,6 +175,8 @@ export function isBrowserRequest(value: unknown): value is BrowserRequest {
 export function isBrowserResponse(value: unknown): value is BrowserResponse {
   if (!isRecord(value) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   switch (value['type']) {
+    case 'browserExportProgress': return (value['phase'] === 'writing' || value['phase'] === 'saving') && exportReport(value);
+    case 'browserExportDone': return value['report'] === undefined || exportReport(value['report']);
     case 'browserQueryStarted':
     case 'browserCancelled': return true;
     case 'browserError': return typeof value['message'] === 'string';
@@ -201,6 +208,7 @@ export function isBrowserResponse(value: unknown): value is BrowserResponse {
   }
 }
 function decimal(value: unknown): value is string { return typeof value === 'string' && /^(0|[1-9]\d{0,18})$/u.test(value); }
+function exportReport(value: unknown): boolean { return isRecord(value) && decimal(value['rows']) && decimal(value['bytes']) && decimal(value['blobs']); }
 export function isBrowserStatus(value: unknown): value is BrowserStatus {
   return isRecord(value) && value['type'] === 'browserStatus' && integer(value['revision'], 1, Number.MAX_SAFE_INTEGER)
     && (value['table'] === null || identifier(value['table'])) && integer(value['offset'], 0, Number.MAX_SAFE_INTEGER)
@@ -235,7 +243,7 @@ function isCellSummary(value: unknown): boolean {
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
-    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
+    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 
@@ -263,7 +271,10 @@ export interface DatabaseGrid {
   page: import('./engine/engine').PageAddress; kind: 'rows' | 'count';
 }
 export type DatabaseOperation = DatabaseQuery | DatabaseMetadata | DatabaseGrid;
-export type DatabaseWorkerRequest = DatabaseOperation | { type: 'consent'; approved: boolean };
+export interface DatabaseExport {
+  type: 'export'; id: number; sql: string; format: import('./engine/engine').ExportFormat; path: string;
+}
+export type DatabaseWorkerRequest = DatabaseOperation | DatabaseExport | { type: 'consent'; approved: boolean };
 export type DatabaseHelperRequest =
   | { type: 'open'; workerPath: string; options: DatabaseWorkerOptions }
   | { type: 'request'; value: DatabaseWorkerRequest };
@@ -272,5 +283,7 @@ export type DatabaseResponse =
   | { type: 'opened'; value: import('./engine/engine').EngineOpened }
   | { type: 'failed'; message: string }
   | { type: 'started'; id: number }
+  | { type: 'exportProgress'; id: number; value: import('./engine/engine').ExportReport }
+  | { type: 'exported'; id: number; value: import('./engine/engine').ExportReport }
   | { type: 'result'; id: number; value: import('./engine/engine').EnginePage }
   | { type: 'queryFailed'; id: number; message: string };

@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-015: stream complete successful SQL results to CSV or exact string-valued
+  JSON using bounded worker writes. Add export controls, row/byte progress,
+  cancellation/recovery, source/sidecar/alias protection and atomic output saves.
+  Disclose CSV NULL conventions and BLOB omission; preserve existing output on
+  pre-commit failure/cancellation and report cleanup failures after closure.
+  Handle late Cancel at the final save boundary with the actual save outcome.
+
 - T-018: add full cell details to Browse and SQL results, token-preserving JSON
   formatting, page-scoped rectangular selection, and copy cell/row/selection as
   TSV. Worker preparation preserves exact integers and NULL/empty/BLOB fidelity,

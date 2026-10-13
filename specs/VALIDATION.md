@@ -2137,6 +2137,156 @@ review has been performed or claimed; retain section 6's whole-milestone review
 requirement. No milestone closure or release tag. The complete T-014 diff starts
 at `1d2fc4f`. Existing untracked files remain untouched.
 
+### T-015 streamed result export (2026-10-13)
+
+Owner approves full T-015 implementation and delegates unresolved decisions.
+SPEC T-015 defines full successful-query export, exact string-valued JSON,
+quoted CSV with unquoted NULL `\N`, duplicate/blank headers and BLOB placeholders.
+No dependency, source write, table-export feature or export page/cell cap.
+
+Coverage (new tests have FR-014 Given/When/Then names):
+- `result-export.test.ts`: exact int64/REAL/TEXT/NULL/BLOB, stored JSON,
+  Unicode/NUL/BOM, quoting/CRLF/NULL collisions, duplicate/blank/1,000 headers,
+  empty results, multi-MiB cells, bounded chunks, slow-sink backpressure and
+  cursor closure on failure.
+- `export-engine.test.ts`: both backends, 25,000 rows beyond paging limits,
+  4,300,000-character cell, bounded progress, invalid SQL/existing temporary path,
+  aggregate/writing cancellation, forced helper death, closure, cleanup after
+  helper exit, recovery and byte-identical source fixtures.
+- `export-service.test.ts` / `export-failures.test.ts`: atomic replacement,
+  source/hard-link/linked-parent and sidecar protection, pre-commit recheck,
+  dismissed/pending dialogs, stale/cancelled completion, missing-source guidance,
+  failed rename, existing output preservation and visible cleanup failure.
+- Browser/provider/protocol suites: successful SQL context after edits/failures,
+  table-mode rejection, nonterminal progress, Saving/Cancel state, stale replies,
+  retained page/state, validated counter strings and closure-failure notification.
+- `export-memory.test.ts`: isolated million-row serializer with discard sink;
+  output >100 MB, chunks <=65,536 bytes and RSS growth <128 MiB (scoped test).
+  It does not establish backend sort memory, fallback database memory, real disk
+  throughput or the separate T-016/NFR-003 target.
+- `src/test/result-export.test.ts`: real Chromium export buttons/messages on
+  both backends, 50,000-row CSV/JSON files, final values, edited-SQL isolation,
+  preserved DOM page/summary, host timers and writing cancellation. Only the Save
+  chooser is controlled; all output/publication/cleanup uses production code.
+
+Red-first evidence: missing serializer module; six engine tests fail on missing
+exportResults; absent browser controls/exporter; raw ENOENT for missing source;
+absent notification after closure cleanup failure. Initial sandbox startup has
+spawn EPERM; approved outside-sandbox runs execute the actual tests. No skip,
+weakened assertion, dependency, `any` or lint suppression.
+
+First host candidate: 36 existing tests pass, both new tests fail because their
+comparison baseline firstRow is empty before grid rendering. Actual saved-page
+reports contain all three expected cells. Strengthen the successful-query wait
+with renderedRows >0 and firstRow.length ===3; retain full comparisons, workload,
+timer targets and deadlines. Native/fallback CSV host gaps in this failed run:
+26.6299 /21.0948 ms. JSON/cancellation are not reached. Runtime-log scanning does
+not complete after failing host tests; no warning-free claim applies.
+
+Initial serializer measurement: 1,000,000 rows, 141,888,926 output bytes,
+2,166 writes, max chunk 65,536; RSS baseline 51,150,848 /sampled peak 85,643,264
+bytes; 15,882.2294 ms. Scoped Windows-process evidence only.
+Required gate results are recorded below from observed command output.
+
+Pre-race-repair standalone `npm run verify` passes 476 tests /44 files, zero
+errors/warnings; unit stage 197.37 s, 20-file /621.71-KB package. This is not the
+final candidate: two new red-first regressions then reproduce a late Cancel
+request at/after Saving leaving the UI busy. Host now returns the actual save
+outcome using the Cancel request ID; the webview accepts that terminal outcome.
+Pre-commit cancellation still aborts and preserves existing output. Focused
+48-test browser run passes after repair. Final candidate gates remain required.
+
+Repaired final-candidate `npm run verify:full` passes, exit 0: 478 unit tests /
+44 files (195.39 s), 38 real-host tests in VS Code 1.140.0 /Node 24.21.0 /Windows
+x64, strict types/lint/builds and 20-file /622.66-KB VSIX. One approved renderer
+record is accepted; full is NOT warning-free:
+- Source `out/integration-profile-WfSRTK/logs/20261013T132107/window1/renderer.log`,
+  line 10; original severity `warning`; rule `VSCODE-HOST-001`; exact message:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other warning/error is accepted. The failed host candidate remains above.
+
+Repaired real-host workload: 50,000 rows, duplicate blank headers, maximum int64
+and 128-character text; both files checked through the final row. Native CSV/JSON:
+941.2715 /920.1156 ms, 61 /60 host ticks, max gaps 16.7076 /19.6511 ms.
+Fallback CSV/JSON: 1284.5997 /1425.1728 ms, 83 /91 ticks, max gaps 17.3339 /
+24.3824 ms. Both larger writing exports cancel and preserve existing output,
+successful DOM results and source hash. These are scoped host measurements,
+not every-machine performance or the separate T-016 memory target.
+
+Full-run serializer: 1,000,000 rows, 141,888,926 bytes, 2,166 writes, max chunk
+65,536 bytes; RSS baseline 58,777,600 /sampled peak 93,069,312 bytes;
+10,293.3959 ms. Native-dialog QA, independent review and new CI stay open.
+
+Final standalone `npm run verify` passes, exit 0: 478 tests /44 files (201.82 s),
+strict host/webview/tooling types, lint, production bundles and 20-file /622.66-KB
+package; ZERO errors and ZERO warnings. Final serializer output is unchanged:
+141,888,926 bytes in 2,166 bounded writes; RSS baseline 58,822,656 /sampled peak
+93,097,984 bytes; 12,682.742 ms. Only evidence/handoff documentation is updated
+after this gate; no implementation/test change follows it.
+
+Native-dialog and visual owner QA (owner reports all six PASS; F5 / Run Extension):
+1. Open `test/fixtures/sample.sqlite`. Run `SELECT *, zeroblob(24) AS bytes FROM
+   fidelity ORDER BY rowid`. Keyboard-activate Export CSV and Export JSON to
+   disposable local paths. Inspect exact int64 strings, REAL strings, NULL/empty
+   conventions and BLOB placeholders; check controls/help in light/dark themes.
+2. Run `WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<205)
+   SELECT x AS id FROM n`. Export from page 2: verify all 205 rows starting at 1.
+   Edit SQL without Run: export still uses that successful query. JSON contains
+   columns and row arrays of strings.
+3. Dismiss the Save dialog: old results remain, no output appears. Choose the
+   source SQLite file: clear rejection; source still opens unchanged.
+4. Export over an existing disposable file: native overwrite confirmation and
+   complete replacement. Run `SELECT 1 AS empty WHERE 0`: CSV header only,
+   JSON empty rows.
+5. Run `WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<10000000)
+   SELECT x, printf('%.*c',1024,'x') FROM n`. Export over existing disposable
+   output; Cancel while counters increase. Old output survives, temporary folder
+   disappears, page/text survive and a new query works.
+6. Repeat writing export and close the tab before Saving: old output survives
+   and temporary files disappear. Progress/Cancel work during writing; Cancel
+   disables at Saving. Existing memory-limited banner stays if using fallback.
+Report numbered PASS/FAIL results; do not overwrite valuable files for QA.
+
+Commands: `npm run verify`; `npm run verify:full`. Owner reports every numbered
+QA check PASS. Local automated acceptance and owner QA are now covered. Section 6
+fresh-chat review and CI on a commit containing T-015 remain pending. Keep T-015
+unchecked until that evidence is reconciled. T-016 is not started.
+
+#### T-015 owner QA and supplied CI audit (2026-10-13)
+
+Owner says "All QA number PASS" and supplies
+[run 38352950470](https://github.com/JreyForFun/lite-voyager/actions/runs/38352950470).
+Record all six numbered native-dialog/visual checks above as owner-reported PASS.
+Individual observations and separate manual backend results are not supplied.
+Existing automated both-backend evidence remains unchanged.
+
+Public GitHub API metadata confirms attempt 1, push on main, completed success
+at `6e25977cc72c6d879b4b49919ff631b5492cb8bd`:
+- Windows job 115149266147: locked installation and Windows/macOS verification
+  step succeed.
+- Ubuntu job 115149266156: locked installation and Linux session-bus/virtual-display
+  verification step succeed.
+- macOS job 115149266161: locked installation and Windows/macOS verification
+  step succeed.
+
+That SHA is the local HEAD, `docs: close T-014 and hand off T-015 per owner
+direction`. Its tree contains none of the new export service, serializer or
+export host/unit tests; T-015 changes are still uncommitted at audit time.
+Consequently this is valid green CI evidence for the previous commit, not for
+T-015. Do not close candidate CI from this run. Commit the actual export code and
+tests, then obtain fresh three-platform CI after the owner's push. Remote raw
+logs/test counts/warning counts were not retrieved or called warning-free.
+Fresh-chat review must include the complete cumulative diff from 6e25977,
+including all eight newly created source/test files. No review result is claimed.
+No implementation or test change follows the prior passing local gates.
+
+Follow-up `npm run verify` after the owner QA/CI audit passes, exit 0: 478 tests /
+44 files (217.06 s), zero errors/warnings, all strict checks/builds and a 20-file /
+622.68-KB package. Only documentation evidence is updated after this gate.
+Prepare a local T-015 implementation/test/handoff commit for the owner's push;
+keep fresh-chat review and actual-candidate CI pending, and exclude generated
+owner exports and unrelated untracked files from that commit.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -2198,6 +2348,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-015 owner QA/CI audit (2026-10-13): Record QA 1–6 PASS; independently verify green 38352950470 on the old 6e25977 tree. Preserve missing actual-candidate CI and fresh-review requirements.
+- T-015 (2026-10-13): Record delegated contract, red-first tests, scoped memory evidence, failed pre-render comparison and strengthened DOM wait. Retain native-dialog QA, fresh review and post-push CI.
 - T-014 owner-directed closure (2026-10-13): Record the owner's confirmation that checks are complete and the next chat is T-015. Close the task with existing passing evidence, without inventing an independent review result or closing the milestone.
 - T-014 green repair CI (2026-10-13): Independently confirm run 38346736300/attempt 1/780f974 success for locked installs and applicable full checks on all three platforms. Preserve failures, exact local warning records and remote-log limits; leave only independent review open.
 - T-014 final CI measurement repair (2026-10-13): Replace rejected startup flags with keyed opt-in host pulses/native observations, preserve complete gap and failure metrics, and serialize unit files without changing test workloads/deadlines. Record final 447-test zero-warning verify and 36-host full pass with its exact approved renderer warning. Owner QA 1-6 passes; fresh CI/review remain open.

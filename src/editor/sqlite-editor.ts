@@ -1,4 +1,4 @@
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import { EngineClient } from '../engine/engine-client';
@@ -72,6 +72,22 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
       nonce: randomBytes(16).toString('hex'), cspSource: panel.webview.cspSource,
     };
     let disposed = false;
+    document.onDispose(() => {
+      void document.session.closed.then(() => {
+        const state = document.session.state;
+        if (state.phase === 'error' && state.message.startsWith('Export temporary')) { void vscode.window.showErrorMessage(state.message); }
+      });
+    });
+    document.session.configureExport(async (format) => {
+      const destination = await vscode.window.showSaveDialog({
+        title: `Export complete query results as ${format.toUpperCase()}`,
+        defaultUri: vscode.Uri.file(join(dirname(document.uri.fsPath), `results.${format}`)),
+        filters: format === 'csv' ? { CSV: ['csv'] } : { JSON: ['json'] }, saveLabel: 'Export',
+      });
+      if (destination === undefined || disposed) { return undefined; }
+      if (destination.scheme !== 'file') { throw new Error('Choose a local file destination for streamed export.'); }
+      return destination.fsPath;
+    });
     const cells = new CellService(join(this.extensionPath, 'dist'), (text) => vscode.env.clipboard.writeText(text),
       (reply) => { if (!disposed) { void panel.webview.postMessage(reply); } });
     const removeCellCleanup = document.onDispose(() => { cells.dispose(); });

@@ -9,6 +9,7 @@ import { collectPage, checkParameters, checkReadStatement } from '../engine/read
 import { needsFallbackConsent, selectBuiltin } from '../engine/selection';
 import { metadataPage } from '../engine/schema';
 import { gridPage } from '../engine/grid-query';
+import { writeResults } from './result-export';
 
 const port = parentPort;
 if (port === null) { throw new Error('The database engine must run in a worker.'); }
@@ -60,6 +61,14 @@ async function start(): Promise<void> {
   port?.on('message', (request: DatabaseWorkerRequest) => {
     if (request.type === 'consent' && resolveConsent !== undefined) {
       const resolve = resolveConsent; resolveConsent = undefined; resolve(request.approved === true);
+    } else if (request.type === 'export' && backend !== undefined) {
+      void writeResults(backend, request.sql, request.format, request.path, (value) => reply({ type: 'exportProgress', id: request.id, value }))
+        .then((value) => reply({ type: 'exported', id: request.id, value }), (error: unknown) => {
+          const detail = error instanceof Error ? error.message : '';
+          const safe = /^(The read-only|Run only one|Invalid |Unsupported |Memory-limited|The query has)/u.test(detail);
+          reply({ type: 'queryFailed', id: request.id, message: safe ? detail
+            : 'The export could not finish. Check SQL, destination permissions and free disk space, then retry. No partial output was saved.' });
+        });
     } else if ((request.type === 'query' || request.type === 'metadata' || request.type === 'grid') && backend !== undefined) { query(backend, request); }
   });
   reply({ type: 'mode', value: mode });

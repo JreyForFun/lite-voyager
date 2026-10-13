@@ -20,6 +20,10 @@ export interface OpenOptions {
   confirmLargeFile?: (mode: EngineMode) => Promise<boolean>;
 }
 
+export type ExportFormat = 'csv' | 'json';
+export interface ExportReport { rows: string; bytes: string; blobs: string; }
+export interface ExportProgress extends ExportReport { phase: 'writing' | 'saving'; }
+
 /** All callers use the supervised helper/worker client, never a synchronous backend. */
 export interface Engine {
   open(path: string, options?: OpenOptions): Promise<EngineOpened>;
@@ -34,6 +38,8 @@ export interface Engine {
   /** Worker-side validated sort/filter reads, preflight warning or filtered count. */
   grid(table: string, options: import('../protocol').GridOptions, page?: PageAddress, kind?: 'rows' | 'count'): Promise<EnginePage>;
   query(sql: string, parameters?: Parameter[], page?: PageAddress, started?: () => void): Promise<EnginePage>;
+  /** Stream one execution to a fresh host-owned temporary file in the worker. */
+  exportResults(sql: string, format: ExportFormat, path: string, progress?: (report: ExportReport) => void): Promise<ExportReport>;
   /** Interrupt execution, confirm helper exit, and reopen a previously opened file. */
   cancel(): Promise<void>;
   close(): Promise<void>;

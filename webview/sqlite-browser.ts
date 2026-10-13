@@ -44,6 +44,9 @@ export class BrowserView {
   private readonly countButton: HTMLButtonElement;
   private readonly cancelButton: HTMLButtonElement;
   private readonly browseButton: HTMLButtonElement;
+  private readonly exportCsv: HTMLButtonElement;
+  private readonly exportJson: HTMLButtonElement;
+  private exportSaving = false;
   private readonly sqlLimitStatus: HTMLElement;
   private readonly filterColumn: HTMLSelectElement;
   private readonly filterOperator: HTMLSelectElement;
@@ -98,6 +101,7 @@ export class BrowserView {
     this.listPrevious = find('browser-list-previous'); this.listNext = find('browser-list-next');
     this.countButton = find('browser-count'); this.cancelButton = find('browser-cancel');
     this.browseButton = find('browser-browse');
+    this.exportCsv = find('browser-export-csv'); this.exportJson = find('browser-export-json');
     this.sqlLimitStatus = find('sql-limit-status');
     this.filterColumn = find('browser-filter-column'); this.filterOperator = find('browser-filter-operator'); this.filterValue = find('browser-filter-value');
     this.applyFilter = find('browser-filter-apply'); this.removeFilter = find('browser-filter-remove'); this.clearGrid = find('browser-grid-clear');
@@ -119,6 +123,8 @@ export class BrowserView {
     for (const [button, action] of [[this.previous, 'previous'], [this.next, 'next'], [this.listPrevious, 'listPrevious'], [this.listNext, 'listNext'], [this.countButton, 'count'], [this.cancelButton, 'cancel'], [this.browseButton, 'browse']] as const) {
       button.addEventListener('click', () => { this.exercise({ type: 'browserExercise', action }); }, options);
     }
+    this.exportCsv.addEventListener('click', () => { this.exercise({ type: 'browserExercise', action: 'exportCsv' }); }, options);
+    this.exportJson.addEventListener('click', () => { this.exercise({ type: 'browserExercise', action: 'exportJson' }); }, options);
     this.controls();
   }
 
@@ -135,7 +141,7 @@ export class BrowserView {
   editorFailed(): void { this.message('The SQL editor could not initialize. Close and reopen the file.', true); this.report(); }
 
   runSql(sql: string): void {
-    if (this.disposed || this.pending === 'browserCancel') { return; }
+    if (this.disposed || this.pending === 'browserCancel' || this.pending === 'browserExport') { return; }
     if (sql.trim().length === 0) { this.message('Enter SQL or select a statement, then Run.', true); this.report(); return; }
     if (sql.length > MAX_SQL_LENGTH || sql.includes('\0')) {
       this.message('SQL exceeds the 4-Mi-character limit or contains a NUL character. Nothing was truncated. Shorten the text or run a smaller selection. Oversized editor text is not saved across tab hiding.', true);
@@ -163,10 +169,12 @@ export class BrowserView {
   private request(message: BrowserRequest): void {
     if (this.disposed) { return; }
     this.pending = message.type;
+    this.exportSaving = false;
     this.warningPage = undefined;
     this.pendingPage = message.type === 'browserPage' ? message : undefined;
     this.pendingSql = message.type === 'browserQuery' ? message.sql : null;
     const label = message.type === 'browserCount' ? 'Counting rows in the worker. You can cancel.'
+      : message.type === 'browserExport' ? 'Choose a destination. Export reruns the complete successful query; you can cancel.'
       : message.type === 'browserCancel' ? 'Cancelling and reopening the database…'
       : message.type === 'browserList' ? 'Loading tables and views…' : message.type === 'browserQuery' ? 'Running SQL in the worker…' : 'Loading rows…';
     this.message(label); this.controls(); this.post(message); this.report();
@@ -229,6 +237,16 @@ export class BrowserView {
 
   receive(message: BrowserResponse): void {
     if (this.disposed || message.requestId !== this.requestId || this.pending === null || !isBrowserResponse(message)) { return; }
+    if (message.type === 'browserExportProgress') {
+      if (this.pending === 'browserExport') {
+        this.exportSaving = message.phase === 'saving';
+        this.message(this.exportSaving ? `Saving ${message.rows} rows atomically…`
+          : `Exporting: ${message.rows} rows · ${message.bytes} bytes written · ${message.blobs} BLOB placeholders. You can cancel.`);
+        this.controls(); this.report();
+      }
+      return;
+    }
+    if (message.type === 'browserExportDone' && this.pending !== 'browserExport' && this.pending !== 'browserCancel') { return; }
     if (message.type === 'browserQueryStarted') {
       if (this.pending === 'browserQuery') {
         this.message('Running SQL: the worker is executing. You can cancel.'); this.report();
@@ -239,9 +257,13 @@ export class BrowserView {
     const pendingPage = this.pendingPage;
     if (message.type === 'browserQueryRows' && (this.pending !== 'browserQuery' || sql === null)) { return; }
     this.pending = null;
+    this.exportSaving = false;
     this.pendingSql = null;
     this.pendingPage = undefined;
     switch (message.type) {
+      case 'browserExportDone':
+        this.message(message.report === undefined ? 'Export dismissed. Existing output was not changed.'
+          : `Export saved: ${message.report.rows} rows · ${message.report.bytes} bytes · ${message.report.blobs} BLOB placeholders (binary contents omitted).`); break;
       case 'browserTables': {
         this.listOffset = message.offset; this.listHasMore = message.hasMore;
         this.objects = message.objects.map((object) => object.name);
@@ -312,14 +334,16 @@ export class BrowserView {
     const pageBlocked = busy || this.warningPage !== undefined;
     this.root.setAttribute('aria-busy', String(busy));
     const results = this.table !== null || this.query.sql !== null;
-    this.select.disabled = this.objects.length === 0 || this.pending === 'browserList' || this.pending === 'browserCancel';
+    this.select.disabled = this.objects.length === 0 || this.pending === 'browserList' || this.pending === 'browserCancel' || this.pending === 'browserExport';
     this.size.disabled = pageBlocked;
     this.previous.disabled = !results || pageBlocked || this.offset === 0;
     this.next.disabled = !results || pageBlocked || !this.hasMore;
     this.countButton.disabled = this.table === null || this.query.sql !== null || pageBlocked;
     this.listPrevious.disabled = busy || this.listOffset === 0;
     this.listNext.disabled = busy || !this.listHasMore;
-    this.cancelButton.disabled = !busy || this.pending === 'browserCancel';
+    this.cancelButton.disabled = !busy || this.pending === 'browserCancel' || this.exportSaving;
+    this.exportCsv.disabled = busy || this.query.sql === null;
+    this.exportJson.disabled = busy || this.query.sql === null;
     this.browseButton.disabled = busy || !this.objects.includes(this.select.value);
     this.editor?.setDisabled(busy);
     const enabled = this.gridEnabled() && this.warningPage === undefined;
@@ -347,6 +371,10 @@ export class BrowserView {
     }
     if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
+      case 'exportCsv': case 'exportJson':
+        if (!(message.action === 'exportCsv' ? this.exportCsv : this.exportJson).disabled) {
+          this.request({ type: 'browserExport', requestId: ++this.requestId, format: message.action === 'exportCsv' ? 'csv' : 'json' });
+        } break;
       case 'startResponsiveness': this.startProbe(); this.report(); break;
       case 'stopResponsiveness': this.stopProbe(); this.report(); break;
       case 'select': if (!this.select.disabled && message.value !== undefined) { this.choose(message.value); } break;

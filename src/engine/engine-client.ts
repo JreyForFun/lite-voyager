@@ -1,7 +1,7 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import type { DatabaseHelperRequest, DatabaseMetadata, DatabaseOperation, DatabaseResponse, DatabaseWorkerRequest } from '../protocol';
-import type { Engine, EngineOpened, EnginePage, OpenOptions, PageAddress, Parameter } from './engine';
+import type { Engine, EngineOpened, EnginePage, ExportFormat, ExportReport, OpenOptions, PageAddress, Parameter } from './engine';
 import { checkParameters, pageAddress, quoteIdentifier } from './read-engine';
 import { isGridOptions, type GridOptions } from '../protocol';
 
@@ -12,6 +12,7 @@ interface Pending {
 interface Session {
   process: ChildProcess; exited: Promise<void>; stopping: boolean; failed: boolean; ready: boolean;
   rejectOpen: ((error: Error) => void) | undefined; pending: Pending | undefined;
+  exportPending?: { id: number; resolve: (value: ExportReport) => void; reject: (error: Error) => void; progress?: (report: ExportReport) => void } | undefined;
 }
 interface OpenedFile { path: string; options: OpenOptions; opened: EngineOpened; }
 
@@ -67,13 +68,18 @@ export class EngineClient implements Engine {
             session.failed = true; session.ready = false;
             reject(new Error(message.message));
             this.failPending(session, message.message);
+          } else if (message.id === session.exportPending?.id) {
+            const pending = session.exportPending;
+            if (message.type === 'exportProgress') { pending.progress?.(message.value); }
+            else if (message.type === 'exported') { session.exportPending = undefined; pending.resolve(message.value); }
+            else if (message.type === 'queryFailed') { session.exportPending = undefined; pending.reject(new Error(message.message)); }
           } else if (message.id === session.pending?.id) {
             const pending = session.pending;
             if (message.type === 'started') { pending.started?.(); }
             else {
               session.pending = undefined;
               if (message.type === 'result') { pending.resolve(message.value); }
-              else { pending.reject(new Error(message.message)); }
+              else if (message.type === 'queryFailed') { pending.reject(new Error(message.message)); }
             }
           }
         });
@@ -137,11 +143,23 @@ export class EngineClient implements Engine {
   private async execute(request: DatabaseOperation, started?: () => void): Promise<EnginePage> {
     const session = this.session;
     if (session === undefined || !session.ready || session.stopping || session.failed) { throw new Error('First open a SQLite file. Reopen it if the database worker stopped.'); }
-    if (session.pending !== undefined) { throw new Error('A database query is already running. Wait or cancel it.'); }
+    if (session.pending !== undefined || session.exportPending !== undefined) { throw new Error('A database query is already running. Wait or cancel it.'); }
     const id = ++this.nextId;
     return new Promise((resolve, reject) => {
       session.pending = { id, resolve, reject, started };
       this.request(session, { ...request, id });
+    });
+  }
+
+  async exportResults(sql: string, format: ExportFormat, path: string, progress?: (report: ExportReport) => void): Promise<ExportReport> {
+    const session = this.session;
+    if (session === undefined || !session.ready || session.stopping || session.failed) { throw new Error('First open a SQLite file. Reopen it if the database worker stopped.'); }
+    if (session.pending !== undefined || session.exportPending !== undefined) { throw new Error('A database query is already running. Wait or cancel it.'); }
+    if ((format !== 'csv' && format !== 'json') || typeof path !== 'string' || path.length === 0 || path.includes('\0')) { throw new Error('Invalid export destination or format. Choose a local CSV or JSON file.'); }
+    const id = ++this.nextId;
+    return new Promise((resolve, reject) => {
+      session.exportPending = { id, resolve, reject, ...(progress === undefined ? {} : { progress }) };
+      this.request(session, { type: 'export', id, sql, format, path });
     });
   }
 
@@ -194,6 +212,9 @@ export class EngineClient implements Engine {
   private failPending(session: Session, message: string): void {
     session.pending?.reject(new Error(message));
     session.pending = undefined;
+    const pending = session.exportPending; session.exportPending = undefined;
+    // Output cleanup must not race a worker that still holds the temporary file.
+    if (pending !== undefined) { void this.stop(session, message).then(() => { pending.reject(new Error(message)); }); }
   }
 
   private async stop(session: Session, message: string): Promise<void> {

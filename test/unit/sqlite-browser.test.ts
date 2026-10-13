@@ -2,9 +2,11 @@ import { expect, test, vi } from 'vitest';
 import type { Engine, EnginePage } from '../../src/engine/engine';
 import { SqliteBrowser } from '../../src/editor/sqlite-browser';
 import { isBrowserRequest, isBrowserResponse, type BrowserResponse } from '../../src/protocol';
+import type { ExportRunner } from '../../src/editor/export-service';
 
 function fixture() {
   const engine = {
+    exportResults: vi.fn<Engine['exportResults']>(),
     grid: vi.fn<Engine['grid']>(),
     open: vi.fn<Engine['open']>(), close: vi.fn<Engine['close']>(), cancel: vi.fn<Engine['cancel']>().mockResolvedValue(undefined),
     schema: vi.fn<Engine['schema']>().mockResolvedValue({ columns: ['type', 'name', 'tbl_name', 'sql'], rows: [['table', 'select "🚀', 'select "🚀', 'CREATE TABLE...']], hasMore: false }),
@@ -19,6 +21,61 @@ function fixture() {
   const send = (message: BrowserResponse): void => { sent.push(message); };
   return { engine, browser, sent, send };
 }
+
+test('FR-014: Given atomic Saving has begun, When a late Cancel request arrives, Then the actual saved outcome acknowledges that request without interrupting the engine', async () => {
+  const { engine, browser, sent, send } = fixture(); let finish!: () => void;
+  const report = { rows: '205', bytes: '1000', blobs: '0' };
+  browser.setExporter({ run: async (_sql, _format, progress) => {
+    progress({ ...report, phase: 'saving' }); await new Promise<void>((resolve) => { finish = resolve; }); return report;
+  }, abort: vi.fn(), settled: () => pendingSave });
+  let resolveSave!: () => void; const pendingSave = new Promise<void>((resolve) => { resolveSave = resolve; });
+  await browser.handle({ type: 'browserQuery', requestId: 1, sql: 'SELECT 1', offset: 0, limit: 1 }, send);
+  const exporting = browser.handle({ type: 'browserExport', requestId: 2, format: 'csv' }, send);
+  const lateCancel = browser.handle({ type: 'browserCancel', requestId: 3 }, send);
+  finish(); await exporting; resolveSave(); await lateCancel;
+  expect(engine.cancel).not.toHaveBeenCalled();
+  expect(sent.at(-1)).toEqual({ type: 'browserExportDone', requestId: 3, report });
+  await browser.handle({ type: 'browserCancel', requestId: 4 }, send);
+  expect(sent.at(-1)).toEqual({ type: 'browserExportDone', requestId: 4, report });
+  expect(engine.cancel).not.toHaveBeenCalled();
+});
+
+test('FR-014: Given a successful query followed by failure, When exporting, Then only successful SQL is rerun and progress is nonterminal', async () => {
+  const { engine, browser, sent, send } = fixture();
+  const exporter = { run: vi.fn<ExportRunner['run']>().mockImplementation((_sql, _format, progress) => {
+    progress({ phase: 'writing', rows: '1', bytes: '64', blobs: '0' });
+    progress({ phase: 'saving', rows: '2', bytes: '128', blobs: '0' }); return Promise.resolve({ rows: '2', bytes: '128', blobs: '0' });
+  }), abort: vi.fn(), settled: vi.fn().mockResolvedValue(undefined) };
+  browser.setExporter(exporter);
+  await browser.handle({ type: 'browserExport', requestId: 1, format: 'csv' }, send);
+  expect(sent.at(-1)).toMatchObject({ type: 'browserError' }); expect(exporter.run).not.toHaveBeenCalled();
+  await browser.handle({ type: 'browserQuery', requestId: 2, sql: 'SELECT 42', offset: 100, limit: 1 }, send);
+  engine.query.mockRejectedValueOnce(new Error('bad SQL'));
+  await browser.handle({ type: 'browserQuery', requestId: 3, sql: 'SELECT bad', offset: 0, limit: 1 }, send);
+  await browser.handle({ type: 'browserExport', requestId: 4, format: 'json' }, send);
+  expect(exporter.run).toHaveBeenCalledWith('SELECT 42', 'json', expect.any(Function));
+  expect(sent.slice(-3)).toEqual([
+    { type: 'browserExportProgress', requestId: 4, phase: 'writing', rows: '1', bytes: '64', blobs: '0' },
+    { type: 'browserExportProgress', requestId: 4, phase: 'saving', rows: '2', bytes: '128', blobs: '0' },
+    { type: 'browserExportDone', requestId: 4, report: { rows: '2', bytes: '128', blobs: '0' } },
+  ]);
+  await browser.handle({ type: 'browserPage', requestId: 5, table: 'data', offset: 0, limit: 1 }, send);
+  await browser.handle({ type: 'browserExport', requestId: 6, format: 'csv' }, send);
+  expect(sent.at(-1)).toMatchObject({ type: 'browserError' }); expect(exporter.run).toHaveBeenCalledOnce();
+});
+test('FR-014: Given export in flight, When Cancel supersedes it, Then cleanup/recovery finish before acknowledgement and stale progress is ignored', async () => {
+  const { browser, sent, send } = fixture(); let progress!: Parameters<ExportRunner['run']>[2]; let finish!: () => void;
+  const exporter = { run: vi.fn<ExportRunner['run']>().mockImplementation(async (_sql, _format, report) => {
+    progress = report; await new Promise<void>((resolve) => { finish = resolve; }); return { rows: '1', bytes: '1', blobs: '0' };
+  }), abort: vi.fn(() => { finish(); }), settled: vi.fn().mockResolvedValue(undefined) };
+  browser.setExporter(exporter); await browser.handle({ type: 'browserQuery', requestId: 1, sql: 'SELECT 1', offset: 0, limit: 1 }, send);
+  const task = browser.handle({ type: 'browserExport', requestId: 2, format: 'csv' }, send);
+  await browser.handle({ type: 'browserCancel', requestId: 3 }, send); await task;
+  progress({ phase: 'writing', rows: '9', bytes: '99', blobs: '0' });
+  expect(exporter.abort).toHaveBeenCalledOnce(); expect(exporter.settled).toHaveBeenCalledOnce();
+  expect(sent.at(-1)).toEqual({ type: 'browserCancelled', requestId: 3 });
+  browser.dispose(); expect(exporter.abort).toHaveBeenCalledTimes(2);
+});
 
 test('FR-011: Given selected SQL and a page address, When running in the host, Then the Engine receives literal SQL and returns bounded rows with elapsed time', async () => {
   const { engine, browser, sent, send } = fixture();

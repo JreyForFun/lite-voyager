@@ -1,6 +1,18 @@
 import { describe, expect, test } from 'vitest';
 import { isHostMessage, isWebviewMessage } from '../../src/protocol';
 
+test('FR-014: Given export requests and bounded counters, When validating messages, Then only CSV/JSON and exact nonnegative counter strings are accepted', () => {
+  expect(isWebviewMessage({ type: 'browserExport', requestId: 1, format: 'csv' })).toBe(true);
+  expect(isWebviewMessage({ type: 'browserExport', requestId: 2, format: 'json' })).toBe(true);
+  for (const format of ['sql', '', null, 1]) { expect(isWebviewMessage({ type: 'browserExport', requestId: 1, format })).toBe(false); }
+  const reply = { type: 'browserExportProgress', requestId: 1, phase: 'writing', rows: '9007199254740993', bytes: '65536', blobs: '0' };
+  expect(isHostMessage(reply)).toBe(true);
+  for (const change of [{ phase: 'finished' }, { rows: 1 }, { bytes: '-1' }, { blobs: '01' }, { rows: 'x'.repeat(1000) }]) { expect(isHostMessage({ ...reply, ...change })).toBe(false); }
+  expect(isHostMessage({ type: 'browserExportDone', requestId: 1 })).toBe(true);
+  expect(isHostMessage({ type: 'browserExportDone', requestId: 1, report: { rows: '0', bytes: '0', blobs: '0' } })).toBe(true);
+  expect(isHostMessage({ type: 'browserExportDone', requestId: 1, report: { rows: '0' } })).toBe(false);
+});
+
 test('FR-018: Given visible-cell column ordinals, When validating DOM reports, Then in-range ordinals survive and malformed or out-of-range positions fail', () => {
   const cell = { text: '1e-200', length: 6, label: null, column: 6 };
   const status = { type: 'browserStatus', revision: 1, table: 'a values', offset: 0, cachedRows: 1, renderedRows: 1, renderedColumns: 6, columns: 9,

@@ -25,6 +25,14 @@ function browserShell(assets: SqliteEditorAssets): string {
   return `<section id="browser" aria-label="Table browser">
 <div class="sql-toolbar"><h2>SQL</h2><button id="sql-run" disabled>Run SQL</button><span>Ctrl/Cmd+Enter · selection or whole editor · read-only</span></div>
 <div id="sql-editor"></div>
+<div class="browser-toolbar" aria-label="Export query results"><button id="browser-export-csv" disabled>Export CSV</button>
+<button id="browser-export-json" disabled>Export JSON</button></div>
+<p class="browser-help">Export reruns the complete last successful query once, including all pages; changed files and nondeterministic SQL may give different results.
+CSV uses UTF-8, comma-separated quoted fields, CRLF records and unquoted \\N for NULL; empty text is "" and literal \\N is quoted.
+Consumers must honor this NULL convention. Spreadsheet formulas are exported literally.
+JSON uses columns and row arrays; all non-NULL values are exact strings so 64-bit integers are never rounded by JSON parsers.
+Stored JSON stays text. BLOBs export placeholders only; binary contents are omitted.
+Cancel works until Saving begins; the final atomic save cannot be cancelled.</p>
 <p id="sql-limit-status" role="status" aria-live="polite" hidden></p>
 <p class="browser-help">Run one read-only statement. SQL transport and saved editor state have a 4-Mi-character limit (UTF-16 code units).
 Results are paged; the exact total appears at the final page. Page time includes worker transport and offset traversal.

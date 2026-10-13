@@ -18,6 +18,9 @@ list and virtualized browsing grid with exact cell display and explicit row
 counts. T-013 adds a CodeMirror SQL editor with selection-only Run, Ctrl/Cmd+Enter,
 paged results, page execution time and SQLite diagnostics that preserve previous
 results. T-018 adds full cell details, exact JSON formatting and TSV copying.
+T-015 adds streamed CSV/JSON export of complete SQL results with progress,
+cancellation and atomic output saves. Owner QA 1–6 passes; fresh review and CI
+on a commit containing T-015 remain pending.
 The schema panel remains later milestone work.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 T-008 now provides an experimental CodeMirror editor and synthetic grid;
@@ -60,6 +63,30 @@ npm run package
 The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
+
+## Export SQL results (T-015)
+
+Run a query, then choose **Export CSV** or **Export JSON** and a local destination.
+Export reruns the last successful SQL once from the beginning, including every
+page. Editing the SQL text without running it does not change that export query.
+Nondeterministic SQL and external database changes can produce different results.
+The source database and its aliases/SQLite sidecars cannot be export destinations.
+
+CSV has a header and CRLF records. Fields are quoted; SQL NULL is an unquoted
+`\N`, empty text is `""`, and literal `\N` is quoted. Consumers must honor that
+NULL convention. Spreadsheet formulas are exported literally.
+JSON contains `columns` and `rows` arrays; every non-NULL value is a string,
+including exact INTEGER/REAL text, so ordinary JSON parsers cannot round int64
+values. Stored JSON remains text. Both formats use BLOB placeholders only and
+omit binary contents, as explained above the export controls.
+
+Rows are streamed in the database worker. Cancel works during execution/writing;
+Saving marks the final atomic commit and cannot be cancelled. Before that point,
+cancellation or failure leaves existing output untouched and removes temporary
+files. If cleanup fails, a message explains which temporary folder to inspect.
+Memory includes the backend's current row; fallback still loads its database.
+The six native-dialog/visual checks are in
+[T-015 validation](specs/VALIDATION.md#t-015-streamed-result-export-2026-10-13).
 
 ## T-013 SQL editor — owner visual check
 
