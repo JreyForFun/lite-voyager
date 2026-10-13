@@ -29,6 +29,7 @@ export class BrowserElement extends EventTarget {
 
 export function browserRoot(ids: string[]): BrowserElement {
   const root = new BrowserElement();
+  if (ids.includes('browser-select')) { ids = [...ids, 'schema-show', 'schema-panel', 'schema-title', 'schema-kind', 'schema-index', 'schema-inspect', 'schema-size', 'schema-previous', 'schema-next', 'schema-rows', 'schema-status']; }
   for (const id of ids) { root.elements.set(id, new BrowserElement()); }
   return root;
 }

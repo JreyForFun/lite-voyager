@@ -3,6 +3,7 @@ import { BrowserGrid } from './browser-grid';
 import { QueryView } from './query-view';
 import { SqlEditor } from './sql-editor';
 import { CellDetails } from './cell-details';
+import { SchemaView } from './schema-view';
 import './sqlite-browser.css';
 
 type Post = (message: BrowserRequest | BrowserStatus | CellRequest) => void;
@@ -15,7 +16,7 @@ export function readSavedState(value: unknown): BrowserSavedState {
   const state = value as Record<string, unknown>;
   const safe = (number: unknown): number is number => typeof number === 'number' && Number.isSafeInteger(number) && number >= 0 && number < Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE;
   if (!safe(state['requestId']) || !safe(state['offset']) || !safe(state['listOffset']) || typeof state['limit'] !== 'number' || ![1, 10, 100].includes(state['limit'])
-    || !(state['table'] === null || typeof state['table'] === 'string' && state['table'].length > 0 && !state['table'].includes('\0'))) { return INITIAL_STATE; }
+    || !(state['table'] === null || typeof state['table'] === 'string' && !state['table'].includes('\0'))) { return INITIAL_STATE; }
   const result: BrowserSavedState = { requestId: state['requestId'], table: state['table'], offset: state['offset'], listOffset: state['listOffset'], limit: state['limit'] };
   if (typeof state['sqlText'] === 'string' && state['sqlText'].length <= MAX_SQL_LENGTH) { result.sqlText = state['sqlText']; }
   if (typeof state['querySql'] === 'string' && state['querySql'].length > 0 && state['querySql'].length <= MAX_SQL_LENGTH && !state['querySql'].includes('\0')) { result.querySql = state['querySql']; }
@@ -32,6 +33,7 @@ function savedGrid(grid: GridOptions): GridOptions {
 export class BrowserView {
   private readonly grid: BrowserGrid;
   private readonly details: CellDetails;
+  private readonly schema: SchemaView;
   private readonly select: HTMLSelectElement;
   private readonly size: HTMLSelectElement;
   private readonly status: HTMLElement;
@@ -83,6 +85,7 @@ export class BrowserView {
   private readonly contextId = crypto.randomUUID();
   private exerciseId = 0;
   private responsiveness: BrowserStatus['responsiveness'];
+  private appearance: BrowserStatus['appearance'];
   private probeTimer: ReturnType<typeof setInterval> | undefined;
   private probePrevious = 0;
   private probeKey: string | undefined;
@@ -110,6 +113,7 @@ export class BrowserView {
     this.details = new CellDetails(root, this.contextId, (message) => { this.post(message); }, (mode) => this.grid.copyRows(mode), () => { this.report(); });
     this.grid = new BrowserGrid(find('browser-grid'), () => { this.report(); }, (column) => { this.sortColumn(column); },
       (selection) => { this.details.select(selection); }, () => { this.details.copy('selection'); });
+    this.schema = new SchemaView(root, (request) => { this.request({ type: 'browserSchema', requestId: ++this.requestId, ...request }); });
     const options = { signal: this.events.signal };
     this.select.addEventListener('change', () => { this.choose(this.select.value); }, options);
     this.size.addEventListener('change', () => { this.changeSize(this.size.value); }, options);
@@ -151,8 +155,8 @@ export class BrowserView {
     this.queryPage(sql, 0);
   }
 
-  private queryPage(sql: string, offset: number): void {
-    this.request({ type: 'browserQuery', requestId: ++this.requestId, sql, offset, limit: this.limit });
+  private queryPage(sql: string, offset: number, limit = this.limit): void {
+    this.request({ type: 'browserQuery', requestId: ++this.requestId, sql, offset, limit });
   }
 
   savedState(): BrowserSavedState {
@@ -176,18 +180,19 @@ export class BrowserView {
     const label = message.type === 'browserCount' ? 'Counting rows in the worker. You can cancel.'
       : message.type === 'browserExport' ? 'Choose a destination. Export reruns the complete successful query; you can cancel.'
       : message.type === 'browserCancel' ? 'Cancelling and reopening the database…'
-      : message.type === 'browserList' ? 'Loading tables and views…' : message.type === 'browserQuery' ? 'Running SQL in the worker…' : 'Loading rows…';
+      : message.type === 'browserList' ? 'Loading tables and views…' : message.type === 'browserQuery' ? 'Running SQL in the worker…'
+        : message.type === 'browserSchema' ? 'Loading schema metadata in the worker…' : 'Loading rows…';
     this.message(label); this.controls(); this.post(message); this.report();
   }
 
   private list(offset: number): void {
     this.request({ type: 'browserList', requestId: ++this.requestId, offset });
   }
-  private page(offset: number, allowSlowSort = false): void {
-    if (this.query.sql !== null) { this.queryPage(this.query.sql, offset); }
+  private page(offset: number, allowSlowSort = false, limit = this.limit): void {
+    if (this.query.sql !== null) { this.queryPage(this.query.sql, offset, limit); }
     else if (this.table !== null) {
       const grid = this.gridOptions.sort === undefined && (this.gridOptions.filters?.length ?? 0) === 0 ? {} : { grid: { ...this.gridOptions, ...(allowSlowSort ? { allowSlowSort: true } : {}) } };
-      this.request({ type: 'browserPage', requestId: ++this.requestId, table: this.table, offset, limit: this.limit, ...grid });
+      this.request({ type: 'browserPage', requestId: ++this.requestId, table: this.table, offset, limit, ...grid });
     }
   }
   private choose(table: string, offset = 0, restoredGrid?: GridOptions): void {
@@ -196,6 +201,7 @@ export class BrowserView {
     this.gridOptions = savedGrid(restoredGrid ?? {}); this.shownGrid = savedGrid(this.gridOptions);
     this.columns = []; this.filterColumn.replaceChildren();
     this.table = table; this.select.value = table; this.offset = offset; this.count = null; this.hasMore = false;
+    this.schema.selectObject(table);
     this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0);
     this.total.textContent = 'Total rows: not counted'; this.page(offset);
   }
@@ -232,7 +238,7 @@ export class BrowserView {
   private changeSize(value: string): void {
     const size = Number(value);
     if (![1, 10, 100].includes(size)) { return; }
-    this.limit = size; this.size.value = value; this.page(0);
+    this.size.value = value; this.page(0, false, size);
   }
 
   receive(message: BrowserResponse): void {
@@ -261,6 +267,7 @@ export class BrowserView {
     this.pendingSql = null;
     this.pendingPage = undefined;
     switch (message.type) {
+      case 'browserSchemaRows': this.schema.receive(message); this.message('Schema metadata complete. Data results retained.'); break;
       case 'browserExportDone':
         this.message(message.report === undefined ? 'Export dismissed. Existing output was not changed.'
           : `Export saved: ${message.report.rows} rows · ${message.report.bytes} bytes · ${message.report.blobs} BLOB placeholders (binary contents omitted).`); break;
@@ -279,15 +286,18 @@ export class BrowserView {
         this.restoring = false;
         if (savedQuery !== undefined) {
           this.table = restore ? this.saved.table : first ?? null;
+          this.schema.selectObject(this.table);
           this.select.value = this.table ?? ''; this.queryPage(savedQuery, this.saved.offset); return;
         }
         if (first !== undefined) { this.choose(restore ? this.saved.table ?? first : first, restore ? this.saved.offset : 0, restore ? this.saved.grid : undefined); return; }
         this.table = null; this.hasMore = false; this.count = null; this.offset = 0;
+        this.schema.selectObject(null);
         this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0);
         this.message('No tables or views in this database.'); this.total.textContent = ''; break;
       }
       case 'browserRows': {
         if (message.table !== this.table) { return; }
+        this.limit = message.limit;
         this.offset = message.offset; this.hasMore = message.page.hasMore;
         this.gridOptions = savedGrid(pendingPage?.grid ?? {}); this.shownGrid = savedGrid(this.gridOptions);
         const selected = this.filterColumn.value;
@@ -305,6 +315,7 @@ export class BrowserView {
       }
       case 'browserQueryRows': {
         if (sql === null) { return; }
+        this.limit = message.limit;
         this.offset = message.offset; this.hasMore = message.page.hasMore;
         this.query.commit(sql, message.offset, message.page, message.ms);
         this.count = this.query.count; this.total.textContent = this.query.summary;
@@ -320,9 +331,10 @@ export class BrowserView {
         this.warningPage = pendingPage; this.sortWarning.textContent = message.message;
         this.message('Sort needs confirmation. Continue sort or dismiss it; the previous page is retained.'); break;
       case 'browserCancelled':
+        this.schema.failed('Operation cancelled.');
         this.gridOptions = savedGrid(this.shownGrid); this.loadFilter();
         this.message('Operation cancelled. The database is ready; use Run to retry SQL, select a table or change page size.'); break;
-      case 'browserError': this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
+      case 'browserError': this.schema.failed(message.message); this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
     }
     this.controls(); this.report();
   }
@@ -330,7 +342,9 @@ export class BrowserView {
   private message(text: string, error = false): void { this.status.textContent = text; this.status.setAttribute('role', error ? 'alert' : 'status'); }
 
   private controls(): void {
+    if (this.pending === null) { this.size.value = String(this.limit); }
     const busy = this.pending !== null;
+    this.schema.setBusy(busy || this.warningPage !== undefined);
     const pageBlocked = busy || this.warningPage !== undefined;
     this.root.setAttribute('aria-busy', String(busy));
     const results = this.table !== null || this.query.sql !== null;
@@ -371,6 +385,19 @@ export class BrowserView {
     }
     if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
+      case 'appearance': {
+        const style = getComputedStyle(document.body);
+        this.appearance = { theme: document.body.className.slice(0, 128), foreground: style.color.slice(0, 128), background: style.backgroundColor.slice(0, 128) }; break;
+      }
+      case 'gridKey': {
+        const key = message.value?.replace(/^Control\+/u, '');
+        if (key !== undefined && ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(key)) {
+          const grid = this.root.querySelector<HTMLElement>('#browser-grid'); grid?.focus();
+          grid?.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: message.value?.startsWith('Control+') ?? false, bubbles: true, cancelable: true }));
+        } break;
+      }
+      case 'schema': case 'schemaKind': case 'schemaNext': case 'schemaPrevious': case 'schemaSize': case 'schemaIndex':
+        this.schema.exercise(message.action, message.value); break;
       case 'exportCsv': case 'exportJson':
         if (!(message.action === 'exportCsv' ? this.exportCsv : this.exportJson).disabled) {
           this.request({ type: 'browserExport', requestId: ++this.requestId, format: message.action === 'exportCsv' ? 'csv' : 'json' });
@@ -440,6 +467,8 @@ export class BrowserView {
         contextId: this.contextId, exerciseId: this.exerciseId,
         ...(this.responsiveness === undefined ? {} : { responsiveness: { ...this.responsiveness } }),
         cell: this.details.summary(),
+        schema: this.schema.summary(),
+        ...(this.appearance === undefined ? {} : { appearance: this.appearance }),
         query: this.query.sql !== null, summary: this.total.textContent ?? '', ...this.editor?.metrics(),
         hasMore: this.hasMore, count: this.count, busy: this.pending !== null, message: this.status.textContent ?? '', firstRow: this.grid.firstRow() });
     }
@@ -470,7 +499,7 @@ export class BrowserView {
     this.probeKey = undefined;
   }
 
-  dispose(): void { this.disposed = true; this.stopProbe(); this.events.abort(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
+  dispose(): void { this.disposed = true; this.stopProbe(); this.events.abort(); this.schema.dispose(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
 }
 
 declare function acquireVsCodeApi(): {

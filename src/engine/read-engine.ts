@@ -21,7 +21,7 @@ export function checkParameters(parameters: Parameter[]): void {
 }
 
 export function quoteIdentifier(name: string): string {
-  if (typeof name !== 'string' || name.length === 0 || name.includes('\0')) { throw new Error('Invalid table identifier.'); }
+  if (typeof name !== 'string' || name.includes('\0')) { throw new Error('Invalid table identifier.'); }
   return `"${name.replaceAll('"', '""')}"`;
 }
 
@@ -50,8 +50,11 @@ export function collectPage(cursor: Cursor, address: PageAddress): EnginePage {
     return finish(false);
 
     function finish(hasMore: boolean): EnginePage {
-      if (bytes > MAX_PAGE_BYTES) { throw oversized(); }
-      return { columns: cursor.columns, rows, hasMore };
+      // Only an exhausted cursor that never reached the requested offset needs
+      // extra evidence. Normal final pages already imply offset + row count.
+      const total = !hasMore && skipped < offset ? String(BigInt(skipped)) : undefined;
+      if (bytes + (total === undefined ? 0 : Buffer.byteLength(`,"total":"${total}"`)) > MAX_PAGE_BYTES) { throw oversized(); }
+      return { columns: cursor.columns, rows, hasMore, ...(total === undefined ? {} : { total }) };
     }
   } finally { cursor.close(); }
 }
@@ -62,12 +65,19 @@ function oversized(): Error {
 
 /** One read statement. PRAGMAs can take effect at prepare time even under EXPLAIN.
  * https://www.sqlite.org/pragma.html
- * query_only independently blocks writable WITH forms.
+ * Reject the main verb of writable WITH forms before backend text transport;
+ * query_only remains an independent database-level write prohibition.
  */
-export function checkReadStatement(sql: string): void {
+export function checkReadStatement(sql: string): string {
   if (typeof sql !== 'string') { throw new Error('Invalid query SQL.'); }
   const words: string[] = [];
   let ended = false;
+  let end = sql.length;
+  let depth = 0;
+  let cteClosed = false;
+  let cteBody = false;
+  let bodyPrefix: 'none' | 'as' | 'not' | 'materialized' = 'none';
+  let mainVerb: string | undefined;
   for (let index = 0; index < sql.length;) {
     const character = sql[index];
     if (character === undefined) { break; }
@@ -79,8 +89,15 @@ export function checkReadStatement(sql: string): void {
       index = next + 2; continue;
     }
     if (ended) { throw new Error('Run only one read statement per query.'); }
-    if (character === ';') { ended = true; index++; continue; }
+    if (character === ';') { ended = true; end = index; index++; continue; }
+    if (character === '(') {
+      if (depth === 0) { cteBody = bodyPrefix === 'as' || bodyPrefix === 'materialized'; bodyPrefix = 'none'; }
+      depth++; index++; continue;
+    }
+    if (character === ')') { depth--; if (depth === 0) { cteClosed = cteBody; cteBody = false; } index++; continue; }
+    if (character === ',' && depth === 0) { cteClosed = false; bodyPrefix = 'none'; index++; continue; }
     if (character === "'" || character === '"' || character === '`' || character === '[') {
+      if (depth === 0) { bodyPrefix = 'none'; }
       const closing = character === '[' ? ']' : character;
       index++;
       while (index < sql.length) {
@@ -93,12 +110,25 @@ export function checkReadStatement(sql: string): void {
     }
     const word = /^[A-Za-z_]+/u.exec(sql.slice(index))?.[0];
     if (words.length < 4 && word !== undefined) { words.push(word.toUpperCase()); }
+    if (depth === 0 && word !== undefined && mainVerb === undefined) {
+      const token = word.toUpperCase();
+      // Recognize only AS [NOT] MATERIALIZED (body), not a column-name list.
+      // Commas begin another CTE, including a legal CTE named "replace".
+      if (token === 'AS') { cteClosed = false; bodyPrefix = 'as'; }
+      else if (token === 'NOT' && bodyPrefix === 'as') { bodyPrefix = 'not'; }
+      else if (token === 'MATERIALIZED' && (bodyPrefix === 'as' || bodyPrefix === 'not')) { bodyPrefix = 'materialized'; }
+      else {
+        if (cteClosed && ['SELECT', 'VALUES', 'INSERT', 'UPDATE', 'DELETE', 'REPLACE'].includes(token)) { mainVerb = token; }
+        bodyPrefix = 'none';
+      }
+    }
     index += word?.length ?? 1;
   }
   const first = words[0] === 'EXPLAIN'
     ? words[1] === 'QUERY' && words[2] === 'PLAN' ? words[3] : words[1]
     : words[0];
-  if (first !== 'SELECT' && first !== 'WITH') {
+  if (first !== 'SELECT' && first !== 'WITH' || first === 'WITH' && mainVerb !== undefined && mainVerb !== 'SELECT' && mainVerb !== 'VALUES') {
     throw new Error('The read-only engine accepts SELECT or WITH, optionally prefixed by EXPLAIN or EXPLAIN QUERY PLAN.');
   }
+  return sql.slice(0, end);
 }

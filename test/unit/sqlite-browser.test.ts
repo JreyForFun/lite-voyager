@@ -4,6 +4,16 @@ import { SqliteBrowser } from '../../src/editor/sqlite-browser';
 import { isBrowserRequest, isBrowserResponse, type BrowserResponse } from '../../src/protocol';
 import type { ExportRunner } from '../../src/editor/export-service';
 
+test('FR-003: Given a schema request, When the browser host handles it, Then bounded worker metadata reaches the view without replacing successful SQL', async () => {
+  const { engine, browser, sent, send } = fixture();
+  engine.columns.mockResolvedValue({ columns: ['name'], rows: [['literal']], hasMore: false });
+  const request = { type: 'browserSchema', requestId: 1, table: '', kind: 'columns', offset: 0, limit: 100 };
+  // New wire contract deliberately reaches the runtime validator before its type is added.
+  await browser.handle(request as unknown as import('../../src/protocol').BrowserRequest, send);
+  expect(engine.columns).toHaveBeenCalledWith('', { offset: 0, limit: 100 });
+  expect(sent.at(-1)).toMatchObject({ type: 'browserSchemaRows', table: '', kind: 'columns', page: { rows: [['literal']] } });
+});
+
 function fixture() {
   const engine = {
     exportResults: vi.fn<Engine['exportResults']>(),
@@ -251,7 +261,8 @@ test('FR-002: Given malformed worker metadata and count, When browsing, Then the
 
 test('FR-002: Given browser messages, When validating them, Then invalid sizes, sparse arrays, unsafe offsets and rounded counts are rejected', () => {
   expect(isBrowserRequest({ type: 'browserPage', requestId: 1, table: 't', offset: 0, limit: 100 })).toBe(true);
-  for (const changes of [{ offset: -1 }, { offset: Number.MAX_SAFE_INTEGER + 1 }, { limit: 0 }, { limit: 101 }, { table: '' }, { table: 'a\0b' }, { requestId: 0 }]) {
+  // SQLite's empty identifier is valid; retain two genuine NUL-invalid cases.
+  for (const changes of [{ offset: -1 }, { offset: Number.MAX_SAFE_INTEGER + 1 }, { limit: 0 }, { limit: 101 }, { table: '\0' }, { table: 'a\0b' }, { requestId: 0 }]) {
     expect(isBrowserRequest({ type: 'browserPage', requestId: 1, table: 't', offset: 0, limit: 100, ...changes })).toBe(false);
   }
   const rows = { type: 'browserRows', requestId: 1, table: 't', offset: 0, limit: 100, page: { columns: ['v'], rows: [[null], ['']], hasMore: false } };

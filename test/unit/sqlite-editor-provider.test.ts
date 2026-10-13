@@ -43,7 +43,7 @@ function panel() {
     asWebviewUri: (value: vscode.Uri) => value,
     postMessage: vi.fn().mockResolvedValue(true),
     onDidReceiveMessage: vi.fn(() => ({ dispose: vi.fn() })),
-  }, onDidDispose(callback: () => void) {
+  }, onDidChangeViewState() { return { dispose: () => {} }; }, onDidDispose(callback: () => void) {
     callbacks.add(callback); return { dispose: () => { callbacks.delete(callback); } };
   }, dispose() { for (const callback of callbacks) { callback(); } } };
   // Model the provider's WebviewPanel surface; actual binary tabs and webviews are tested in VS Code.
@@ -55,6 +55,21 @@ beforeEach(() => {
   mocks.close.mockResolvedValue(undefined);
   mocks.prompt.mockResolvedValue(undefined);
   mocks.withProgress.mockImplementation((_options, task) => task({ report: vi.fn() }, cancellation().token));
+});
+
+test('FR-001: Given two views of the same custom document, When one closes, Then the other owns an independent open session until final closure', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const first = panel(); const second = panel();
+  const document = provider.openCustomDocument(uri(), openContext, cancellation().token);
+  await provider.resolveCustomEditor(document, first, cancellation().token);
+  const firstSession = document.session;
+  await provider.resolveCustomEditor(document, second, cancellation().token);
+  const secondSession = document.session;
+  expect(secondSession).not.toBe(firstSession); expect(mocks.open).toHaveBeenCalledTimes(2);
+  first.dispose(); await firstSession.closed;
+  expect(secondSession.state.phase).toBe('opened'); expect(provider.getDocument(uri())).toBe(document);
+  expect(document.panel).toBe(second); expect(mocks.close).toHaveBeenCalledTimes(1);
+  second.dispose(); await secondSession.closed; expect(mocks.close).toHaveBeenCalledTimes(2);
+  expect(provider.getDocument(uri())).toBeUndefined(); provider.dispose();
 });
 
 test('FR-014: Given export cleanup failure during editor closure, When the document finishes closing, Then a user notification names the cleanup action', async () => {

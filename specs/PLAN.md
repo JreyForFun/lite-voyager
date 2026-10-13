@@ -442,6 +442,67 @@ schema follow-up, whole-milestone QA/review and release/tag remain separate.
 Completion-documentation `npm run verify` also passes all 489 tests /45 files
 in 202.04 s with zero errors/warnings, strict types/lint, builds and packaging.
 
+### T-019 Milestone 1 QA/review closure (2026-10-13)
+
+The owner delegates remaining QA and review in this chat. Use one gate task,
+not Milestone 2 work. A fresh isolated reviewer inspects the actual cumulative
+foundation-tag-to-candidate diff. Confirmed defects get failing regressions
+before repairs. Expose Engine column/index/index-term pages in a literal, lazy
+schema panel; keep data results and successful SQL/export context. Each view
+of one CustomDocument needs its own session/helper and cleanup lifetime.
+Protocol messages remain typed in src/protocol.ts; no new dependency.
+
+Validate all static SQLite fixtures and required states on both engines in
+the real editor, plus the existing full suite and real multi-GB contract.
+Add a scoped first-DOM timing assertion for the large files without claiming
+unobserved physical paint. Preserve failed candidates and every exact approved
+host diagnostic. Reconcile the Milestone 1 gate separately from the existing
+foundation checklist; do not turn future global trace gaps into work here.
+Prepare a reviewable local preview only after checks pass; owner retains push
+and external release/feedback steps. Do not claim a complete phase transition
+while a required check or external step remains unobserved.
+
+Observed repaired production candidate: `out/t019-full-final.log` passes
+513 unit tests /47 files (195.64 s), 49 real-host tests, strict types/lint,
+builds/package and runtime logs on Windows x64 /VS Code 1.140.0 /Node 24.21.0.
+Its one VSCODE-HOST-001 warning is explicitly recorded in VALIDATION; this
+full result is not warning-free. All schema/view/source/export/cancel checks
+pass on both engines. Fresh cumulative review and grammar differential probes
+find no remaining concrete defect after failing-first repairs.
+
+For populated 1,285,033,984 /5,874,388,992-byte files (ten million rows each),
+warm first DOM reports take 1,219.710 /1,209.001 ms, under the unchanged 2 s
+NFR-004 target. Combined sampled host/helper peaks 273,813,504 /283,303,936
+are under 500 MB; size growth 9,490,432 and paging growth 8,916,992 /14,737,408
+are under 50 MB. Renderer peaks 426,348,544 /423,251,968 remain separate.
+There are 50/139 samples (49/138 with helpers), maximum gaps 513.076 /575.195 ms,
+and complete unchanged hashes, 60 Browse/20 SQL pages and payload scans.
+Workload 285,273.661 ms meets the unchanged internal/outer budgets. This is
+warm DOM readiness and sampled resident memory, not cold/physical paint or an
+unsampled peak. The isolated-gallery fixture follow-up now passes its complete
+six-minute 513-unit/49-host strict gate. The installed VSIX also passes four
+both-engine schema/view/theme/key/source cases in isolated VS Code 1.141.0,
+with one explicitly reported approved VSCODE-HOST-001 warning. See VALIDATION
+for exact records and retained failed preview harness attempts. Desktop API
+inspection is unavailable (native pipe, os error 2); physical feedback remains
+unobserved. Stronger large-grid acceptance keeps every original workload/cap/
+deadline, plus both sort directions, a descending broad filter and eleven-row
+full forward filter. Retain the failed reverse-filter timeout separately.
+The first strengthened run passes all 513 unit/49 host tests, both 11-row
+large filters, unchanged source hashes and numeric limits: first DOM
+1,482.977/1,889.464 ms; sampled peaks 273,494,016/289,894,400 bytes;
+growth 16,400,384; paging growth 4,562,944/18,702,336; total 337,944.229 ms.
+It fails strict logs solely on an unapproved 25 ms chatPetContext warning;
+retain that failure and both exact approved records in VALIDATION. A fresh
+unchanged-code diagnostic rerun reproduces preferencesActions/chatPetContext
+warnings and is stopped; section 1 prohibits retry-to-green. Shipped host
+code confirms both vendor startup contributions run before the extension loads.
+The owner is asked about two additional exact exception families; policy stays
+unchanged until approval. Final standalone verify passes 513 tests /47 files
+(273.46 s), strict types/lint/build/package with zero errors/warnings. It does
+not clear the failed full host-log gate. Current-code CI and physical feedback
+remain unobserved; no release tag or M2 transition yet.
+
 ### T-011 worker metadata contract (2026-10-10)
 
 The existing `Engine.schema(page)` remains the paged table/view catalog.
@@ -983,6 +1044,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-019 gate plan (2026-10-13): Plan one owner-delegated QA/review closure task, fresh isolated cumulative review, tests-first schema/view/fidelity/paging repairs, real-host acceptance and honest release/visual limits. No new dependency or Milestone 2 feature.
 - T-016 repaired-candidate CI (2026-10-13): Confirm run 38384170955 /attempt 1 at 284fbee succeeds on Windows/macOS/Ubuntu, including locked installs and full checks. Close only T-016 after clean 489-test completion verify; retain failed runs, diagnostic evidence and remote raw-log limits. No milestone closure.
 - T-016 CI repair (2026-10-13): Retain failed caf209b Windows/macOS evidence and the local Vitest-startup full failure. Reopen the task, reuse one hash buffer and persist the Windows OS reader. Separate 489-test zero-diagnostic verify and 45-host/log gates pass without relaxing targets; fresh full CI remains pending.
 - T-016 local result (2026-10-13): Record passing 487-unit/45-host full gate and source-identical 1.285 GB/5.874 GB primary SQLite memory observations. Preserve the 600 s deadline, all workloads and exact warning policy after the red-first hash/budget repair.

@@ -2654,6 +2654,251 @@ builds and the 20-file 622.93 KB package check. Output is retained in
 `out/t016-ci-closure-verify.log`. No behavior or acceptance change follows
 the green candidate; the exact approved prior local host warning remains.
 
+### T-019 Milestone 1 delegated QA/review candidate (2026-10-13)
+
+The owner explicitly delegates the remaining QA/review and repairs, selects a
+local VSIX preview, and retains pushing. This is one Milestone 1 gate task;
+no Milestone 2 feature or dependency is added. The checked universal items
+above describe the foundation gate and must not be reused as Milestone 1 proof.
+
+Fresh-context Bugbot reviews the real cumulative `v0.0.1`-to-working-tree diff,
+including the production changes, rather than the latest documentation commit.
+Six confirmed MEDIUM findings are repaired: missing opt-in schema UI, shared
+same-file view lifetime, rejected legal empty identifiers, prematurely committed
+page size on failure/cancel, invented shrinking query totals, and silently
+replaced native malformed TEXT. Follow-up identifies a schema/sort-confirmation
+bypass, oversized typed-index Loading hang, and missing schema context after SQL
+restoration/empty catalog replacement. Each is reproduced before repair.
+Independent follow-up probes confirm all repairs and find no remaining concrete
+defect. Reviewer probes are separate from root full verification, not a host pass.
+The proposed abort-listener leak is not reproduced and Chromium's weak listener
+references do not support labelling it a confirmed leak; no speculative refactor.
+
+Preserved red/failure evidence:
+
+- `out/t019-regressions-red.log`: seven initial native/identifier/total/size failures.
+- `out/t019-regressions-partial.log`: three remaining native encoding failures.
+- `out/t019-schema-views-red.log`: schema UI/host and per-view failures.
+- `out/t019-followup-red.log`: sort-confirmation bypass and oversized-index failures.
+- `out/t019-schema-context-red.log`: restored SQL and empty-catalog schema failures.
+- `out/t019-appearance-red.log`: absent opt-in appearance observation.
+- First strict candidates stop at new QA type errors; fixes use no suppressions.
+- `out/t019-full-candidate-3.log`: 504 pass /one failure of 505 unit tests,
+  198.80 s; the appearance harness omitted its action correlation ID. The real
+  bridge reports correlated actions; supply the required ID and retain the
+  positive computed-color assertion. No production assertion or deadline weakens.
+- The empty-identifier fixture initially attempted identical empty table/index
+  names in one database. SQLite shares that namespace; split the two valid
+  cases into separate databases and retain both positive source-safe checks.
+- `out/t019-full-candidate-4.log`: 506 unit tests /47 files pass (188.95 s),
+  strict types/lint/build/package pass; real host has 47 pass /two failures.
+  Both native-only failures expose WITH DELETE reaching the text wrapper and
+  getting a synthetic near-`)` error instead of the required read-only refusal.
+  Keep both source-safety and SQL-editor assertions/deadlines unchanged.
+- `out/t019-with-write-red.log` reproduces the missing pre-wrapper refusal;
+  `out/t019-with-syntax-red.log` catches incorrectly classifying a malformed
+  CTE column list as a completed body. Recognize AS/[NOT]/MATERIALIZED bodies
+  and the following main statement. Refuse confirmed DML with or without
+  RETURNING; preserve valid `replace` CTE names, recursive/multiple/nested
+  reads, VALUES, quoting/comments, and genuine SQLite syntax diagnostics.
+  Focused engine/encoding/regression run passes 61 tests; final scanner's
+  seven regression tests pass. No assertion, workload or diagnostic weakens.
+
+The failed full candidate nonetheless passes all four new real-host schema and
+same-file-view cases, including ten metadata pages, literal defaults/index SQL,
+empty/quoted names, malformed text rejection, retained SQL, actual grid keyboard
+events and computed light/dark colors. Both-engine view sessions retain separate
+results; closing one during the other's acknowledged query leaves the survivor
+available for cancellation/retry and all helpers close. These are observable
+DOM/transport tests, not a physical-paint or subjective visual assessment.
+
+Its real large-file checks pass: 1,285,033,984 /5,874,388,992 bytes, ten million
+populated rows each; warm first DOM readiness 974.363 /940.437 ms (under 2 s).
+Combined sampled host/helper peaks 272,936,960 /285,229,056 bytes (under 500 MB),
+size growth 12,292,096 (under 50 MB), repeated-paging growth 8,744,960 /13,570,048;
+47/129 samples, 46/128 helper samples, maximum gaps 504.171 /476.780 ms (under 3 s).
+Renderer peaks 433,418,240 /431,292,416 are separate. Workload 264,104.161 ms
+retains complete hashes, 60 Browse/20 SQL pages and full payload scans. Hashes
+equal the previously recorded SHA-256 values. This does not turn the overall
+failed full attempt into a pass or establish an unsampled memory peak.
+
+Compatibility focused run passes 69 tests /four files. The repaired production
+candidate `out/t019-full-final.log` passes 513 unit tests /47 files (195.64 s),
+strict types/lint/build/package and all 49 real-host tests on Windows x64 /
+VS Code 1.140.0 /Node 24.21.0. Both native failures above now pass with the
+unchanged assertions/deadlines. All six UTF-8/UTF-16 worker cases pass too.
+
+This full run is **not warning-free**. Exactly one approved record is accepted:
+
+- Source: `out/integration-profile-NhurTQ/logs/20261013T223647/window1/renderer.log`.
+- Line: `10`; original severity: `warning`; rule: `VSCODE-HOST-001`.
+- Message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+No other warning/error is accepted. The prior failed profile also has an
+offline VS Code background-gallery error at
+`out/integration-profile-hBRuRA/logs/20261013T221514/network-shared.log:1`:
+`#2: https://main.vscode-cdn.net/extensions/marketplace.json - error GET net::ERR_INTERNET_DISCONNECTED`,
+plus the renderer's two-test-failure error at `window1/renderer.log:136`.
+An independent strict scan fails on both; do not allowlist or erase them.
+Its approved warning is `window1/renderer.log:10`, severity `warning`,
+VSCODE-HOST-001, the same exact CloudSandboxApi message quoted above.
+
+The subsequent production-candidate full result passes, but a single pass does
+not prove the intermittent background request cannot recur. A configuration
+regression first fails (`out/t019-gallery-red.log`, one fail/four pass), then
+passes all five cases after setting only the isolated profile's signed-out
+private-gallery route plus automatic-update settings. VS Code 1.140's shipped
+service code confirms that a nonempty private URL and no account yield a null
+manifest before any fetch, also sent to the shared process. The control cache
+handles that at TRACE. No vendor binary/product file, user profile, dependency
+or diagnostic rule changes. `out/t019-full-gallery-final.log` passes 513 unit
+tests /47 files (204.48 s) and all 49 host cases (six minutes), including
+assertions of effective settings/sign-out and strict runtime logs. Its one
+approved diagnostic is source
+`out/integration-profile-KmTMDI/logs/20261013T225537/window1/renderer.log`,
+line `10`, severity `warning`, rule `VSCODE-HOST-001`, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This full result is not warning-free.
+
+Additional large-grid acceptance retains both primary-key sort directions,
+descending broad filtering, a complete eleven-row literal filter, unindexed
+sort confirmation retaining the page, and clearing back to offset zero.
+The original 60 Browse/20 SQL pages, full payload scan/hashes, 500 MB/50 MB
+caps and 540/600 s budgets are unchanged. Preserve these failed attempts:
+`out/t019-full-large-grid-final.log` has 513 unit passes and 48 host passes /
+one failure because the new harness mistook a retained sort-confirmation
+page for completed sorting. Await correlated completion and accept the
+confirmation before checking actual rows. `out/t019-full-large-grid-repaired.log`
+has the same counts; all added 1 GB controls pass, but a reverse 5 GB rare
+filter exceeds its new 120 s action deadline. It is not a source/memory pass
+for the unfinished second file. Retain both directional sort and descending
+broad-filter assertions, then use forward primary-key traversal for the full
+rare-filter scan, as for the original payload scan. Do not claim the reverse
+full scan passed. Fresh reviewer finds no weakened original criterion and
+no spec target requiring a reverse scan within 120 s.
+
+`out/t019-full-large-grid-forward-final.log` passes 513 unit tests /47 files
+(287.33 s) and all 49 host tests (eight minutes), including both strengthened
+large-grid cases, but **fails** strict logs on an unapproved renderer warning.
+Source `out/integration-profile-UwjrWd/logs/20261014T000528/window1/renderer.log`,
+line `3`, severity `warning`, exact message
+`Creation of workbench contribution 'workbench.contrib.chatPetContext' took 25ms.`
+Keep this failure; do not extend the warning policy. Its approved records
+in that same source are line `2`, severity `warning`, VSCODE-HOST-002,
+`Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 24ms.`,
+and line `12`, severity `warning`, VSCODE-HOST-001,
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+That failed attempt's observed large-file workload nonetheless meets every
+numeric/source assertion: 1,482.977 /1,889.464 ms first DOM; combined sampled
+peaks 273,494,016 /289,894,400 bytes, growth 16,400,384, paging growth
+4,562,944 /18,702,336. Renderer peaks 412,758,016 /412,004,352 are separate.
+There are 81/194 samples (80/193 with helpers), maximum gaps 734.762 /740.806 ms.
+Both files contain ten million rows; both exact original hashes match.
+Total 337,944.229 ms includes both added full filters and every original
+page/hash/scan, within the unchanged 540/600 s budgets. This is scoped warm
+DOM and sampled resident-memory evidence, not physical feedback or an overall
+full pass. `out/t019-full-clean-retry.log` was started as an unchanged rerun
+before correctly applying section 1's explicit no-retry-to-green prohibition.
+It reproduces additional unapproved warnings and is stopped once that is
+established; it cannot erase the first failed gate or count as a complete run.
+All 513 units pass again (274.59 s); both new large-grid cases pass, but the
+second file's final workload/hash is interrupted and no completed memory
+comparison is claimed. Only this verified run's process tree is stopped;
+the user's VS Code remains open. Its owned `out/t016-memory-Nc7kBa` directory
+is verified within the project before cleanup; generation metadata is retained
+in `out/t019-aborted-retry-generation.json` and logs remain intact.
+
+Its renderer source is
+`out/integration-profile-eVmO6a/logs/20261014T002237/window1/renderer.log`:
+line `1`, severity `warning`, unapproved
+`Creation of workbench contribution 'workbench.contrib.preferencesActions' took 31ms.`;
+line `3`, severity `warning`, unapproved
+`Creation of workbench contribution 'workbench.contrib.chatPetContext' took 21ms.`;
+line `12`, severity `warning`, approved VSCODE-HOST-001,
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+Read-only inspection of shipped VS Code 1.140.0's
+`out/vs/workbench/workbench.desktop.main.js` confirms these are workbench
+contributions created and timed by `safeCreateContribution` using `Date.now()`.
+Preferences registers settings/keybinding actions; pet context binds the
+vendor pet-service enabled state. The warnings precede loading either
+development extension in this run. No vendor edit or warning suppression is
+applied. The concrete proposal is to permit only these two additional exact
+renderer startup-timing families with integer durations, using the same
+source/severity/reporting restrictions as HOST-002, while preserving every
+other diagnostic rule and all responsiveness targets. This needs explicit
+owner approval; section 1 and scanner tests are unchanged pending that answer.
+The current full gate remains failed. Final standalone `npm run verify`
+(`out/t019-verify-final.log`, 2026-10-14) passes all 513 unit tests /47 files
+in 273.46 s, strict host/webview/tooling types, lint, production builds and
+the 20-file /626.61 KB package dry run, with zero errors and zero warnings.
+This clean non-host gate does not clear the full host-log failure.
+
+Local preview prepared: `out/t019-preview/lite-voyager-t019-preview.vsix`,
+641,652 bytes, 20 ZIP entries; SHA-256
+`8251a4e36304a82ad65d1f277e232941885a3057d7e4da813b4ab4e7978ffd34`.
+Archive inspection confirms required worker/webview/WASM assets and excludes
+src/scripts/test/out/node_modules/authentication fixtures. `PREVIEW.md` contains
+the installation command and five physical feedback checks; disposable
+`gate.sqlite` /`browser.sqlite` are provided in the same directory. Candidate
+manifest version stays 0.0.1 until release closure. Owner feedback is pending;
+availability does not itself complete the preview-feedback gate.
+
+The owner's "Do it" authorizes installation/QA; it is not PASS feedback.
+CLI installation succeeds in VS Code 1.141.0; locate/list confirm
+`C:/Users/ADMIN/.vscode/extensions/jreyinnovarev.lite-voyager-0.0.1`.
+All fourteen installed runtime assets match the VSIX byte-for-byte.
+Installation emits the tool's `[DEP0169] DeprecationWarning` about `url.parse()`;
+do not call installation warning-free or change the vendor to suppress it.
+
+The same four host schema/view/theme/key/source cases target the actually
+installed artifact; fixture scripts and compiled test controller remain in
+the project, outside the VSIX. `out/t019-installed-preview.log` passes four
+cases but fails strict logs on stock VS Code's `Error mutex already exists`
+while the user's app runs. Use isolated cached VS Code 1.141.0 instead of
+closing the user's windows. `out/t019-installed-preview-isolated.log` also
+passes four cases but fails on the external controller's require-path warning:
+`out/integration-profile-packaged-Z49lVI/logs/20261013T234826/window1/exthost/exthost.log:5`,
+severity `warning`, `Could not identify extension for 'vscode' require call from file:///c%3A/Users/ADMIN/lite-voyager/out/integration/test/milestone-one.test.js. These are the extension path mappings: `.
+It also has approved warnings at `window1/renderer.log:2`, VSCODE-HOST-002,
+`Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 25ms.`,
+and `window1/renderer.log:11`, VSCODE-HOST-001, the exact CloudSandboxApi
+message above. `out/t019-installed-preview-mapped.log` still fails that mapping
+warning and an unapproved `workbench.contrib.preferencesActions` 21 ms warning;
+neither is added to the policy.
+
+A separate activatable QA controller fixture maps the tests without placing
+test assets in the installed extension or replacing its production entry point.
+`out/t019-installed-preview-controller.log` passes all four cases /18 s plus
+strict logs. Its only approved record is source
+`out/integration-profile-packaged-owlgK7/logs/20261013T235639/window1/renderer.log`,
+line `11`, severity `warning`, rule `VSCODE-HOST-001`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This installed-preview result is not warning-free. Desktop visual inspection
+remains unavailable: the approved `@oai/sky` API returns
+`Computer Use native pipe is unavailable: failed to connect native pipe: The system cannot find the file specified. (os error 2)`.
+Do not substitute computed colors/key events for physical feedback or launch
+a custom automation helper. The five `PREVIEW.md` feedback checks remain open.
+
+The scoped trace finds all 16 linked Milestone 1 requirement IDs in real test
+declarations: FR-001/002/003/010/011/014/015/016/017/018 and
+NFR-001/002/003/004/005/009. FR-016 is the read-only/refusal/source-safety subset;
+write mode remains Milestone 3. Matching names index actual assertions, rather
+than establish every future acceptance clause. Global trace still reports
+FR-005/006/007/012/013/020/021/022/030/040 and NFR-006/007/008/010; these remain
+later work. A source search finds no TODO/FIXME in src/webview/scripts/test/.github.
+
+Milestone 1 gate status (separate from foundation):
+
+- [ ] Current candidate `npm run verify:full` passes locally.
+- [ ] Current candidate full CI succeeds on Windows/macOS/Ubuntu.
+- [x] Current-code source safety, memory and first-DOM measurements recorded.
+- [x] Requirement scope and independent review reconciled; confirmed findings repaired.
+- [x] Observable delegated host QA passes on both engines; host-log failure is separate.
+- [ ] Physical preview feedback is received.
+- [ ] Local preview, owner feedback and release `v0.1.0` tag recorded.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -2715,6 +2960,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-019 QA/review candidate (2026-10-13): Record owner delegation/local-preview choice, cumulative fresh-context review, red-first repairs and failed full candidates. Preserve source/workload/diagnostic limits and distinguish observable DOM/theme/key evidence from physical preview feedback; current-code full gate/CI/release remain pending.
 - T-016 repaired-candidate CI (2026-10-13): Independently confirm successful 38384170955 /attempt 1 at final repair 284fbee and all three applicable full gates/locked installs. Check only T-016 after clean 489-test completion verify; preserve prior failures, the exact approved local warning, remote raw-log limits and remaining milestone work.
 - T-016 CI repair (2026-10-13): Independently confirm failed caf209b run 38378099885, retain OS/full-startup failures and red-first regressions. Separate final 489-test zero-diagnostic verify and 45-host/log gates pass with 270.7/276.1 MB peaks, 5.4 MB size growth and one exact approved renderer warning. Reopen T-016 pending fresh full CI; all acceptance limits remain unchanged.
 - T-016 local completion (2026-10-13): Final repaired full gate passes 487 unit/45 host tests; record genuine 1.285 GB/5.874 GB source-safe memory evidence, 269.8 MB/285.0 MB sampled peaks and the exact approved renderer warning. Preserve failed candidates and owner push/CI/milestone work.

@@ -8,7 +8,7 @@ export class QueryView {
 
   commit(sql: string, offset: number, page: EnginePage, ms: number): void {
     this.sql = sql;
-    this.count = page.hasMore ? null : String(offset + page.rows.length);
+    this.count = page.hasMore ? null : page.total ?? (offset === 0 || page.rows.length > 0 ? String(offset + page.rows.length) : null);
     const range = page.rows.length === 0 ? 'No rows on this page.'
       : `Showing rows ${String(offset + 1)}–${String(offset + page.rows.length)}${page.hasMore ? ' · more rows available' : ''}`;
     this.summary = `${range} · ${this.count === null ? 'Total rows: not yet known' : `Total rows: ${this.count}`} · Page execution time: ${ms.toFixed(1)} ms`;

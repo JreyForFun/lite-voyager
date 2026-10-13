@@ -91,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 	const sqliteEditor = new SqliteEditorProvider(context.extensionPath);
 	context.subscriptions.push(sqliteEditor, vscode.window.registerCustomEditorProvider(SQLITE_EDITOR_VIEW_TYPE, sqliteEditor,
-		{ supportsMultipleEditorsPerDocument: false }));
+		{ supportsMultipleEditorsPerDocument: true }));
 	const output = vscode.window.createOutputChannel('Lite Voyager T-002');
 	context.subscriptions.push(output,
 		vscode.commands.registerCommand('lite-voyager.engineCheck', (file?: vscode.Uri) => openEngineCheck(context, file)),

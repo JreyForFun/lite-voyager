@@ -1,6 +1,14 @@
 import { expect, test } from 'vitest';
 import { sqliteEditorHtml } from '../../src/editor/sqlite-editor-ui';
 
+test('FR-003: Given the opened editor shell, When viewing a selected object, Then opt-in schema and paged column/index controls are available without starting metadata work', () => {
+  const html = sqliteEditorHtml('sample.sqlite', { phase: 'opened', message: 'Read-only' }, {
+    scriptUri: 'local:browser', styleUri: 'local:styles', nonce: 'nonce', cspSource: 'local:',
+  });
+  for (const id of ['schema-show', 'schema-panel', 'schema-kind', 'schema-size', 'schema-previous', 'schema-next', 'schema-rows', 'schema-status']) { expect(html).toContain(`id="${id}"`); }
+  expect(html).toContain('Default SQL'); expect(html).toContain('Primary key'); expect(html).toContain('NOT NULL');
+});
+
 test('FR-018: Given the editor shell, When rendered, Then details, copy controls, selection help and TSV limits are accessible', () => {
   const html = sqliteEditorHtml('sample.sqlite', { phase: 'opened', message: 'Read-only' }, {
     scriptUri: 'local:browser', styleUri: 'local:styles', nonce: 'nonce', cspSource: 'local:',

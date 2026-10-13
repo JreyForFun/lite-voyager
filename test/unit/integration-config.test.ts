@@ -73,6 +73,16 @@ test('T-007: Given an isolated host without GitHub authentication, When configur
       main: './extension.js', contributes: { authentication: [{ id: 'github', label: 'Signed-out test fixture' }] },
     });
     expect(await readFile(join(fixture, 'extension.js'), 'utf8')).toContain('registerAuthenticationProvider');
+    const settings: unknown = JSON.parse(await readFile(join(profile, 'User', 'settings.json'), 'utf8'));
+    expect(settings).toMatchObject({
+      'extensions.autoUpdate': 'off', 'extensions.autoCheckUpdates': false,
+      'extensions.gallery.serviceUrl': 'http://127.0.0.1:1/lite-voyager-isolated-tests',
+      'extensions.gallery.authProvider': 'github',
+    });
+    expect(manifest).toMatchObject({ contributes: { themes: [
+      { label: 'T-019 Light', uiTheme: 'vs', path: './light.json' },
+      { label: 'T-019 Dark', uiTheme: 'vs-dark', path: './dark.json' },
+    ] } });
   } finally {
     await rm(profile, { recursive: true, force: true });
   }

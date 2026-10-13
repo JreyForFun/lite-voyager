@@ -17,7 +17,31 @@ export class SqliteDocument implements vscode.CustomDocument {
   private readonly browserListeners = new Set<(status: BrowserStatus) => void>();
   private disposed = false;
   private readonly cleanup = new Set<() => void>();
-  constructor(readonly uri: vscode.Uri, readonly session: SqliteSession, private readonly remove: () => void) {}
+  private readonly records = new Map<vscode.WebviewPanel, { session: SqliteSession; status?: BrowserStatus }>();
+  private claimed = false;
+  constructor(readonly uri: vscode.Uri, private readonly initialSession: SqliteSession, private readonly remove: () => void, readonly path?: string) {}
+  get session(): SqliteSession { return (this.panel === undefined ? undefined : this.records.get(this.panel)?.session) ?? this.initialSession; }
+  get views(): ReadonlyMap<vscode.WebviewPanel, Readonly<{ session: SqliteSession; status?: BrowserStatus }>> { return this.records; }
+  attach(panel: vscode.WebviewPanel, create: () => SqliteSession): SqliteSession {
+    if (this.disposed) { throw new Error('The SQLite document is closed. Reopen the file.'); }
+    const session = this.claimed ? create() : this.initialSession; this.claimed = true;
+    this.records.set(panel, { session }); this.activate(panel); return session;
+  }
+  activate(panel: vscode.WebviewPanel): void {
+    if (!this.records.has(panel) || this.disposed) { return; }
+    this.panel = panel; this.browserStatus = undefined;
+    const status = this.records.get(panel)?.status;
+    if (status !== undefined) { this.reportBrowserStatus(status, panel); }
+  }
+  detach(panel: vscode.WebviewPanel): void {
+    const session = this.records.get(panel)?.session; this.records.delete(panel); void session?.close();
+    if (this.panel === panel) {
+      this.panel = undefined; this.browserStatus = undefined;
+      const remaining = this.records.keys().next().value;
+      if (remaining !== undefined) { this.activate(remaining); }
+    }
+    if (this.records.size === 0) { this.dispose(); }
+  }
 
   onBrowserStatus(listener: (status: BrowserStatus) => void): () => void {
     this.browserListeners.add(listener); return () => { this.browserListeners.delete(listener); };
@@ -26,8 +50,12 @@ export class SqliteDocument implements vscode.CustomDocument {
     if (this.disposed) { listener(); return () => {}; }
     this.cleanup.add(listener); return () => { this.cleanup.delete(listener); };
   }
-  reportBrowserStatus(status: BrowserStatus): void {
+  reportBrowserStatus(status: BrowserStatus, panel = this.panel): void {
     if (this.disposed) { return; }
+    if (panel !== undefined) {
+      const view = this.records.get(panel); if (view === undefined) { return; }
+      view.status = status; if (panel !== this.panel) { return; }
+    }
     // A destroyed/recreated webview restarts its local frame counter. Document
     // observers need one continuing sequence across all those contexts.
     const report = { ...status, revision: ++this.browserRevision };
@@ -41,7 +69,8 @@ export class SqliteDocument implements vscode.CustomDocument {
     for (const listener of this.cleanup) { listener(); } this.cleanup.clear();
     this.browserListeners.clear(); this.browserStatus = undefined;
     this.remove();
-    void this.session.close();
+    for (const record of this.records.values()) { void record.session.close(); }
+    this.records.clear(); void this.initialSession.close();
   }
 }
 
@@ -56,14 +85,14 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
     const key = uri.toString();
     const path = uri.scheme === 'file' && openContext.backupId === undefined && openContext.untitledDocumentData === undefined ? uri.fsPath : undefined;
     const session = new SqliteSession(path, new EngineClient({ directory: join(this.extensionPath, 'dist') }));
-    const document = new SqliteDocument(uri, session, () => { this.documents.delete(key); });
+    const document = new SqliteDocument(uri, session, () => { this.documents.delete(key); }, path);
     this.documents.set(key, document);
     if (token.isCancellationRequested) { void session.cancel(); }
     return document;
   }
 
   async resolveCustomEditor(document: SqliteDocument, panel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
-    document.panel = panel;
+    const session = document.attach(panel, () => new SqliteSession(document.path, new EngineClient({ directory: join(this.extensionPath, 'dist') })));
     const directory = vscode.Uri.file(join(this.extensionPath, 'dist'));
     panel.webview.options = { enableScripts: true, localResourceRoots: [directory] };
     const assets = {
@@ -72,13 +101,14 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
       nonce: randomBytes(16).toString('hex'), cspSource: panel.webview.cspSource,
     };
     let disposed = false;
-    document.onDispose(() => {
-      void document.session.closed.then(() => {
-        const state = document.session.state;
+    const notify = (): void => {
+      void session.closed.then(() => {
+        const state = session.state;
         if (state.phase === 'error' && /^(Export |The export )/u.test(state.message)) { void vscode.window.showErrorMessage(state.message); }
       });
-    });
-    document.session.configureExport(async (format) => {
+    };
+    const removeNotification = document.onDispose(notify);
+    session.configureExport(async (format) => {
       const destination = await vscode.window.showSaveDialog({
         title: `Export complete query results as ${format.toUpperCase()}`,
         defaultUri: vscode.Uri.file(join(dirname(document.uri.fsPath), `results.${format}`)),
@@ -96,42 +126,43 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
       // Engine recovery can update its mode; do not reset an initialized browser
       // and its monotonic request IDs by replacing the document on each update.
       if (!disposed && !browserRendered) {
-        panel.webview.html = sqliteEditorHtml(basename(document.uri.fsPath) || document.uri.toString(), document.session.state, assets);
-        browserRendered = document.session.state.phase === 'opened';
+        panel.webview.html = sqliteEditorHtml(basename(document.uri.fsPath) || document.uri.toString(), session.state, assets);
+        browserRendered = session.state.phase === 'opened';
       }
     };
     const messages = panel.webview.onDidReceiveMessage((message: unknown) => {
-      if (disposed || document.session.state.phase !== 'opened') { return; }
+      if (disposed || session.state.phase !== 'opened') { return; }
       if (isBrowserStatus(message)) {
         if (message.contextId !== undefined) { cells.activate(message.contextId); }
-        document.reportBrowserStatus(message);
+        document.reportBrowserStatus(message, panel);
       }
       else if (isCellRequest(message)) { cells.handle(message); }
       else if (isBrowserRequest(message)) {
-        void document.session.browser.handle(message, (reply) => { if (!disposed) { void panel.webview.postMessage(reply); } });
+        void session.browser.handle(message, (reply) => { if (!disposed) { void panel.webview.postMessage(reply); } });
       }
     });
-    const unsubscribe = document.session.subscribe(render);
-    const cancellation = token.onCancellationRequested(() => { void document.session.cancel(); });
+    const unsubscribe = session.subscribe(render);
+    const cancellation = token.onCancellationRequested(() => { void session.cancel(); });
+    const focus = panel.onDidChangeViewState((event) => { if (event.webviewPanel.active) { document.activate(panel); } });
     const disposal = panel.onDidDispose(() => {
       disposed = true;
       cells.dispose();
       removeCellCleanup();
-      document.panel = undefined;
+      removeNotification(); notify();
       unsubscribe();
       messages.dispose();
       cancellation.dispose();
       disposal.dispose();
-      document.dispose();
+      focus.dispose(); document.detach(panel);
     });
     render();
-    if (token.isCancellationRequested) { await document.session.cancel(); }
+    if (token.isCancellationRequested) { await session.cancel(); }
     try {
       await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Opening SQLite', cancellable: true }, async (_progress, progressToken) => {
-        const listener = progressToken.onCancellationRequested(() => { void document.session.cancel(); });
+        const listener = progressToken.onCancellationRequested(() => { void session.cancel(); });
         try {
-          if (progressToken.isCancellationRequested) { await document.session.cancel(); }
-          await document.session.start(async (mode) => {
+          if (progressToken.isCancellationRequested) { await session.cancel(); }
+          await session.start(async (mode) => {
             if (disposed || token.isCancellationRequested || progressToken.isCancellationRequested) { return false; }
             const proceed: vscode.MessageItem = { title: 'Proceed' };
             const cancel: vscode.MessageItem = { title: 'Cancel', isCloseAffordance: true };

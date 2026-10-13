@@ -1,38 +1,38 @@
-﻿# Progress
+# Progress
 
 ## Current phase / task
-Milestone 1; T-016 scoped safety/memory acceptance and repair CI are complete.
-Only T-016 closes; schema, whole-milestone QA/review and release remain separate.
+Milestone 1; T-019 QA/review candidate and installed preview. Owner pushes.
+No Milestone 2 work or v0.1.0 release/tag yet.
 
 ## Verify status
-- CI 38384170955 /attempt 1 at 284fbee succeeds on all three platforms.
-- Public API confirms locked installs and applicable full-verification steps.
-- Remote raw test/memory/warning counts are not claimed.
-- Repaired integration: 45 tests pass; strict log gate accepts one known warning.
-- jdqstT/logs/20261013T181428/window1/renderer.log:10, VSCODE-HOST-001.
-- Repair verify: 489 tests /45 files, zero errors/warnings; builds/package pass.
-- Closure verify: 489 tests /45 files, 202.04 s, zero errors/warnings.
-- Prior local host gate is not warning-free; exact diagnostic is in VALIDATION.
+- Strengthened full: 513 unit /49 host tests pass; strict host logs fail.
+- Unapproved chatPetContext 25 ms: UwjrWd/20261014T000528/renderer.log:3.
+- Exact approved/unapproved records and prior failures are in VALIDATION.
+- Both large-file sorts/filters, original pages/scans and full hashes pass.
+- First DOM 1,482.977/1,889.464 ms; sampled peaks 273.5/289.9 MB.
+- Original caps and 540/600 s budgets pass; workload 337,944.229 ms.
+- Earlier gallery-fixture full passes; it precedes strengthened grid checks.
+- Installed VSIX passes four both-engine cases/logs; one approved HOST-001.
+- Final npm run verify passes 513 tests/47 files; zero errors/warnings.
 
 ## Last session
-Failed caf209b Windows/macOS CI and local full-startup failure remain recorded.
-Red-first reader/hash repairs pass; the repaired candidate now passes full CI.
-Repaired Windows peaks 270,688,256 /276,115,456; size growth 5,427,200 bytes.
-All pages/scans/hashes pass; max gap 584.9556 ms; large workload 192.188 s.
+Fresh cumulative Bugbot review; schema/view/fidelity/paging defects repaired red-first.
+WITH DML refusal repaired; 2,112 read/352 write review probes find no defect.
+Diagnostic repeat reproduces vendor warnings and is stopped; failures preserved.
+All fourteen installed runtime assets match the 0.0.1 preview VSIX exactly.
 
 ## Decisions made this session
-Reuse one fixed 1 MiB hash buffer to avoid cumulative chunk allocations.
-Persistent Windows CIM reader; initial bootstrap bounded before opening.
-Retain 3 s measured gaps, 500 MB cap, 50 MB growth and 540/600 s budgets.
-Retain full hashes, 10 million rows, 60 Browse/20 SQL pages and payload scans.
-Owner-approved native SHM coordination stays; database/WAL bytes stay exact.
-No dependencies or production changes; all observer tooling stays out of VSIX.
+No dependencies, vendor edits, warning suppression or Milestone 2 features.
+Owner asked about two exact vendor warning families; policy unchanged.
+Preview guide/artifacts and 33-file inventory are in out/t019-preview.
 
 ## Known issues / blockers
-Green macOS confirms repaired acceptance, not sole cause of the old failure.
-Failed full Vitest-startup attempt is retained; separate final local gates pass.
-CSV memory, physical/cold first paint, schema and milestone QA/review remain.
-Pre-existing edits/unrelated untracked files are preserved outside this repair.
+Host-warning decision, current-code three-platform CI and feedback pending.
+Desktop inspection API fails: native pipe unavailable (os error 2).
+Physical/cold paint and subjective usability are not inferred from DOM checks.
+Pre-existing edits/unrelated files remain outside this task; T-019 stays unchecked.
 
 ## Next
-Owner pushes completion records; use a fresh chat for remaining Milestone 1 work.
+Local candidate prepared; full gate needs the policy decision.
+Owner tests preview and pushes; confirm fresh CI/feedback, then close T-019.
+Complete release gate/tag before starting Milestone 2 in a fresh chat.

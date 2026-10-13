@@ -41,8 +41,16 @@ On an error, previous results remain. For oversized results, choose fewer rows a
 Select a table or view to return to table browsing.</p>
 <div class="browser-toolbar"><label for="browser-select">Table or view</label><select id="browser-select" disabled></select>
 <button id="browser-browse" disabled>Browse table</button>
+<button id="schema-show" disabled>View schema</button>
 <button id="browser-list-previous" disabled>Previous objects</button><button id="browser-list-next" disabled>Next objects</button>
 <span id="browser-list-status" role="status"></span></div>
+<section id="schema-panel" aria-labelledby="schema-title" hidden><h2 id="schema-title">Schema</h2>
+<div class="browser-toolbar"><label for="schema-kind">Metadata</label><select id="schema-kind"><option value="columns">Columns</option><option value="indexes">Indexes</option><option value="indexColumns">Index terms</option></select>
+<label for="schema-index">Index name</label><input id="schema-index" type="text"><button id="schema-inspect">Inspect index</button>
+<label for="schema-size">Metadata rows per page</label><select id="schema-size"><option value="100">100</option><option value="10">10</option><option value="1">1</option></select>
+<button id="schema-previous" disabled>Previous metadata</button><button id="schema-next" disabled>Next metadata</button></div>
+<p class="browser-help">Columns include name, declared type, Primary key ordinal, NOT NULL, Default SQL and hidden/generated flag. Indexes include uniqueness, origin, partial flag and SQL. Values are literal metadata, never executed. Use fewer metadata rows for large defaults; Cancel operation also cancels metadata reads.</p>
+<p id="schema-status" role="status" aria-live="polite"></p><div id="schema-rows" tabindex="0" aria-label="Complete schema metadata"></div></section>
 <div class="browser-toolbar"><button id="browser-previous" disabled>Previous page</button><button id="browser-next" disabled>Next page</button>
 <label for="browser-size">Rows per page</label><select id="browser-size"><option value="100">100</option><option value="10">10</option><option value="1">1</option></select>
 <button id="browser-count" disabled>Count rows</button><button id="browser-cancel" disabled>Cancel operation</button>

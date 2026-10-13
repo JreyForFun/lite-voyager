@@ -122,6 +122,7 @@ export type BrowserRequest =
   | { type: 'browserList'; requestId: number; offset: number }
   | { type: 'browserPage'; requestId: number; table: string; offset: number; limit: number; grid?: GridOptions }
   | { type: 'browserCount'; requestId: number; table: string; grid?: GridOptions }
+  | { type: 'browserSchema'; requestId: number; table: string; kind: 'columns' | 'indexes' | 'indexColumns'; index?: string; offset: number; limit: number }
   | { type: 'browserCancel'; requestId: number };
 export type BrowserResponse =
   | ({ type: 'browserExportProgress'; requestId: number } & import('./engine/engine').ExportProgress)
@@ -131,6 +132,7 @@ export type BrowserResponse =
   | { type: 'browserTables'; requestId: number; offset: number; objects: BrowserObject[]; hasMore: boolean }
   | { type: 'browserRows'; requestId: number; table: string; offset: number; limit: number; page: import('./engine/engine').EnginePage }
   | { type: 'browserCounted'; requestId: number; table: string; count: string }
+  | { type: 'browserSchemaRows'; requestId: number; table: string; kind: 'columns' | 'indexes' | 'indexColumns'; index?: string; offset: number; limit: number; page: import('./engine/engine').EnginePage }
   | { type: 'browserSortWarning'; requestId: number; table: string; message: string }
   | { type: 'browserCancelled'; requestId: number }
   | { type: 'browserError'; requestId: number; message: string };
@@ -146,26 +148,32 @@ export interface BrowserStatus {
   /** Opt-in local integration event-loop probe; no contents or persistent samples. */
   responsiveness?: { ticks: number; maxGapMs: number };
   cell?: { row: number | null; column: number | null; length: number; preview: string | null; kind: string; busy: boolean; message: string };
+  schema?: { table: string | null; kind: 'columns' | 'indexes' | 'indexColumns'; offset: number; rows: number; hasMore: boolean; preview: string; message: string };
+  appearance?: { theme: string; foreground: string; background: string };
 }
 /** Local host integration drives the same editor/controls as a user; no file access. */
 export interface BrowserExercise {
   type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse' | 'sort' | 'filter' | 'removeFilter' | 'clearGrid' | 'continueSort' | 'dismissSort'
     | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'
     | 'exportCsv' | 'exportJson'
+    | 'schema' | 'schemaKind' | 'schemaNext' | 'schemaPrevious' | 'schemaSize' | 'schemaIndex' | 'appearance' | 'gridKey'
     | 'startResponsiveness' | 'stopResponsiveness' | 'pulseResponsiveness'; value?: string; exerciseId?: number;
 }
 function identifier(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= 4 * 1024 * 1024 && !value.includes('\0');
+  return typeof value === 'string' && value.length <= 4 * 1024 * 1024 && !value.includes('\0');
 }
 export function isBrowserRequest(value: unknown): value is BrowserRequest {
   if (!isRecord(value) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   switch (value['type']) {
     case 'browserExport': return value['format'] === 'csv' || value['format'] === 'json';
-    case 'browserQuery': return identifier(value['sql']) && integer(value['limit'], 1, BROWSER_PAGE_SIZE)
+    case 'browserQuery': return identifier(value['sql']) && value['sql'].length > 0 && integer(value['limit'], 1, BROWSER_PAGE_SIZE)
       && integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
     case 'browserCancel': return true;
     case 'browserList': return integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
     case 'browserCount': return identifier(value['table']) && (value['grid'] === undefined || isGridOptions(value['grid']));
+    case 'browserSchema': return identifier(value['table']) && ['columns', 'indexes', 'indexColumns'].includes(String(value['kind']))
+      && (value['kind'] !== 'indexColumns' || identifier(value['index'])) && integer(value['limit'], 1, BROWSER_PAGE_SIZE)
+      && integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
     case 'browserPage': return identifier(value['table']) && integer(value['limit'], 1, BROWSER_PAGE_SIZE)
       && (value['grid'] === undefined || isGridOptions(value['grid']))
       && integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
@@ -186,13 +194,16 @@ export function isBrowserResponse(value: unknown): value is BrowserResponse {
       && typeof value['hasMore'] === 'boolean' && Array.isArray(value['objects']) && value['objects'].length <= BROWSER_PAGE_SIZE
       && Array.from(value['objects']).every((object: unknown) => isRecord(object) && identifier(object['name']) && ['table', 'view'].includes(String(object['kind'])));
     case 'browserRows':
+    case 'browserSchemaRows':
     case 'browserQueryRows': {
       const page = value['page'];
-      const context = value['type'] === 'browserRows' ? identifier(value['table'])
+      const context = value['type'] === 'browserRows' ? identifier(value['table']) : value['type'] === 'browserSchemaRows'
+        ? identifier(value['table']) && ['columns', 'indexes', 'indexColumns'].includes(String(value['kind'])) && (value['kind'] !== 'indexColumns' || identifier(value['index']))
         : typeof value['ms'] === 'number' && Number.isFinite(value['ms']) && value['ms'] >= 0;
       if (!context || !integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE)
         || !integer(value['limit'], 1, BROWSER_PAGE_SIZE) || !isRecord(page) || !Array.isArray(page['columns']) || !Array.isArray(page['rows'])
-        || page['rows'].length > value['limit'] || typeof page['hasMore'] !== 'boolean') { return false; }
+        || page['rows'].length > value['limit'] || typeof page['hasMore'] !== 'boolean'
+        || (page['total'] !== undefined && !decimal(page['total']))) { return false; }
       const columns = page['columns'];
       let size = 0;
       const cell = (text: unknown): boolean => {
@@ -228,10 +239,20 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && (value['sqlLength'] === undefined || integer(value['sqlLength'], 0, Number.MAX_SAFE_INTEGER))
     && (value['selectionLength'] === undefined || integer(value['selectionLength'], 0, Number.MAX_SAFE_INTEGER))
     && (value['cell'] === undefined || isCellSummary(value['cell']))
+    && (value['appearance'] === undefined || isAppearanceSummary(value['appearance']))
+    && (value['schema'] === undefined || isRecord(value['schema'])
+      && (value['schema']['table'] === null || identifier(value['schema']['table']))
+      && ['columns', 'indexes', 'indexColumns'].includes(String(value['schema']['kind']))
+      && integer(value['schema']['offset'], 0, Number.MAX_SAFE_INTEGER) && integer(value['schema']['rows'], 0, BROWSER_PAGE_SIZE)
+      && typeof value['schema']['hasMore'] === 'boolean' && typeof value['schema']['preview'] === 'string' && value['schema']['preview'].length <= 2048
+      && typeof value['schema']['message'] === 'string' && value['schema']['message'].length <= 2048)
     && Array.isArray(value['firstRow']) && value['firstRow'].length <= 12 && Array.from(value['firstRow']).every((cell: unknown) =>
       isRecord(cell) && (cell['text'] === null || typeof cell['text'] === 'string' && cell['text'].length <= 128)
       && integer(cell['length'], 0, 4 * 1024 * 1024) && (cell['label'] === null || typeof cell['label'] === 'string')
       && (cell['column'] === undefined || typeof value['columns'] === 'number' && integer(cell['column'], 0, value['columns'] - 1)));
+}
+function isAppearanceSummary(value: unknown): boolean {
+  return isRecord(value) && ['theme', 'foreground', 'background'].every((key) => typeof value[key] === 'string' && value[key].length <= 128);
 }
 function isCellSummary(value: unknown): boolean {
   return isRecord(value) && (value['row'] === null || integer(value['row'], 0, BROWSER_PAGE_SIZE - 1))
@@ -243,7 +264,7 @@ function isCellSummary(value: unknown): boolean {
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
-    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
+    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'schema', 'schemaKind', 'schemaNext', 'schemaPrevious', 'schemaSize', 'schemaIndex', 'appearance', 'gridKey', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 

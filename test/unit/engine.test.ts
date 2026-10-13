@@ -41,6 +41,20 @@ test('FR-018: Given invalid UTF-8 TEXT in fallback, When reading details, Then l
 });
 
 describe.each([false, true])('Production Engine, fallback=%s', (fallback) => {
+  test.each(['UTF-8', 'UTF-16le', 'UTF-16be'])('FR-018: Given %s database encoding, When worker queries valid and malformed TEXT, Then both modes retain exact characters, reject replacement and preserve source bytes', async (encoding) => {
+    const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-encoding-')); const path = join(directory, 'source.sqlite');
+    const writer = new DatabaseSync(path); writer.exec(`PRAGMA encoding='${encoding}'; CREATE TABLE data(v TEXT)`); writer.close();
+    const before = await hash(path); const engine = makeEngine(fallback);
+    try {
+      await engine.open(path);
+      const bad = encoding === 'UTF-8' ? '80' : encoding === 'UTF-16le' ? '00D8' : 'D800';
+      await expect(engine.query(`SELECT CAST(x'${bad}' AS TEXT)`)).rejects.toThrow(/not valid/u);
+      const page = await engine.query("SELECT char(65279)||'before'||char(0)||'after'||char(65533) AS same, 9223372036854775807 AS same, zeroblob(3)");
+      expect(page.columns.slice(0, 2)).toEqual(['same', 'same']);
+      expect(page.rows).toEqual([['\uFEFFbefore\0after\uFFFD', '9223372036854775807', '[BLOB 3 bytes]']]);
+    } finally { await engine.close(); }
+    try { expect(await hash(path)).toBe(before); } finally { await rm(directory, { recursive: true, force: true }); }
+  });
   test('FR-018: Given SQLite text with NUL, BOM and Unicode, When reading full cell details, Then both engines preserve every character without changing other types or the source', async () => {
     const engine = makeEngine(fallback); const before = await hash(fixture);
     try {
@@ -130,6 +144,8 @@ describe.each([false, true])('Production Engine, fallback=%s', (fallback) => {
       for (const sql of ['DELETE FROM records', 'WITH n AS (SELECT 1) DELETE FROM records', 'PRAGMA query_only=OFF', "ATTACH DATABASE 'bad.sqlite' AS bad", 'SELECT 1; DELETE FROM records', "SELECT load_extension('bad')"]) {
         await expect(engine.query(sql)).rejects.toThrow();
       }
+      await expect(engine.query('WITH n AS (SELECT 1) DELETE FROM records RETURNING *')).rejects.toThrow('read-only');
+      expect((await engine.query('WITH replace(v) AS (VALUES(1)) SELECT v FROM replace')).rows).toEqual([['1']]);
       await expect(engine.page('records"; DELETE FROM records; --')).rejects.toThrow();
       expect((await engine.query('SELECT ? AS text', ["'; DELETE FROM records; --"])).rows).toEqual([["'; DELETE FROM records; --"]]);
       expect((await engine.query("/* comment */ SELECT ';' AS value; -- trailing comment")).rows).toEqual([[';']]);

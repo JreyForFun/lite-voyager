@@ -111,9 +111,13 @@ suite('T-016 production multi-GB SQLite memory', () => {
         try {
           await monitor.next(); // Establish actual host/renderer coverage before opening.
           const uri = vscode.Uri.file(path);
+          const openStarted = performance.now();
           await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
           const document = api.sqliteEditor.getDocument(uri); assert.ok(document);
           await waitBrowser(document, (status) => painted(status) && status.editorReady === true, 0, budget.remaining(15000));
+          const firstDomMs = performance.now() - openStarted;
+          console.log(`T-019 first-DOM evidence: ${JSON.stringify({ name, bytes, firstDomMs, scope: 'warm generated input; openWith through first populated DOM report, not physical paint' })}`);
+          assert.ok(firstDomMs < 2000, `${name} first populated DOM must appear within the unchanged NFR-004 two-second target.`);
           const opened = document.session.state.opened; assert.ok(opened);
           assert.equal(opened.engine, 'node:sqlite'); assert.equal(opened.memoryLimited, false);
           assert.equal(opened.bytes, String(bytes));
@@ -127,6 +131,53 @@ suite('T-016 production multi-GB SQLite memory', () => {
           assert.equal(document.browserStatus.firstRow[0]?.text, '9007199254740993');
           await browserAction(document, 'select', (status) => painted(status) && status.table === 'records', 'records');
           await monitor.next(helper);
+          // Close the M1 large-table grid criterion inside the same observed,
+          // source-hashed workload, without replacing any existing page/scan.
+          const gridAction = async (action: 'sort' | 'filter', value: string) => {
+            const started = await browserAction(document, action, (status) => status.busy, value);
+            let result = await waitBrowser(document, (status) => status.exerciseId === started.exerciseId && !status.busy
+              && (painted(status) || /confirmation/u.test(status.message)), started.revision, budget.remaining(120000));
+            if (/confirmation/u.test(result.message)) {
+              const continued = await browserAction(document, 'continueSort', (status) => status.busy);
+              result = await waitBrowser(document, (status) => status.exerciseId === continued.exerciseId && painted(status), continued.revision, budget.remaining(120000));
+            }
+            return result;
+          };
+          const ascending = await gridAction('sort', 'id');
+          assert.equal(ascending.firstRow[0]?.text, '9007199254740993');
+          await monitor.next(helper);
+          const lastId = String(9007199254740993n + 9999999n);
+          const descending = await gridAction('sort', 'id');
+          assert.equal(descending.firstRow[0]?.text, lastId);
+          await monitor.next(helper);
+          const filtered = await gridAction('filter', JSON.stringify({ column: 'name', operator: 'contains', value: 'row 999' }));
+          assert.equal(filtered.firstRow[0]?.text, lastId); assert.equal(filtered.firstRow[1]?.text, 'row 9999999');
+          assert.equal(filtered.cachedRows, 100); assert.equal(filtered.count, null);
+          await monitor.next(helper);
+          // Retain both directional sort assertions above. Use forward primary-
+          // key order for the complete rare-filter scan, as for the original
+          // full payload scan; reverse cold page traversal has no latency target.
+          await gridAction('sort', 'id'); // descending -> unsorted
+          await monitor.next(helper);
+          await gridAction('sort', 'id'); // unsorted -> ascending
+          await monitor.next(helper);
+          // A rare literal proves filtering actually narrows the result, rather
+          // than accepting the same initial rows of an unfiltered reverse scan.
+          const narrowed = await gridAction('filter', JSON.stringify({ column: 'name', operator: 'contains', value: 'row 999999' }));
+          assert.equal(narrowed.cachedRows, 11); assert.equal(narrowed.hasMore, false); assert.equal(narrowed.count, null);
+          assert.equal(narrowed.firstRow[0]?.text, String(9007199254740993n + 999999n));
+          assert.equal(narrowed.firstRow[1]?.text, 'row 999999');
+          await monitor.next(helper);
+          const warning = await browserAction(document, 'sort', (status) => !status.busy && /confirmation/u.test(status.message), 'name');
+          assert.equal(warning.firstRow[0]?.text, narrowed.firstRow[0]?.text);
+          await monitor.next(helper);
+          await browserAction(document, 'dismissSort', (status) => !status.busy && /dismissed/u.test(status.message));
+          const cleared = await browserAction(document, 'clearGrid', painted);
+          assert.equal(cleared.offset, 0); assert.equal(cleared.firstRow[0]?.text, '9007199254740993');
+          await monitor.next(helper);
+          console.log(`T-019 large-grid evidence: ${JSON.stringify({ name, rows: 10000000, ascending: ascending.firstRow[0]?.text,
+            descending: descending.firstRow[0]?.text, filter: filtered.firstRow[1]?.text, cachedRows: filtered.cachedRows, narrowedRows: narrowed.cachedRows,
+            unindexedWarningRetainedPage: true, clearedOffset: cleared.offset })}`);
           // Sixty actual UI pages; each contains 100 rows, and only one page is cached.
           for (let page = 1; page <= 60; page++) {
             budget.remaining(15000);

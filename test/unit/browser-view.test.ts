@@ -9,6 +9,12 @@ let sent: (BrowserRequest | BrowserStatus | CellRequest)[];
 let frames: FrameRequestCallback[];
 const flush = (): void => { const queued = frames; frames = []; for (const callback of queued) { callback(0); } };
 const requests = () => sent.filter((message): message is BrowserRequest => message.type.startsWith('browser') && message.type !== 'browserStatus');
+test('NFR-005: Given a local QA exercise, When appearance is sampled, Then only bounded computed theme colors are reported', () => {
+  vi.stubGlobal('getComputedStyle', () => ({ color: 'rgb(0, 0, 0)', backgroundColor: 'rgb(255, 255, 255)' }));
+  vi.stubGlobal('document', { createElement: () => new BrowserElement(), body: { className: 'vscode-light' } });
+  view.exercise({ type: 'browserExercise', action: 'appearance', exerciseId: 1 });
+  expect(sent.at(-1)).toMatchObject({ appearance: { theme: 'vscode-light', foreground: 'rgb(0, 0, 0)', background: 'rgb(255, 255, 255)' } });
+});
 beforeEach(() => {
   root = browserRoot(['browser-grid', 'browser-viewport', 'browser-track', 'browser-rows', 'browser-header', 'browser-select', 'browser-list-previous', 'browser-list-next', 'browser-previous', 'browser-next', 'browser-count', 'browser-cancel', 'browser-size', 'browser-status', 'browser-total', 'browser-list-status', 'browser-browse', 'sql-limit-status']);
   for (const id of ['browser-export-csv', 'browser-export-json']) { root.elements.set(id, new BrowserElement()); }
@@ -30,6 +36,19 @@ beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe(): void {} disconnect(): void {} });
   view = new BrowserView(root as unknown as HTMLElement, (message) => { sent.push(message); });
   view.start();
+});
+
+test.each(['browserError', 'browserCancelled'] as const)('FR-002: Given a successful ten-row page, When a larger page replacement fails with %s, Then successful size and subsequent navigation survive without skipping rows', (type) => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['v'], rows: [['old']], hasMore: true } });
+  view.exercise({ type: 'browserExercise', action: 'size', value: '10' });
+  view.receive({ type: 'browserRows', requestId: 3, table: 'data', offset: 0, limit: 10, page: { columns: ['v'], rows: Array.from({ length: 10 }, () => ['old']), hasMore: true } });
+  view.exercise({ type: 'browserExercise', action: 'size', value: '100' });
+  if (type === 'browserError') { view.receive({ type, requestId: 4, message: 'Page exceeds 4 MiB.' }); }
+  else { view.exercise({ type: 'browserExercise', action: 'cancel' }); view.receive({ type, requestId: 5 }); }
+  expect(view.savedState().limit).toBe(10); expect(root.elements.get('browser-size')?.value).toBe('10');
+  view.exercise({ type: 'browserExercise', action: 'next' });
+  expect(requests().at(-1)).toMatchObject({ type: 'browserPage', offset: 10, limit: 10 });
 });
 
 test('FR-014: Given successful SQL results, When exporting, Then counters remain busy until commit, Cancel disables during Saving and the page survives', () => {
@@ -219,10 +238,10 @@ test('FR-017: Given a changed filter awaiting sort confirmation, When counting o
   view.receive({ type: 'browserCounted', requestId: 6, table: 'data', count: '205' });
   view.exercise({ type: 'browserExercise', action: 'filter', value: JSON.stringify({ column: 'id', operator: 'contains', value: '9' }) });
   view.receive({ type: 'browserSortWarning', requestId: 7, table: 'data', message: 'Slow filtered sort' });
-  for (const id of ['browser-count', 'browser-next', 'browser-previous', 'browser-size']) {
+  for (const id of ['browser-count', 'browser-next', 'browser-previous', 'browser-size', 'schema-show', 'schema-inspect']) {
     expect(root.elements.get(id)?.disabled).toBe(true);
   }
-  for (const action of ['count', 'next', 'previous', 'size'] as const) {
+  for (const action of ['count', 'next', 'previous', 'size', 'schema', 'schemaIndex'] as const) {
     view.exercise({ type: 'browserExercise', action, value: '10' });
   }
   expect(requests()).toHaveLength(7);
@@ -449,6 +468,21 @@ test('FR-011: Given saved query context, When recreating the webview, Then the s
   expect(requests().at(-1)).toEqual({ type: 'browserQuery', requestId: 9, sql: 'SELECT 1', offset: 100, limit: 10 });
   expect(view.savedState()).not.toHaveProperty('rows');
   expect(root.elements.get('browser-select')?.value).toBe('data');
+  view.receive({ type: 'browserQueryRows', requestId: 9, offset: 100, limit: 10, ms: 1, page: { columns: ['v'], rows: [['101']], hasMore: false } });
+  expect(root.elements.get('schema-show')?.disabled).toBe(false);
+  view.exercise({ type: 'browserExercise', action: 'schema' });
+  expect(requests().at(-1)).toMatchObject({ type: 'browserSchema', table: 'data' });
+});
+
+test('FR-003: Given inspected metadata, When the replacement catalog is empty, Then stale schema is cleared and inspection is disabled', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: true });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['v'], rows: [['old']], hasMore: false } });
+  view.exercise({ type: 'browserExercise', action: 'schema' });
+  view.receive({ type: 'browserSchemaRows', requestId: 3, table: 'data', kind: 'columns', offset: 0, limit: 100, page: { columns: ['name'], rows: [['old metadata']], hasMore: false } });
+  view.exercise({ type: 'browserExercise', action: 'listNext' });
+  view.receive({ type: 'browserTables', requestId: 4, offset: 100, objects: [], hasMore: false });
+  expect(sent.at(-1)).toMatchObject({ schema: { table: null, rows: 0, preview: '' } });
+  expect(root.elements.get('schema-show')?.disabled).toBe(true); expect(root.elements.get('schema-rows')?.children).toHaveLength(0);
 });
 
 test('FR-002: Given a table list, When browsing and navigating an exact page boundary, Then selection is automatic, controls reflect hasMore and counting stays explicit', () => {

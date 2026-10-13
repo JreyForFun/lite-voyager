@@ -478,6 +478,34 @@ Targets marked "start" are starting points to validate in the benchmark task, th
   separate requirements. Tests must reject fabricated over-budget, growing,
   missing-process and insufficient-sample evidence.
 
+### T-019 Milestone 1 gate acceptance (2026-10-13)
+
+- Schema inspection is opt-in and does not delay first data rows. For the
+  selected table/view, show literal column names/types, primary-key ordinals,
+  NOT NULL, default SQL and generated/hidden metadata, plus paged indexes and
+  index terms through the existing Engine methods. Pages are bounded at 100
+  rows, with 10/1-row choices for large metadata. Failures/cancellation retain
+  data results and permit retry. Do not execute displayed default/index SQL.
+- Two views of the same source use independent worker sessions, request IDs,
+  results and export/clipboard state. Closing or cancelling one view cannot
+  close or replace the other; final closure releases all owned helpers.
+- Valid empty SQLite object/column names remain reachable and literal, alongside
+  ordinary and unusual names. Invalid NUL identifiers remain rejected.
+- A failed/cancelled page-size replacement preserves the last successful
+  page size, rows, offset and subsequent navigation. A rerun that exhausts
+  before its requested offset reports the observed total or an honest unknown
+  total; it must never invent a total from the requested offset.
+- Both backends preserve complete valid text, including NUL, BOM, literal
+  replacement characters and SQLite-supported UTF-16 databases. Malformed
+  stored text fails visibly instead of replacement decoding. Native decoding
+  must preserve column labels, bound parameters, nondeterministic evaluation,
+  streaming cancellation/export and all existing source/memory/read-only rules.
+- Record delegated real-host QA separately from subjective physical-paint,
+  smoothness and visual observations. Keep the NFR-004 two-second target and
+  T-016 numeric memory contract unchanged; automated DOM timing is scoped
+  evidence, not proof of physical paint on every host. Milestone 2 is not built
+  here. Preview publication/feedback remains the existing external phase step.
+
 ## 5.5 Screens and states
 
 Every screen must handle each of these, with a test or a manual checklist item:
@@ -502,6 +530,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-019 gate acceptance (2026-10-13): Define the missing opt-in paged schema UI and isolated same-source views; reconcile review regressions for literal empty names, successful paging context, observed totals and cross-engine lossless text without relaxing any existing limit.
 - T-016 WAL clarification (2026-10-13): Owner approves SQLite-managed transient SHM reader coordination after the red-first idle-writer test shows reader marks changing. Preserve strict database/WAL hashes and constrain the observed SHM changes; no production change or source restoration.
 - T-016 acceptance (2026-10-13): Owner approves source-safety tests and a scoped 1 GB/5 GB primary SQLite sampled-memory contract: 500 MB cap, 50 MB growth, explicit process coverage and observation limits. Preserve the CSV target and milestone scope.
 - T-015 (2026-10-13): Specify delegated successful-query streaming, exact JSON strings, CSV NULL convention, BLOB disclosure, bounded worker writes, atomic publication and cancellation safety.

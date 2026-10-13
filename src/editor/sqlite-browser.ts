@@ -76,6 +76,14 @@ export class SqliteBrowser {
   private async execute(request: BrowserRequest, send: (message: BrowserResponse) => void): Promise<BrowserResponse> {
     const requestId = request.requestId;
     switch (request.type) {
+      case 'browserSchema': {
+        const address = { offset: request.offset, limit: request.limit };
+        const page = request.kind === 'columns' ? await this.engine.columns(request.table, address)
+          : request.kind === 'indexes' ? await this.engine.indexes(request.table, address)
+            : await this.engine.indexColumns(request.table, request.index ?? '', address);
+        return { type: 'browserSchemaRows', requestId, table: request.table, kind: request.kind,
+          ...(request.index === undefined ? {} : { index: request.index }), ...address, page };
+      }
       case 'browserExport': {
         if (this.successfulSql === undefined || this.exporter === undefined) { throw new Error('Run a successful SQL query before exporting its results.'); }
         this.exportRunning = true;

@@ -6,7 +6,7 @@ export type EngineName = 'node:sqlite' | 'sql.js';
 export type Parameter = string | number | null | Uint8Array;
 export type Cell = string | null;
 export interface PageAddress { offset?: number; limit?: number; }
-export interface EnginePage { columns: string[]; rows: Cell[][]; hasMore: boolean; sortWarning?: string; }
+export interface EnginePage { columns: string[]; rows: Cell[][]; hasMore: boolean; sortWarning?: string; total?: string; }
 export interface EngineMode {
   engine: EngineName;
   memoryLimited: boolean;

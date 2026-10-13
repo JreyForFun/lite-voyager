@@ -56,6 +56,22 @@ const definition = `
 `;
 
 describe.each([false, true])('T-011 worker metadata, fallback=%s', (fallback) => {
+  test('FR-003: Given legal empty table, column and index names, When browsing and inspecting on either backend, Then literal empty identifiers remain accessible and source bytes stay unchanged', async () => {
+    await withDatabase(fallback, 'CREATE TABLE ""("" TEXT NOT NULL DEFAULT \'literal\'); INSERT INTO "" VALUES(\'blank\'); CREATE INDEX blank_index ON ""("");', async (engine, path) => {
+      const before = await hash(path);
+      expect((await engine.page('')).rows).toEqual([['blank']]);
+      expect((await engine.columns('')).rows[0]?.slice(0, 5)).toEqual(['0', '', 'TEXT', '1', "'literal'"]);
+      expect((await engine.indexes('')).rows[0]?.[0]).toBe('blank_index');
+      expect((await engine.indexColumns('', 'blank_index')).rows[0]?.[2]).toBe('');
+      expect((await engine.grid('', { filters: [{ column: '', operator: 'contains', value: 'blank' }] })).rows).toEqual([['blank']]);
+      expect(await hash(path)).toBe(before);
+    });
+    // Tables and indexes share SQLite's schema-name namespace.
+    await withDatabase(fallback, 'CREATE TABLE ordinary(""); CREATE INDEX "" ON ordinary("");', async (engine) => {
+      expect((await engine.indexes('ordinary')).rows[0]?.[0]).toBe('');
+      expect((await engine.indexColumns('ordinary', '')).rows[0]?.[2]).toBe('');
+    });
+  });
   test.each(['columns', 'indexes', 'indexColumns'] as const)('FR-003: Given user tables named like PRAGMA functions, When requesting %s, Then metadata functions are not shadowed', async (operation) => {
     await withDatabase(fallback, `
       CREATE TABLE pragma_table_xinfo(value); CREATE TABLE pragma_index_list(value); CREATE TABLE pragma_index_xinfo(value);
@@ -119,11 +135,13 @@ describe.each([false, true])('T-011 worker metadata, fallback=%s', (fallback) =>
 
   test('FR-003: Given missing objects, injection-like identifiers and invalid pages, When requesting schema, Then failures are clear and subsequent valid requests still work', async () => {
     await withDatabase(fallback, definition, async (engine) => {
-      for (const name of ['missing', "sentinel'); DROP TABLE sentinel; --"]) {
+      // Empty identifiers are legal SQLite names; an absent one is missing,
+      // while NUL remains invalid. Both behaviours retain explicit regressions.
+      for (const name of ['', 'missing', "sentinel'); DROP TABLE sentinel; --"]) {
         await expect(engine.columns(name)).rejects.toThrow('schema object was not found');
         await expect(engine.indexes(name)).rejects.toThrow('schema object was not found');
       }
-      for (const name of ['', 'sentinel\0']) {
+      for (const name of ['\0', 'sentinel\0']) {
         await expect(engine.columns(name)).rejects.toThrow('Invalid');
         await expect(engine.indexes(name)).rejects.toThrow('Invalid');
         await expect(engine.indexColumns(table, name)).rejects.toThrow('Invalid');

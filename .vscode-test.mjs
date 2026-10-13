@@ -25,6 +25,13 @@ await mkdir(builtinExtensionsDirectory, { recursive: true });
 await writeFile(join(extensionsDirectory, 'extensions.json'), '[]\n', { flag: 'wx' });
 await writeFile(join(settingsDirectory, 'settings.json'), JSON.stringify({
 	'chat.disableAIFeatures': true,
+	'extensions.autoUpdate': 'off',
+	'extensions.autoCheckUpdates': false,
+	// In VS Code 1.140 the signed-out private-gallery route returns a null
+	// manifest before any request. This prevents the five-minute background
+	// control-report fetch in long offline tests. No user profile is changed.
+	'extensions.gallery.serviceUrl': 'http://127.0.0.1:1/lite-voyager-isolated-tests',
+	'extensions.gallery.authProvider': 'github',
 }, null, 2));
 
 const version = process.env.LITE_VOYAGER_TEST_VSCODE_VERSION ?? '1.140.0';
@@ -43,8 +50,22 @@ await writeFile(join(authenticationFixture, 'package.json'), JSON.stringify({
 	license: 'MIT',
 	engines: { vscode: '^1.140.0' },
 	main: './extension.js',
-	contributes: { authentication: [{ id: 'github', label: 'Signed-out test fixture' }] },
+	contributes: {
+		authentication: [{ id: 'github', label: 'Signed-out test fixture' }],
+		themes: [
+			{ label: 'T-019 Light', uiTheme: 'vs', path: './light.json' },
+			{ label: 'T-019 Dark', uiTheme: 'vs-dark', path: './dark.json' },
+		],
+	},
 }, null, 2), { flag: 'wx' });
+// Deterministic test themes accompany the isolated development fixture only.
+for (const [name, type, foreground, background] of [
+	['light', 'light', '#111111', '#ffffff'], ['dark', 'dark', '#eeeeee', '#111111'],
+]) {
+	await writeFile(join(authenticationFixture, `${name}.json`), JSON.stringify({
+		type, colors: { 'editor.foreground': foreground, 'editor.background': background }, tokenColors: [],
+	}), { flag: 'wx' });
+}
 const fixtureBuild = await build({
 	entryPoints: [join(root, 'src', 'test', 'fixtures', 'authentication-provider.ts')],
 	outfile: join(authenticationFixture, 'extension.js'),

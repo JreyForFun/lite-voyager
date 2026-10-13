@@ -28,7 +28,7 @@ function query(backend: ReadBackend, request: DatabaseOperation): void {
     reply({ type: 'result', id: request.id, value });
   } catch (error: unknown) {
     const text = error instanceof Error ? error.message : '';
-    const actionable = /^(Invalid |Pass an exact|The result page|Run only one|The read-only|The query has|The schema object|The table index)/u.test(text);
+    const actionable = /^(Invalid |Pass an exact|The result page|Run only one|The read-only|The query has|The schema object|The table index|The SQLite TEXT|SQLite TEXT)/u.test(text);
     const failure = request.type === 'metadata'
       ? 'The SQLite schema could not be read. Refresh the table list, check that the database is still available, or reopen the file.'
       : 'The SQLite query failed. Check the SQL, table names, and read-only mode.';
@@ -65,7 +65,7 @@ async function start(): Promise<void> {
       void writeResults(backend, request.sql, request.format, request.path, (value) => reply({ type: 'exportProgress', id: request.id, value }))
         .then((value) => reply({ type: 'exported', id: request.id, value }), (error: unknown) => {
           const detail = error instanceof Error ? error.message : '';
-          const safe = /^(The read-only|Run only one|Invalid |Unsupported |Memory-limited|The query has)/u.test(detail);
+          const safe = /^(The read-only|Run only one|Invalid |Unsupported |Memory-limited|The query has|The SQLite TEXT|SQLite TEXT)/u.test(detail);
           reply({ type: 'queryFailed', id: request.id, message: safe ? detail
             : 'The export could not finish. Check SQL, destination permissions and free disk space, then retry. No partial output was saved.' });
         });
