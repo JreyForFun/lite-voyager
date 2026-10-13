@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 1; T-014 implementation and scoped automated acceptance pass.
-T-014 stays unchecked pending owner QA, independent review and fresh CI.
-T-018 and prior tasks remain complete; no milestone closure or release tag.
+Milestone 1; T-014 owner QA 1-6 and local full repair gate pass.
+Run 38341388121/attempt 1/21da760 fails Windows/macOS; Ubuntu passes.
+T-014 stays unchecked; no milestone closure or release tag.
 
 ## Verify status
-- Final verify: 445 tests / 39 files, zero errors/warnings (unit 80.94 s).
-- Full: 445 unit / 36 host; exit 0; one approved warning, not warning-free.
-- VMKJ6y, 20261013T091423/window1/renderer.log:10, VSCODE-HOST-001.
-- Exact warning and initial full-run evidence retained in VALIDATION.
-- Windows x64 / VS Code 1.140.0 / host Node 24.21.0.
-- VSIX: 20 files / 618.08 KB; no dependency added.
-- Native/fallback helper exit: 0.7971 / 0.6179 ms (target 1000 ms).
-- Host maximum timer interval: 40.1677 / 35.6103 ms (target 100 ms).
-- Webview maximum interval: 12 / 19 ms; sources byte-identical.
+- First repair gate: two unchanged five-second unit timeouts (444 pass).
+- Switch candidate: 446 unit / 36 host pass, gate fails on 3 CLI warnings.
+- Unsupported switches removed; diagnostic policy unchanged.
+- Corrected full: 447 unit / 39 files, 36 host; exit 0, one approved warning.
+- pubCu0, 20261013T121620/window1/renderer.log:10, VSCODE-HOST-001.
+- Full is not warning-free; exact message retained in VALIDATION.
+- Final verify: 447 tests / 39 files, zero errors/warnings (unit 161.37 s).
 
 ## Last session
-Five red-first behavior failures; focused 41-test pass after implementation.
-Initial sandbox Vitest spawn EPERM is separate from behavior-test failures.
+Owner reports all six numbered QA checks PASS, including fallback check 6.
+GitHub API confirms failed jobs/step/SHA; both pasted failures preserved.
+Original CI omitted probe metrics on failure; raw logging now precedes assertions.
 
 ## Decisions made this session
-Owner delegates implementation, uncertainties and scoped repairs; owner pushes.
-Reuse helper supervisor; worker-start acknowledgement does not finish a query.
-Probe timers are opt-in local integration exercises, never telemetry.
-Helper exit and reopening timings are separate; successful context is retained.
-Use existing sample.sqlite; no fixture edit needed. Untracked files untouched.
+Use keyed, opt-in 10 ms host pulses plus native webview timer observations.
+One transport request in flight; stop awaits delivery and clears the timer.
+Stale/stopped pulses do not count or change action acknowledgements.
+Keep 5 samples, 100 ms gaps, 150 ms SQL and 1000 ms helper-exit bounds.
+Serialize unit files; within-test concurrency/workloads/deadlines unchanged.
+No dependency or fixture-data change. Normal cancellation behavior unchanged.
 
 ## Known issues / blockers
-Owner manual QA 1-6, fresh-chat independent review and post-push CI remain open.
-Measurements cover the deterministic aggregate, not every workload/machine.
-T-015/T-016, schema-panel follow-up and whole-milestone QA remain open.
+Fresh repair CI and independent review remain open; local gates pass.
+Background timer starvation is supported but not proven from original CI logs.
+Existing untracked files remain untouched; unrelated compiler is not stopped.
 
 ## Next
-Follow VALIDATION T-014 owner QA; report native and fallback observations.
-Review complete diff with git diff 1d2fc4f..HEAD in a fresh chat.
-Owner pushes with git push origin main and supplies three-platform CI evidence.
+Local gates/evidence complete; owner pushes with git push origin main.
+Only T-014 files are committed; existing untracked files remain untouched.
+Review git diff 1d2fc4f..HEAD in a fresh chat; supply fresh three-platform CI.
 Keep T-014 unchecked until closure evidence passes; stay on this task.

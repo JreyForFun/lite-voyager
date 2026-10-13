@@ -358,6 +358,36 @@ test('NFR-005: Given a delayed timer, When the probe resumes, Then its reported 
   } finally { now.mockRestore(); vi.useRealTimers(); }
 });
 
+test('NFR-005: Given background timer starvation, When keyed host pulses arrive, Then the webview records actual event gaps and rejects stale probes without changing action acknowledgements', () => {
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+  let clock = 0; const now = vi.spyOn(performance, 'now').mockImplementation(() => clock);
+  const latest = () => sent.filter((message): message is BrowserStatus => message.type === 'browserStatus').at(-1);
+  try {
+    expect(isBrowserExercise({ type: 'browserExercise', action: 'pulseResponsiveness', value: 'key' })).toBe(true);
+    view.exercise({ type: 'browserExercise', action: 'startResponsiveness', exerciseId: 71 });
+    const context = latest()?.contextId; expect(context).toBeTypeOf('string');
+    // Do not advance the native timer scheduler: only delivered events sample.
+    for (let i = 0; i < 5; ++i) {
+      clock += 20;
+      view.exercise({ type: 'browserExercise', action: 'pulseResponsiveness', value: `${context}:71`, exerciseId: 900 });
+    }
+    view.exercise({ type: 'browserExercise', action: 'stopResponsiveness', exerciseId: 72 });
+    expect(latest()).toMatchObject({ exerciseId: 72, responsiveness: { ticks: 5, maxGapMs: 20 } });
+    view.exercise({ type: 'browserExercise', action: 'startResponsiveness', exerciseId: 73 });
+    view.exercise({ type: 'browserExercise', action: 'pulseResponsiveness', value: `${context}:71` });
+    view.exercise({ type: 'browserExercise', action: 'pulseResponsiveness', value: 'wrong-context:73' });
+    clock = 350;
+    view.exercise({ type: 'browserExercise', action: 'pulseResponsiveness', value: `${context}:73` });
+    view.exercise({ type: 'browserExercise', action: 'stopResponsiveness', exerciseId: 74 });
+    expect(latest()).toMatchObject({ exerciseId: 74, responsiveness: { ticks: 1, maxGapMs: 250 } });
+    clock = 500;
+    view.exercise({ type: 'browserExercise', action: 'pulseResponsiveness', value: `${context}:73` });
+    view.exercise({ type: 'browserExercise', action: 'selection', exerciseId: 75 });
+    expect(latest()).toMatchObject({ exerciseId: 75, responsiveness: { ticks: 1, maxGapMs: 250 } });
+    expect(vi.getTimerCount()).toBe(0);
+  } finally { now.mockRestore(); vi.useRealTimers(); }
+});
+
 test('FR-010: Given empty or oversized editor SQL, When Run is requested, Then no query is sent and previous results survive', () => {
   const before = requests().length;
   view.runSql('  ');

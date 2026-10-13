@@ -82,6 +82,7 @@ export class BrowserView {
   private responsiveness: BrowserStatus['responsiveness'];
   private probeTimer: ReturnType<typeof setInterval> | undefined;
   private probePrevious = 0;
+  private probeKey: string | undefined;
 
   constructor(private readonly root: HTMLElement, private readonly post: Post, private readonly saved: BrowserSavedState = INITIAL_STATE) {
     this.requestId = saved.requestId; this.listOffset = saved.listOffset; this.limit = saved.limit;
@@ -336,6 +337,14 @@ export class BrowserView {
 
   exercise(message: BrowserExercise): void {
     if (this.disposed || !isBrowserExercise(message)) { return; }
+    if (message.action === 'pulseResponsiveness') {
+      if (this.probeTimer !== undefined && message.value === this.probeKey) {
+        this.sampleProbe();
+        if (this.responsiveness !== undefined) { ++this.responsiveness.ticks; }
+      }
+      // Pulses neither acknowledge user actions nor send periodic reports.
+      return;
+    }
     if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
       case 'startResponsiveness': this.startProbe(); this.report(); break;
@@ -419,6 +428,7 @@ export class BrowserView {
   private startProbe(): void {
     this.stopProbe();
     this.responsiveness = { ticks: 0, maxGapMs: 0 }; this.probePrevious = performance.now();
+    this.probeKey = `${this.contextId}:${String(this.exerciseId)}`;
     // Local integration only: no periodic reports, no samples persisted.
     this.probeTimer = setInterval(() => {
       this.sampleProbe();
@@ -429,6 +439,7 @@ export class BrowserView {
   private stopProbe(): void {
     if (this.probeTimer === undefined) { return; }
     this.sampleProbe(); clearInterval(this.probeTimer); this.probeTimer = undefined;
+    this.probeKey = undefined;
   }
 
   dispose(): void { this.disposed = true; this.stopProbe(); this.events.abort(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }

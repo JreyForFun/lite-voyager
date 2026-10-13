@@ -265,10 +265,16 @@ file loading remain later tasks.
   disposed UI or reopen a closed engine. Recovery failure gives a close/reopen
   instruction. The source remains byte-identical.
 - T-014 NFR-005 measurement: during that query and cancellation/reopening,
-  extension-host and webview 10 ms timer probes must continue ticking with no
+  extension-host timers and webview 10 ms event-loop probes must continue ticking with no
   observed interval above 100 ms. Report observed maxima and workloads, rather
   than claiming this establishes every-operation or every-machine compliance.
-  Webview probes are opt-in local integration exercises, not telemetry.
+  Webview probes are opt-in local integration exercises, not telemetry. The
+  host supplies bounded 10 ms pulses scoped to the current context/probe;
+  native webview timers provide additional observations. All samples share
+  the same monotonic clock and retain full gaps. Old/stopped-probe pulses do
+  not count or change action acknowledgements. This avoids measuring hidden
+  Chromium timer policy as synchronous application work without relaxing the
+  100 ms bound or five-sample minimum.
 
 **FR-016 (P0) Read-only by default.** SQLite files open read-only. Write statements and inline editing need the user to switch on write mode, which is clearly indicated.
 
@@ -423,6 +429,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-014 CI probe route (2026-10-13): Replace warning-producing Chromium launch flags with bounded opt-in host pulses plus native webview samples. Preserve full monotonic gaps, sample minimum, workloads and action/context correlation.
 - T-014 scope (2026-10-13): Owner delegates implementation and uncertainties. Apply the existing helper-exit bound to production SQL cancellation, preserve successful context, and define scoped host/webview responsiveness evidence on both engines.
 - v0.5 T-018 fidelity repair (2026-10-12): Preserve complete fallback UTF-8 TEXT including NUL/BOM, reject invalid encoding visibly, and reject embedded NUL clipboard text before write rather than risk silent loss.
 - v0.5 T-018 acceptance (2026-10-12): Owner delegates selection, JSON and TSV decisions. Define page-scoped rectangles, token-preserving JSON, NULL/empty/escaping rules, cancellable worker preparation, explicit expansion budgets and separate owner/CI/milestone evidence.

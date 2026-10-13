@@ -6,6 +6,22 @@ import { expect, test } from 'vitest';
 
 const execute = promisify(execFile);
 
+test('NFR-005: Given the strict diagnostic gate, When the isolated host launches, Then unsupported Chromium switches are absent', async () => {
+  const { stdout, stderr } = await execute(process.execPath, ['--input-type=module', '-e',
+    'const { default: config } = await import("./.vscode-test.mjs"); console.log(JSON.stringify(config.launchArgs));',
+  ]);
+  expect(stderr).toBe('');
+  const args: unknown = JSON.parse(stdout);
+  // The previous switch-based probe route emitted three CLI warnings and
+  // failed the real gate. Host pulses replace it; no warning is suppressed.
+  expect(Array.isArray(args)).toBe(true);
+  for (const option of [
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
+  ]) { expect(args).not.toContain(option); }
+});
+
 test('NFR-002: Given a compatibility version, When configuration loads, Then the exact requested VS Code version is selected', async () => {
   const { stdout } = await execute(process.execPath, ['--input-type=module', '-e',
     'const { default: config } = await import("./.vscode-test.mjs"); console.log(config.version);',

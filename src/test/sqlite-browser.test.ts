@@ -39,6 +39,26 @@ const settled = (status: BrowserStatus): boolean => !status.busy;
 const rowsPainted = (status: BrowserStatus): boolean => !status.busy && status.renderedRows > 0 && status.firstRow.length > 0;
 const digest = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
 
+function startProbePulse(document: SqliteDocument, key: string): () => Promise<void> {
+  const panel = document.panel; assert.ok(panel);
+  let delivery: Promise<void> | undefined;
+  let failure: Error | undefined;
+  // Keep at most one API delivery promise pending; pulses also have a fixed
+  // 10 ms rate and the enclosing test's existing 60 s deadline.
+  const timer = setInterval(() => {
+    if (delivery !== undefined || failure !== undefined) { return; }
+    delivery = Promise.resolve().then(() => panel.webview.postMessage({
+      type: 'browserExercise', action: 'pulseResponsiveness', value: key,
+    } satisfies BrowserExercise)).then((delivered) => { assert.equal(delivered, true); })
+      .catch((error: unknown) => { failure = error instanceof Error ? error : new Error('The webview probe pulse could not be delivered.'); })
+      .finally(() => { delivery = undefined; });
+  }, 10);
+  return async () => {
+    clearInterval(timer); await delivery;
+    if (failure !== undefined) { throw failure; }
+  };
+}
+
 suite('T-014 production SQL cancellation and responsiveness', () => {
   for (const fallback of [false, true]) {
     test(`FR-015: Given the real SQL editor and fallback=${String(fallback)}, When cancelling executing SQL and closing during execution, Then the UI stays responsive, successful results survive and retry works`, async function () {
@@ -65,23 +85,28 @@ suite('T-014 production SQL cancellation and responsiveness', () => {
         for (let attempt = 0; attempt < 2; ++attempt) {
           const old = current.browserStatus; assert.ok(old);
           await edit(slow);
-          await action(current, { type: 'browserExercise', action: 'startResponsiveness' }, (status) => status.responsiveness?.ticks === 0);
-          const busy = await action(current, { type: 'browserExercise', action: 'run' }, (status) => status.busy);
-          await waitStatus(current, (status) => status.exerciseId === busy.exerciseId && status.busy && /executing/.test(status.message), busy.revision);
-          await new Promise<void>((resolve) => setTimeout(resolve, 150));
-          assert.equal(current.browserStatus?.busy, true, 'query must still be executing when Cancel is clicked');
-          const cancelStarted = performance.now();
-          const cancelling = await action(current, { type: 'browserExercise', action: 'cancel' }, (status) => status.busy && /Cancelling/.test(status.message));
-          // The second click must neither supersede nor duplicate cancellation.
-          await action(current, { type: 'browserExercise', action: 'cancel' }, (status) => /Cancelling|cancelled/.test(status.message));
-          const ready = await waitStatus(current, (status) => status.contextId === cancelling.contextId && !status.busy && /cancelled/.test(status.message), cancelling.revision);
-          const recoveryMs = performance.now() - cancelStarted;
-          assert.equal(ready.firstRow[0]?.text, old.firstRow[0]?.text);
-          assert.equal(ready.count, '1'); assert.equal(ready.sqlLength, slow.length); assert.match(ready.message, /Run/);
-          const measured = await action(current, { type: 'browserExercise', action: 'stopResponsiveness' }, (status) => !status.busy && status.responsiveness !== undefined);
-          assert.ok(measured.responsiveness); assert.ok(measured.responsiveness.ticks >= 5);
-          assert.ok(measured.responsiveness.maxGapMs <= 100, `webview timer maximum interval: ${String(measured.responsiveness.maxGapMs)} ms`);
-          console.log(`T-014 DOM evidence: ${JSON.stringify({ fallback, attempt, recoveryMs, ...measured.responsiveness })}`);
+          const probing = await action(current, { type: 'browserExercise', action: 'startResponsiveness' }, (status) => status.responsiveness?.ticks === 0);
+          const stopPulse = startProbePulse(current, `${probing.contextId}:${String(probing.exerciseId)}`);
+          try {
+            const busy = await action(current, { type: 'browserExercise', action: 'run' }, (status) => status.busy);
+            await waitStatus(current, (status) => status.exerciseId === busy.exerciseId && status.busy && /executing/.test(status.message), busy.revision);
+            await new Promise<void>((resolve) => setTimeout(resolve, 150));
+            assert.equal(current.browserStatus?.busy, true, 'query must still be executing when Cancel is clicked');
+            const cancelStarted = performance.now();
+            const cancelling = await action(current, { type: 'browserExercise', action: 'cancel' }, (status) => status.busy && /Cancelling/.test(status.message));
+            // The second click must neither supersede nor duplicate cancellation.
+            await action(current, { type: 'browserExercise', action: 'cancel' }, (status) => /Cancelling|cancelled/.test(status.message));
+            const ready = await waitStatus(current, (status) => status.contextId === cancelling.contextId && !status.busy && /cancelled/.test(status.message), cancelling.revision);
+            const recoveryMs = performance.now() - cancelStarted;
+            assert.equal(ready.firstRow[0]?.text, old.firstRow[0]?.text);
+            assert.equal(ready.count, '1'); assert.equal(ready.sqlLength, slow.length); assert.match(ready.message, /Run/);
+            const measured = await action(current, { type: 'browserExercise', action: 'stopResponsiveness' }, (status) => !status.busy && status.responsiveness !== undefined);
+            assert.ok(measured.responsiveness);
+            // Preserve evidence on failures too, before either timing assertion.
+            console.log(`T-014 DOM evidence: ${JSON.stringify({ fallback, attempt, recoveryMs, ...measured.responsiveness })}`);
+            assert.ok(measured.responsiveness.ticks >= 5, `webview probe must collect at least five samples: ${JSON.stringify(measured.responsiveness)}`);
+            assert.ok(measured.responsiveness.maxGapMs <= 100, `webview event maximum interval: ${String(measured.responsiveness.maxGapMs)} ms`);
+          } finally { await stopPulse(); }
           const retried = await run(`SELECT ${String(7 + attempt)} AS recovered`);
           assert.equal(retried.firstRow[0]?.text, String(7 + attempt));
         }

@@ -725,7 +725,7 @@ DB worker thread (node:sqlite or sql.js, queries, paging)
 - T-014 reuses this supervisor. Forward a bounded worker-start acknowledgement
   through the typed protocol without completing the pending query. Production
   DOM tests wait for that acknowledgement and sustained execution before Cancel.
-  Use opt-in 10 ms webview timer probes and host timers to measure the 100 ms
+  Use opt-in 10 ms webview event probes (host pulses/native timer) and host timers to measure the 100 ms
   responsiveness target; keep helper-exit and full recovery timings separate.
   Retain the successful page/editor context and show SQL-specific retry guidance.
   No dependency or new database interruption API is needed.
@@ -737,6 +737,40 @@ DB worker thread (node:sqlite or sql.js, queries, paging)
   Both targets pass for this workload. VALIDATION retains both full runs and
   their exact approved renderer warnings; neither full run is warning-free.
   Owner QA, independent review and post-push three-platform CI remain open.
+- T-014 CI measurement repair (2026-10-13): owner passes QA 1-6. Run
+  38341388121 / attempt 1 / 21da760 fails the five-sample webview assertion on
+  Windows fallback and macOS native; Ubuntu passes. Helper/host tests pass.
+  Timer starvation from background/occlusion is the current supported
+  hypothesis, not a measured originating cause: failed logs omitted the raw
+  probe values. The initial candidate disables Chromium timer/occlusion/renderer
+  backgrounding using documented switches. A red-first launch-contract test
+  requires all three; failed probes now print raw values before assertions.
+  Keep 150 ms sustained SQL, five samples, 100 ms intervals, 1,000 ms helper
+  exit, existing deadlines and source assertions unchanged. Production remains
+  unchanged; fresh CI must establish whether the repair resolves both failures.
+- Repair verification initially hits two unchanged five-second unit deadlines
+  under concurrent helper suites and an active unrelated compiler. The same
+  CSV responsiveness, schema cancellation and launch-contract suites pass
+  together (76 tests) without target/deadline changes. Serialize unit files
+  (`maxWorkers: 1`) to isolate helper builds from other suites' library parsing;
+  preserve concurrency within tests, all workloads and assertions. This is
+  gate scheduling, not a production or CSV/metadata feature change.
+- The Chromium-switch candidate passes 446 unit / 36 host tests but its gate
+  correctly fails on three unknown-option CLI warnings. VS Code 1.140.0's
+  startup/runtime whitelist does not support a warning-free route for them.
+  Remove that candidate. Use at most one pending API delivery for 10 ms host pulses, keyed
+  to the active context/start exercise. Webview pulses sample the same clock
+  as its native timer without producing periodic reports or changing action
+  IDs. A real UI stall still records the full gap. Stopped/old pulses are
+  ignored; stop awaits delivery and releases the host timer. Keep every
+  workload, threshold, deadline and diagnostic rule intact. Integration-only
+  hooks change; ordinary cancellation behavior remains as owner-tested.
+- Final pulse-route local full gate passes: 447 unit / 39 files (186.84 s),
+  36 host tests and a 20-file / 618.15 KB VSIX. Native/fallback helper exit:
+  1.1164 / 0.7492 ms; host maximum timer interval: 37.1712 / 39.7769 ms;
+  webview maximum observed event intervals: 13.6 / 14.1 ms. No unsupported
+  CLI warning; one exact approved renderer warning is retained in VALIDATION,
+  so full is not warning-free. Owner QA 1-6 passes; repair CI/review stay open.
 
 ## 4. Message protocol (draft)
 
@@ -829,6 +863,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-014 final pulse repair (2026-10-13): Reject the warning-producing switch candidate; implement keyed local host pulses with retained native observations and raw failure metrics. Preserve every target/workload and report passing 447-unit/36-host local evidence separately from pending CI/review.
+- T-014 CI probe repair (2026-10-13): Preserve owner QA and failed platform evidence; isolate test-host background scheduling with documented Chromium/Electron switches and retain raw probe metrics on failure. All timing targets and workloads remain unchanged.
 - T-014 design (2026-10-13): Reuse helper termination/reopening, acknowledge worker-start in the editor and measure scoped host/webview responsiveness with opt-in local probes.
 - T-018 CI viewport repair (2026-10-13): Reproduce the sidebar-width fidelity failure; identify visible DOM cells by validated column ordinals and navigate to every asserted cell without changing fixtures, deadlines or expected values.
 - T-018 (2026-10-12): Add page-scoped cell selection/details, exact JSON whitespace formatting and TSV clipboard preparation in supervised transform workers; preserve atomic page reporting, source safety and packaging without a dependency.

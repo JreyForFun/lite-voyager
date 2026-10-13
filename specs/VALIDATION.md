@@ -1961,6 +1961,153 @@ After owner QA, arrange a fresh-chat independent review under section 6 and
 push the implementation. Provide the new CI run URL/SHA and all three platform
 conclusions; preserve any failures and exact diagnostics before closure.
 
+### T-014 owner QA and failed CI probe (2026-10-13)
+
+Owner supplies `1 - PASS` through `6 - PASS` against the numbered QA above.
+Accept these as completion of owner QA, including forced fallback in check 6.
+The earlier 1-5 message is superseded by the complete 1-6 report. No individual
+typing, theme, timing or separate engine observation beyond that report is
+invented. Implementation acceptance has its existing automated evidence.
+
+Owner provides [run 38341388121](https://github.com/JreyForFun/lite-voyager/actions/runs/38341388121)
+and two pasted platform logs. Public GitHub API metadata independently confirms
+attempt 1 at `21da760bc5151fbf7b0bce037e1ad16cdae474a1`, overall failure:
+- Windows job 115112931298: locked dependency installation succeeds;
+  `Verify on Windows and macOS` fails. Pasted log: 445 unit tests pass;
+  35 host tests pass / one fails, specifically T-014 fallback DOM at
+  `assert.ok(measured.responsiveness.ticks >= 5)` (compiled test line 126).
+- macOS job 115112931487: locked installation succeeds; the same verification
+  step fails. Pasted log identifies darwin/arm64, 445 passing unit tests and
+  35 passing / one failing host test: T-014 native DOM at the identical sample
+  assertion. Fallback DOM and both direct helper/host tests pass.
+- Ubuntu job 115112931537: locked installation and
+  `Verify with session bus and virtual display on Linux` succeed. Raw Ubuntu
+  logs/diagnostic counts were not retrieved; metadata success is the evidence.
+
+Preserve this failed run; do not describe it as green or warning-free. The two
+failed full runs exit before the structured runtime-log scan. Console copies of
+host messages do not establish approved source/severity/line records, so no
+host-warning classification is claimed for those failed runs.
+
+Scoped repair under the owner's standing authorization:
+- The supplied failures establish too few webview samples, but omit their
+  actual count and maximum interval. Thus a blocking SQL/UI fault is not proven.
+  Background/occlusion timer starvation is the current hypothesis, supported
+  by platform selectivity, successful helper/host measurements and documented
+  Chromium background scheduling. Fresh CI must confirm resolution.
+- Primary references: [Chromium switch definitions](https://chromium.googlesource.com/chromium/src/+/HEAD/content/public/common/content_switches.cc)
+  document `disable-background-timer-throttling` and the testing switch
+  `disable-backgrounding-occluded-windows`;
+  [Electron supported command-line switches](https://www.electronjs.org/docs/latest/api/command-line-switches#--disable-renderer-backgrounding)
+  document `disable-renderer-backgrounding`.
+- A new NFR-005 launch-contract regression in
+  `test/unit/integration-config.test.ts` fails first because all three switches
+  are absent (one failed / four passed). Add them only to `.vscode-test.mjs`'s
+  isolated host; all five configuration tests then pass. This candidate is
+  subsequently rejected by the strict CLI warning gate, as recorded below.
+- Move T-014 raw probe logging before the sample/interval assertions and
+  include the observed probe values in the five-sample assertion's message.
+  A future failure retains count/gap evidence for diagnosis.
+- Preserve the five-sample minimum, 100 ms bound, 150 ms sustained SQL,
+  20-million-step aggregate, 1,000 ms helper-exit bound, both attempts/backends,
+  all deadlines, source/delivery assertions and strict diagnostic policy.
+  No production behavior, dependency, fixture data or acceptance target changes.
+
+Owner QA passes; repaired local gate, fresh repair CI and independent review
+are tracked separately. Keep T-014 unchecked until closure evidence passes.
+
+First repair `verify:full` stops at the unit stage: 444 pass / two five-second
+timeouts, 37 passing / two failing files (143.96 s). Exact failures:
+- `test/unit/csv-import-spike.test.ts:243`, NFR-005 worker-insert event-loop
+  responsiveness, with its existing 100,000-row workload and five-second limit.
+- `test/unit/engine-schema.test.ts:158`, fallback FR-016 metadata/read-only/
+  cancellation/source-recovery case, also with its existing five-second limit.
+
+No integration or diagnostic-scan pass is claimed for that invocation. A
+diagnostic run of these two suites plus the launch-contract suite passes all
+76 tests / three files in 21.36 s with unchanged bodies, workload and deadlines.
+A nominal two-second process sample records an unrelated `vbc` compiler using
+8.48 CPU-seconds. Do not stop the owner's unrelated process. Resource contention
+is supported, not uniquely proven. Change only unit-file scheduling to one
+worker, preserving within-test concurrency, all 446 tests, all assertions and
+every timeout. Record the resulting complete gate separately; no failed run is
+discarded or called a pass.
+
+Chromium-switch candidate gate: 446 unit / 39 files pass (183.52 s) and all
+36 real-host tests pass, but verification exits 1 because these three CLI
+warnings are failures, not approved renderer exceptions:
+- `Warning: 'disable-background-timer-throttling' is not in the list of known options, but still passed to Electron/Chromium.`
+- `Warning: 'disable-backgrounding-occluded-windows' is not in the list of known options, but still passed to Electron/Chromium.`
+- `Warning: 'disable-renderer-backgrounding' is not in the list of known options, but still passed to Electron/Chromium.`
+
+No warning exemption/filter is added. Inspection of the tested version's
+[startup source](https://github.com/microsoft/vscode/blob/1.140.0/src/mainImpl.ts)
+shows its runtime-argument switch whitelist also excludes these options.
+Withdraw all three launch switches and replace the measurement route:
+- An opt-in `pulseResponsiveness` typed exercise samples the same webview
+  monotonic clock as the native timer. Host pulses arrive every 10 ms with
+  at most one API delivery promise pending, within the existing 60 s test
+  deadline. API delivery is not an acknowledgement that the inner frame has
+  processed a pulse; stale/late pulses are rejected by its context/probe key.
+- The key includes webview context and starting exercise ID. Wrong/stopped/
+  old-probe pulses neither count nor change action IDs or send periodic reports.
+  Stop clears the host timer and awaits pending delivery, including failures.
+- A deterministic NFR-005 regression suppresses the native timer scheduler,
+  delivers five keyed pulses, verifies exact observed gaps and action IDs,
+  rejects stale/wrong contexts and retains an injected 250 ms stall in full.
+  Existing native-timer stall, validation and cleanup tests remain intact.
+- The configuration regression is revised to reject each unsupported switch,
+  because the abandoned route violates the zero-warning requirement. It does
+  not permit or suppress any warning. With the candidate still present and
+  before pulse implementation, the two regressions fail (32 pass / two fail).
+  After switch removal and implementation, all 34 focused tests pass.
+- Retain five samples, 100 ms maximum observed event gap, 150 ms executing SQL,
+  every helper-exit/deadline/source assertion and all diagnostic rules. The
+  measurement includes host-delivered events and native timer samples; do not
+  describe the aggregate count as native timer ticks alone. Ordinary user
+  cancellation behavior is unchanged; only opt-in local test hooks change.
+
+The first asset-hash comparison mixed the owner's non-minified F5 build with
+the minified production build and did not match. No byte-identical-bundle claim
+is made; esbuild selects minification/maps using `--production`. At that stage,
+the production-source diff was empty. The later pulse route changes only
+opt-in protocol/webview instrumentation, so normal cancellation QA is retained.
+
+The first pulse-route full invocation stops at lint: `only-throw-error` rejects
+throwing the captured `unknown` transport failure (`src/test/sqlite-browser.test.ts:56`).
+Normalize non-Error rejection values to an Error and retain real Error objects;
+no lint disable or test/diagnostic weakening is used. No later stage is claimed
+for that invocation. Validate the corrected route with a new complete gate.
+
+Final pulse-route `npm run verify:full` passes (exit 0): 447 unit / 39 files
+(186.84 s), 36 real-host tests, strict typechecks/lint/build and the 20-file /
+618.15 KB VSIX. Windows x64 / VS Code 1.140.0 / host Node 24.21.0. No CLI
+warning remains and no warning policy is changed. Zero errors; one explicitly
+approved host warning means the full run is **not warning-free**:
+- Profile `out/integration-profile-pubCu0`; source
+  `20261013T121620/window1/renderer.log:10`; original severity `warning`;
+  rule `VSCODE-HOST-001`; exact message:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+- Native: helper exit 1.1164 ms; Engine recovery 225.4138 ms; maximum host
+  timer interval 37.1712 ms / 24 ticks. DOM recovery 227.983 / 268.0528 ms;
+  maximum webview event intervals 13.6 / 10.9 ms, with 63 / 70 observations.
+- Fallback: helper exit 0.7492 ms; Engine recovery 312.9 ms; maximum host
+  timer interval 39.7769 ms / 28 ticks. DOM recovery 359.9459 / 366.2187 ms;
+  maximum webview event intervals 12 / 14.1 ms, with 85 / 88 observations.
+
+The repaired local acceptance and owner QA 1-6 pass. All earlier failures remain
+recorded. Fresh three-platform repair CI and fresh-context independent review
+are still required; do not tick T-014 or close Milestone 1 yet. Subsequent edits
+only record evidence/clarify comments, with no behavior change after this gate.
+
+Final standalone repair `npm run verify` passes (exit 0): 447 unit tests in
+39 files (161.37 s), strict typechecks/lint/build and the 20-file / 618.15 KB
+VSIX, with zero errors and zero warnings. No behavior/test change follows
+these successful gates; final edits record evidence and handoff only.
+Commit the 11 scoped files, leaving existing untracked files untouched.
+Owner pushes with `git push origin main` and provides a fresh CI run URL/SHA.
+No independent review or three-platform repair success is claimed yet.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -2022,6 +2169,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-014 final CI measurement repair (2026-10-13): Replace rejected startup flags with keyed opt-in host pulses/native observations, preserve complete gap and failure metrics, and serialize unit files without changing test workloads/deadlines. Record final 447-test zero-warning verify and 36-host full pass with its exact approved renderer warning. Owner QA 1-6 passes; fresh CI/review remain open.
+- T-014 owner QA/CI probe repair (2026-10-13): Record numbered QA 1-6 PASS and independently confirmed failed Windows/macOS / successful Ubuntu run 38341388121 at 21da760. Add red-first isolated-host background controls without changing workloads, thresholds or diagnostics; retain the unproven-cause limit and require fresh repair CI/review.
 - T-014 implementation (2026-10-13): Record red-first production cancellation acknowledgement, bounded opt-in responsiveness probes, both-engine real-host measurements and the exact approved host warning. Keep owner QA, independent review and fresh CI open.
 - T-018 closure (2026-10-13): Check the task after observed final 437-test zero-error/zero-warning verify and independent isolated review, owner QA and repaired three-platform CI. Update the handoff to T-014 in a new chat; preserve all earlier evidence and limits.
 - T-018 independent review (2026-10-13): Honor the owner's preference to finish this task in the current chat. Record one fresh-context isolated review of cumulative implementation/CI repair with no concrete findings, preserving its sandbox execution limitation and separate gate evidence.
