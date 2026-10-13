@@ -9,6 +9,43 @@ import { parseProcessJson, parseProcessTable, parseMemorySample, memorySample, c
 import { TestBudget } from '../../src/test/sqlite-budget';
 import { sourceDigest } from '../../src/test/sqlite-exercise';
 import { createHash } from 'node:crypto';
+import { digestChunks } from '../../src/test/sqlite-digest';
+import { observeProcessLines } from '../../src/test/sqlite-memory-observer';
+
+test('NFR-003: Given a cold observer that starts slower than its sampling interval, When snapshots begin, Then startup completes separately and every later snapshot still meets the unchanged deadline', async () => {
+  const abort = new AbortController(); const seen: number[] = []; let observerPid = 0;
+  const code = 'setTimeout(() => { console.log(JSON.stringify({n:1,pid:process.pid})); setInterval(() => console.log(JSON.stringify({n:2,pid:process.pid})), 20); }, 500)';
+  await observeProcessLines(process.execPath, ['-e', code], (line) => {
+    const row: unknown = JSON.parse(line); expect(row).toHaveProperty('n');
+    if (typeof row === 'object' && row !== null && 'pid' in row && typeof row.pid === 'number') { observerPid = row.pid; }
+    seen.push(performance.now());
+    if (seen.length === 4) { abort.abort(); }
+  }, abort.signal, 3000, 250);
+  expect(seen).toHaveLength(4);
+  expect(observerPid).toBeGreaterThan(0); expect(() => process.kill(observerPid, 0)).toThrow();
+  await expect(observeProcessLines(process.execPath, ['-e', 'console.log("first"); setInterval(() => {}, 1000)'], () => {}, new AbortController().signal, 3000, 100))
+    .rejects.toThrow(/snapshot.*100 ms/);
+  await expect(observeProcessLines(process.execPath, ['-e', 'console.error("unexpected diagnostic"); setInterval(() => {}, 1000)'], () => {}, new AbortController().signal, 3000, 100))
+    .rejects.toThrow(/unexpected diagnostic/);
+  await expect(observeProcessLines(process.execPath, ['-e', 'console.log("first")'], () => {}, new AbortController().signal, 3000, 100))
+    .rejects.toThrow(/stopped unexpectedly/);
+  await expect(observeProcessLines(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], () => {}, new AbortController().signal, 100, 100))
+    .rejects.toThrow(/startup.*100 ms/);
+}, 10000);
+
+test('NFR-003: Given a many-chunk source hash, When reading outside the measured workload, Then one fixed buffer is reused instead of retaining size-dependent chunk allocations in the extension host', async () => {
+  const buffers = new Set<Buffer>(); const expected = createHash('sha256'); let remaining = 12 * 1024 * 1024 + 7;
+  const result = await digestChunks((buffer) => {
+    buffers.add(buffer); expect(buffer.length).toBe(1024 * 1024);
+    const count = Math.min(buffer.length, remaining); buffer.fill(97, 0, count); remaining -= count;
+    expected.update(buffer.subarray(0, count)); return Promise.resolve(count);
+  });
+  expect(result).toEqual({ bytes: 12 * 1024 * 1024 + 7, sha256: expected.digest('hex') });
+  expect(buffers.size).toBe(1);
+  const abort = new AbortController(); let reads = 0;
+  await expect(digestChunks(() => { reads++; abort.abort(); return Promise.resolve(1); }, abort.signal)).rejects.toMatchObject({ name: 'AbortError' });
+  expect(reads).toBe(1);
+});
 
 test('NFR-003: Given a running fixture child, When the internal test budget expires, Then abort closes the child and cleanup completes before the outer test deadline', async () => {
   const budget = new TestBudget(100);

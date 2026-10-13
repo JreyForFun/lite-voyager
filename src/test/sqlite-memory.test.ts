@@ -38,7 +38,9 @@ function observe(directory: string, signal?: AbortSignal) {
         if (signal?.aborted === true) { throw new Error('T-016 test budget expired during memory observation.'); }
         if (failure !== undefined) { throw failure; }
         if (child.exitCode !== null) { await closed; throw new Error('The memory observer stopped before the checkpoint.'); }
-        if (performance.now() - started > 5000) { throw new Error(`Memory observation deadline: ${diagnostic}`); }
+        // Initial CIM module/process bootstrap happens before opening the file;
+        // after the first snapshot the unchanged OS watchdog is 3,000 ms.
+        if (performance.now() - started > (previous === 0 ? 25000 : 5000)) { throw new Error(`Memory observation deadline: ${diagnostic}`); }
         await new Promise<void>((resolve) => { setTimeout(resolve, 20); });
       }
     },

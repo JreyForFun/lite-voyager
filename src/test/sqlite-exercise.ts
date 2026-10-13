@@ -1,18 +1,14 @@
 import * as assert from 'node:assert/strict';
-import { createReadStream } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { stat } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
+import { digestChunks } from './sqlite-digest';
 import type { SqliteDocument } from '../editor/sqlite-editor';
 import type { BrowserExercise, BrowserStatus } from '../protocol';
 
 export async function sourceDigest(path: string, signal?: AbortSignal): Promise<{ bytes: number; sha256: string }> {
-  const hash = createHash('sha256');
-  // A fixed 1 MiB batch avoids tens of thousands of tiny Windows filesystem
-  // requests on multi-GB files. Memory remains independent of source size.
-  for await (const chunk of createReadStream(path, { highWaterMark: 1024 * 1024, ...(signal === undefined ? {} : { signal }) })) {
-    hash.update(chunk as Buffer);
-  }
-  return { bytes: (await stat(path)).size, sha256: hash.digest('hex') };
+  signal?.throwIfAborted();
+  const file = await open(path, 'r');
+  try { return await digestChunks(async (buffer) => (await file.read(buffer, 0, buffer.length, null)).bytesRead, signal); }
+  finally { await file.close(); }
 }
 export const painted = (status: BrowserStatus): boolean => !status.busy && status.renderedRows > 0 && status.firstRow.length > 0;
 export function waitBrowser(document: SqliteDocument, predicate: (status: BrowserStatus) => boolean, revision = 0, timeout = 15000): Promise<BrowserStatus> {

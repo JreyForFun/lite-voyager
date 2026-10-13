@@ -2540,6 +2540,88 @@ follow-up, whole-milestone QA/review and release/tag remain open. Preserve every
 failed candidate and the late-cleanup defect; no independent review or remote
 warning/test-count claim is added by this task.
 
+### T-016 failed candidate CI and harness repair (2026-10-13)
+
+Owner supplies Windows/macOS full-step logs for
+[run 38378099885](https://github.com/JreyForFun/lite-voyager/actions/runs/38378099885).
+Public GitHub API confirms commit `caf209b2a72ffe6363d4f2ff470f05809db2c6fb`,
+completed/failure, Ubuntu success, Windows failure and macOS failure. Keep the
+previous local result; reopen T-016 pending repaired validation.
+
+- Windows: 487 unit tests pass, 43 host tests pass, two T-016 memory tests fail
+  because the OS observer's PowerShell command fails without a useful reason.
+  Its cold per-snapshot subprocess has a 3,000 ms command timeout; the supplied
+  text alone does not establish whether the command timed out or another
+  process failure occurred. Subsequent repair reports explicit phase/timeouts.
+- macOS arm64: 487 unit tests pass and 44 host tests pass. Real memory reports
+  have peaks 270,581,760 /354,779,136 bytes, size growth 84,197,376, above the
+  unchanged 50,000,000 allowance. Paging growth is zero, gaps 443.019417 /
+  360.307833 ms, and both complete hashes match. This is a failed memory
+  acceptance; do not treat the sub-500 MB individual peaks as a complete pass.
+- Streamed hashes allocated new 1 MiB chunks for every read in the measured
+  extension host before/after each window. Those allocations may remain
+  resident and contaminate the next window despite bounded live stream storage.
+  The remote log does not prove this is the sole cause of macOS growth.
+
+Red-first behavioral regressions reproduce a reader killed during delayed
+initialization and 14 different hash buffers instead of one (two failing/five
+passing tests). Repair reuses one fixed hash buffer and starts one persistent
+Windows PowerShell/CIM reader. Its initial bootstrap is bounded at 20 seconds
+before opening; every later snapshot retains the 3,000 ms watchdog, and every
+observed gap remains subject to the existing gate. Diagnostics, unexpected
+exit and missing/invalid process evidence still fail; stop awaits actual child
+closure. No retries, skipped data, idle subtraction, dependency or production
+behavior change. All full hashes, 10-million-row files, 80 pages per file,
+payload scans, cap/growth rules and 540/600-second budgets remain unchanged.
+
+At repair kickoff, local gates and fresh owner-pushed three-platform CI are pending.
+
+Local repair attempts retained without a pass claim:
+- `out/t016-ci-repair-full.log`: lint rejects two newly added `async`
+  callbacks without `await`. Return resolved promises instead; no lint disable.
+- `out/t016-ci-repair-full-2.log`: types/lint pass; 471 tests /44 files pass,
+  but Vitest reports one worker-start handshake timeout for the existing
+  `sqlite-browser.test.ts` before its tests execute (285.61 s). The full gate
+  fails and does not reach integration. No test or runner timeout is changed.
+- `out/t016-ci-worker-diagnosis.log`: the same unchanged browser suite passes
+  all 18 tests in isolation (783 ms). This diagnoses the missing suite; it does
+  not turn the failed full attempt into a pass or prove a specific host cause.
+Run the separate real-host gate and required standalone automatic gate; record
+each outcome independently. Fresh CI must still run full verification.
+
+Separate repaired `npm run test:integration` exits 0: all 45 tests pass in
+VS Code 1.140.0 /Node 24.21.0 /Windows x64, including both-engine invalid/source
+safety, cancellation/crash recovery, constrained SHM/WAL checks and unchanged
+full SHA-256 values for both ten-million-row databases. No acceptance limits
+or workloads change.
+
+- 1,285,033,984-byte file: combined peak 270,688,256; host/helper peaks
+  149,954,560 /121,946,112; renderer peak 413,040,640; 44 samples /43 helper;
+  maximum gap 543.206 ms; repeated-paging growth 6,770,688 bytes.
+- 5,874,388,992-byte file: combined peak 276,115,456; host/helper peaks
+  153,399,296 /123,113,472; renderer peak 424,046,592; 100 samples /99 helper;
+  maximum gap 584.9556 ms; repeated-paging growth 9,945,088 bytes.
+- Larger-file peak growth 5,427,200 bytes; workload elapsed 192,188.2255 ms.
+  Both 60 Browse/20 SQL page sequences and complete payload scans pass.
+  Hashes are the same complete SHA-256 values recorded above. Raw numeric
+  evidence is retained in `out/t016-ci-repair-integration.log` lines 76/78/79.
+
+Exactly one structured record is accepted; this host gate is **not warning-free**:
+`out/integration-profile-jdqstT/logs/20261013T181428/window1/renderer.log:10`, original severity `warning`,
+rule `VSCODE-HOST-001`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No error or other warning is accepted. Fresh full CI remains pending;
+do not rename the failed full attempt as a success.
+
+Required final standalone `npm run verify` exits 0 with all 489 tests /45
+files (202.69 s), strict types/lint, production builds and the 20-file 622.93 KB VSIX.
+It has zero errors and zero warnings; output is retained in
+`out/t016-ci-repair-verify.log`. Together with the separately passing 45-host
+integration/log gate this validates the repaired local candidate. It does not
+overwrite either failed full attempt, establish the sole macOS cause or
+prove remote completion. Keep T-016 unchecked until fresh owner-pushed full CI
+confirms the repaired candidate on Windows/macOS/Ubuntu.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -2601,6 +2683,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-016 CI repair (2026-10-13): Independently confirm failed caf209b run 38378099885, retain OS/full-startup failures and red-first regressions. Separate final 489-test zero-diagnostic verify and 45-host/log gates pass with 270.7/276.1 MB peaks, 5.4 MB size growth and one exact approved renderer warning. Reopen T-016 pending fresh full CI; all acceptance limits remain unchanged.
 - T-016 local completion (2026-10-13): Final repaired full gate passes 487 unit/45 host tests; record genuine 1.285 GB/5.874 GB source-safe memory evidence, 269.8 MB/285.0 MB sampled peaks and the exact approved renderer warning. Preserve failed candidates and owner push/CI/milestone work.
 - T-016 implementation (2026-10-13): Record source-safety and sampled-memory coverage, owner-approved SHM clarification, red-first observer repairs, exact calibration diagnostics and disk-space block. Retain the large acceptance and final gates as pending.
 - T-015 delegated closure/review (2026-10-13): Record independent cumulative review, confirmed post-closure save-error defect, red-first notification/cancellation repairs and independent follow-up. Keep actual-candidate CI explicitly at the milestone gate; scoped task closure awaits current local gates and commit.

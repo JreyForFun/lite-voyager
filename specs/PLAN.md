@@ -373,7 +373,8 @@ at 9007199254740993. Generate in a fresh disposable directory; refuse existing
 destinations. A child process performs the bounded SQLite generation. Require
 9 GB free before the large real-host test; lower-row generator unit tests are
 not large-file evidence. Never pad a sparse file or load a multi-GB hash input
-as one Buffer. Full hashes use fixed 1 MiB stream chunks with an abort signal.
+as one Buffer. Full hashes reuse one fixed 1 MiB buffer with an abort signal;
+avoid cumulative stream-chunk allocations retained into the next RSS window.
 An internal 540-second budget stops owned work and reserves a minute for
 cleanup before Mocha's unchanged 600-second deadline. The real-host suite
 cleans its own disposable directory before a following test can start.
@@ -385,6 +386,9 @@ from before opening; identify the actual extension host, all descendant
 database helpers and the same test host's renderer processes. Helper RSS
 includes its worker threads. Reject missing helper/renderer observations,
 observer diagnostics, insufficient samples and gaps above three seconds.
+Windows uses a persistent PowerShell/CIM reader, with a separate bounded
+20-second initial bootstrap before opening; subsequent snapshot watchdogs and
+all measured observation gaps retain the strict three-second limit.
 Report sampled combined peaks, separate component/renderer peaks and gaps;
 do not subtract idle memory. The 500 MB cap and 50 MB growth rules are in SPEC.
 
@@ -397,7 +401,7 @@ the documented reader-mark bytes in that controlled fixture:
 [SQLite WAL-index format](https://www.sqlite.org/walformat.html).
 Never restore SHM or checkpoint source files to make the safety assertion pass.
 
-**Local T-016 result:** final repaired `verify:full` passes 487 unit tests and
+**Previous local T-016 result (caf209b):** repaired `verify:full` passes 487 unit tests and
 45 real-host tests under the existing exact renderer-warning policy. Both
 ten-million-row databases retain complete SHA-256 hashes: 1,285,033,984 bytes
 and 5,874,388,992 bytes; sampled host/helper peaks 269,840,384 and 284,991,488
@@ -411,6 +415,22 @@ Keep the original failed deadline/late-cleanup run; bounded hash batching and
 an earlier abort budget repair the harness without relaxing acceptance. See
 VALIDATION for exact component/renderer figures and the approved diagnostic.
 Owner pushing, fresh CI and remaining milestone QA/review are separate.
+
+**CI correction:** run 38378099885 at `caf209b2a72ffe6363d4f2ff470f05809db2c6fb`
+passes Ubuntu but fails Windows OS observation and macOS size-growth gating.
+The old local pass is retained evidence, not proof of three-platform completion.
+Red-first regressions cover slow reader initialization and per-chunk hashing
+allocations. Repair only test tooling: persistent Windows sampling and reused
+hash storage. No RSS subtraction, retries, skipped workload or relaxed target.
+The separate repaired Windows integration/log gate passes all 45 tests.
+The two files retain their full hashes; combined peaks 270,688,256 /
+276,115,456 bytes, size growth 5,427,200, paging growth 6,770,688 /9,945,088,
+largest gaps 543.206 /584.9556 ms; full workload time 192,188.2255 ms.
+One exact approved renderer warning is recorded in VALIDATION. The local
+full attempt stopped on a Vitest worker initialization failure (not a memory
+assertion); keep it as failed. Standalone verify passes 489 tests /45 files
+with zero errors/warnings, builds and the 20-file VSIX. Fresh owner-pushed full
+CI remains pending, particularly confirmation of the macOS allocation hypothesis.
 
 ### T-011 worker metadata contract (2026-10-10)
 
@@ -953,6 +973,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-016 CI repair (2026-10-13): Retain failed caf209b Windows/macOS evidence and the local Vitest-startup full failure. Reopen the task, reuse one hash buffer and persist the Windows OS reader. Separate 489-test zero-diagnostic verify and 45-host/log gates pass without relaxing targets; fresh full CI remains pending.
 - T-016 local result (2026-10-13): Record passing 487-unit/45-host full gate and source-identical 1.285 GB/5.874 GB primary SQLite memory observations. Preserve the 600 s deadline, all workloads and exact warning policy after the red-first hash/budget repair.
 - T-016 plan (2026-10-13): Define test-only real-editor safety, populated 1 GB/5 GB fixtures, bounded streaming hashes and sampled OS process coverage. Record owner-approved SHM coordination and retain all original production/CSV targets.
 - T-015 scoped closure (2026-10-13): Record independently checked review repairs, 482-test clean verify and 38-host passing integration/log gate. Close the task at owner-delegated judgment; preserve actual-candidate CI at the milestone gate.
