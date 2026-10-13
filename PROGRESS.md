@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 1; T-014 owner QA 1-6 and local full repair gate pass.
-Run 38341388121/attempt 1/21da760 fails Windows/macOS; Ubuntu passes.
-T-014 stays unchecked; no milestone closure or release tag.
+Milestone 1; T-014 implementation, local gates, owner QA 1-6 and repaired CI pass.
+T-014 stays unchecked only for fresh-context independent review.
+No milestone closure or release tag; do not start the next task yet.
 
 ## Verify status
-- First repair gate: two unchanged five-second unit timeouts (444 pass).
-- Switch candidate: 446 unit / 36 host pass, gate fails on 3 CLI warnings.
-- Unsupported switches removed; diagnostic policy unchanged.
-- Corrected full: 447 unit / 39 files, 36 host; exit 0, one approved warning.
+- Final local verify: 447 tests / 39 files, zero errors/warnings (unit 161.37 s).
+- Local full: 447 unit / 36 host, exit 0; one approved host warning.
 - pubCu0, 20261013T121620/window1/renderer.log:10, VSCODE-HOST-001.
-- Full is not warning-free; exact message retained in VALIDATION.
-- Final verify: 447 tests / 39 files, zero errors/warnings (unit 161.37 s).
+- Full is not warning-free; exact message remains in VALIDATION.
+- Repair CI: run 38346736300/attempt 1/780f974 succeeds on all 3 platforms.
+- Locked installs and applicable full checks independently verified via API.
+- Raw remote logs/warning counts were not retrieved or called warning-free.
+- Prior failed CI 38341388121/21da760 and local failures remain recorded.
+- VSIX: 20 files / 618.15 KB; no dependency or fixture-data change.
 
 ## Last session
-Owner reports all six numbered QA checks PASS, including fallback check 6.
-GitHub API confirms failed jobs/step/SHA; both pasted failures preserved.
-Original CI omitted probe metrics on failure; raw logging now precedes assertions.
+Update only PLAN, VALIDATION, TASKS and this handoff; no code/test changes.
 
 ## Decisions made this session
-Use keyed, opt-in 10 ms host pulses plus native webview timer observations.
-One transport request in flight; stop awaits delivery and clears the timer.
+Use keyed opt-in host pulses plus native webview event observations.
+At most one API delivery promise pending; stop clears its timer/awaits delivery.
 Stale/stopped pulses do not count or change action acknowledgements.
 Keep 5 samples, 100 ms gaps, 150 ms SQL and 1000 ms helper-exit bounds.
 Serialize unit files; within-test concurrency/workloads/deadlines unchanged.
-No dependency or fixture-data change. Normal cancellation behavior unchanged.
+Retain all failed candidates and the originating-cause uncertainty.
 
 ## Known issues / blockers
-Fresh repair CI and independent review remain open; local gates pass.
-Background timer starvation is supported but not proven from original CI logs.
-Existing untracked files remain untouched; unrelated compiler is not stopped.
+Only independent review remains for T-014 closure.
+Original timer-starvation cause is supported, not uniquely proven.
+T-015/T-016, schema follow-up and whole-milestone QA remain open.
+Existing untracked files remain untouched.
 
 ## Next
-Local gates/evidence complete; owner pushes with git push origin main.
-Only T-014 files are committed; existing untracked files remain untouched.
-Review git diff 1d2fc4f..HEAD in a fresh chat; supply fresh three-platform CI.
-Keep T-014 unchecked until closure evidence passes; stay on this task.
+Use VALIDATION section 6 in a fresh chat with git diff 1d2fc4f..HEAD.
+Fix concrete findings with failing tests first, then rerun required gates/CI.
+Only tick T-014 after review/closure evidence passes. Owner pushes documentation.

@@ -2106,7 +2106,34 @@ VSIX, with zero errors and zero warnings. No behavior/test change follows
 these successful gates; final edits record evidence and handoff only.
 Commit the 11 scoped files, leaving existing untracked files untouched.
 Owner pushes with `git push origin main` and provides a fresh CI run URL/SHA.
-No independent review or three-platform repair success is claimed yet.
+At that checkpoint, no independent review or three-platform repair success was
+claimed. The subsequently verified repair CI is recorded below.
+
+### T-014 repaired three-platform CI confirmation (2026-10-13)
+
+Owner provides [run 38346736300](https://github.com/JreyForFun/lite-voyager/actions/runs/38346736300)
+and reports it good. Public GitHub API metadata independently confirms attempt
+1 at `780f9741166ecfce821df81fbb9025e57eba9d12`, completed with success:
+- Windows job 115129797822: locked dependencies and
+  `Verify on Windows and macOS` succeed.
+- macOS job 115129798144: locked dependencies and the same full-verification
+  step succeed.
+- Ubuntu job 115129798091: locked dependencies and
+  `Verify with session bus and virtual display on Linux` succeed.
+
+The repair clears the original failing platform steps at the tested commit.
+This does not uniquely prove the originating cause of the earlier missed timer
+samples; the original logs omitted their raw metrics. Preserve failed run
+38341388121, local failed candidates/timeouts and exact approved host warnings.
+Remote raw logs and diagnostic counts were not independently retrieved: do not
+describe remote full runs as warning-free. No implementation/test change
+follows the successful repair commit; this update records metadata only.
+
+Local acceptance/gates, owner QA 1-6 and fresh repaired three-platform CI pass.
+Only fresh-context independent review remains for T-014 closure. Keep T-014
+unchecked until that review and any required repairs pass; no milestone closure
+or release tag. Review the complete task diff with `git diff 1d2fc4f..HEAD` using
+section 6's prompt. Existing untracked files remain untouched.
 
 ## 5. Edge cases every format must be tested against
 
@@ -2169,6 +2196,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-014 green repair CI (2026-10-13): Independently confirm run 38346736300/attempt 1/780f974 success for locked installs and applicable full checks on all three platforms. Preserve failures, exact local warning records and remote-log limits; leave only independent review open.
 - T-014 final CI measurement repair (2026-10-13): Replace rejected startup flags with keyed opt-in host pulses/native observations, preserve complete gap and failure metrics, and serialize unit files without changing test workloads/deadlines. Record final 447-test zero-warning verify and 36-host full pass with its exact approved renderer warning. Owner QA 1-6 passes; fresh CI/review remain open.
 - T-014 owner QA/CI probe repair (2026-10-13): Record numbered QA 1-6 PASS and independently confirmed failed Windows/macOS / successful Ubuntu run 38341388121 at 21da760. Add red-first isolated-host background controls without changing workloads, thresholds or diagnostics; retain the unproven-cause limit and require fresh repair CI/review.
 - T-014 implementation (2026-10-13): Record red-first production cancellation acknowledgement, bounded opt-in responsiveness probes, both-engine real-host measurements and the exact approved host warning. Keep owner QA, independent review and fresh CI open.

@@ -771,6 +771,10 @@ DB worker thread (node:sqlite or sql.js, queries, paging)
   webview maximum observed event intervals: 13.6 / 14.1 ms. No unsupported
   CLI warning; one exact approved renderer warning is retained in VALIDATION,
   so full is not warning-free. Owner QA 1-6 passes; repair CI/review stay open.
+- Repaired CI run 38346736300 / attempt 1 at 780f974 succeeds on Windows,
+  macOS and Ubuntu, including locked installs and applicable full checks.
+  Metadata is independently verified; raw remote warning counts are not claimed.
+  Owner QA and local gates remain passing; only independent review stays open.
 
 ## 4. Message protocol (draft)
 
@@ -863,6 +867,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-014 green repair CI (2026-10-13): Record independently verified three-platform success for 780f974/run 38346736300. Preserve failed CI/candidate evidence and leave independent review as the remaining closure step.
 - T-014 final pulse repair (2026-10-13): Reject the warning-producing switch candidate; implement keyed local host pulses with retained native observations and raw failure metrics. Preserve every target/workload and report passing 447-unit/36-host local evidence separately from pending CI/review.
 - T-014 CI probe repair (2026-10-13): Preserve owner QA and failed platform evidence; isolate test-host background scheduling with documented Chromium/Electron switches and retain raw probe metrics on failure. All timing targets and workloads remain unchanged.
 - T-014 design (2026-10-13): Reuse helper termination/reopening, acknowledge worker-start in the editor and measure scoped host/webview responsiveness with opt-in local probes.
