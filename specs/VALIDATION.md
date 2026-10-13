@@ -2130,10 +2130,12 @@ describe remote full runs as warning-free. No implementation/test change
 follows the successful repair commit; this update records metadata only.
 
 Local acceptance/gates, owner QA 1-6 and fresh repaired three-platform CI pass.
-Only fresh-context independent review remains for T-014 closure. Keep T-014
-unchecked until that review and any required repairs pass; no milestone closure
-or release tag. Review the complete task diff with `git diff 1d2fc4f..HEAD` using
-section 6's prompt. Existing untracked files remain untouched.
+Owner subsequently confirms T-014 checked and explicitly directs the next chat
+to T-015. Close T-014 at the owner's direction using the passing acceptance,
+owner QA and repaired CI evidence above. No separate task-specific independent
+review has been performed or claimed; retain section 6's whole-milestone review
+requirement. No milestone closure or release tag. The complete T-014 diff starts
+at `1d2fc4f`. Existing untracked files remain untouched.
 
 ## 5. Edge cases every format must be tested against
 
@@ -2196,6 +2198,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-014 owner-directed closure (2026-10-13): Record the owner's confirmation that checks are complete and the next chat is T-015. Close the task with existing passing evidence, without inventing an independent review result or closing the milestone.
 - T-014 green repair CI (2026-10-13): Independently confirm run 38346736300/attempt 1/780f974 success for locked installs and applicable full checks on all three platforms. Preserve failures, exact local warning records and remote-log limits; leave only independent review open.
 - T-014 final CI measurement repair (2026-10-13): Replace rejected startup flags with keyed opt-in host pulses/native observations, preserve complete gap and failure metrics, and serialize unit files without changing test workloads/deadlines. Record final 447-test zero-warning verify and 36-host full pass with its exact approved renderer warning. Owner QA 1-6 passes; fresh CI/review remain open.
 - T-014 owner QA/CI probe repair (2026-10-13): Record numbered QA 1-6 PASS and independently confirmed failed Windows/macOS / successful Ubuntu run 38341388121 at 21da760. Add red-first isolated-host background controls without changing workloads, thresholds or diagnostics; retain the unproven-cause limit and require fresh repair CI/review.

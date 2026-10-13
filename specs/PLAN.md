@@ -774,7 +774,9 @@ DB worker thread (node:sqlite or sql.js, queries, paging)
 - Repaired CI run 38346736300 / attempt 1 at 780f974 succeeds on Windows,
   macOS and Ubuntu, including locked installs and applicable full checks.
   Metadata is independently verified; raw remote warning counts are not claimed.
-  Owner QA and local gates remain passing; only independent review stays open.
+  Owner QA and local gates remain passing. Owner subsequently directs T-014
+  closure and T-015 in the next chat. No separate T-014 independent review is
+  claimed; whole-milestone review remains required.
 
 ## 4. Message protocol (draft)
 
@@ -867,6 +869,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-014 owner-directed closure (2026-10-13): Accept the owner's completed checks and green CI as task closure; hand off T-015 to the next chat. Preserve the absence of a separate task-review result and the milestone review requirement.
 - T-014 green repair CI (2026-10-13): Record independently verified three-platform success for 780f974/run 38346736300. Preserve failed CI/candidate evidence and leave independent review as the remaining closure step.
 - T-014 final pulse repair (2026-10-13): Reject the warning-producing switch candidate; implement keyed local host pulses with retained native observations and raw failure metrics. Preserve every target/workload and report passing 447-unit/36-host local evidence separately from pending CI/review.
 - T-014 CI probe repair (2026-10-13): Preserve owner QA and failed platform evidence; isolate test-host background scheduling with documented Chromium/Electron switches and retain raw probe metrics on failure. All timing targets and workloads remain unchanged.
