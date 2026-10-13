@@ -1,39 +1,35 @@
 ﻿# Progress
 
 ## Current phase / task
-Milestone 1; T-015 is complete under owner-delegated closure checks.
-Acceptance, owner QA 1–6, independent review/repairs and current local gates pass.
-Next chat: T-016 source safety and very-large-SQLite memory tests.
+Milestone 1; T-016 scoped safety and multi-GB memory acceptance passes locally.
+Only T-016 is checked; owner push/fresh CI and milestone work remain separate.
 
 ## Verify status
-- Final verify: 482 tests /44 files, zero errors/warnings; unit 216.37 s.
-- Final integration/log gate: 38 real-host tests, exit 0.
+- Final full gate: 487 unit tests /45 files and 45 real-host tests, exit 0.
+- Final standalone verify: 487 tests /45 files, zero errors/warnings; 197.35 s.
 - VS Code 1.140.0 /Node 24.21.0 /Windows x64; one approved warning.
-- kcCfbJ, 20261013T142447/window1/renderer.log:10, VSCODE-HOST-001.
-- Host is not warning-free; exact message/source remains in VALIDATION.
-- Supplied green CI 38352950470 tests old 6e25977, not T-015.
-- Actual-candidate three-platform CI stays pending at the milestone gate.
+- BqiNnE, 20261013T171030/window1/renderer.log:10, VSCODE-HOST-001.
+- Host is not warning-free; exact message/source is in VALIDATION.
 
 ## Last session
-Owner delegates checking both commits and closing T-015 to move to the next task.
-One fresh-context reviewer inspects cumulative 30-file diff, including 8 new files.
-Fix confirmed lost atomic-save errors after closure with red-first regressions.
-Also isolate historical save errors from cancellation of later SQL queries.
-Independent follow-up finds no remaining concrete defect; root gates pass.
+Both-engine invalid/source-safe editor tests, cancel/crash recovery and WAL pass.
+Ten-million-row databases: 1,285,033,984 /5,874,388,992 bytes, full hashes match.
+Sampled host/helper peaks 269,840,384 /284,991,488 bytes; growth 15,151,104.
+80 UI pages per file/full scans pass; largest gap 1,932.3043 ms; work 339.3 s.
+Red-first parser, deadline/hash repairs retain every workload and the 600 s cap.
 
 ## Decisions made this session
-Keep source-safe, bounded CSV/JSON export and all prior workloads/deadlines.
-Notify failed Saving after closure; successful saves do not become errors.
-Close the scoped task under VALIDATION section 2; retain real CI facts.
-Owner controls push; no dependency, milestone closure or tag.
+Owner approves transient native SHM reader marks; database/WAL bytes stay exact.
+500 MB sampled host/helpers, 50 MB growth; renderer RSS is separate evidence.
+Fixed 1 MiB hashes and 540 s abort budget reserve time for owned cleanup.
+Test tooling stays out of VSIX; no new dependency or production behavior change.
 
 ## Known issues / blockers
-Actual-candidate CI, T-016, schema follow-up and milestone QA/review remain open.
-Serializer/host timing measurements are scoped; not a T-016 memory proof.
-Existing generated/unrelated untracked files are excluded from commits.
+T-016 post-push three-platform CI, schema and whole-milestone QA/review remain.
+CSV import memory, cold-disk/physical first paint and release/tag are unclaimed.
+Failed first full timeout/late-cleanup run is retained; repaired full gate passes.
+Pre-existing edits/unrelated untracked files are excluded from the T-016 commit.
 
 ## Next
-Owner pushes the local T-015 implementation and repair/closure commits.
-Start a fresh chat; read AGENTS, CONSTITUTION, PROGRESS, then T-016 references.
-Restate that task/acceptance/proposed files and wait for OK before coding.
-Retain actual-candidate CI as a milestone item; do not call old CI export proof.
+Owner pushes and supplies fresh CI URL/SHA plus all three platform conclusions.
+Use a fresh chat for remaining Milestone 1 work; no next milestone starts here.

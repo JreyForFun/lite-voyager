@@ -2367,6 +2367,179 @@ deadline or diagnostic allowance is weakened. Only closure/evidence docs change
 after these final passing gates. Existing generated/unrelated untracked files
 are not included in the repair/closure commit. Next task starts in a fresh chat.
 
+### T-016 implementation and validation (2026-10-13)
+
+The owner authorizes full implementation, scoped fixes and fixture changes,
+and will handle pushing. The owner separately approves the native transient
+SHM coordination exception after the initial WAL hash test fails. The exact
+SQLite acceptance and sampled-memory contract are in SPEC's T-016 section;
+PLAN documents implementation and the fixture README gives repeatable commands.
+
+Coverage:
+- `sqlite-safety.test.ts`: real custom editor on both engines; invalid header,
+  truncated/zero-byte input and valid-header damaged schema page; valid empty
+  recovery; writable/read-only files; table/view paging, exact int64 values,
+  1,000 columns and large cells; visible prohibited-write rejection; cancellation,
+  helper crash and successful reopening. Final byte counts/SHA-256 must match,
+  and unexpected sidecars must not appear.
+- Idle WAL writer: native must read a committed WAL-only row; fallback must
+  refuse visibly without any SHM change. Main database/WAL hashes stay exact.
+  Native SHM changes may touch only reader marks at bytes 100..119 of the
+  controlled fixture, per [SQLite WAL-index format](https://www.sqlite.org/walformat.html).
+  No source checkpoint, SHM restoration, forced write or ignored failure.
+- `sqlite-memory.test.ts`: calibrates the actual OS observer in a real host,
+  then generates ten-million-row 1 GB/5 GB databases and exercises 60 Browse
+  pages, a complete payload scan and 20 SQL pages on each. Record full source
+  hashes outside the memory window. The default full suite includes this test;
+  insufficient disk space fails explicitly and never skips it.
+- `sqlite-memory.test.ts` under `test/unit`: OS parser/units/process attribution,
+  strict peak/growth/gap/process/sample rejection and actual generator fidelity,
+  integrity and existing-destination refusal. Tests fail before support exists;
+  the PID-zero Windows idle-process regression also demonstrably fails before
+  its repair and passes afterward.
+
+Retained failed candidates:
+- Sandbox Vitest startup fails with `spawn EPERM`; the same command runs with
+  approved escalation and exposes missing test support before implementation.
+- Initial real-host safety adapter observes completed SQL before DOM paint;
+  three assertions fail. Correlated painted-row waits repair the adapter.
+- The first corrected safety run passes four cases and fails on native SHM
+  bytes, while database/WAL hashes match. Owner approves the explicit contract
+  correction; the revised test constrains SHM changes rather than ignoring it.
+- Observer calibration exposes Node 24's typeless `.ts` module diagnostic.
+  Load the already compiled CommonJS support instead of suppressing the warning.
+- Windows EncodedCommand emits module-preparation CLIXML progress. Disable only
+  that progress UI; all warning/error streams remain enabled and fail the gate.
+- The OS snapshot legitimately includes Windows PID-zero Idle. A failing unit
+  regression precedes the parser repair; actual host/helper IDs stay positive.
+- An in-progress first full unit gate observes the pre-repair parser and ends
+  with 484 passing /1 failing tests. Final verification must use repaired code.
+- Large-file attempt fails before generation because free C: space is about
+  2.56 GB, below the documented 9 GB requirement. Owner elects to free space.
+- First actual full run passes 485 unit tests but ends with 43 real-host passes
+  and two failures: the large case exceeds its unchanged 600,000 ms deadline,
+  and its late asynchronous close-all cleanup interferes with the following
+  fallback `.db3` editor test. Do not treat numeric memory observations as a
+  passing test or gate. Both source hashes and observed memory criteria finish
+  successfully afterward, which exposes the harness isolation bug rather than
+  proving task completion.
+- Red-first deadline/hash tests fail before budget support exists. Repair uses
+  a fixed 1 MiB hash batch instead of 64 KiB filesystem requests, a 540-second
+  abort budget propagated to generation/hashing/observation, remaining query
+  deadlines and a minute for teardown before Mocha can advance. Preserve both
+  full ten-million-row databases, all 80 UI pages, complete scans, source hashes,
+  500 MB/50 MB targets, five samples, 3,000 ms gaps and the 600 s outer deadline.
+
+Observed scoped results so far:
+- Three measurement/fixture unit tests pass; final canonical gates follow.
+- Two added hash/deadline regressions pass as well (five scoped unit tests):
+  the child stops before the outer test timeout; complete final-partial-chunk
+  hashing detects a last-byte edit, and an aborted stream rejects.
+- Five real-host safety tests pass after the owner-approved SHM clarification.
+- Repaired observer calibration passes on Windows x64 /VS Code 1.140.0 /
+  Node 24.21.0: seven samples, six containing the helper; combined sampled peak
+  271,093,760 bytes, host peak 162,148,352, helper peak 108,945,408, separate
+  renderer peak 461,873,152, largest gap 1,685.7676 ms, paging growth 450,560.
+  This is small-file observer evidence, not a multi-GB memory result.
+- Calibration strict log gate exits 0 with these two explicitly accepted records
+  from `out/integration-profile-t016-H5vfj3/logs/` (not warning-free):
+  - `20261013T161818/window1/renderer.log:2`, severity `warning`, rule
+    `VSCODE-HOST-002`, exact message:
+    `Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 23ms.`
+  - `20261013T161818/window1/renderer.log:10`, severity `warning`, rule
+    `VSCODE-HOST-001`, exact message:
+    `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+T-016 remains unchecked until the large-file acceptance and required gate pass.
+The CSV memory target, physical/cold-disk first paint, schema follow-up, whole-
+milestone QA/review, fresh three-platform CI and release/tag remain separate.
+
+Additional repaired scoped run (2026-10-13): all 44 currently runnable real-host
+tests pass, including all pre-existing 38 and the six new safety/calibration
+cases. The temporary targeted runner uses the same isolated environment and
+strict runtime-log scanner while the owner frees space; it explicitly excludes
+the still-required large-file case and is **not** `verify:full` completion.
+The source/observer scenarios pass alongside the previous browsing, SQL,
+cancellation, metadata and export assertions with their existing deadlines.
+`out/integration-profile-t016-bjclhM/logs/20261013T162132/window1/renderer.log:10`
+contains one accepted severity `warning`, rule `VSCODE-HOST-001`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The run exits 0 under that policy and is not warning-free. Disk capacity grows
+to about 7.17 GB but the 9 GB large-fixture requirement is still unmet.
+
+Repaired actual large-file run (2026-10-13): the same ten-million-row populated
+databases, byte-for-byte identical to the first measured candidate, now pass
+in 345,191 ms under the unchanged 600,000 ms deadline. Generation, all hashes,
+80 actual UI pages per file, complete payload scans, helper closure and final
+cleanup complete before the framework advances. Reported measured-work elapsed
+time is 344,735.8128 ms; the rest is final fixture cleanup.
+
+- Smaller file: 1,285,033,984 bytes; SHA-256
+  `7fe4e06f189cc8bcc833521f82a2833118a98245d3c9f26d8bbae21032e0b298`;
+  sampled combined peak 315,715,584 bytes; independent host/helper component
+  peaks 201,498,624 /121,741,312; separate renderer peak 395,165,696;
+  23 samples /22 with helper; maximum gap 1,242.5107 ms; paging growth 0.
+- Larger file: 5,874,388,992 bytes; SHA-256
+  `203e3860172622ef1a65108ae8d14acfe51c25b0f689ae267f4184e4721a535e`;
+  sampled combined peak 268,271,616 bytes; independent host/helper component
+  peaks 242,352,128 /123,109,376; separate renderer peak 395,452,416;
+  46 samples /45 with helper; maximum gap 1,433.2078 ms; paging growth 2,908,160.
+- Combined peaks sum components at the same observation. Independent component
+  maxima need not happen together and must not be added as a simultaneous peak.
+  The larger input grows by 4,589,355,008 bytes; sampled combined peak changes
+  by -47,443,968 bytes. Do not subtract idle host memory or claim instantaneous
+  unsampled peaks. Both observed peaks satisfy the strict 500,000,000-byte cap
+  and both growth checks satisfy the 50,000,000-byte allowance.
+- VS Code 1.140.0 /Node 24.21.0 /Windows x64; primary engine only. Two scoped
+  real-host tests pass (calibration and large case), followed by strict log-gate
+  exit 0. This run is not warning-free: one severity `warning` record at
+  `out/integration-profile-t016-oty9rU/logs/20261013T165516/window1/renderer.log:9`,
+  rule `VSCODE-HOST-001`, exact message
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+Final repaired complete gate (2026-10-13): `npm run verify:full` exits 0 with
+487 unit tests /45 files (190.33 s), all 45 real-host tests (about eight minutes),
+strict types/lint, builds and the 20-file 622.93 KB VSIX package check. Tests and
+observers are excluded from the VSIX. The legacy fallback `.db3` test also
+passes, confirming the timeout repair no longer closes a following test's tab.
+All memory workloads, budgets, caps and diagnostic rules remain unchanged.
+
+Final full-run memory observations, preserved in
+`out/integration-profile-BqiNnE/logs/20261013T171030/window1/renderer.log:37`
+and `:39`:
+- 1,285,033,984-byte file: combined peak 269,840,384 bytes; host/helper peaks
+  147,640,320 /122,200,064; separate renderer peak 418,476,032; 23 samples /22
+  with helper; maximum gap 1,790.0809 ms; paging growth 3,981,312 bytes.
+- 5,874,388,992-byte file: combined peak 284,991,488 bytes; host/helper peaks
+  162,189,312 /123,363,328; separate renderer peak 404,979,712; 41 samples /40
+  with helper; maximum gap 1,932.3043 ms; paging growth 0.
+- Same complete SHA-256 values as above; ten million rows in each; all 80 pages
+  per file and full payload sums pass. Larger-file peak growth is 15,151,104
+  bytes against the 50,000,000-byte allowance. Measured-work elapsed time is
+  339,262.2889 ms, safely inside the unchanged outer deadline.
+
+The final strict log gate accepts exactly one record and is **not warning-free**:
+`out/integration-profile-BqiNnE/logs/20261013T171030/window1/renderer.log:10`,
+original severity `warning`, rule `VSCODE-HOST-001`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No error or other warning is accepted. Earlier standalone `npm run verify`
+passed 485 tests /45 files with zero errors/warnings before the two additional
+deadline/hash regressions; final full verification repeats every automatic
+stage with all 487 tests. Retain both facts without calling the earlier run
+a 487-test standalone verification.
+
+Final standalone completion-record `npm run verify` also exits 0 after the
+repair and handoff updates: 487 tests /45 files in 197.35 s, strict types/lint,
+builds and the 20-file package check, with zero errors and zero warnings. This
+is the current warning-free automatic-gate evidence; the separate full host
+run retains its one explicitly reported approved warning.
+
+Only T-016's scoped acceptance is complete. The owner handles pushing and fresh
+three-platform CI. CSV import memory, physical/cold-disk first paint, schema
+follow-up, whole-milestone QA/review and release/tag remain open. Preserve every
+failed candidate and the late-cleanup defect; no independent review or remote
+warning/test-count claim is added by this task.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -2428,6 +2601,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-016 local completion (2026-10-13): Final repaired full gate passes 487 unit/45 host tests; record genuine 1.285 GB/5.874 GB source-safe memory evidence, 269.8 MB/285.0 MB sampled peaks and the exact approved renderer warning. Preserve failed candidates and owner push/CI/milestone work.
+- T-016 implementation (2026-10-13): Record source-safety and sampled-memory coverage, owner-approved SHM clarification, red-first observer repairs, exact calibration diagnostics and disk-space block. Retain the large acceptance and final gates as pending.
 - T-015 delegated closure/review (2026-10-13): Record independent cumulative review, confirmed post-closure save-error defect, red-first notification/cancellation repairs and independent follow-up. Keep actual-candidate CI explicitly at the milestone gate; scoped task closure awaits current local gates and commit.
 - T-015 owner QA/CI audit (2026-10-13): Record QA 1–6 PASS; independently verify green 38352950470 on the old 6e25977 tree. Preserve missing actual-candidate CI and fresh-review requirements.
 - T-015 (2026-10-13): Record delegated contract, red-first tests, scoped memory evidence, failed pre-render comparison and strengthened DOM wait. Retain native-dialog QA, fresh review and post-push CI.

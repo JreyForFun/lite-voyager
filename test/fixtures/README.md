@@ -32,6 +32,48 @@ files, generated data, or a runtime setup. Tests check the assets and hashes.
 - `empty.*`, `corrupt.*`, and `truncated.*`: format-appropriate empty or bad
   inputs. An empty JSON file is intentionally not valid JSON.
 
+## T-016 SQLite safety and multi-GB memory fixtures
+
+The standard `npm run verify:full` suite creates fresh populated SQLite
+databases under `out/`, verifies and hashes them through bounded streams,
+then removes its own fixtures. It requires **at least 9 GB free** and allows
+up to ten minutes for generation, full reads, UI paging, sampling and cleanup.
+Insufficient space fails explicitly; the large test is never skipped.
+
+For an inspectable standalone fixture, first create a parent directory, then
+choose a new child destination:
+
+```powershell
+New-Item -ItemType Directory -Force test/fixtures/generated
+node scripts/sqlite-memory-fixture.mts test/fixtures/generated/t016-memory
+```
+
+Existing destinations, including empty directories, are refused. Keep the
+printed row/byte reports and `generation.json`; do not commit large files.
+Each database has ten million rows with exact IDs beginning at
+9007199254740993 and 100/512-byte payloads. This generator produces SQLite
+only. `--rows` is for small generator unit tests; reduced datasets cannot
+satisfy the real-host 1 GB/5 GB acceptance test.
+
+```powershell
+npm test -- test/unit/sqlite-memory.test.ts
+npm run verify
+npm run verify:full
+```
+
+The memory report includes extension-host plus database-helper sampled
+resident memory (all helper threads), separate renderer memory, sample counts
+and maximum observation gaps. It does not claim instantaneous unsampled peaks,
+cold-disk first paint or the later CSV import target. OS commands run only in
+development tests, never in the shipped extension.
+
+The safety suite uses disposable malformed, browser and live-WAL fixtures.
+An idle fixture writer holds its connection open while the native editor reads
+the committed WAL row and fallback refuses that snapshot. Main database and
+WAL hashes must match exactly. SQLite's transient SHM reader-mark bytes are
+the sole owner-approved coordination exception in this fixture; no source
+restoration is permitted.
+
 ## Generate datasets
 
 Use Node 25.7+; Node 26.5.0 was tested. Earlier Node versions emit experimental

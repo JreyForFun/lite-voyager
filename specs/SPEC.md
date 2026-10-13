@@ -439,6 +439,45 @@ Targets marked "start" are starting points to validate in the benchmark task, th
 | NFR-009 | Security: files are untrusted input | Strict webview Content Security Policy with no remote content; read-only by default; SQLite extension loading stays disabled; identifiers quoted; evaluate `PRAGMA trusted_schema=OFF` for opened databases (verify in T-002); declare limited behavior in untrusted workspaces (write mode off) |
 | NFR-010 | Diagnosable | Logs go to a VS Code Output channel; no file contents or personal data in logs |
 
+### T-016 SQLite safety and memory acceptance (2026-10-13)
+
+- Given invalid, corrupt, truncated or zero-byte SQLite input, when opened in
+  the real editor on either backend, then an actionable error is shown, no
+  source data is changed, and a subsequent valid open succeeds. A valid
+  database without tables is an empty state, not invalid input.
+- Given disposable SQLite fixtures, when browsing tables/views, paging,
+  executing reads and attempting prohibited writes, then SHA-256 and byte
+  counts match before opening and after final closure on both backends.
+  Exercise fidelity, wide/large cells and read-only permissions. Native WAL
+  reads preserve the database and WAL bytes; fallback refuses the snapshot
+  visibly. The owner-approved exception is SQLite-managed transient `-shm`
+  reader coordination, which stores no durable database content; do not
+  checkpoint, rewrite, restore or delete source data to hide this activity.
+  Require SHM byte changes to remain confined to documented reader marks in
+  the idle-writer test. Cancellation/crash recovery retains the same safety rule.
+- Given real populated SQLite files of approximately 1 GB and at least
+  5,000,000,000 bytes, when opened with the primary engine in a real VS Code
+  and browsed/queried repeatedly, then sampled combined resident memory of
+  the extension host and all its database helpers stays strictly below
+  500,000,000 bytes. Worker threads are included in their helper process.
+  The larger-file peak may exceed the smaller-file peak by at most
+  50,000,000 bytes; late repeated-paging samples may exceed initial settled
+  samples by at most the same amount. Neither allowance relaxes the peak cap.
+- Sample from before open through completed reads, at a nominal 100 ms
+  polling delay with non-overlapping OS snapshots. Require at least five
+  samples containing the actual helper per workload and report the largest
+  observation gap (at most 3,000 ms). Report renderer resident memory
+  separately; do not subtract idle host memory or count the observer and
+  fixture generator as extension work. This is sampled resident memory,
+  not proof of unsampled instantaneous peaks or total system memory.
+- Use full streaming hashes and generated data, never sparse file padding
+  or whole-file reads to manufacture the size/memory result. Record sizes,
+  row counts, engine, host/runtime, sample counts/gaps and peaks. The fallback
+  is exempt from the large-file memory gate and retains its existing warning.
+  CSV import, cold-disk/physical first-paint and whole-milestone QA remain
+  separate requirements. Tests must reject fabricated over-budget, growing,
+  missing-process and insufficient-sample evidence.
+
 ## 5.5 Screens and states
 
 Every screen must handle each of these, with a test or a manual checklist item:
@@ -463,6 +502,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-016 WAL clarification (2026-10-13): Owner approves SQLite-managed transient SHM reader coordination after the red-first idle-writer test shows reader marks changing. Preserve strict database/WAL hashes and constrain the observed SHM changes; no production change or source restoration.
+- T-016 acceptance (2026-10-13): Owner approves source-safety tests and a scoped 1 GB/5 GB primary SQLite sampled-memory contract: 500 MB cap, 50 MB growth, explicit process coverage and observation limits. Preserve the CSV target and milestone scope.
 - T-015 (2026-10-13): Specify delegated successful-query streaming, exact JSON strings, CSV NULL convention, BLOB disclosure, bounded worker writes, atomic publication and cancellation safety.
 - T-014 CI probe route (2026-10-13): Replace warning-producing Chromium launch flags with bounded opt-in host pulses plus native webview samples. Preserve full monotonic gaps, sample minimum, workloads and action/context correlation.
 - T-014 scope (2026-10-13): Owner delegates implementation and uncertainties. Apply the existing helper-exit bound to production SQL cancellation, preserve successful context, and define scoped host/webview responsiveness evidence on both engines.

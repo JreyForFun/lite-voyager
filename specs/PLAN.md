@@ -360,6 +360,58 @@ limitations remain open as described above.
 - **Role of spike T-002:** no longer a go/no-go gate. It measures reality (which VS Code versions have `node:sqlite`, whether workers behave) so we can set the documented minimum version and verify the fallback triggers correctly.
 - **Cost:** two engine implementations to test, and the CSV import pipeline needs a fallback path (the sql.js route imports into memory, so it is capped).
 
+### T-016 production safety and memory validation (2026-10-13)
+
+Use the existing production editor, Engine helpers and correlated real-DOM
+exercise messages; no new production instrumentation or dependency. Tests and
+OS process observation stay outside the VSIX. The scoped acceptance contract
+is in SPEC's T-016 section and does not replace the CSV import target.
+
+`scripts/sqlite-memory-fixture.mts` writes two genuine populated SQLite files
+with ten million rows each, 100/512-byte payloads and exact BigInt IDs starting
+at 9007199254740993. Generate in a fresh disposable directory; refuse existing
+destinations. A child process performs the bounded SQLite generation. Require
+9 GB free before the large real-host test; lower-row generator unit tests are
+not large-file evidence. Never pad a sparse file or load a multi-GB hash input
+as one Buffer. Full hashes use fixed 1 MiB stream chunks with an abort signal.
+An internal 540-second budget stops owned work and reserves a minute for
+cleanup before Mocha's unchanged 600-second deadline. The real-host suite
+cleans its own disposable directory before a following test can start.
+
+`scripts/sqlite-memory.mts` observes OS resident bytes using Windows
+[Win32_Process WorkingSetSize](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process)
+or Unix `ps` RSS (KiB converted to bytes). Poll without overlapping snapshots
+from before opening; identify the actual extension host, all descendant
+database helpers and the same test host's renderer processes. Helper RSS
+includes its worker threads. Reject missing helper/renderer observations,
+observer diagnostics, insufficient samples and gaps above three seconds.
+Report sampled combined peaks, separate component/renderer peaks and gaps;
+do not subtract idle memory. The 500 MB cap and 50 MB growth rules are in SPEC.
+
+Source safety covers both engines, writable/read-only permissions, damaged
+schema pages, views, wide/large cells, prohibited SQL writes, cancellation,
+helper crash and reopening. An idle external WAL connection supplies committed
+WAL-only rows. Preserve the main database and WAL hashes exactly; fallback
+refuses the snapshot. Owner-approved native SHM coordination is constrained to
+the documented reader-mark bytes in that controlled fixture:
+[SQLite WAL-index format](https://www.sqlite.org/walformat.html).
+Never restore SHM or checkpoint source files to make the safety assertion pass.
+
+**Local T-016 result:** final repaired `verify:full` passes 487 unit tests and
+45 real-host tests under the existing exact renderer-warning policy. Both
+ten-million-row databases retain complete SHA-256 hashes: 1,285,033,984 bytes
+and 5,874,388,992 bytes; sampled host/helper peaks 269,840,384 and 284,991,488
+bytes. Larger-file growth is 15,151,104 bytes; repeated-paging growth is
+3,981,312 /0; largest observation gaps 1,790.0809 /1,932.3043 ms. Each completes
+60 Browse pages, a full payload scan and 20 SQL pages. Measured-work time is
+339,262.2889 ms within the unchanged ten-minute outer test deadline.
+This establishes the scoped primary SQLite memory target locally, not the CSV
+import target, unsampled peaks, renderer cap or cold-disk/physical first paint.
+Keep the original failed deadline/late-cleanup run; bounded hash batching and
+an earlier abort budget repair the harness without relaxing acceptance. See
+VALIDATION for exact component/renderer figures and the approved diagnostic.
+Owner pushing, fresh CI and remaining milestone QA/review are separate.
+
 ### T-011 worker metadata contract (2026-10-10)
 
 The existing `Engine.schema(page)` remains the paged table/view catalog.
@@ -901,6 +953,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-016 local result (2026-10-13): Record passing 487-unit/45-host full gate and source-identical 1.285 GB/5.874 GB primary SQLite memory observations. Preserve the 600 s deadline, all workloads and exact warning policy after the red-first hash/budget repair.
+- T-016 plan (2026-10-13): Define test-only real-editor safety, populated 1 GB/5 GB fixtures, bounded streaming hashes and sampled OS process coverage. Record owner-approved SHM coordination and retain all original production/CSV targets.
 - T-015 scoped closure (2026-10-13): Record independently checked review repairs, 482-test clean verify and 38-host passing integration/log gate. Close the task at owner-delegated judgment; preserve actual-candidate CI at the milestone gate.
 - T-015 owner QA/CI audit (2026-10-13): Record all six owner QA checks PASS. Verify supplied green run 38352950470 at 6e25977, which predates T-015; retain candidate CI and fresh review as pending.
 - T-015 (2026-10-13): Stream one backend cursor through 64-KiB worker writes; host owns destination protection, temporary cleanup and atomic publication. Reuse helper recovery and typed progress without dependencies.
