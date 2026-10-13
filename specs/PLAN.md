@@ -722,6 +722,21 @@ DB worker thread (node:sqlite or sql.js, queries, paging)
 - Cancel kills the helper process, awaits its exit, starts a fresh helper/worker,
   then reopens the database. Worker termination alone is not sufficient for
   synchronous native SQLite execution. T-002 validates a 1,000 ms spike target.
+- T-014 reuses this supervisor. Forward a bounded worker-start acknowledgement
+  through the typed protocol without completing the pending query. Production
+  DOM tests wait for that acknowledgement and sustained execution before Cancel.
+  Use opt-in 10 ms webview timer probes and host timers to measure the 100 ms
+  responsiveness target; keep helper-exit and full recovery timings separate.
+  Retain the successful page/editor context and show SQL-specific retry guidance.
+  No dependency or new database interruption API is needed.
+- T-014 final local full gate (2026-10-13): 445 unit / 36 real-host tests pass
+  on Windows x64 / VS Code 1.140.0 / host Node 24.21.0. On the 28,672-byte
+  fixture, native/fallback old-helper absence is observed at 0.7971 / 0.6179 ms;
+  Engine recovery takes 264.4193 / 309.5686 ms. Maximum host timer intervals are
+  40.1677 / 35.6103 ms, and maximum DOM probe intervals are 12 / 19 ms.
+  Both targets pass for this workload. VALIDATION retains both full runs and
+  their exact approved renderer warnings; neither full run is warning-free.
+  Owner QA, independent review and post-push three-platform CI remain open.
 
 ## 4. Message protocol (draft)
 
@@ -814,6 +829,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-014 design (2026-10-13): Reuse helper termination/reopening, acknowledge worker-start in the editor and measure scoped host/webview responsiveness with opt-in local probes.
 - T-018 CI viewport repair (2026-10-13): Reproduce the sidebar-width fidelity failure; identify visible DOM cells by validated column ordinals and navigate to every asserted cell without changing fixtures, deadlines or expected values.
 - T-018 (2026-10-12): Add page-scoped cell selection/details, exact JSON whitespace formatting and TSV clipboard preparation in supervised transform workers; preserve atomic page reporting, source safety and packaging without a dependency.
 - v0.4 T-017 independent review repairs (2026-10-12): Fix warning-state page/count actions and SQLite expression-depth overflow with red-first regressions; a separate reviewer confirms both fixes on both backends. Owner delegates local task closure; fresh CI remains tracked at the milestone gate after the owner's push.

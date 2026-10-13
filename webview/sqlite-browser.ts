@@ -79,6 +79,9 @@ export class BrowserView {
   private editor: BrowserSqlEditor | undefined;
   private readonly contextId = crypto.randomUUID();
   private exerciseId = 0;
+  private responsiveness: BrowserStatus['responsiveness'];
+  private probeTimer: ReturnType<typeof setInterval> | undefined;
+  private probePrevious = 0;
 
   constructor(private readonly root: HTMLElement, private readonly post: Post, private readonly saved: BrowserSavedState = INITIAL_STATE) {
     this.requestId = saved.requestId; this.listOffset = saved.listOffset; this.limit = saved.limit;
@@ -225,6 +228,12 @@ export class BrowserView {
 
   receive(message: BrowserResponse): void {
     if (this.disposed || message.requestId !== this.requestId || this.pending === null || !isBrowserResponse(message)) { return; }
+    if (message.type === 'browserQueryStarted') {
+      if (this.pending === 'browserQuery') {
+        this.message('Running SQL: the worker is executing. You can cancel.'); this.report();
+      }
+      return;
+    }
     const sql = this.pendingSql;
     const pendingPage = this.pendingPage;
     if (message.type === 'browserQueryRows' && (this.pending !== 'browserQuery' || sql === null)) { return; }
@@ -289,7 +298,7 @@ export class BrowserView {
         this.message('Sort needs confirmation. Continue sort or dismiss it; the previous page is retained.'); break;
       case 'browserCancelled':
         this.gridOptions = savedGrid(this.shownGrid); this.loadFilter();
-        this.message('Operation cancelled. The database is ready; select a table or change page size to retry.'); break;
+        this.message('Operation cancelled. The database is ready; use Run to retry SQL, select a table or change page size.'); break;
       case 'browserError': this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
     }
     this.controls(); this.report();
@@ -329,6 +338,8 @@ export class BrowserView {
     if (this.disposed || !isBrowserExercise(message)) { return; }
     if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
+      case 'startResponsiveness': this.startProbe(); this.report(); break;
+      case 'stopResponsiveness': this.stopProbe(); this.report(); break;
       case 'select': if (!this.select.disabled && message.value !== undefined) { this.choose(message.value); } break;
       case 'size': if (!this.size.disabled && message.value !== undefined) { this.changeSize(message.value); } break;
       case 'next': if (!this.next.disabled) { this.page(this.offset + this.limit); } break;
@@ -390,13 +401,37 @@ export class BrowserView {
     if (!this.disposed) {
       this.post({ type: 'browserStatus', revision: ++this.revision, table: this.query.sql === null ? this.table : null, offset: this.offset, ...this.grid.metrics(),
         contextId: this.contextId, exerciseId: this.exerciseId,
+        ...(this.responsiveness === undefined ? {} : { responsiveness: { ...this.responsiveness } }),
         cell: this.details.summary(),
         query: this.query.sql !== null, summary: this.total.textContent ?? '', ...this.editor?.metrics(),
         hasMore: this.hasMore, count: this.count, busy: this.pending !== null, message: this.status.textContent ?? '', firstRow: this.grid.firstRow() });
     }
   }
 
-  dispose(): void { this.disposed = true; this.events.abort(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
+  private sampleProbe(): void {
+    const now = performance.now();
+    if (this.responsiveness !== undefined) {
+      this.responsiveness.maxGapMs = Math.max(this.responsiveness.maxGapMs, now - this.probePrevious);
+    }
+    this.probePrevious = now;
+  }
+
+  private startProbe(): void {
+    this.stopProbe();
+    this.responsiveness = { ticks: 0, maxGapMs: 0 }; this.probePrevious = performance.now();
+    // Local integration only: no periodic reports, no samples persisted.
+    this.probeTimer = setInterval(() => {
+      this.sampleProbe();
+      if (this.responsiveness !== undefined) { ++this.responsiveness.ticks; }
+    }, 10);
+  }
+
+  private stopProbe(): void {
+    if (this.probeTimer === undefined) { return; }
+    this.sampleProbe(); clearInterval(this.probeTimer); this.probeTimer = undefined;
+  }
+
+  dispose(): void { this.disposed = true; this.stopProbe(); this.events.abort(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
 }
 
 declare function acquireVsCodeApi(): {

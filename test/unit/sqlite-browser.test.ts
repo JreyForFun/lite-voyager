@@ -24,11 +24,62 @@ test('FR-011: Given selected SQL and a page address, When running in the host, T
   const { engine, browser, sent, send } = fixture();
   const sql = 'SELECT 9223372036854775807 AS "🚀"';
   await browser.handle({ type: 'browserQuery', requestId: 1, sql, offset: 100, limit: 10 }, send);
-  expect(engine.query).toHaveBeenCalledWith(sql, [], { offset: 100, limit: 10 });
+  expect(engine.query).toHaveBeenCalledWith(sql, [], { offset: 100, limit: 10 }, expect.any(Function));
   expect(sent[0]).toMatchObject({ type: 'browserQueryRows', requestId: 1, offset: 100, limit: 10 });
   const reply = sent[0];
   if (reply?.type !== 'browserQueryRows') { throw new Error('Expected query result'); }
   expect(reply.ms).toBeGreaterThanOrEqual(0);
+});
+
+test('FR-015: Given SQL acknowledged by the worker, When cancelling before recovery finishes, Then started is nonterminal, stale replies are suppressed and retry waits for recovery', async () => {
+  const { engine, browser, sent, send } = fixture();
+  let started: (() => void) | undefined;
+  let fail!: (error: Error) => void;
+  let recovered!: () => void;
+  engine.query.mockImplementationOnce((_sql, _parameters, _page, onStarted) => {
+    started = onStarted; return new Promise((_resolve, reject) => { fail = reject; });
+  });
+  engine.cancel.mockImplementationOnce(() => {
+    fail(new Error('cancelled')); return new Promise((resolve) => { recovered = resolve; });
+  });
+  const query = browser.handle({ type: 'browserQuery', requestId: 1, sql: 'SELECT slow', offset: 0, limit: 100 }, send);
+  expect(started).toBeTypeOf('function'); started?.();
+  expect(sent).toEqual([{ type: 'browserQueryStarted', requestId: 1 }]);
+  const cancel = browser.handle({ type: 'browserCancel', requestId: 2 }, send);
+  started?.();
+  await query;
+  const retry = browser.handle({ type: 'browserQuery', requestId: 3, sql: 'SELECT 42', offset: 0, limit: 1 }, send);
+  expect(engine.query).toHaveBeenCalledTimes(1);
+  expect(sent).toHaveLength(1);
+  recovered(); await Promise.all([cancel, retry]);
+  expect(sent.at(-1)).toMatchObject({ type: 'browserQueryRows', requestId: 3 });
+});
+
+test('FR-015: Given SQL cancellation recovery failure, When a late query rejection follows, Then only the actionable recovery error is sent', async () => {
+  const { engine, browser, sent, send } = fixture();
+  let fail!: (error: Error) => void;
+  engine.query.mockImplementationOnce(() => new Promise((_resolve, reject) => { fail = reject; }));
+  engine.cancel.mockRejectedValueOnce(new Error('open failed'));
+  const query = browser.handle({ type: 'browserQuery', requestId: 1, sql: 'SELECT slow', offset: 0, limit: 1 }, send);
+  await browser.handle({ type: 'browserCancel', requestId: 2 }, send);
+  fail(new Error('old query failed')); await query;
+  expect(sent).toEqual([{ type: 'browserError', requestId: 2, message: 'The database could not recover after cancellation. Close and reopen the file.' }]);
+});
+
+test('FR-015: Given cancellation recovery in flight, When the browser is disposed, Then no completion revives the UI', async () => {
+  const { engine, browser, sent, send } = fixture();
+  let finish!: () => void;
+  engine.cancel.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+  const cancel = browser.handle({ type: 'browserCancel', requestId: 1 }, send);
+  browser.dispose(); finish(); await cancel;
+  expect(sent).toEqual([]);
+});
+
+test('FR-015: Given a worker-start response, When validating its address, Then only a valid typed acknowledgement is accepted', () => {
+  expect(isBrowserResponse({ type: 'browserQueryStarted', requestId: 1 })).toBe(true);
+  for (const requestId of [0, -1, 1.5, '1', Number.MAX_SAFE_INTEGER + 1]) {
+    expect(isBrowserResponse({ type: 'browserQueryStarted', requestId })).toBe(false);
+  }
 });
 
 test('FR-011: Given a failed SQL run, When the host responds, Then the original diagnostic is kept as literal text', async () => {

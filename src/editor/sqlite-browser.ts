@@ -32,7 +32,7 @@ export class SqliteBrowser {
       while (this.queued !== undefined && !this.disposed && !this.recovering) {
         const pending = this.queued; this.queued = undefined;
         try {
-          const result = await this.execute(pending.request);
+          const result = await this.execute(pending.request, pending.send);
           if (!this.disposed && pending.request.requestId === this.lastId) { pending.send(result); }
         } catch (error: unknown) {
           if (!this.disposed && pending.request.requestId === this.lastId) {
@@ -45,12 +45,14 @@ export class SqliteBrowser {
     } finally { this.running = false; }
   }
 
-  private async execute(request: BrowserRequest): Promise<BrowserResponse> {
+  private async execute(request: BrowserRequest, send: (message: BrowserResponse) => void): Promise<BrowserResponse> {
     const requestId = request.requestId;
     switch (request.type) {
       case 'browserQuery': {
         const started = performance.now();
-        const page = await this.engine.query(request.sql, [], { offset: request.offset, limit: request.limit });
+        const page = await this.engine.query(request.sql, [], { offset: request.offset, limit: request.limit }, () => {
+          if (!this.disposed && requestId === this.lastId) { send({ type: 'browserQueryStarted', requestId }); }
+        });
         return { type: 'browserQueryRows', requestId, offset: request.offset, limit: request.limit,
           ms: performance.now() - started, page };
       }

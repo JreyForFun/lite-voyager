@@ -123,6 +123,7 @@ export type BrowserRequest =
   | { type: 'browserCount'; requestId: number; table: string; grid?: GridOptions }
   | { type: 'browserCancel'; requestId: number };
 export type BrowserResponse =
+  | { type: 'browserQueryStarted'; requestId: number }
   | { type: 'browserQueryRows'; requestId: number; offset: number; limit: number; ms: number; page: import('./engine/engine').EnginePage }
   | { type: 'browserTables'; requestId: number; offset: number; objects: BrowserObject[]; hasMore: boolean }
   | { type: 'browserRows'; requestId: number; table: string; offset: number; limit: number; page: import('./engine/engine').EnginePage }
@@ -139,12 +140,15 @@ export interface BrowserStatus {
   query?: boolean; editorReady?: boolean; sqlLength?: number; selectionLength?: number; highlighted?: boolean; summary?: string;
   /** Local integration correlation only; neither value is persisted. */
   contextId?: string; exerciseId?: number;
+  /** Opt-in local integration timer probe; no contents or persistent samples. */
+  responsiveness?: { ticks: number; maxGapMs: number };
   cell?: { row: number | null; column: number | null; length: number; preview: string | null; kind: string; busy: boolean; message: string };
 }
 /** Local host integration drives the same editor/controls as a user; no file access. */
 export interface BrowserExercise {
   type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse' | 'sort' | 'filter' | 'removeFilter' | 'clearGrid' | 'continueSort' | 'dismissSort'
-    | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'; value?: string; exerciseId?: number;
+    | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'
+    | 'startResponsiveness' | 'stopResponsiveness'; value?: string; exerciseId?: number;
 }
 function identifier(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 4 * 1024 * 1024 && !value.includes('\0');
@@ -166,6 +170,7 @@ export function isBrowserRequest(value: unknown): value is BrowserRequest {
 export function isBrowserResponse(value: unknown): value is BrowserResponse {
   if (!isRecord(value) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   switch (value['type']) {
+    case 'browserQueryStarted':
     case 'browserCancelled': return true;
     case 'browserError': return typeof value['message'] === 'string';
     case 'browserSortWarning': return identifier(value['table']) && typeof value['message'] === 'string';
@@ -205,6 +210,9 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && typeof value['busy'] === 'boolean' && typeof value['message'] === 'string'
     && (value['contextId'] === undefined || typeof value['contextId'] === 'string' && /^[\da-f-]{36}$/u.test(value['contextId']))
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 0, Number.MAX_SAFE_INTEGER))
+    && (value['responsiveness'] === undefined || isRecord(value['responsiveness'])
+      && integer(value['responsiveness']['ticks'], 0, Number.MAX_SAFE_INTEGER)
+      && typeof value['responsiveness']['maxGapMs'] === 'number' && Number.isFinite(value['responsiveness']['maxGapMs']) && value['responsiveness']['maxGapMs'] >= 0)
     && (value['query'] === undefined || typeof value['query'] === 'boolean')
     && (value['editorReady'] === undefined || typeof value['editorReady'] === 'boolean')
     && (value['highlighted'] === undefined || typeof value['highlighted'] === 'boolean')
@@ -227,7 +235,7 @@ function isCellSummary(value: unknown): boolean {
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
-    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell'].includes(String(value['action']))
+    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'startResponsiveness', 'stopResponsiveness'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 

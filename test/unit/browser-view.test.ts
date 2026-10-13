@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { BrowserView, readSavedState } from '../../webview/sqlite-browser';
 import { BrowserElement, browserRoot } from './browser-dom';
-import type { BrowserRequest, BrowserStatus, CellRequest } from '../../src/protocol';
+import { isBrowserStatus, isBrowserExercise, type BrowserRequest, type BrowserStatus, type CellRequest } from '../../src/protocol';
 
 let view: BrowserView;
 let root: BrowserElement;
@@ -280,6 +280,82 @@ test('FR-011: Given successful SQL results, When edited SQL fails, Then the old 
   view.receive({ type: 'browserQueryRows', requestId: 4, offset: 100, limit: 100, ms: 6, page: { columns: ['x'], rows: [['101']], hasMore: false } }); flush();
   expect(root.elements.get('browser-total')?.textContent).toContain('Total rows: 101');
   expect(root.elements.get('browser-next')?.disabled).toBe(true);
+});
+
+test('FR-015: Given successful SQL and a worker-start acknowledgement, When Cancel is clicked twice, Then recovery remains busy, stale replies are ignored and the previous page survives', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [], hasMore: false });
+  view.runSql('SELECT 42');
+  view.receive({ type: 'browserQueryRows', requestId: 2, offset: 0, limit: 100, ms: 1, page: { columns: ['value'], rows: [['42']], hasMore: false } }); flush();
+  view.runSql('SELECT slow');
+  // Runtime protocol validation must accept the new nonterminal response.
+  view.receive({ type: 'browserQueryStarted', requestId: 3 });
+  expect(root.elements.get('browser-status')?.textContent).toContain('executing');
+  expect(root.elements.get('browser-cancel')?.disabled).toBe(false);
+  view.exercise({ type: 'browserExercise', action: 'cancel' });
+  view.exercise({ type: 'browserExercise', action: 'cancel' });
+  expect(requests().filter((request) => request.type === 'browserCancel')).toHaveLength(1);
+  expect(root.attributes.get('aria-busy')).toBe('true');
+  expect(root.elements.get('browser-cancel')?.disabled).toBe(true);
+  for (const reply of [{ type: 'browserQueryStarted', requestId: 3 }, { type: 'browserError', requestId: 3, message: 'old error' }] as const) { view.receive(reply); }
+  expect(root.elements.get('browser-status')?.textContent).toContain('Cancelling');
+  view.receive({ type: 'browserQueryRows', requestId: 3, offset: 0, limit: 100, ms: 2, page: { columns: ['bad'], rows: [['stale']], hasMore: false } });
+  view.receive({ type: 'browserCancelled', requestId: 4 }); flush();
+  expect(root.attributes.get('aria-busy')).toBe('false');
+  expect(root.elements.get('browser-status')?.textContent).toContain('Run');
+  expect(root.elements.get('browser-total')?.textContent).toContain('Total rows: 1');
+  expect(view.savedState().querySql).toBe('SELECT 42');
+  const status = sent.filter((message): message is BrowserStatus => message.type === 'browserStatus').at(-1);
+  expect(status?.firstRow[0]?.text).toBe('42');
+  view.runSql('SELECT 7');
+  expect(requests().at(-1)).toMatchObject({ type: 'browserQuery', requestId: 5, sql: 'SELECT 7' });
+});
+
+test('FR-015: Given recovery failure, When Cancel settles with a reopen instruction, Then old SQL results and editor context are preserved', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [], hasMore: false });
+  view.runSql('SELECT 42');
+  view.receive({ type: 'browserQueryRows', requestId: 2, offset: 0, limit: 100, ms: 1, page: { columns: ['value'], rows: [['42']], hasMore: false } }); flush();
+  view.runSql('SELECT slow'); view.exercise({ type: 'browserExercise', action: 'cancel' });
+  view.receive({ type: 'browserError', requestId: 4, message: 'The database could not recover after cancellation. Close and reopen the file.' });
+  expect(root.elements.get('browser-status')?.attributes.get('role')).toBe('alert');
+  expect(root.elements.get('browser-status')?.textContent).toContain('Close and reopen');
+  expect(view.savedState().querySql).toBe('SELECT 42');
+  expect(root.elements.get('browser-total')?.textContent).toContain('Total rows: 1');
+});
+
+test('NFR-005: Given an opt-in responsiveness probe, When sampling then stopping or disposing, Then bounded metrics are validated and no timer remains', () => {
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+  try {
+    expect(isBrowserExercise({ type: 'browserExercise', action: 'startResponsiveness' })).toBe(true);
+    expect(isBrowserExercise({ type: 'browserExercise', action: 'stopResponsiveness' })).toBe(true);
+    view.exercise({ type: 'browserExercise', action: 'startResponsiveness' });
+    vi.advanceTimersByTime(40);
+    view.exercise({ type: 'browserExercise', action: 'stopResponsiveness' });
+    const status = sent.filter((message): message is BrowserStatus => message.type === 'browserStatus').at(-1);
+    expect(status).toMatchObject({ responsiveness: { ticks: 4, maxGapMs: 10 } });
+    expect(isBrowserStatus(status)).toBe(true);
+    for (const responsiveness of [{ ticks: -1, maxGapMs: 10 }, { ticks: 1.5, maxGapMs: 10 }, { ticks: 4, maxGapMs: NaN }, { ticks: 4, maxGapMs: -1 }, { ticks: 4, maxGapMs: Infinity }]) {
+      expect(isBrowserStatus({ ...status, responsiveness })).toBe(false);
+    }
+    expect(vi.getTimerCount()).toBe(0);
+    view.exercise({ type: 'browserExercise', action: 'startResponsiveness' });
+    view.exercise({ type: 'browserExercise', action: 'startResponsiveness' });
+    expect(vi.getTimerCount()).toBe(1);
+    view.dispose(); expect(vi.getTimerCount()).toBe(0);
+  } finally { vi.useRealTimers(); }
+});
+
+test('NFR-005: Given a delayed timer, When the probe resumes, Then its reported maximum retains the entire stall instead of clamping it to the target', () => {
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+  let clock = 0;
+  const now = vi.spyOn(performance, 'now').mockImplementation(() => clock);
+  try {
+    view.exercise({ type: 'browserExercise', action: 'startResponsiveness' });
+    clock = 250; vi.advanceTimersByTime(10);
+    clock = 260; view.exercise({ type: 'browserExercise', action: 'stopResponsiveness' });
+    const status = sent.filter((message): message is BrowserStatus => message.type === 'browserStatus').at(-1);
+    expect(status).toMatchObject({ responsiveness: { ticks: 1, maxGapMs: 250 } });
+    expect(vi.getTimerCount()).toBe(0);
+  } finally { now.mockRestore(); vi.useRealTimers(); }
 });
 
 test('FR-010: Given empty or oversized editor SQL, When Run is requested, Then no query is sent and previous results survive', () => {

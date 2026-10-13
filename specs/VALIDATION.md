@@ -1839,6 +1839,128 @@ T-018 closure (2026-10-13):
 This does not close Milestone 1 or authorize a release tag. The next feature task
 is T-014 in a new chat after T-018 closure; do not start it in the current chat.
 
+### T-014 production cancellation (2026-10-13)
+
+Owner authorizes implementation, resolution of uncertainties and scoped repairs;
+owner pushes. T-014 uses the existing process supervisor and adds a typed,
+nonterminal SQL-start acknowledgement, SQL retry guidance and opt-in local timer
+probes. No new dependency, source writes or normal-session timer is introduced.
+The 1,000 ms target measures old-helper exit; reopening is reported separately.
+
+Tests-first evidence:
+- The first focused invocation could not start Vitest because the sandbox denied
+  its build subprocess (`spawn EPERM`); this is not a failing behavior test.
+- The authorized invocation outside the sandbox ran the tests: five failed,
+  36 passed. Failures cover the missing worker-start forwarding, response
+  validation, nonterminal UI acknowledgement and opt-in probe exercises.
+- After implementation, all 41 focused tests passed. Added coverage retains
+  cancellation recovery errors, disposal, queued retry and stale replies.
+- `test/unit/browser-view.test.ts` covers previous SQL results/count/context,
+  repeated Cancel, recovery busy state, retry, visible recovery failure, probe
+  validation and timer cleanup. An injected 250 ms stall must remain visible
+  rather than being clamped to the 100 ms target.
+- `test/unit/sqlite-browser.test.ts` covers worker-start forwarding without
+  completing the query, suppression after cancellation, queued retry waiting
+  for recovery, recovery failure, disposal and typed response validation.
+- `src/test/engine.test.ts` runs both real backends in the extension host. It
+  waits for the worker acknowledgement and 150 ms of sustained execution,
+  verifies the query has not settled, observes the old PID becoming absent,
+  requires exit within 1,000 ms, awaits supervised recovery, runs `SELECT 42`,
+  measures 10 ms host timer intervals and compares source hashes. Only ESRCH
+  counts as an absent process; permission errors do not count as helper exit.
+- `src/test/sqlite-browser.test.ts` runs both real CodeMirror/grid editors,
+  waits for acknowledged execution, cancels twice with a repeated click, checks
+  retained successful results/count/editor length, retries SQL and then closes
+  during a third executing query. Opt-in 10 ms webview timers must tick with no
+  observed interval above 100 ms. Source hashes remain identical.
+- Existing Engine tests retain repeated cancellation, confirmed process exit,
+  close overriding recovery, crashes and read-only/source safety coverage.
+
+Initial full gate: `npm run verify:full` exits 0 with 444 unit tests in 39 files
+and 36 real-host tests. Types, lint, build and a 20-file / 618.08 KB VSIX pass.
+Windows x64, VS Code 1.140.0, host Node 24.21.0. It contains one approved host
+warning and is **not warning-free**:
+- Profile `out/integration-profile-outiXH`; source
+  `20261013T090909/window1/renderer.log:10`; original severity `warning`;
+  rule `VSCODE-HOST-001`; exact message:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+Initial real-host measurements, all within the scoped targets:
+- Native: helper exit 1.1675 ms; direct Engine recovery 271.1975 ms;
+  host maximum timer interval 45.689 ms / 25 ticks.
+- Fallback: helper exit 0.7361 ms; direct Engine recovery 352.0498 ms;
+  host maximum timer interval 34.5325 ms / 32 ticks.
+- Native DOM attempts: recovery 264.6267 / 276.6438 ms; webview maximum timer
+  intervals 21.7 / 19.3 ms, with 29 / 32 ticks.
+- Fallback DOM attempts: recovery 309.2579 / 308.1124 ms; webview maximum timer
+  intervals 22.8 / 18.8 ms, with 34 / 34 ticks.
+
+These observations cover the deterministic aggregate on a 28,672-byte SQLite
+fixture. They do not establish responsiveness for every workload or machine,
+multi-GB fallback reopening, physical-paint quality or remote CI compatibility.
+No owner manual QA, fresh independent review or post-push CI is claimed.
+T-014 remains unchecked pending that closure evidence; Milestone 1 remains open.
+
+Final full gate after strengthening the observer tests: `npm run verify:full`
+exits 0 with 445 unit tests in 39 files (89.27 s) and 36 real-host tests.
+Types/lint/build/package pass; VSIX remains 20 files / 618.08 KB. The injected
+stall test and ESRCH-only process observation pass without changing production
+behavior or relaxing a target. Zero errors; one approved host warning, so this
+full run is **not warning-free**:
+- Profile `out/integration-profile-VMKJ6y`; source
+  `20261013T091423/window1/renderer.log:10`; original severity `warning`;
+  rule `VSCODE-HOST-001`; exact message:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+- Native: helper exit 0.7971 ms; Engine recovery 264.4193 ms; host maximum
+  timer interval 40.1677 ms / 25 ticks. DOM recovery 253.2175 / 253.2526 ms;
+  webview maximum intervals 11.9 / 12 ms, with 43 / 42 ticks.
+- Fallback: helper exit 0.6179 ms; Engine recovery 309.5686 ms; host maximum
+  timer interval 35.6103 ms / 29 ticks. DOM recovery 343.0191 / 315.4338 ms;
+  webview maximum intervals 19 / 14.2 ms, with 55 / 48 ticks.
+
+For fresh-chat review, use the complete diff from the starting commit:
+`git diff 1d2fc4f..HEAD`. No independent review is claimed by this implementation
+session. Manual QA and fresh CI remain required before checking T-014.
+
+Final standalone `npm run verify` exits 0: 445 tests / 39 files (unit 80.94 s),
+all three typechecks, lint, production build and the 20-file / 618.08 KB VSIX
+pass with zero errors and zero warnings. Final evidence/handoff edits only
+record these observed results; no production or test change follows the full
+gate. Existing untracked files remain untouched and are excluded from staging.
+
+Owner QA, native and forced fallback (report each numbered observation):
+1. Run `npm run verify` and `npm run verify:full` in the project terminal and
+   retain the output. For visual QA, press F5 with `Run Extension`, then open
+   `test/fixtures/sample.sqlite` in the Extension Development Host. The native
+   run should say the primary engine reads from disk.
+2. Run `SELECT 42 AS preserved;`. Verify the result is `42` and total rows `1`.
+   Replace the editor text with the single statement below and Run:
+
+   ```sql
+   WITH RECURSIVE n(x) AS (VALUES(0) UNION ALL SELECT x+1 FROM n WHERE x<20000000) SELECT sum(x) FROM n;
+   ```
+
+   While running, type a SQL comment and scroll/select the existing result.
+   Verify typing and scrolling respond and Cancel operation remains available.
+3. Click Cancel operation. Verify cancellation/reopening feedback, followed by
+   ready status with Run guidance; previous result/count and the edited SQL
+   document remain. Run `SELECT 7 AS recovered;` and verify `7`.
+4. Repeat the long query and click Cancel twice quickly. Verify one recovery,
+   no stale error/result and a successful `SELECT 8 AS recovered;` retry.
+5. Run the long query again, close its editor while executing, reopen the file
+   and run `SELECT 9;`. Verify recovery without a frozen window or revived tab.
+6. Close the Development Host. Temporarily add
+   `"env": { "LITE_VOYAGER_FORCE_FALLBACK": "1" }` inside the `Run Extension`
+   configuration in `.vscode/launch.json`, preserving its other properties.
+   Press F5, confirm the persistent memory-limited notice, repeat checks 2-5,
+   then remove only that temporary `env` property. Report native and fallback
+   separately, including any failure and exact visible message. Assess light
+   and dark themes and keyboard access to Cancel and Run during these checks.
+
+After owner QA, arrange a fresh-chat independent review under section 6 and
+push the implementation. Provide the new CI run URL/SHA and all three platform
+conclusions; preserve any failures and exact diagnostics before closure.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -1900,6 +2022,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-014 implementation (2026-10-13): Record red-first production cancellation acknowledgement, bounded opt-in responsiveness probes, both-engine real-host measurements and the exact approved host warning. Keep owner QA, independent review and fresh CI open.
 - T-018 closure (2026-10-13): Check the task after observed final 437-test zero-error/zero-warning verify and independent isolated review, owner QA and repaired three-platform CI. Update the handoff to T-014 in a new chat; preserve all earlier evidence and limits.
 - T-018 independent review (2026-10-13): Honor the owner's preference to finish this task in the current chat. Record one fresh-context isolated review of cumulative implementation/CI repair with no concrete findings, preserving its sandbox execution limitation and separate gate evidence.
 - T-018 green CI confirmation (2026-10-13): Verify 38293986528/attempt 1/0004369 and all three successful jobs, locked installs and applicable full checks. Record metadata-only remote evidence, preserve failed CI/exact local renderer warning history, and leave only independent review open for task closure.

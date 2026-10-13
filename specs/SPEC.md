@@ -255,6 +255,21 @@ file loading remain later tasks.
   Reopening starts a fresh helper and a new query succeeds. Rejecting the host
   promise while native SQL continues running does not count as cancellation.
 
+- T-014 production acceptance (owner-delegated, 2026-10-13): given SQL that the
+  worker has acknowledged starting, Cancel remains available and shows recovery
+  progress. Confirm the old helper exits within 1,000 ms on the deterministic
+  20-million-step recursive aggregate; reopening time is measured separately.
+  Both native and fallback recover in the same editor and run a new query.
+  Preserve the last successful results, counts, paging context and editor text;
+  ignore stale starts/results/errors. Repeated Cancel and closure cannot revive
+  disposed UI or reopen a closed engine. Recovery failure gives a close/reopen
+  instruction. The source remains byte-identical.
+- T-014 NFR-005 measurement: during that query and cancellation/reopening,
+  extension-host and webview 10 ms timer probes must continue ticking with no
+  observed interval above 100 ms. Report observed maxima and workloads, rather
+  than claiming this establishes every-operation or every-machine compliance.
+  Webview probes are opt-in local integration exercises, not telemetry.
+
 **FR-016 (P0) Read-only by default.** SQLite files open read-only. Write statements and inline editing need the user to switch on write mode, which is clearly indicated.
 
 - T-002 fallback snapshot safety: refuse WAL-mode database headers (including
@@ -408,6 +423,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-014 scope (2026-10-13): Owner delegates implementation and uncertainties. Apply the existing helper-exit bound to production SQL cancellation, preserve successful context, and define scoped host/webview responsiveness evidence on both engines.
 - v0.5 T-018 fidelity repair (2026-10-12): Preserve complete fallback UTF-8 TEXT including NUL/BOM, reject invalid encoding visibly, and reject embedded NUL clipboard text before write rather than risk silent loss.
 - v0.5 T-018 acceptance (2026-10-12): Owner delegates selection, JSON and TSV decisions. Define page-scoped rectangles, token-preserving JSON, NULL/empty/escaping rules, cancellable worker preparation, explicit expansion budgets and separate owner/CI/milestone evidence.
 - v0.5 T-017 review repairs (2026-10-12): Clarify pending-confirmation controls after a reproduced page/filter/count mismatch. Preserve the accepted 1,000-filter limit with balanced engine predicates; no acceptance or test is weakened.

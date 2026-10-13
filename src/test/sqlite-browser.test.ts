@@ -39,6 +39,67 @@ const settled = (status: BrowserStatus): boolean => !status.busy;
 const rowsPainted = (status: BrowserStatus): boolean => !status.busy && status.renderedRows > 0 && status.firstRow.length > 0;
 const digest = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
 
+suite('T-014 production SQL cancellation and responsiveness', () => {
+  for (const fallback of [false, true]) {
+    test(`FR-015: Given the real SQL editor and fallback=${String(fallback)}, When cancelling executing SQL and closing during execution, Then the UI stays responsive, successful results survive and retry works`, async function () {
+      this.timeout(60000);
+      const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>('jreyinnovarev.lite-voyager');
+      assert.ok(extension); const api = await extension.activate();
+      const path = join(extension.extensionPath, 'test/fixtures/sample.sqlite'); const before = await digest(path);
+      const previous = process.env['LITE_VOYAGER_FORCE_FALLBACK']; process.env['LITE_VOYAGER_FORCE_FALLBACK'] = fallback ? '1' : '0';
+      let document: SqliteDocument | undefined;
+      try {
+        const uri = vscode.Uri.file(path);
+        await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        document = api.sqliteEditor.getDocument(uri); assert.ok(document);
+        await waitStatus(document, (status) => rowsPainted(status) && status.editorReady === true);
+        const current = document;
+        const edit = (sql: string) => action(current, { type: 'browserExercise', action: 'sql', value: sql }, (status) => status.sqlLength === sql.length && !status.busy);
+        const run = async (sql: string) => {
+          await edit(sql);
+          const busy = await action(current, { type: 'browserExercise', action: 'run' }, (status) => status.busy);
+          return waitStatus(current, (status) => status.exerciseId === busy.exerciseId && rowsPainted(status), busy.revision);
+        };
+        await run('SELECT 42 AS preserved');
+        const slow = 'WITH RECURSIVE n(x) AS (VALUES(0) UNION ALL SELECT x+1 FROM n WHERE x<20000000) SELECT sum(x) FROM n';
+        for (let attempt = 0; attempt < 2; ++attempt) {
+          const old = current.browserStatus; assert.ok(old);
+          await edit(slow);
+          await action(current, { type: 'browserExercise', action: 'startResponsiveness' }, (status) => status.responsiveness?.ticks === 0);
+          const busy = await action(current, { type: 'browserExercise', action: 'run' }, (status) => status.busy);
+          await waitStatus(current, (status) => status.exerciseId === busy.exerciseId && status.busy && /executing/.test(status.message), busy.revision);
+          await new Promise<void>((resolve) => setTimeout(resolve, 150));
+          assert.equal(current.browserStatus?.busy, true, 'query must still be executing when Cancel is clicked');
+          const cancelStarted = performance.now();
+          const cancelling = await action(current, { type: 'browserExercise', action: 'cancel' }, (status) => status.busy && /Cancelling/.test(status.message));
+          // The second click must neither supersede nor duplicate cancellation.
+          await action(current, { type: 'browserExercise', action: 'cancel' }, (status) => /Cancelling|cancelled/.test(status.message));
+          const ready = await waitStatus(current, (status) => status.contextId === cancelling.contextId && !status.busy && /cancelled/.test(status.message), cancelling.revision);
+          const recoveryMs = performance.now() - cancelStarted;
+          assert.equal(ready.firstRow[0]?.text, old.firstRow[0]?.text);
+          assert.equal(ready.count, '1'); assert.equal(ready.sqlLength, slow.length); assert.match(ready.message, /Run/);
+          const measured = await action(current, { type: 'browserExercise', action: 'stopResponsiveness' }, (status) => !status.busy && status.responsiveness !== undefined);
+          assert.ok(measured.responsiveness); assert.ok(measured.responsiveness.ticks >= 5);
+          assert.ok(measured.responsiveness.maxGapMs <= 100, `webview timer maximum interval: ${String(measured.responsiveness.maxGapMs)} ms`);
+          console.log(`T-014 DOM evidence: ${JSON.stringify({ fallback, attempt, recoveryMs, ...measured.responsiveness })}`);
+          const retried = await run(`SELECT ${String(7 + attempt)} AS recovered`);
+          assert.equal(retried.firstRow[0]?.text, String(7 + attempt));
+        }
+        await edit(slow);
+        const busy = await action(current, { type: 'browserExercise', action: 'run' }, (status) => status.busy);
+        await waitStatus(current, (status) => status.exerciseId === busy.exerciseId && status.busy && /executing/.test(status.message), busy.revision);
+        await closeEditor(current); await current.session.closed;
+        assert.equal(api.sqliteEditor.getDocument(uri), undefined);
+        assert.equal(await digest(path), before);
+        document = undefined;
+      } finally {
+        if (document !== undefined) { await closeEditor(document); await document.session.closed; }
+        if (previous === undefined) { delete process.env['LITE_VOYAGER_FORCE_FALLBACK']; } else { process.env['LITE_VOYAGER_FORCE_FALLBACK'] = previous; }
+      }
+    });
+  }
+});
+
 suite('T-018 production cell details and clipboard', () => {
   for (const fallback of [false, true]) {
     test(`FR-018: Given the real editor and fallback=${String(fallback)}, When inspecting Browse/SQL cells and copying TSV, Then exact details, selection and source safety survive`, async function () {
