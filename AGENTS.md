@@ -17,7 +17,7 @@ Lite Voyager is a VS Code extension (TypeScript) that opens SQLite, CSV, JSON an
 - If the spec is unclear or seems wrong, stop and propose a change to the spec. Do not silently work around it.
 
 ## Validation (see `specs/VALIDATION.md`)
-- Before saying a task is done, run `npm run verify` (or ask me to run it and paste the output). Zero errors and zero warnings. For `verify:full`, the only owner-approved host exceptions are the two exact renderer diagnostic families in `specs/VALIDATION.md` section 1; report each explicitly and never describe a run containing them as warning-free. Every other warning and every error fails.
+- Before saying a task is done, run `npm run verify` (or ask me to run it and paste the output). Zero errors and zero warnings. For `verify:full`, the only owner-approved host exceptions are the four exact renderer diagnostic families in `specs/VALIDATION.md` section 1; report each explicitly and never describe a run containing them as warning-free. Every other warning and every error fails.
 - Never skip, weaken, or delete a test to make it pass. Never use `any`, `@ts-ignore`, or lint disables without a written reason.
 - Test names start with the requirement ID, for example `FR-002: shows NULL differently from empty string`.
 - When fixing a bug, write a failing test first.
@@ -52,3 +52,6 @@ Lite Voyager is a VS Code extension (TypeScript) that opens SQLite, CSV, JSON an
 - Give the commands to run the tests.
 - Say which acceptance criteria are covered and which are not.
 - At the end of a session, produce an updated `PROGRESS.md` (see its format) and say which checkbox in `specs/TASKS.md` may be ticked, only if the acceptance criteria pass.
+
+## Changelog
+- 2026-10-14: Owner explicitly approves the two additional exact renderer startup timing families in VALIDATION section 1. Preserve all other diagnostic rules and the no-retry-to-green policy.

@@ -122,13 +122,18 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
       (reply) => { if (!disposed) { void panel.webview.postMessage(reply); } });
     const removeCellCleanup = document.onDispose(() => { cells.dispose(); });
     let browserRendered = false;
+    let openingRendered = false;
     const render = (): void => {
       // Engine recovery can update its mode; do not reset an initialized browser
       // and its monotonic request IDs by replacing the document on each update.
-      if (!disposed && !browserRendered) {
-        panel.webview.html = sqliteEditorHtml(basename(document.uri.fsPath) || document.uri.toString(), session.state, assets);
-        browserRendered = session.state.phase === 'opened';
-      }
+      if (disposed || browserRendered) { return; }
+      const state = session.state;
+      // Avoid resetting the opening frame for native mode/status updates.
+      // Fallback needs its banner before consent; errors/cancellation still render.
+      if (openingRendered && state.phase === 'opening' && state.mode?.memoryLimited !== true) { return; }
+      panel.webview.html = sqliteEditorHtml(basename(document.uri.fsPath) || document.uri.toString(), state, assets);
+      openingRendered = state.phase === 'opening';
+      browserRendered = state.phase === 'opened';
     };
     const messages = panel.webview.onDidReceiveMessage((message: unknown) => {
       if (disposed || session.state.phase !== 'opened') { return; }

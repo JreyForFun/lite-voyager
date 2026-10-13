@@ -57,6 +57,23 @@ beforeEach(() => {
   mocks.withProgress.mockImplementation((_options, task) => task({ report: vi.fn() }, cancellation().token));
 });
 
+test('NFR-004: Given native opening and mode updates, When resolving the editor, Then one opening document is replaced only once by the ready browser', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const view = panel();
+  const document = provider.openCustomDocument(uri(), openContext, cancellation().token);
+  const native: EngineOpened = { ...opened, engine: 'node:sqlite', memoryLimited: false, needsConsent: false, notice: 'Primary engine reads from disk.' };
+  const assignments = vi.fn<(value: string) => void>(); let html = '';
+  Object.defineProperty(view.webview, 'html', { get: () => html, set: (value: string) => { html = value; assignments(value); } });
+  mocks.open.mockImplementation((_path, options) => { options?.onMode?.(native); return Promise.resolve(native); });
+  await provider.resolveCustomEditor(document, view, cancellation().token);
+  expect(assignments).toHaveBeenCalledTimes(2);
+  expect(assignments.mock.calls[0]?.[0]).toContain('Opening SQLite');
+  expect(assignments.mock.calls[0]?.[0]).not.toContain('<script');
+  expect(assignments.mock.calls[1]?.[0]).toContain('id="browser"');
+  expect(assignments.mock.calls[1]?.[0]).toContain(native.notice);
+  expect(mocks.prompt).not.toHaveBeenCalled();
+  view.dispose(); await document.session.closed; provider.dispose();
+});
+
 test('FR-001: Given two views of the same custom document, When one closes, Then the other owns an independent open session until final closure', async () => {
   const provider = new SqliteEditorProvider('/extension'); const first = panel(); const second = panel();
   const document = provider.openCustomDocument(uri(), openContext, cancellation().token);

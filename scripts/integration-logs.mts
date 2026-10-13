@@ -5,13 +5,16 @@ export interface ApprovedHostDiagnostic {
   source: string;
   line: number;
   severity: 'warning';
-  rule: 'VSCODE-HOST-001' | 'VSCODE-HOST-002';
+  rule: 'VSCODE-HOST-001' | 'VSCODE-HOST-002' | 'VSCODE-HOST-003' | 'VSCODE-HOST-004';
   message: string;
 }
 
 const hostRules = [
   { id: 'VSCODE-HOST-001', message: /^\[CloudSandboxApi\] No 'github' session with scopes \[read:user, user:email, repo, workflow\]$/ },
   { id: 'VSCODE-HOST-002', message: /^Creation of workbench contribution 'workbench\.contrib\.chatLanguageModelsData' took \d+ms\.$/ },
+  // Owner-approved T-019 vendor startup families; retain renderer/severity guards.
+  { id: 'VSCODE-HOST-003', message: /^Creation of workbench contribution 'workbench\.contrib\.preferencesActions' took \d+ms\.$/ },
+  { id: 'VSCODE-HOST-004', message: /^Creation of workbench contribution 'workbench\.contrib\.chatPetContext' took \d+ms\.$/ },
 ] as const;
 
 function approvedHostDiagnostic(source: string, line: string, number: number): ApprovedHostDiagnostic | undefined {

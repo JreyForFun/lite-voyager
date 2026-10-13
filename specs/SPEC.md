@@ -500,6 +500,10 @@ Targets marked "start" are starting points to validate in the benchmark task, th
   stored text fails visibly instead of replacement decoding. Native decoding
   must preserve column labels, bound parameters, nondeterministic evaluation,
   streaming cancellation/export and all existing source/memory/read-only rules.
+- Native opening retains one opening document until the ready browser replaces
+  it; repeated opening/native-mode updates must not recreate the webview.
+  Fallback mode must still be visible before consent, and failure/cancellation
+  must render their actionable state. Preserve the two-second first-DOM target.
 - Record delegated real-host QA separately from subjective physical-paint,
   smoothness and visual observations. Keep the NFR-004 two-second target and
   T-016 numeric memory contract unchanged; automated DOM timing is scoped
@@ -530,6 +534,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-019 opening performance (2026-10-14): After an observed 2.178-second first-DOM failure, require one native opening document before the ready browser, retaining fallback consent/error/cancellation rendering and the unchanged two-second target.
 - T-019 gate acceptance (2026-10-13): Define the missing opt-in paged schema UI and isolated same-source views; reconcile review regressions for literal empty names, successful paging context, observed totals and cross-engine lossless text without relaxing any existing limit.
 - T-016 WAL clarification (2026-10-13): Owner approves SQLite-managed transient SHM reader coordination after the red-first idle-writer test shows reader marks changing. Preserve strict database/WAL hashes and constrain the observed SHM changes; no production change or source restoration.
 - T-016 acceptance (2026-10-13): Owner approves source-safety tests and a scoped 1 GB/5 GB primary SQLite sampled-memory contract: 500 MB cap, 50 MB growth, explicit process coverage and observation limits. Preserve the CSV target and milestone scope.

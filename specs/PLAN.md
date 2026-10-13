@@ -484,8 +484,8 @@ six-minute 513-unit/49-host strict gate. The installed VSIX also passes four
 both-engine schema/view/theme/key/source cases in isolated VS Code 1.141.0,
 with one explicitly reported approved VSCODE-HOST-001 warning. See VALIDATION
 for exact records and retained failed preview harness attempts. Desktop API
-inspection is unavailable (native pipe, os error 2); physical feedback remains
-unobserved. Stronger large-grid acceptance keeps every original workload/cap/
+inspection is unavailable (native pipe, os error 2); physical feedback was
+unobserved at that point. Stronger large-grid acceptance keeps every original workload/cap/
 deadline, plus both sort directions, a descending broad filter and eleven-row
 full forward filter. Retain the failed reverse-filter timeout separately.
 The first strengthened run passes all 513 unit/49 host tests, both 11-row
@@ -497,11 +497,48 @@ retain that failure and both exact approved records in VALIDATION. A fresh
 unchanged-code diagnostic rerun reproduces preferencesActions/chatPetContext
 warnings and is stopped; section 1 prohibits retry-to-green. Shipped host
 code confirms both vendor startup contributions run before the extension loads.
-The owner is asked about two additional exact exception families; policy stays
-unchanged until approval. Final standalone verify passes 513 tests /47 files
+At that point the two-family proposal awaits explicit approval. Final standalone
+verify passes 513 tests /47 files
 (273.46 s), strict types/lint/build/package with zero errors/warnings. It does
-not clear the failed full host-log gate. Current-code CI and physical feedback
-remain unobserved; no release tag or M2 transition yet.
+not clear that failed full host-log gate.
+
+On 2026-10-14 the owner confirms all five visible preview checks PASS and
+explicitly approves only the two additional exact renderer timing families.
+Add HOST-003 preferencesActions and HOST-004 chatPetContext with the existing
+source/severity/reporting restrictions; preserve all other warning/error rules
+and no-retry-to-green. Four new positive/reporting cases fail first; all 35
+scanner tests then pass, including expanded negative/error/source cases.
+Fresh full verification of this authorized policy change is pending. Prior
+failed runs remain failures. Current-code three-platform CI and release/tag
+remain unobserved; no M2 transition yet.
+
+The new-policy full run passes 530 units /47 files (240.41 s), but one real
+first-DOM measurement is 2,177.673 ms and fails the unchanged two-second
+target (48 other host cases pass). Do not average, alter the predicate or
+retry unchanged code past it. Add a failing native-provider regression:
+four document assignments reduce to one opening document and one ready
+browser assignment. Skip intermediate native status/mode replacements;
+retain fallback banners before consent and terminal error/cancellation
+rendering. All 16 provider tests pass after this repair. Runtime/browser
+operations, source safety, caps and deadlines are unchanged; new full proof
+is required, not assumed from the focused test.
+
+Repaired full verification passes 531 units /47 files (209.46 s) and 49 host
+cases with strict logs: `out/t019-opening-repair-full-2.log`. Its one approved
+HOST-001 record is explicit in VALIDATION; this full run is not warning-free.
+Warm large-file first DOM is 1,339.026/1,203.989 ms; sampled combined peaks
+271,155,200/287,035,392 bytes, size growth 15,880,192 and paging growth
+6,070,272/15,925,248 meet unchanged limits. Renderer peaks
+418,734,080/421,400,576 are separate. Observations 75/183 (helpers74/182),
+max gaps 587.410/560.942 ms and 279,424.918 ms workload retain all source
+hashes, pages, full scans and budgets. Both large sorts/full filters pass.
+Local observable/manual preview and independent review criteria are covered;
+current-code three-platform CI and release/tag remain external gate items.
+Final standalone verify passes 531 tests /47 files (237.04 s), strict types/
+lint/build and 20-file packaging with zero errors/warnings. Refreshed VSIX
+passes four installed-artifact cases /17 s and strict logs; its sole approved
+HOST-001 record is explicit in VALIDATION. Browser/worker/WASM assets match
+the owner-tested UI; only the verified host-opening optimization changes.
 
 ### T-011 worker metadata contract (2026-10-10)
 
@@ -1044,6 +1081,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-019 owner approvals (2026-10-14): Record five visible preview checks PASS, two narrowly approved renderer timing families and tested native-opening optimization. Preserve prior failures and every remaining diagnostic/performance rule. Repaired 531-unit/49-host full gate, updated four-case packaged preview and clean 531-test verify pass; current-code CI/release remain external gate items.
 - T-019 gate plan (2026-10-13): Plan one owner-delegated QA/review closure task, fresh isolated cumulative review, tests-first schema/view/fidelity/paging repairs, real-host acceptance and honest release/visual limits. No new dependency or Milestone 2 feature.
 - T-016 repaired-candidate CI (2026-10-13): Confirm run 38384170955 /attempt 1 at 284fbee succeeds on Windows/macOS/Ubuntu, including locked installs and full checks. Close only T-016 after clean 489-test completion verify; retain failed runs, diagnostic evidence and remote raw-log limits. No milestone closure.
 - T-016 CI repair (2026-10-13): Retain failed caf209b Windows/macOS evidence and the local Vitest-startup full failure. Reopen the task, reuse one hash buffer and persist the Windows OS reader. Separate 489-test zero-diagnostic verify and 45-host/log gates pass without relaxing targets; fresh full CI remains pending.

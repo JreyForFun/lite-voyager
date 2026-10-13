@@ -22,7 +22,7 @@ Two commands, defined in task T-006:
 Rules:
 - Zero errors and zero warnings. A warning is a defect that has not been explained yet.
 - **Owner-approved T-007 host exceptions:** only structured `[warning]` records
-  in a dated VS Code session's `windowN/renderer.log` may match either exact
+  in a dated VS Code session's `windowN/renderer.log` may match one of the exact
   message family below. Report every accepted record with source, line, original
   severity, rule ID and message; never call such a run warning-free. All errors,
   other warnings, altered scopes/messages and records from other log sources fail.
@@ -32,6 +32,12 @@ Rules:
   - `VSCODE-HOST-002`: `Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took Nms.`
     `N` must be an integer duration. This is the vendor's synchronous startup
     schema contribution, not Lite Voyager work or its responsiveness measurement.
+  - `VSCODE-HOST-003`: `Creation of workbench contribution 'workbench.contrib.preferencesActions' took Nms.`
+    Owner approved on 2026-10-14. `N` must be an integer duration. This is
+    the vendor's settings/keybinding registration before Lite Voyager loads.
+  - `VSCODE-HOST-004`: `Creation of workbench contribution 'workbench.contrib.chatPetContext' took Nms.`
+    Owner approved on 2026-10-14. `N` must be an integer duration. This is
+    the vendor's pet-service context binding before Lite Voyager loads.
   The original manifest-creation and cloud-dictation timeout warnings remain
   failures. Console diagnostic checks, types, lint and builds retain zero
   errors/warnings. No blanket vendor-warning allowance or retry-to-green is permitted.
@@ -1107,17 +1113,23 @@ T-013 in the message; owner pushes the completion record.
 
 The following checklist is the remaining whole-milestone QA:
 
-- [ ] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
-- [ ] A generated multi-GB database shows its first rows within the NFR-004 target, and memory stays flat while scrolling.
-- [ ] NULL, empty string, BLOB placeholder, and a 64-bit integer (for example 9223372036854775807) all display correctly.
-- [ ] Table and column names with spaces, quotes, and unicode work.
-- [ ] Run a long query and cancel it: the UI stays responsive and the app recovers.
-- [ ] A bad SQL statement shows the error and keeps the previous results.
-- [ ] Sort and filter work on a large table; sorting an unindexed column shows the warning.
-- [ ] Export results to CSV, open the exported file, and compare it with the grid.
-- [ ] Two tabs open on the same file; closing a tab during a query does not crash.
-- [ ] Light and dark themes; the grid is usable by keyboard only.
-- [ ] Force the fallback engine and repeat the basics; the banner appears.
+T-019 closes these items using the owner's delegated observable QA and five
+explicit physical preview PASS checks (2026-10-14), plus the repaired
+531-unit/49-host full gate recorded below. This does not claim the owner
+manually replayed every automated fixture. First-DOM/memory evidence retains
+its scoped warm-input and sampled-process limits.
+
+- [x] Open every fixture database. Open an invalid file, an empty (0-byte) file, and a database with no tables: each gives a clear result.
+- [x] A generated multi-GB database shows its first rows within the NFR-004 target, and memory stays flat while scrolling.
+- [x] NULL, empty string, BLOB placeholder, and a 64-bit integer (for example 9223372036854775807) all display correctly.
+- [x] Table and column names with spaces, quotes, and unicode work.
+- [x] Run a long query and cancel it: the UI stays responsive and the app recovers.
+- [x] A bad SQL statement shows the error and keeps the previous results.
+- [x] Sort and filter work on a large table; sorting an unindexed column shows the warning.
+- [x] Export results to CSV, open the exported file, and compare it with the grid.
+- [x] Two tabs open on the same file; closing a tab during a query does not crash.
+- [x] Light and dark themes; the grid is usable by keyboard only.
+- [x] Force the fallback engine and repeat the basics; the banner appears.
 
 ### Milestone 2 manual QA (other formats)
 - [ ] CSV files with a BOM, CRLF line endings, quoted commas, quoted line breaks, and ragged rows all load correctly.
@@ -2827,9 +2839,9 @@ development extension in this run. No vendor edit or warning suppression is
 applied. The concrete proposal is to permit only these two additional exact
 renderer startup-timing families with integer durations, using the same
 source/severity/reporting restrictions as HOST-002, while preserving every
-other diagnostic rule and all responsiveness targets. This needs explicit
-owner approval; section 1 and scanner tests are unchanged pending that answer.
-The current full gate remains failed. Final standalone `npm run verify`
+other diagnostic rule and all responsiveness targets. At that point the
+proposal awaits explicit approval and section 1/scanner tests are unchanged.
+That full gate remains a recorded failure. Final standalone `npm run verify`
 (`out/t019-verify-final.log`, 2026-10-14) passes all 513 unit tests /47 files
 in 273.46 s, strict host/webview/tooling types, lint, production builds and
 the 20-file /626.61 KB package dry run, with zero errors and zero warnings.
@@ -2842,8 +2854,8 @@ Archive inspection confirms required worker/webview/WASM assets and excludes
 src/scripts/test/out/node_modules/authentication fixtures. `PREVIEW.md` contains
 the installation command and five physical feedback checks; disposable
 `gate.sqlite` /`browser.sqlite` are provided in the same directory. Candidate
-manifest version stays 0.0.1 until release closure. Owner feedback is pending;
-availability does not itself complete the preview-feedback gate.
+manifest version stays 0.0.1 until release closure. Feedback is pending when
+prepared; availability alone does not complete the preview-feedback gate.
 
 The owner's "Do it" authorizes installation/QA; it is not PASS feedback.
 CLI installation succeeds in VS Code 1.141.0; locate/list confirm
@@ -2879,7 +2891,7 @@ This installed-preview result is not warning-free. Desktop visual inspection
 remains unavailable: the approved `@oai/sky` API returns
 `Computer Use native pipe is unavailable: failed to connect native pipe: The system cannot find the file specified. (os error 2)`.
 Do not substitute computed colors/key events for physical feedback or launch
-a custom automation helper. The five `PREVIEW.md` feedback checks remain open.
+a custom automation helper. The five feedback checks remain open at that point.
 
 The scoped trace finds all 16 linked Milestone 1 requirement IDs in real test
 declarations: FR-001/002/003/010/011/014/015/016/017/018 and
@@ -2889,14 +2901,135 @@ than establish every future acceptance clause. Global trace still reports
 FR-005/006/007/012/013/020/021/022/030/040 and NFR-006/007/008/010; these remain
 later work. A source search finds no TODO/FIXME in src/webview/scripts/test/.github.
 
+#### Owner preview feedback and narrow host approval (2026-10-14)
+
+The owner explicitly answers **"All five checks pass"** after installation
+and the `PREVIEW.md` checklist: literal empty-name schema/index details,
+all 1,000 columns with recoverable metadata errors, retained SQL/export context
+and visible malformed-text refusal, independent views with close/cancel/retry,
+and visible light/dark readability plus keyboard navigation. This is owner
+physical preview feedback in addition to the delegated real-host observations;
+it does not establish universal cold/physical paint or unsampled memory peaks.
+
+The owner separately answers **"Approve the two exact host families"** to
+the concrete preferencesActions/chatPetContext renderer-only timing proposal.
+Persist exactly HOST-003/004 in section 1 and AGENTS, using the unchanged
+dated renderer path, structured warning severity, integer-duration wording and
+explicit source/line/severity/rule/message reporting. Errors, other sources,
+other contribution names, suffixes and altered/noninteger durations still fail.
+The console gate, types/lint, original workloads/caps/deadlines and no-retry-to-
+green policy are unchanged. Prior failed runs retain their original outcomes;
+no retrospective pass or warning-free claim.
+
+Tests first: `out/t019-host-exceptions-red.log` fails four cases with 31 passing
+before implementation; `out/t019-host-exceptions-green.log` passes all 35.
+The two new positive classifications and console reports fail first. Added
+negative cases preserve errors/wrong-source rejection and reject lookalike
+names, appended diagnostics, signed/fractional/unknown durations. Fresh full
+verification after this explicitly authorized policy change is pending.
+The existing independent reviewer checks the actual narrow diff from d16dcc6
+and finds no concrete defect or unintended broadening. A separate read-only
+scanner probe accepts four valid cases and rejects sixteen invalid cases,
+including zero-duration, signed/fractional/unknown values, wrong/undated sources,
+errors and appended text. No assertion or diagnostic rule outside the approved
+two families changes; these probes are not a completed full-host verification.
+
+`out/t019-approved-host-full.log` passes 530 unit tests /47 files (240.41 s)
+and 48 host tests but fails the genuine 1 GB first-DOM assertion:
+2,177.673 ms exceeds the unchanged two-second target. No 5 GB/full memory
+completion is claimed for that attempt. Preserve the failure; no averaging,
+deadline increase, readiness-predicate change or unchanged-code retry is used.
+Its host warnings match the now-approved policy; the measured test failure
+still fails the gate.
+For that failed attempt, source
+`out/integration-profile-BItMH0/logs/20261014T013006/window1/renderer.log`
+has approved severity `warning` records: line `1`, VSCODE-HOST-003,
+`Creation of workbench contribution 'workbench.contrib.preferencesActions' took 29ms.`;
+line `3`, VSCODE-HOST-002,
+`Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 21ms.`;
+line `12`, VSCODE-HOST-001,
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+Line `131` is severity `error`, `1 test failed.`; it remains a failure.
+Investigation finds redundant native opening-document
+assignments before the ready browser, including an intermediate mode-only
+document replacement. The targeted provider regression fails first in
+`out/t019-opening-frame-red.log` (one fail/15 pass), then all 16 provider
+cases pass in `out/t019-opening-frame-green.log` after suppressing redundant
+opening/native-mode replacements. Fallback pre-consent banners and terminal
+error/cancellation states remain rendered; the same existing assertions pass.
+The first-DOM target, worker/source logic, measurements and workloads remain
+unchanged. Fresh full verification of this production repair is required.
+Independent follow-up uses the actual provider/session with controlled engine
+and VS Code surfaces: native two assignments opens the browser; fallback three
+assignments show the banner before consent; decline shows a visible error;
+cancellation shows its state without a late browser revival. No concrete
+consent, per-view lifetime or state regression is found. Actual first-DOM
+latency remains a separate real-host assertion, not inferred from these probes.
+The first repaired full candidate (`out/t019-opening-repair-full.log`) stops
+at lint: the new mock is an async arrow with no await. Return a genuine
+resolved promise directly; do not add a fake await or suppress the rule.
+No test assertion, production behavior or target changes for this correction.
+
+The repaired candidate `out/t019-opening-repair-full-2.log` passes all 531
+unit tests /47 files (209.46 s), strict types/lint/build/package, all 49
+real-host tests (seven minutes), and strict runtime logs on Windows x64 /
+VS Code 1.140.0 /Node 24.21.0. The unchanged large-file assertion now measures
+1,339.026 /1,203.989 ms, both under two seconds. Both directional sorts,
+descending broad filters and complete eleven-row filters pass, alongside
+all original 60 Browse/20 SQL pages, full payload scans and full hashes.
+Combined sampled host/helper peaks are 271,155,200 /287,035,392 bytes,
+growth 15,880,192; paging growth 6,070,272 /15,925,248, all within unchanged
+500 MB/50 MB bounds. Renderer peaks 418,734,080 /421,400,576 are separate.
+There are 75/183 observations (74/182 with helpers), maximum gaps
+587.410 /560.942 ms. Ten million rows and 1,285,033,984 /5,874,388,992 bytes
+per file are genuine; both previously recorded complete SHA-256 values match.
+Workload 279,424.918 ms meets the same 540/600 s budgets. This is observed
+warm DOM readiness and sampled resident memory, not universal physical paint.
+
+This full result is **not warning-free**. Exactly one accepted record:
+
+- Source: `out/integration-profile-v0vZHu/logs/20261014T015515/window1/renderer.log`.
+- Line: `10`; original severity: `warning`; rule: `VSCODE-HOST-001`.
+- Message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+No other warning/error occurs in that complete runtime-log scan. The old
+failed attempts remain failures; this pass follows the tested production
+repair and explicit policy approval. Current-code three-platform CI and
+release/tag remain unobserved.
+
+The updated preview preserves the owner-tested original archive as
+`out/t019-preview/lite-voyager-t019-original-preview.vsix` (original hash above).
+The refreshed `lite-voyager-t019-preview.vsix` is 641,687 bytes /20 entries,
+SHA-256 `f66bdd8c215a5bd144a506f0f0a6c9fd65e105ce345df6530a9adee1b54694c1`.
+Archive comparison finds only `extension/dist/extension.js` changed for the
+native opening repair; browser CSS/JS, workers and WASM are byte-identical.
+The owner's five physical passes cover that unchanged post-open UI; native
+opening transitions have separate provider/real-host proof above. No owner
+retest of the refreshed host bundle is claimed. CLI force-install succeeds,
+again emitting the vendor's DEP0169 url.parse deprecation (recorded in
+`out/t019-refreshed-preview-install.log`); installation is not warning-free.
+The same installed-artifact suite passes four cases /17 s and strict logs
+in `out/t019-refreshed-preview-host.log` on VS Code 1.141.0. Its single
+approved record is source
+`out/integration-profile-packaged-X0Scei/logs/20261014T021100/window1/renderer.log`,
+line `11`, severity `warning`, VSCODE-HOST-001, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This refreshed-preview host result is not warning-free.
+All fourteen installed runtime assets match the final production build.
+Final `npm run verify` (`out/t019-approved-final-verify.log`) passes all 531
+tests /47 files in 237.04 s, strict host/webview/tooling types, lint, production
+builds and a 20-file /626.65 KB package dry run with zero errors/warnings.
+No source change follows these passing gates. Current-code CI/release remain
+the outstanding T-019 phase steps; the checkbox is not ticked prematurely.
+
 Milestone 1 gate status (separate from foundation):
 
-- [ ] Current candidate `npm run verify:full` passes locally.
+- [x] Current candidate `npm run verify:full` passes locally; approved record explicit.
 - [ ] Current candidate full CI succeeds on Windows/macOS/Ubuntu.
 - [x] Current-code source safety, memory and first-DOM measurements recorded.
 - [x] Requirement scope and independent review reconciled; confirmed findings repaired.
 - [x] Observable delegated host QA passes on both engines; host-log failure is separate.
-- [ ] Physical preview feedback is received.
+- [x] Physical preview feedback is received; owner confirms all five checks.
 - [ ] Local preview, owner feedback and release `v0.1.0` tag recorded.
 
 ## 5. Edge cases every format must be tested against
@@ -2960,6 +3093,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-019 owner approvals (2026-10-14): Record all five physical preview checks PASS and explicit approval of only the preferencesActions/chatPetContext renderer timing families. Preserve every prior failure and diagnostic/performance rule. Red-first native-opening repair passes 531-unit/49-host full gate, refreshed installed preview passes four cases, and final verify passes 531 tests with zero errors/warnings. Exact approved host records remain explicit; current-code CI/release are still pending.
 - T-019 QA/review candidate (2026-10-13): Record owner delegation/local-preview choice, cumulative fresh-context review, red-first repairs and failed full candidates. Preserve source/workload/diagnostic limits and distinguish observable DOM/theme/key evidence from physical preview feedback; current-code full gate/CI/release remain pending.
 - T-016 repaired-candidate CI (2026-10-13): Independently confirm successful 38384170955 /attempt 1 at final repair 284fbee and all three applicable full gates/locked installs. Check only T-016 after clean 489-test completion verify; preserve prior failures, the exact approved local warning, remote raw-log limits and remaining milestone work.
 - T-016 CI repair (2026-10-13): Independently confirm failed caf209b run 38378099885, retain OS/full-startup failures and red-first regressions. Separate final 489-test zero-diagnostic verify and 45-host/log gates pass with 270.7/276.1 MB peaks, 5.4 MB size growth and one exact approved renderer warning. Reopen T-016 pending fresh full CI; all acceptance limits remain unchanged.

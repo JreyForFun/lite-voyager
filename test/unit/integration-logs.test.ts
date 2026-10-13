@@ -49,10 +49,14 @@ test.each([
 
 const cloudMessage = "[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]";
 const timingMessage = "Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 24ms.";
+const preferencesMessage = "Creation of workbench contribution 'workbench.contrib.preferencesActions' took 31ms.";
+const petMessage = "Creation of workbench contribution 'workbench.contrib.chatPetContext' took 21ms.";
 
 test.each([
   { rule: 'VSCODE-HOST-001', message: cloudMessage },
   { rule: 'VSCODE-HOST-002', message: timingMessage },
+  { rule: 'VSCODE-HOST-003', message: preferencesMessage },
+  { rule: 'VSCODE-HOST-004', message: petMessage },
 ])('T-007: Given approved renderer diagnostic $rule, When checked, Then its severity source and message are returned for explicit reporting', async ({ rule, message }) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`);
   await expect(checkIntegrationLogs(directory)).resolves.toEqual([{
@@ -65,17 +69,25 @@ test.each([
   `${cloudMessage} Unexpected failure.`,
   timingMessage.replace('chatLanguageModelsData', 'liteVoyager'),
   timingMessage.replace('24ms.', 'unknownms.'),
+  preferencesMessage.replace('31ms.', '31.5ms.'),
+  preferencesMessage.replace('31ms.', '-31ms.'),
+  `${preferencesMessage} Unexpected failure.`,
+  preferencesMessage.replace('preferencesActions', 'preferencesActionsExtra'),
+  petMessage.replace('21ms.', 'unknownms.'),
+  petMessage.replace('21ms.', '+21ms.'),
+  `${petMessage} Unexpected failure.`,
+  petMessage.replace('chatPetContext', 'otherChatContext'),
 ])('T-007: Given a similar unapproved host message %s, When checked, Then it still fails', async (message) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`);
   await expect(checkIntegrationLogs(directory)).rejects.toThrow(message);
 });
 
-test.each([cloudMessage, timingMessage])('T-007: Given approved wording %s recorded as an error, When checked, Then the error still fails', async (message) => {
+test.each([cloudMessage, timingMessage, preferencesMessage, petMessage])('T-007: Given approved wording %s recorded as an error, When checked, Then the error still fails', async (message) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [error] ${message}\n`);
   await expect(checkIntegrationLogs(directory)).rejects.toThrow('[error]');
 });
 
-test.each([cloudMessage, timingMessage])('T-007: Given approved wording %s from the extension host, When checked, Then source restrictions reject it', async (message) => {
+test.each([cloudMessage, timingMessage, preferencesMessage, petMessage])('T-007: Given approved wording %s from the extension host, When checked, Then source restrictions reject it', async (message) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`, 'exthost.log');
   await expect(checkIntegrationLogs(directory)).rejects.toThrow(message);
 });
@@ -86,12 +98,17 @@ test('T-007: Given an approved diagnostic followed by an application error, When
   await expect(checkIntegrationLogs(directory)).rejects.toThrow('VSCODE-HOST-001');
 });
 
-test('T-007: Given approved host diagnostics, When the report crosses the console gate, Then source severity rule and message remain visible without weakening console checks', async () => {
-  const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${cloudMessage}\n`);
+test.each([
+  { rule: 'VSCODE-HOST-001', message: cloudMessage },
+  { rule: 'VSCODE-HOST-002', message: timingMessage },
+  { rule: 'VSCODE-HOST-003', message: preferencesMessage },
+  { rule: 'VSCODE-HOST-004', message: petMessage },
+])('T-007: Given approved host diagnostic $rule, When the report crosses the console gate, Then source severity rule and message remain visible without weakening console checks', async ({ rule, message }) => {
+  const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`);
   const report = formatApprovedHostDiagnostics(await checkIntegrationLogs(directory));
   const record: unknown = JSON.parse(report.trim().split('\n')[1] ?? 'null');
   expect(record).toEqual({
-    source: '20261009T153247/window1/renderer.log', line: 1, severity: 'warning', rule: 'VSCODE-HOST-001', message: cloudMessage,
+    source: '20261009T153247/window1/renderer.log', line: 1, severity: 'warning', rule, message,
   });
   await expect(runCheck({ name: 'approved host report', command: process.execPath,
     args: ['-e', `process.stdout.write(${JSON.stringify(report)})`],
