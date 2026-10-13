@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-015 review repair: retain failed atomic-save diagnostics after editor closure
+  and show their retry guidance in a notification. Keep historical export errors
+  separate from cancellation/recovery of later SQL queries. Red-first tests also
+  cover successful saves after closure, unchanged output/source and cleanup.
+
 - T-015: stream complete successful SQL results to CSV or exact string-valued
   JSON using bounded worker writes. Add export controls, row/byte progress,
   cancellation/recovery, source/sidecar/alias protection and atomic output saves.

@@ -44,20 +44,25 @@ export class ExportService implements ExportRunner {
   private committing = false;
   private signalCancel: (() => void) | undefined;
   private cleanupError: Error | undefined;
+  private saveError: Error | undefined;
   constructor(private readonly source: string, private readonly engine: Pick<Engine, 'exportResults'>,
     private readonly choose: (format: ExportFormat) => Promise<string | undefined>) {}
 
   run(sql: string, format: ExportFormat, progress: (report: ExportProgress) => void): Promise<ExportReport | undefined> {
     if (this.active !== undefined) { return Promise.reject(new Error('An export is already running. Wait or cancel it.')); }
-    this.cancelled = false; this.committing = false; this.cleanupError = undefined;
+    this.cancelled = false; this.committing = false; this.cleanupError = undefined; this.saveError = undefined;
     const task = this.save(sql, format, progress); this.active = task;
     const clear = (): void => { if (this.active === task) { this.active = undefined; this.signalCancel = undefined; } };
-    void task.then(clear, clear); return task;
+    void task.then(clear, (error: unknown) => {
+      if (this.committing && error instanceof Error) { this.saveError = error; }
+      clear();
+    }); return task;
   }
   abort(): void { if (!this.committing) { this.cancelled = true; this.signalCancel?.(); } }
   async settled(): Promise<void> {
     try { await this.active; } catch { /* run reports the original failure to its caller. */ }
     if (this.cleanupError !== undefined) { throw this.cleanupError; }
+    if (this.saveError !== undefined) { throw this.saveError; }
   }
   private checkCancelled(): void { if (this.cancelled) { throw new Error('Export was cancelled. Existing output was not replaced.'); } }
 

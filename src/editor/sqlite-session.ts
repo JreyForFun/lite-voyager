@@ -86,7 +86,11 @@ export class SqliteSession {
         this.update({ ...this.state, phase: 'error', message: `${this.state.message} The database helper could not be closed. Close the editor and reload VS Code.` });
       } finally {
         try { await this.browser.finishExportCleanup(); }
-        catch { this.update({ ...this.state, phase: 'error', message: 'Export temporary files could not be removed. Check the .lite-voyager-export- folder beside the chosen destination.' }); }
+        catch (error: unknown) {
+          const message = error instanceof Error && /^(Export |The export )/u.test(error.message) ? error.message
+            : 'Export could not finish after the editor closed. Check the saved output and retry.';
+          this.update({ ...this.state, phase: 'error', message });
+        }
         this.resolveClosed();
       }
     })();

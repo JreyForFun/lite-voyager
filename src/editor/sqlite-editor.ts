@@ -75,7 +75,7 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
     document.onDispose(() => {
       void document.session.closed.then(() => {
         const state = document.session.state;
-        if (state.phase === 'error' && state.message.startsWith('Export temporary')) { void vscode.window.showErrorMessage(state.message); }
+        if (state.phase === 'error' && /^(Export |The export )/u.test(state.message)) { void vscode.window.showErrorMessage(state.message); }
       });
     });
     document.session.configureExport(async (format) => {

@@ -2287,6 +2287,86 @@ Prepare a local T-015 implementation/test/handoff commit for the owner's push;
 keep fresh-chat review and actual-candidate CI pending, and exclude generated
 owner exports and unrelated untracked files from that commit.
 
+#### T-015 independent review and owner-delegated closure checks (2026-10-13)
+
+Owner delegates checking both commits and finishing T-015 in this session using
+best judgment so the next task can proceed. One fresh-context read-only reviewer
+examines the full 30-file /1,145-insertion diff from 6e25977 to 204197a, including
+all eight new source/test files. The dedicated Bugbot backend is unavailable;
+this is an independent reviewer fallback, not a claim of a Bugbot service run.
+
+Review confirms one MEDIUM FR-014 defect: after Closing during Saving, failed
+atomic rename is swallowed by ExportService.settled and disposed browser delivery;
+session/provider do not notify the save failure. An in-process probe using actual
+Session/Browser/ExportService with deferred mocked rename proves old output stays
+intact and cleanup succeeds, but the save error disappears. A spawned esbuild
+probe has EPERM; the successful in-process reproduction is separate evidence.
+No other concrete defect or scope creep is found in the original cumulative diff.
+
+Two root regressions fail before repair: settled resolves after failed rename;
+provider replaces save guidance with cleanup text. Retain post-commit failure,
+preserve its actionable session message, and notify it after closure. Actual
+deferred-rename session regressions cover failure and successful save during
+closure, unchanged source/output, and completed cleanup. Independent follow-up
+reproduces the repaired error and finds no concrete new defect.
+
+Root then reproduces a collateral case: retained export failure wrongly turns
+cancellation of a later SQL query into database recovery failure. A red-first
+regression fails; snapshot the active-export state before engine cancellation and
+await export settlement only when cancelling an export. Independent follow-up
+confirms the original notification fix stays intact and no defect remains.
+Focused 42 tests pass. Reviewer makes no edits and does not run full gates.
+
+GitHub branch/API checks still put remote main at 6e25977; candidate 204197a is
+not resolved by GitHub (HTTP 422). The latest supplied green run is therefore
+previous-commit evidence only. Owner reserves pushing. Under VALIDATION section 2,
+the scoped task may close after current local gates, acceptance, owner QA, review,
+handoff and commit; three-platform CI remains the Milestone 1 gate in TASKS.
+Preserve pending actual-candidate CI without claiming it passed or closing the
+milestone. Do not change any behavioral criterion, workload, deadline or warning
+policy. T-016 begins only in a fresh task chat after the current checks finish.
+
+Final repaired gate/closure evidence follows below from command output.
+
+First closure-gate attempt passes all three typechecks but fails lint at
+export-failures.test.ts:40 on an unsafe inferred `any` from an asymmetric matcher
+inside an object. Split that matcher into equivalent typed phase/message
+assertions; preserve output/source/cleanup checks and do not suppress the rule.
+The failed gate remains recorded; the repaired gate is rerun.
+
+Final repair `npm run verify` passes, exit 0: 482 unit tests /44 files (216.37 s),
+all three strict typechecks, lint, builds and a 20-file /622.89-KB VSIX; ZERO
+errors and ZERO warnings. Serializer evidence remains scoped: 1,000,000 rows /
+141,888,926 bytes /2,166 writes /65,536-byte max chunk; RSS baseline 58,712,064 /
+sampled peak 93,224,960 bytes; 15,567.601 ms.
+
+Final `npm run test:integration` passes, exit 0: compilation/build and 38 real-host
+tests on Windows x64 /VS Code 1.140.0 /Node 24.21.0. Its strict runtime-log scan
+accepts exactly one record; this host run is NOT warning-free:
+- Source `out/integration-profile-kcCfbJ/logs/20261013T142447/window1/renderer.log`,
+  line 10; severity `warning`; rule `VSCODE-HOST-001`; exact message:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other warning/error is accepted. These two observed commands cover the local
+unit/build/package and real-host/log gates; do not claim a new combined
+`verify:full` invocation. Retain the earlier full-run evidence separately.
+
+Current 50,000-row export measurements: native CSV/JSON 982.4584 /1009.4963 ms,
+63 /66 host ticks, max gaps 16.1898 /21.2563 ms; fallback 1418.1927 /1816.5761 ms,
+91 /116 ticks, max gaps 26.4483 /21.4174 ms. Both formats/end rows, source hashes,
+DOM preservation and larger writing cancellation pass on both engines.
+
+Final API recheck still reports remote main at 6e25977 and latest green run
+38352950470 at that SHA. Actual repair-candidate CI is pending the owner's push.
+Under the owner's instruction to check both commits and use best judgment to
+move to the next task, close scoped T-015 against the per-task Definition of Done:
+test-first acceptance, clean current verify, actionable failures, Constitution,
+matching spec/plan, owner QA, independent review/follow-up, handoff and local
+commit. Keep three-platform actual-candidate CI, whole-milestone review/QA,
+T-016/schema follow-up and milestone release/tag open. No behavior, workload,
+deadline or diagnostic allowance is weakened. Only closure/evidence docs change
+after these final passing gates. Existing generated/unrelated untracked files
+are not included in the repair/closure commit. Next task starts in a fresh chat.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -2348,6 +2428,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-015 delegated closure/review (2026-10-13): Record independent cumulative review, confirmed post-closure save-error defect, red-first notification/cancellation repairs and independent follow-up. Keep actual-candidate CI explicitly at the milestone gate; scoped task closure awaits current local gates and commit.
 - T-015 owner QA/CI audit (2026-10-13): Record QA 1–6 PASS; independently verify green 38352950470 on the old 6e25977 tree. Preserve missing actual-candidate CI and fresh-review requirements.
 - T-015 (2026-10-13): Record delegated contract, red-first tests, scoped memory evidence, failed pre-render comparison and strengthened DOM wait. Retain native-dialog QA, fresh review and post-push CI.
 - T-014 owner-directed closure (2026-10-13): Record the owner's confirmation that checks are complete and the next chat is T-015. Close the task with existing passing evidence, without inventing an independent review result or closing the milestone.

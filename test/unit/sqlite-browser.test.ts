@@ -22,6 +22,21 @@ function fixture() {
   return { engine, browser, sent, send };
 }
 
+test('FR-014: Given an earlier save failure and a later running query, When cancelling that query, Then retained save diagnostics cannot turn successful query recovery into an error', async () => {
+  const { engine, browser, sent, send } = fixture();
+  const failure = new Error('The export could not be saved. Existing output was not replaced.');
+  const exporter = { run: vi.fn<ExportRunner['run']>().mockRejectedValue(failure), abort: vi.fn(), settled: vi.fn<ExportRunner['settled']>().mockRejectedValue(failure) };
+  browser.setExporter(exporter);
+  await browser.handle({ type: 'browserQuery', requestId: 1, sql: 'SELECT 1', offset: 0, limit: 1 }, send);
+  await browser.handle({ type: 'browserExport', requestId: 2, format: 'csv' }, send);
+  let failQuery!: (error: Error) => void;
+  engine.query.mockImplementationOnce(() => new Promise((_resolve, reject) => { failQuery = reject; }));
+  engine.cancel.mockImplementationOnce(() => { failQuery(new Error('cancelled')); return Promise.resolve(); });
+  const query = browser.handle({ type: 'browserQuery', requestId: 3, sql: 'SELECT slow', offset: 0, limit: 1 }, send);
+  await browser.handle({ type: 'browserCancel', requestId: 4 }, send); await query;
+  expect(sent.at(-1)).toEqual({ type: 'browserCancelled', requestId: 4 }); expect(exporter.settled).not.toHaveBeenCalled();
+});
+
 test('FR-014: Given atomic Saving has begun, When a late Cancel request arrives, Then the actual saved outcome acknowledges that request without interrupting the engine', async () => {
   const { engine, browser, sent, send } = fixture(); let finish!: () => void;
   const report = { rows: '205', bytes: '1000', blobs: '0' };

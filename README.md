@@ -19,8 +19,9 @@ counts. T-013 adds a CodeMirror SQL editor with selection-only Run, Ctrl/Cmd+Ent
 paged results, page execution time and SQLite diagnostics that preserve previous
 results. T-018 adds full cell details, exact JSON formatting and TSV copying.
 T-015 adds streamed CSV/JSON export of complete SQL results with progress,
-cancellation and atomic output saves. Owner QA 1–6 passes; fresh review and CI
-on a commit containing T-015 remain pending.
+cancellation and atomic output saves. T-015 is complete with owner QA 1–6,
+independent review and local gates passing. CI on the final implementation commit
+remains tracked at the milestone gate.
 The schema panel remains later milestone work.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 T-008 now provides an experimental CodeMirror editor and synthetic grid;

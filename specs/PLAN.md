@@ -798,7 +798,19 @@ cancelled. Repaired full local gate passes 478 unit /38 host tests with one
 explicitly reported approved renderer warning (not warning-free). Owner reports
 all native-dialog/visual QA 1–6 PASS. Run 38352950470 succeeds on all three
 platforms at 6e25977, but that commit excludes the T-015 implementation.
-Fresh-chat review and CI on the actual T-015 candidate remain open.
+At that audit, independent review and actual-candidate CI remained open.
+
+Owner subsequently delegates review/closure checks in this session. One independent
+fresh-context reviewer examines the full cumulative diff; red-first repairs retain
+post-commit save errors after tab closure and route them to notifications, while
+waiting for export settlement only on export cancellation keeps historical save
+errors out of later query recovery. Independent follow-up finds no remaining
+concrete defect. No worker, serializer, format, dependency or timing change.
+Final `npm run verify` passes 482 tests /44 files with zero errors/warnings;
+current real-host suite/log scan passes 38 tests with one explicitly reported
+approved renderer warning. Under the owner-delegated per-task closure checks,
+T-015 is complete using acceptance, QA, independent review and local gates.
+Actual-candidate CI stays a milestone gate. No milestone completion is claimed.
 
 Webview to host: `ready`, `listTables`, `getRows {table, offset, limit, sort?, filter?}`, `getSchema {table}`, `countRows {table}`, `runQuery {sql}`, `cancel`, `stageEdit {table, key, column, value}`, `save`, `revert`, `exportResults {format}`, `setWriteMode {on}`.
 
@@ -889,6 +901,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-015 scoped closure (2026-10-13): Record independently checked review repairs, 482-test clean verify and 38-host passing integration/log gate. Close the task at owner-delegated judgment; preserve actual-candidate CI at the milestone gate.
 - T-015 owner QA/CI audit (2026-10-13): Record all six owner QA checks PASS. Verify supplied green run 38352950470 at 6e25977, which predates T-015; retain candidate CI and fresh review as pending.
 - T-015 (2026-10-13): Stream one backend cursor through 64-KiB worker writes; host owns destination protection, temporary cleanup and atomic publication. Reuse helper recovery and typed progress without dependencies.
 - T-014 owner-directed closure (2026-10-13): Accept the owner's completed checks and green CI as task closure; hand off T-015 to the next chat. Preserve the absence of a separate task-review result and the milestone review requirement.

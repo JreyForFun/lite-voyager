@@ -15,6 +15,7 @@ export class SqliteBrowser {
   private successfulSql: string | undefined;
   private exporter: ExportRunner | undefined;
   private exportSaving = false;
+  private exportRunning = false;
   private committedCancel: { requestId: number; send: (message: BrowserResponse) => void; resolve: () => void } | undefined;
   private saveOutcome: BrowserResponse | undefined;
 
@@ -77,6 +78,7 @@ export class SqliteBrowser {
     switch (request.type) {
       case 'browserExport': {
         if (this.successfulSql === undefined || this.exporter === undefined) { throw new Error('Run a successful SQL query before exporting its results.'); }
+        this.exportRunning = true;
         try {
           const report = await this.exporter.run(this.successfulSql, request.format, (progress) => {
             if (!this.disposed && requestId === this.lastId) {
@@ -84,7 +86,7 @@ export class SqliteBrowser {
             }
           });
           return { type: 'browserExportDone', requestId, ...(report === undefined ? {} : { report }) };
-        } finally { this.exportSaving = false; }
+        } finally { this.exportSaving = false; this.exportRunning = false; }
       }
       case 'browserQuery': {
         const started = performance.now();
@@ -129,10 +131,11 @@ export class SqliteBrowser {
 
   private async cancel(requestId: number, send: (message: BrowserResponse) => void): Promise<void> {
     this.recovering = true;
+    const cancellingExport = this.exportRunning;
     this.exporter?.abort();
     try {
       await this.engine.cancel();
-      await this.exporter?.settled();
+      if (cancellingExport) { await this.exporter?.settled(); }
       if (!this.disposed && requestId === this.lastId) { send({ type: 'browserCancelled', requestId }); }
     } catch (error: unknown) {
       if (!this.disposed && requestId === this.lastId) { send({ type: 'browserError', requestId, message: error instanceof Error && error.message.startsWith('Export temporary')

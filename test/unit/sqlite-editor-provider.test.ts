@@ -62,9 +62,20 @@ test('FR-014: Given export cleanup failure during editor closure, When the docum
   const document = provider.openCustomDocument(uri(), openContext, cancellation().token);
   await provider.resolveCustomEditor(document, view, cancellation().token);
   document.session.browser.setExporter({ run: () => Promise.resolve(undefined), abort: () => {},
-    settled: () => Promise.reject(new Error('Export temporary files could not be removed.')) });
+    settled: () => Promise.reject(new Error('Export temporary files could not be removed. Check the .lite-voyager-export- folder beside the destination.')) });
   view.dispose(); await document.session.closed;
   expect(mocks.error).toHaveBeenCalledWith(expect.stringContaining('.lite-voyager-export-'));
+});
+
+test('FR-014: Given atomic save failure after editor closure, When shutdown settles, Then the notification preserves the save error and existing-output guidance', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const view = panel();
+  const document = provider.openCustomDocument(uri(), openContext, cancellation().token);
+  await provider.resolveCustomEditor(document, view, cancellation().token);
+  const failure = 'The export could not be saved. Close programs using the destination and retry. Existing output was not replaced.';
+  document.session.browser.setExporter({ run: () => Promise.resolve(undefined), abort: () => {},
+    settled: () => Promise.reject(new Error(failure)) });
+  view.dispose(); await document.session.closed;
+  expect(mocks.error).toHaveBeenCalledWith(failure);
 });
 
 test.each(['Proceed', 'Cancel', 'Escape', 'dismissed'])('FR-001: Given consent action %s, When fallback requests consent, Then an explicit close action refuses loading unless Proceed is selected', async (choice) => {

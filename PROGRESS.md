@@ -1,39 +1,39 @@
 ﻿# Progress
 
 ## Current phase / task
-Milestone 1; T-015 streamed CSV/JSON result export is implemented.
-Local acceptance and owner QA 1–6 PASS; unchecked for fresh review/candidate CI.
-Do not start T-016 in this chat.
+Milestone 1; T-015 is complete under owner-delegated closure checks.
+Acceptance, owner QA 1–6, independent review/repairs and current local gates pass.
+Next chat: T-016 source safety and very-large-SQLite memory tests.
 
 ## Verify status
-- Repaired local full: 478 unit /44 files and 38 real-host tests, exit 0.
-- Unit stage 195.39 s; VS Code 1.140.0 /Node 24.21.0 /Windows x64.
-- One approved warning; full is not warning-free.
-- WfSRTK, 20261013T132107/window1/renderer.log:10, VSCODE-HOST-001.
-- Exact source/message and failed candidate are in VALIDATION T-015.
-- Latest standalone verify: 478 tests /44 files, zero errors/warnings; 217.06 s.
+- Final verify: 482 tests /44 files, zero errors/warnings; unit 216.37 s.
+- Final integration/log gate: 38 real-host tests, exit 0.
+- VS Code 1.140.0 /Node 24.21.0 /Windows x64; one approved warning.
+- kcCfbJ, 20261013T142447/window1/renderer.log:10, VSCODE-HOST-001.
+- Host is not warning-free; exact message/source remains in VALIDATION.
+- Supplied green CI 38352950470 tests old 6e25977, not T-015.
+- Actual-candidate three-platform CI stays pending at the milestone gate.
 
 ## Last session
-Owner reports all six QA checks PASS and supplies run 38352950470 as CI PASS.
-API confirms attempt 1, all three platforms and applicable verification steps.
-It tests 6e25977cc72c6d879b4b49919ff631b5492cb8bd, the T-014 handoff commit.
-Its tree excludes T-015; actual export changes were uncommitted at audit time.
+Owner delegates checking both commits and closing T-015 to move to the next task.
+One fresh-context reviewer inspects cumulative 30-file diff, including 8 new files.
+Fix confirmed lost atomic-save errors after closure with red-first regressions.
+Also isolate historical save errors from cancellation of later SQL queries.
+Independent follow-up finds no remaining concrete defect; root gates pass.
 
 ## Decisions made this session
-Export complete last successful SQL once; edited/failed SQL cannot replace it.
-CSV quotes non-NULL fields; unquoted NULL is \N. JSON uses columns/row arrays,
-with exact non-NULL strings. BLOB placeholders only; explain conventions in UI.
-Sequential 64-KiB worker writes; host owns destination checks and atomic rename.
-Cancel before commit cleans after helper exit; late Cancel gets save outcome.
-No dependency; existing untracked files were not intentionally edited.
+Keep source-safe, bounded CSV/JSON export and all prior workloads/deadlines.
+Notify failed Saving after closure; successful saves do not become errors.
+Close the scoped task under VALIDATION section 2; retain real CI facts.
+Owner controls push; no dependency, milestone closure or tag.
 
 ## Known issues / blockers
-Fresh-chat review and CI on a commit containing T-015 remain pending.
-Serializer and host timer measurements are scoped, not T-016 proof.
-Local T-015 candidate commit follows this passing gate; owner controls its push.
+Actual-candidate CI, T-016, schema follow-up and milestone QA/review remain open.
+Serializer/host timing measurements are scoped; not a T-016 memory proof.
+Existing generated/unrelated untracked files are excluded from commits.
 
 ## Next
-Review the cumulative T-015 diff from 6e25977 in a fresh chat.
-Owner pushes the local T-015 candidate and supplies new three-platform CI.
-Include all eight new source/test files; do not reuse old-run CI as export proof.
-Reconcile evidence before checking T-015; T-016 starts only in a new task chat.
+Owner pushes the local T-015 implementation and repair/closure commits.
+Start a fresh chat; read AGENTS, CONSTITUTION, PROGRESS, then T-016 references.
+Restate that task/acceptance/proposed files and wait for OK before coding.
+Retain actual-candidate CI as a milestone item; do not call old CI export proof.
