@@ -429,8 +429,18 @@ largest gaps 543.206 /584.9556 ms; full workload time 192,188.2255 ms.
 One exact approved renderer warning is recorded in VALIDATION. The local
 full attempt stopped on a Vitest worker initialization failure (not a memory
 assertion); keep it as failed. Standalone verify passes 489 tests /45 files
-with zero errors/warnings, builds and the 20-file VSIX. Fresh owner-pushed full
-CI remains pending, particularly confirmation of the macOS allocation hypothesis.
+with zero errors/warnings, builds and the 20-file VSIX. Owner supplies successful
+[run 38384170955](https://github.com/JreyForFun/lite-voyager/actions/runs/38384170955),
+attempt 1, at repair `284fbee92d7c81ade010393e8438faf318c8e819`. Public API
+confirms all three full-verification jobs and their applicable verification
+and locked-install steps succeed. This closes the scoped T-016 acceptance and
+repair CI item. It confirms the candidate on macOS too, without proving that
+hash allocation was the sole cause of the earlier failure. Raw remote memory,
+test and diagnostic counts were not retrieved; no remote warning-free claim.
+Preserve all failed candidates and the exact local approved warning. CSV memory,
+schema follow-up, whole-milestone QA/review and release/tag remain separate.
+Completion-documentation `npm run verify` also passes all 489 tests /45 files
+in 202.04 s with zero errors/warnings, strict types/lint, builds and packaging.
 
 ### T-011 worker metadata contract (2026-10-10)
 
@@ -973,6 +983,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-016 repaired-candidate CI (2026-10-13): Confirm run 38384170955 /attempt 1 at 284fbee succeeds on Windows/macOS/Ubuntu, including locked installs and full checks. Close only T-016 after clean 489-test completion verify; retain failed runs, diagnostic evidence and remote raw-log limits. No milestone closure.
 - T-016 CI repair (2026-10-13): Retain failed caf209b Windows/macOS evidence and the local Vitest-startup full failure. Reopen the task, reuse one hash buffer and persist the Windows OS reader. Separate 489-test zero-diagnostic verify and 45-host/log gates pass without relaxing targets; fresh full CI remains pending.
 - T-016 local result (2026-10-13): Record passing 487-unit/45-host full gate and source-identical 1.285 GB/5.874 GB primary SQLite memory observations. Preserve the 600 s deadline, all workloads and exact warning policy after the red-first hash/budget repair.
 - T-016 plan (2026-10-13): Define test-only real-editor safety, populated 1 GB/5 GB fixtures, bounded streaming hashes and sampled OS process coverage. Record owner-approved SHM coordination and retain all original production/CSV targets.

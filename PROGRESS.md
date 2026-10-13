@@ -1,22 +1,22 @@
 ﻿# Progress
 
 ## Current phase / task
-Milestone 1; T-016 reopened after failed candidate CI, run 38378099885.
-Exactly this task; no schema, next milestone or release work.
+Milestone 1; T-016 scoped safety/memory acceptance and repair CI are complete.
+Only T-016 closes; schema, whole-milestone QA/review and release remain separate.
 
 ## Verify status
-- caf209b: CI Ubuntu passes, Windows/macOS fail; API and owner logs confirmed.
-- Old local 487-unit/45-host pass is retained, not three-platform completion.
-- Repair regressions fail first (2 failing/5 passing), then 7 pass locally.
+- CI 38384170955 /attempt 1 at 284fbee succeeds on all three platforms.
+- Public API confirms locked installs and applicable full-verification steps.
+- Remote raw test/memory/warning counts are not claimed.
 - Repaired integration: 45 tests pass; strict log gate accepts one known warning.
 - jdqstT/logs/20261013T181428/window1/renderer.log:10, VSCODE-HOST-001.
-- Final verify: 489 tests /45 files, zero errors/warnings; builds/package pass.
+- Repair verify: 489 tests /45 files, zero errors/warnings; builds/package pass.
+- Closure verify: 489 tests /45 files, 202.04 s, zero errors/warnings.
+- Prior local host gate is not warning-free; exact diagnostic is in VALIDATION.
 
 ## Last session
-Windows observer fails in two memory tests; cold command has a 3 s timeout.
-Logs omit the command's exact cause; repaired observer reports timeout phases.
-macOS completes source-safe workloads but size-growth is 84,197,376 bytes.
-Peaks 270,581,760 /354,779,136; paging growth 0; strict 50 MB growth fails.
+Failed caf209b Windows/macOS CI and local full-startup failure remain recorded.
+Red-first reader/hash repairs pass; the repaired candidate now passes full CI.
 Repaired Windows peaks 270,688,256 /276,115,456; size growth 5,427,200 bytes.
 All pages/scans/hashes pass; max gap 584.9556 ms; large workload 192.188 s.
 
@@ -29,11 +29,10 @@ Owner-approved native SHM coordination stays; database/WAL bytes stay exact.
 No dependencies or production changes; all observer tooling stays out of VSIX.
 
 ## Known issues / blockers
-macOS diagnosis is a harness-allocation hypothesis until fresh CI confirms it.
+Green macOS confirms repaired acceptance, not sole cause of the old failure.
 Failed full Vitest-startup attempt is retained; separate final local gates pass.
 CSV memory, physical/cold first paint, schema and milestone QA/review remain.
 Pre-existing edits/unrelated untracked files are preserved outside this repair.
 
 ## Next
-Owner pushes the repair and supplies fresh CI URL; confirm all three platforms.
-Use a fresh chat for remaining Milestone 1 work after this repair is validated.
+Owner pushes completion records; use a fresh chat for remaining Milestone 1 work.

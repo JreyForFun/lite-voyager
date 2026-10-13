@@ -2622,6 +2622,38 @@ overwrite either failed full attempt, establish the sole macOS cause or
 prove remote completion. Keep T-016 unchecked until fresh owner-pushed full CI
 confirms the repaired candidate on Windows/macOS/Ubuntu.
 
+#### T-016 repaired-candidate CI confirmation (2026-10-13)
+
+Owner supplies [run 38384170955](https://github.com/JreyForFun/lite-voyager/actions/runs/38384170955)
+as GOOD. Public GitHub API independently confirms attempt 1, completed success,
+at `284fbee92d7c81ade010393e8438faf318c8e819`, matching the local repair commit.
+- Ubuntu job 115251701433: locked installation and Linux session-bus/virtual-
+  display full-verification step succeed.
+- macOS job 115251701563: locked installation and Windows/macOS full-verification
+  step succeed.
+- Windows job 115251701728: locked installation and the same full-verification
+  step succeed.
+
+The opposite-platform conditional step is skipped as designed; the applicable
+full gate succeeds on each platform. Raw remote logs, exact test/memory figures
+and warning counts were not retrieved; do not claim remote warning-free runs.
+Retain the independently observed 489-test clean local verify, passing 45-host
+integration/log gate and its exact local VSCODE-HOST-001 record above. The green
+macOS result confirms repaired acceptance under the unchanged limits, not sole
+causation of the previous allocation hypothesis. Preserve all prior CI, lint,
+deadline, late-cleanup and Vitest-startup failures.
+
+T-016 is checked: invalid-input recovery, both-engine source safety and scoped
+real 1 GB/5 GB primary SQLite memory acceptance pass, with repaired three-platform
+full CI confirmed. No implementation, fixture, workload, limit or dependency
+changes follow 284fbee. Only completion/evidence documents change. Schema
+follow-up, CSV memory, cold/physical first paint, whole-milestone QA/review and
+release/tag remain open. Closure-documentation `npm run verify` exits 0 with
+489 tests /45 files in 202.04 s, zero errors/warnings, strict types/lint,
+builds and the 20-file 622.93 KB package check. Output is retained in
+`out/t016-ci-closure-verify.log`. No behavior or acceptance change follows
+the green candidate; the exact approved prior local host warning remains.
+
 ## 5. Edge cases every format must be tested against
 
 T-005 creates fixtures for these. Add new ones whenever a bug is found.
@@ -2683,6 +2715,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-016 repaired-candidate CI (2026-10-13): Independently confirm successful 38384170955 /attempt 1 at final repair 284fbee and all three applicable full gates/locked installs. Check only T-016 after clean 489-test completion verify; preserve prior failures, the exact approved local warning, remote raw-log limits and remaining milestone work.
 - T-016 CI repair (2026-10-13): Independently confirm failed caf209b run 38378099885, retain OS/full-startup failures and red-first regressions. Separate final 489-test zero-diagnostic verify and 45-host/log gates pass with 270.7/276.1 MB peaks, 5.4 MB size growth and one exact approved renderer warning. Reopen T-016 pending fresh full CI; all acceptance limits remain unchanged.
 - T-016 local completion (2026-10-13): Final repaired full gate passes 487 unit/45 host tests; record genuine 1.285 GB/5.874 GB source-safe memory evidence, 269.8 MB/285.0 MB sampled peaks and the exact approved renderer warning. Preserve failed candidates and owner push/CI/milestone work.
 - T-016 implementation (2026-10-13): Record source-safety and sampled-memory coverage, owner-approved SHM clarification, red-first observer repairs, exact calibration diagnostics and disk-space block. Retain the large acceptance and final gates as pending.
