@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
 import { checkIntegrationLogs, formatApprovedHostDiagnostics } from '../../scripts/integration-logs.mts';
 import { runCheck } from '../../scripts/checks.mts';
@@ -51,12 +51,14 @@ const cloudMessage = "[CloudSandboxApi] No 'github' session with scopes [read:us
 const timingMessage = "Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 24ms.";
 const preferencesMessage = "Creation of workbench contribution 'workbench.contrib.preferencesActions' took 31ms.";
 const petMessage = "Creation of workbench contribution 'workbench.contrib.chatPetContext' took 21ms.";
+const remoteIndicatorMessage = "Creation of workbench contribution 'workbench.contrib.remoteStatusIndicator' took 66ms.";
 
 test.each([
   { rule: 'VSCODE-HOST-001', message: cloudMessage },
   { rule: 'VSCODE-HOST-002', message: timingMessage },
   { rule: 'VSCODE-HOST-003', message: preferencesMessage },
   { rule: 'VSCODE-HOST-004', message: petMessage },
+  { rule: 'VSCODE-HOST-005', message: remoteIndicatorMessage },
 ])('T-007: Given approved renderer diagnostic $rule, When checked, Then its severity source and message are returned for explicit reporting', async ({ rule, message }) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`);
   await expect(checkIntegrationLogs(directory)).resolves.toEqual([{
@@ -77,19 +79,36 @@ test.each([
   petMessage.replace('21ms.', '+21ms.'),
   `${petMessage} Unexpected failure.`,
   petMessage.replace('chatPetContext', 'otherChatContext'),
+  remoteIndicatorMessage.replace('66ms.', '66.5ms.'),
+  remoteIndicatorMessage.replace('66ms.', '-66ms.'),
+  remoteIndicatorMessage.replace('66ms.', '+66ms.'),
+  remoteIndicatorMessage.replace('66ms.', 'unknownms.'),
+  `${remoteIndicatorMessage} Unexpected failure.`,
+  remoteIndicatorMessage.replace('remoteStatusIndicator', 'remoteStatusIndicatorExtra'),
 ])('T-007: Given a similar unapproved host message %s, When checked, Then it still fails', async (message) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`);
   await expect(checkIntegrationLogs(directory)).rejects.toThrow(message);
 });
 
-test.each([cloudMessage, timingMessage, preferencesMessage, petMessage])('T-007: Given approved wording %s recorded as an error, When checked, Then the error still fails', async (message) => {
+test.each([cloudMessage, timingMessage, preferencesMessage, petMessage, remoteIndicatorMessage])('T-007: Given approved wording %s recorded as an error, When checked, Then the error still fails', async (message) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [error] ${message}\n`);
   await expect(checkIntegrationLogs(directory)).rejects.toThrow('[error]');
 });
 
-test.each([cloudMessage, timingMessage, preferencesMessage, petMessage])('T-007: Given approved wording %s from the extension host, When checked, Then source restrictions reject it', async (message) => {
+test.each([cloudMessage, timingMessage, preferencesMessage, petMessage, remoteIndicatorMessage])('T-007: Given approved wording %s from the extension host, When checked, Then source restrictions reject it', async (message) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`, 'exthost.log');
   await expect(checkIntegrationLogs(directory)).rejects.toThrow(message);
+});
+
+test.each(['missing timestamp', 'undated session', 'nested renderer'] as const)('T-007: Given HOST-005 wording with %s, When checked, Then only a dated structured renderer warning can qualify', async (kind) => {
+  const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-host005-guards-')); directories.push(directory);
+  const file = kind === 'undated session' ? join(directory, 'window1', 'renderer.log')
+    : kind === 'nested renderer' ? join(directory, '20261009T153247', 'window1', 'exthost', 'renderer.log')
+      : join(directory, '20261009T153247', 'window1', 'renderer.log');
+  await mkdir(dirname(file), { recursive: true });
+  const prefix = kind === 'missing timestamp' ? '' : '2026-10-09 15:32:58.326 ';
+  await writeFile(file, `${prefix}[warning] ${remoteIndicatorMessage}\n`);
+  await expect(checkIntegrationLogs(directory)).rejects.toThrow(remoteIndicatorMessage);
 });
 
 test('T-007: Given an approved diagnostic followed by an application error, When checked, Then the error fails and the approved diagnostic is still reported', async () => {
@@ -103,6 +122,7 @@ test.each([
   { rule: 'VSCODE-HOST-002', message: timingMessage },
   { rule: 'VSCODE-HOST-003', message: preferencesMessage },
   { rule: 'VSCODE-HOST-004', message: petMessage },
+  { rule: 'VSCODE-HOST-005', message: remoteIndicatorMessage },
 ])('T-007: Given approved host diagnostic $rule, When the report crosses the console gate, Then source severity rule and message remain visible without weakening console checks', async ({ rule, message }) => {
   const directory = await createLog(`2026-10-09 15:32:58.326 [warning] ${message}\n`);
   const report = formatApprovedHostDiagnostics(await checkIntegrationLogs(directory));

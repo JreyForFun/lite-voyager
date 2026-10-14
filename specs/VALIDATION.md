@@ -38,6 +38,11 @@ Rules:
   - `VSCODE-HOST-004`: `Creation of workbench contribution 'workbench.contrib.chatPetContext' took Nms.`
     Owner approved on 2026-10-14. `N` must be an integer duration. This is
     the vendor's pet-service context binding before Lite Voyager loads.
+  - `VSCODE-HOST-005`: `Creation of workbench contribution 'workbench.contrib.remoteStatusIndicator' took Nms.`
+    Owner delegates the decision on this exact reviewed proposal on 2026-10-14;
+    adopt only this family. `N` must be an unsigned integer duration. Official
+    VS Code source registers its remote-status indicator at BlockStartup and
+    logs synchronous constructor time before the extension host starts.
   The original manifest-creation and cloud-dictation timeout warnings remain
   failures. Console diagnostic checks, types, lint and builds retain zero
   errors/warnings. No blanket vendor-warning allowance or retry-to-green is permitted.
@@ -1612,6 +1617,81 @@ zero warnings. No production runtime file is changed. The prior passing
 Windows full and latest hosted Ubuntu full apply to that unchanged runtime;
 neither substitutes for fresh macOS/current-test three-platform CI. Stage only
 the test and T-020 PROGRESS/TASKS/VALIDATION hunks, preserving all owner edits.
+
+T-020 canonical repair actual-candidate CI (2026-10-14):
+[run 38585494750](https://github.com/JreyForFun/lite-voyager/actions/runs/38585494750),
+attempt 1 at `5dd4770b278d50374831bb30ac299df343a25f38`, FAILS overall.
+Public API evidence: `out/t020-linux/ci-38585494750-metadata.json`.
+Windows job 115926268535 and Ubuntu job 115926268197 pass their locked install
+and applicable full steps. Their raw logs/counts/diagnostics were not retrieved;
+do not describe them as warning-free or infer an original GPU cause repair.
+macOS job 115926267769 installs and passes strict types/lint, all 588 unit
+tests/53 files, builds/24-file package, integration compilation and all 52 host
+cases (VS Code 1.140.0, Node 24.21.0, darwin arm64). Its T-020 sparse 3 GB first
+DOM is 81.455 ms, with 65,536 bytes read and 100 rows; all three preview cases
+pass. The earlier alias injector defect is confirmed repaired on actual macOS.
+The owner-pasted log is retained at the provided attachment path; the strict
+log gate correctly fails one additional vendor startup warning:
+- Source: `integration-profile-vWQsqL/logs/20261014T150236/window1/renderer.log:2`
+- Original severity: `warning`; no currently approved rule matches.
+- Exact message: `Creation of workbench contribution 'workbench.contrib.remoteStatusIndicator' took 66ms.`
+The same source contains two explicitly accepted warnings, not warning-free:
+- Line 4, original severity `warning`, `VSCODE-HOST-002`:
+  `Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 43ms.`
+- Line 17, original severity `warning`, `VSCODE-HOST-001`:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`
+
+Official VS Code 1.140.0 source identifies this exact contribution and
+unconditional `WorkbenchPhase.BlockStartup` registration. Its registry's
+constructor-timing logger produces the observed family; the log precedes
+extension-host startup. Sources: [registration](https://github.com/microsoft/vscode/blob/1.140.0/src/vs/workbench/contrib/remote/browser/remote.contribution.ts#L43),
+[contribution](https://github.com/microsoft/vscode/blob/1.140.0/src/vs/workbench/contrib/remote/browser/remoteIndicator.ts#L73),
+[timing logger](https://github.com/microsoft/vscode/blob/1.140.0/src/vs/workbench/common/contributions.ts#L369).
+Prepare a concrete, unapplied fifth-family proposal in ignored
+`out/t020-preview/host005-proposal.md`, retaining severity/source/reporting,
+all other failures, budgets and no-retry-to-green. The active checker and
+four-family policy are unchanged. Explicit owner policy approval is required;
+functional passes do not authorize silently accepting a fifth family or
+reclassifying this failed run. T-020 remains unchecked pending that decision
+and subsequent current-candidate full CI. No code, dependency or launch flag
+is changed while approval is pending.
+The pasted macOS log is also preserved byte-for-byte as
+`out/t020-preview/ci-38585494750-macos-full.log`, SHA-256
+`2192F3D60D5350EEF2EF69E13DBAE2A618E412420719B403C6673ECBD9200DD8`.
+Independent read-only review finds no concrete guard/source/reporting defect
+in the proposal and confirms the active four-family policy is unchanged;
+that review does not grant owner approval. No tests are rerun or weakened.
+
+T-020 owner policy decision (2026-10-14): in direct response to the exact
+HOST-005 approval question, owner says `Use your best judgemet. Do what's best
+for now and the future.` Treat this as delegation to decide that concrete
+proposal and adopt only the reviewed remoteStatusIndicator family. Persist
+the fifth exact exception in section 1 and AGENTS, with unchanged source,
+severity, reporting and all-other-diagnostic rejection rules. This authorizes
+no blanket vendor allowance, timing-budget change or retry-to-green. The prior
+macOS run remains failed under its then-active four-family policy.
+
+Add the exact acceptance/reporting regressions first: current checker rejects
+both, while 46 cases pass. Extend guard coverage to reject fractional/signed/
+unknown durations, trailing text, altered contribution name, errors, extension
+host log source, missing timestamp, undated session and nested renderer paths.
+After adding only the HOST-005 union member and anchored message matcher,
+all 48 log-policy tests pass. Console checks and existing source/severity guards
+are untouched. No production runtime, dependency, launch flag or workflow
+changes. Complete standalone verification and independent implementation
+review are running; fresh actual-candidate three-platform full remains pending.
+
+T-020 HOST-005 implementation follow-up is independently clear: only the
+union member and exact anchored matcher are added; source/severity/timestamp
+parsing and report formatter remain unchanged. All prior test cases remain.
+Final standalone `npm run verify` entry point PASSES all strict type checks,
+zero-warning lint, all 601 unit tests in 53 files, production builds and the
+24-file/646.48-KB VSIX dry run. Raw output:
+`out/t020-preview/host005-verify.log`; zero errors and zero warnings.
+No subsequent checker/test/runtime change follows. Prepare only the six
+reviewed T-020 policy/test/evidence files for owner push; preserve unrelated
+owner hunks. Fresh actual-candidate three-platform full remains required;
+old CI failures are neither erased nor retroactively described as passing.
 
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
@@ -3673,3 +3753,5 @@ Then triage the findings yourself. For each real one, write a failing test first
 - T-020 repaired gates (2026-10-14): Record red-first genuine sparse fixtures and independently cleared repairs, final 587-unit/52-host Windows full with explicit HOST-001, and retained native Linux setup/read-only/SIGBUS and rejected X11/Mesa failures. Prepare independently reviewed owner-run compaction without executing it or claiming a GPU repair or three-platform pass.
 - T-020 host recovery (2026-10-14): Preserve successful owner disk compaction, 186-file source parity and the failed resumed Linux full with unknown native WAL assertion and host-space exhaustion. Record guarded generated-tool/fixture cleanup and independently reviewed second compaction; continue with hosted actual-candidate CI, not further large local retries.
 - T-020 canonical race fixture (2026-10-14): Record 38572461954/ceb05b2 hosted Ubuntu full success, Windows ECONNRESET install failure and macOS alias-injector failure. Preserve exact local red regression, canonical test-only repair and independent review; 37 reader/3 targeted POSIX cases and 588-test zero-diagnostic standalone pass, with fresh current-candidate full CI still required.
+- T-020 vendor startup gate (2026-10-14): Record 38585494750/5dd4770 Windows/Ubuntu full passes and macOS 588-unit/52-host passes followed by strict remoteStatusIndicator warning failure. Report both approved records and the exact unapproved record; preserve official-source evidence and an unapplied fifth-family proposal pending explicit owner approval. No checker, test, launch flag or active policy change.
+- T-020 HOST-005 decision (2026-10-14): Owner delegates judgement on the exact reviewed proposal; adopt only remoteStatusIndicator's unsigned timing family with unchanged guards/reporting. Preserve red-first acceptance failures and 48 passing policy cases; independent implementation review and 601-test zero-diagnostic standalone pass. Original CI remains failed; fresh candidate three-platform full is pending.
