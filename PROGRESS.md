@@ -5,18 +5,17 @@ Milestone 2, T-020 review repairs and post-push CI investigation.
 Owner keeps T-020 repairs in this chat; next chat will be T-021.
 
 ## Verify status
-Owner visual checks 1-5 PASS; final standalone 587 tests, zero errors/warnings.
-CI 38539935087/attempt 1: Windows/macOS pass; Ubuntu fails on GPU errors.
-Final Windows full: 587 unit/53 files and 52 host cases pass; one HOST-001.
+Owner visual checks 1-5 PASS; final standalone 588 tests, zero errors/warnings.
+CI 38572461954/ceb05b2: Ubuntu full PASS; Windows install/macOS unit FAIL.
+Prior runtime Windows full: 587 unit/53 files and 52 host pass; one HOST-001.
 Genuine sparse 3 GB CSV: first DOM 237.054 ms; 65,536 bytes read; 100 rows.
 
 ## Last session
-Independent fresh-context review authorized and performed in this chat.
-Fixed unscanned UTF-8 rejection with physical-line/budget-bounded decoding.
-Fixed FIFO blocking with preflight/nonblocking POSIX open/snapshot comparison.
-Fixed failed commands awaiting notification dismissal; all fixes are red-first.
-Independent follow-up clears all code/fixture findings; no concrete defect remains.
-Red-first sparse-fixture fix: unit/host stay 3 GB; focused 37 cases pass.
+Canonical-path alias regression reproduces macOS race-injector failure locally.
+Fix only injector path; prove replacement; preserve error/deadline/cleanup checks.
+All 37 reader cases and 3 targeted real POSIX FIFO cases PASS.
+Independent follow-up clears repair; complete 588-test verify PASS.
+Earlier reader/controller/genuine sparse-fixture repairs remain independently clear.
 
 ## Decisions made this session
 Separate preview command; normal CSV opening stays text; no import/SQL yet.
@@ -25,15 +24,15 @@ No new dependency, lockfile, static-fixture or diagnostic-policy change.
 Four exact host families only; every other warning/error still fails.
 
 ## Known issues / blockers
-Ubuntu emitted 30 Chromium mailbox errors during preceding T-012.
-GPU cause not reproduced; no graphics repair claimed or rejected flag applied.
+Original Ubuntu mailbox failure retained; new Ubuntu full succeeds.
+No graphics repair or remote warning-free run is claimed.
 All failed WSL probes retained; later passes do not erase intermittent timeouts.
-Linux 587 units pass; both full host attempts interrupted; no Linux full pass.
-Owner recovered 10.062 GB; resumed run exhausted host space again (69.9 MB).
+Local WSL full interrupted twice; no further large local Linux run.
+Windows npm ci ECONNRESET; macOS corrected injector awaits fresh CI.
 
 ## Next
-Reviewed T-020 repairs verified and prepared for owner push.
+Reviewed T-020 alias-test repair/evidence verified; prepare owner push.
 Owner second compaction PASS; C: free 10.464 GB; no large local Linux run.
-Record hosted CI after owner push; preserve unknown WAL/graphics causes.
+Owner pushes; inspect fresh actual-candidate three-platform CI here.
 Keep T-020 unchecked until remaining gates pass; then hand off T-021.
 WSL copy: /home/pengging/lite-voyager-t020-ci.hFKC34; helpers out/t020-linux.

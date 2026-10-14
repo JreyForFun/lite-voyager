@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, open, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, open, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { build } from 'esbuild';
@@ -52,13 +52,21 @@ test('FR-004: Given a nonregular CSV source without a producer, When previewed, 
   }
 });
 
-test('FR-004: Given a regular source replaced by a nonregular file between stat and open, When previewed, Then descriptor validation rejects it without a blocking open', async () => {
+test.each(['direct', 'directory alias'] as const)('FR-004: Given a regular source replaced by a nonregular file between stat and open using a %s path, When previewed, Then descriptor validation rejects it without a blocking open', async (pathKind) => {
   const path = await source('value\noriginal\n');
+  let inputPath = path;
+  if (pathKind === 'directory alias') {
+    const alias = join(directory, `alias-${String(sequence++)}`);
+    await symlink(dirname(path), alias, process.platform === 'win32' ? 'junction' : 'dir');
+    inputPath = join(alias, basename(path));
+  }
   const raceDirectory = join(directory, `race-${String(sequence++)}`); await mkdir(raceDirectory);
   const result = await build({ entryPoints: [resolve('src/worker/csv-preview-worker.ts')], outfile: join(raceDirectory, 'csv-preview-worker.js'),
     bundle: true, platform: 'node', format: 'cjs', target: 'es2022', logLevel: 'silent', banner: { js: `
 const raceFs = require('node:fs');
-const racePath = require('node:worker_threads').workerData.path;
+// The reader stats its canonical path; macOS temp paths and directory aliases
+// need the same resolution so the injected replacement actually occurs.
+const racePath = raceFs.realpathSync(require('node:worker_threads').workerData.path);
 const raceStat = raceFs.statSync;
 let raceChanged = false;
 raceFs.statSync = (...args) => {
@@ -72,12 +80,13 @@ raceFs.statSync = (...args) => {
 };
 ` } });
   expect(result.warnings).toEqual([]);
-  const pending = new CsvPreviewLoader(raceDirectory).preview(path).then(() => undefined, (error: unknown) => error);
+  const pending = new CsvPreviewLoader(raceDirectory).preview(inputPath).then(() => undefined, (error: unknown) => error);
   const deadline = new AbortController(); let expired = false;
   try {
     const error = await Promise.race([pending, delay(1000, undefined, { signal: deadline.signal }).then(() => { expired = true; return undefined; })]);
     expect(expired).toBe(false); expect(error).toBeInstanceOf(Error);
     expect(error instanceof Error ? error.message : '').toMatch(/regular local CSV/i);
+    expect((await stat(path)).isFile()).toBe(false);
   } finally {
     deadline.abort();
     if (expired && process.platform !== 'win32') { const producer = await open(path, 'r+'); await producer.close(); }

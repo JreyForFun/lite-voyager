@@ -1562,6 +1562,57 @@ failed, and no originating WAL, graphics or space-loss cause is inferred.
 No additional large local Linux run follows; actual-candidate hosted CI
 after owner push remains the next T-020 gate.
 
+T-020 next actual-candidate CI (2026-10-14):
+[run 38572461954](https://github.com/JreyForFun/lite-voyager/actions/runs/38572461954),
+attempt 1 at `ceb05b2f98110561d8a2684fb9c46aa80ed3bd32`, FAILS overall.
+Public API metadata is retained in `out/t020-linux/ci-38572461954-metadata.json`.
+Ubuntu job 115880911400 succeeds, including locked install and unchanged full
+verification. This establishes hosted Linux full success for that candidate;
+raw remote logs/counts/warnings were not retrieved, so it is not described as
+warning-free or as proof that the original mailbox cause was repaired.
+Windows job 115880911974 fails locked install; both verification steps are
+skipped. Owner-pasted log's fatal error is `ECONNRESET`, syscall `read`, errno
+`-4077`, from npm's network download. It also contains existing `glob@10.5.0`
+deprecation and cleanup `EPERM` warnings; retain all of them. Do not infer a
+runtime/test failure or change packages/workflow to silence this install log.
+macOS job 115880911941 installs successfully but fails its full step at unit
+tests: 586 pass, one fails, 52 files pass/one fails. The owner-pasted assertion
+is `expected undefined to be an instance of Error` in the replacement-race
+test at `test/unit/csv-preview.test.ts:79`; no host cases run there.
+
+T-020 red-first race-injector portability repair: the reader stats its
+`realpathSync` canonical source, while the test injector compared that path
+with the original caller's path. Directory aliases therefore bypass the
+replacement. Keep the original direct-path case and add a directory-alias
+case using Windows's junction/POSIX's directory symlink. Before changing the
+injector, Windows's direct case passes but the alias case fails with the exact
+macOS assertion, `expected undefined to be an instance of Error`. This proves
+the fixture defect locally; no production reader failure is inferred.
+
+Canonicalize the injector's path with the same `fs.realpathSync` before its
+stat hook, and additionally assert the source is no longer a regular file.
+Preserve expected rejection, 1,000-ms deadline and regressed-FIFO unblocking.
+All 37 CSV reader cases pass on Windows. A separately scoped small Linux run
+passes the three actual nonregular/direct-race/alias-race FIFO cases (2.06 s);
+other cases are excluded only by this diagnostic filter and remain in complete
+verification. It launches no VS Code or large-file benchmark. Raw focused
+output is `out/path-race-posix.log` in the native isolated copy.
+Independent follow-up finds no concrete defect; verifies canonical matching,
+mutation assertion, unchanged deadline and disposable junction/symlink cleanup.
+No runtime source, locked package, static fixture, workflow or diagnostic rule
+changes. Actual macOS CI confirmation and current-candidate all-platform full
+remain pending; complete 588-test standalone verification is running with
+raw output in `out/t020-preview/path-race-verify.log`.
+
+T-020 final canonical-path repair standalone PASSES: unchanged `npm run verify`
+entry point passes all three strict type checks, zero-warning lint, 588 unit
+tests in 53 files, production builds and 24-file/646.48-KB VSIX dry run.
+Complete raw output is `out/t020-preview/path-race-verify.log`; zero errors and
+zero warnings. No production runtime file is changed. The prior passing
+Windows full and latest hosted Ubuntu full apply to that unchanged runtime;
+neither substitutes for fresh macOS/current-test three-platform CI. Stage only
+the test and T-020 PROGRESS/TASKS/VALIDATION hunks, preserving all owner edits.
+
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
 - [ ] The dirty marker appears and clears correctly; write mode is clearly indicated.
@@ -3621,3 +3672,4 @@ Then triage the findings yourself. For each real one, write a failing test first
 - T-020 independent repairs (2026-10-14): Owner authorizes fresh-context review in this chat. Record three confirmed red-first reader/controller fixes, independent follow-up and 48 focused passing cases. Preserve broad/Mesa/stage-trace failures and exact diagnostics; no GPU repair or weakened gate is claimed.
 - T-020 repaired gates (2026-10-14): Record red-first genuine sparse fixtures and independently cleared repairs, final 587-unit/52-host Windows full with explicit HOST-001, and retained native Linux setup/read-only/SIGBUS and rejected X11/Mesa failures. Prepare independently reviewed owner-run compaction without executing it or claiming a GPU repair or three-platform pass.
 - T-020 host recovery (2026-10-14): Preserve successful owner disk compaction, 186-file source parity and the failed resumed Linux full with unknown native WAL assertion and host-space exhaustion. Record guarded generated-tool/fixture cleanup and independently reviewed second compaction; continue with hosted actual-candidate CI, not further large local retries.
+- T-020 canonical race fixture (2026-10-14): Record 38572461954/ceb05b2 hosted Ubuntu full success, Windows ECONNRESET install failure and macOS alias-injector failure. Preserve exact local red regression, canonical test-only repair and independent review; 37 reader/3 targeted POSIX cases and 588-test zero-diagnostic standalone pass, with fresh current-candidate full CI still required.
