@@ -51,10 +51,10 @@ Paste `T-020 visual checks 1–5: PASS` or the failing check number and what you
 These physical observations, cold-disk paint, other operating systems and full
 CSV import memory/performance are not inferred from automated DOM tests.
 
-Milestone 2 independent review and three-platform CI remain milestone gate
-items. A fresh review should inspect the real T-020 diff against its parent,
-the Constitution, SPEC's T-020 acceptance and VALIDATION section 5. Fix confirmed
-findings with failing regressions first; do not rewrite unrelated owner changes.
+T-020 scoped independent review is complete, with the owner's authorized fresh
+review agent and cleared red-first findings. Final actual-candidate CI passes
+on all three platforms (run 38592857439, commit 6f19368). Whole Milestone 2 QA
+and review remain separate gates for later tasks; no milestone closure is claimed.
 
 ## File inventory
 
@@ -95,6 +95,9 @@ Modified:
 - `specs/TASKS.md`
 - `specs/VALIDATION.md`
 - `PROGRESS.md`
+- `AGENTS.md` (owner-authorized fifth exact renderer diagnostic family)
+- `scripts/integration-logs.mts` (same source/severity guards and reporting)
+- `test/unit/integration-logs.test.ts` (13 added acceptance/guard cases)
 
 Build output and the local VSIX are generated, ignored artifacts. Existing
 static fixtures and the owner's unrelated working-tree files are unchanged.
@@ -112,9 +115,20 @@ The follow-up to commit `256ebb2` changes only:
 - This guide, `PROGRESS.md`, `specs/TASKS.md` and `specs/VALIDATION.md`
   (file inventory and passing/failing evidence).
 
-Independent review clears these repairs. Windows full passes 587 unit and
-52 integration cases with one explicitly recorded HOST-001 warning. Linux
-full and fresh candidate CI remain open; T-020 is not yet ticked. Run
-`npm run verify` and `npm run verify:full`; Linux's full command is
-`dbus-run-session -- xvfb-run -a npm run verify:full`. All failed probes
-remain recorded in `specs/VALIDATION.md`.
+The canonical alias-path race injector is also repaired with a red-first
+regression; expected error, actual replacement and 1,000-ms deadline remain
+asserted. Owner-delegated HOST-005 adds only the exact remoteStatusIndicator
+startup timing family with all other diagnostic failures retained.
+
+Independent review clears all repairs. Final standalone passes 601 tests in
+53 files with zero errors/warnings. Prior real-host runs pass 52 cases with
+explicitly recorded approved warnings. Final [CI run 38592857439](https://github.com/JreyForFun/lite-voyager/actions/runs/38592857439),
+attempt 1 at 6f19368, passes locked installs/full checks on Windows/macOS/Ubuntu.
+Remote raw counts/diagnostics are not retrieved; no warning-free remote claim.
+Owner visual QA 1-5 PASS. T-020 is complete and checked; the next chat plans
+T-021 only. Full import and all later formats remain unimplemented.
+
+Verification commands: `npm run verify`, `npm run verify:full`; Linux full is
+`dbus-run-session -- xvfb-run -a npm run verify:full`. Do not repeat large local
+WSL workloads under the retained host-resource limitations. All failed probes
+remain recorded in `specs/VALIDATION.md`; no retry-to-green or erased failure.

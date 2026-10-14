@@ -1693,6 +1693,31 @@ reviewed T-020 policy/test/evidence files for owner push; preserve unrelated
 owner hunks. Fresh actual-candidate three-platform full remains required;
 old CI failures are neither erased nor retroactively described as passing.
 
+T-020 final actual-candidate CI and closure (2026-10-14):
+[run 38592857439](https://github.com/JreyForFun/lite-voyager/actions/runs/38592857439),
+attempt 1 at exact `6f193683f4b7547eddeddc96f6f15ae2adeae9f7`, SUCCEEDS.
+Owner reports PASS; independent public API check confirms completed/success
+run and all three locked installations/applicable full-verification steps:
+- Windows job 115951954520: install and Windows/macOS full step succeed.
+- Ubuntu job 115951954814: install and session-bus/virtual-display full succeed.
+- macOS job 115951955248: install and Windows/macOS full step succeed.
+Metadata: `out/t020-linux/ci-38592857439-metadata.json`. Final remote raw logs,
+test counts and diagnostic records are not retrieved; do not call these full
+runs warning-free or invent per-platform warning counts. Existing exact local
+and owner-pasted approved diagnostics, every failed run, budgets and no-retry-
+to-green policy remain preserved. No original graphics/WSL cause repair is
+inferred solely from fresh hosted success.
+
+This clears the actual-candidate CI gate after the independently reviewed
+red-first implementation/fixture/policy repairs. The verified 601-test
+zero-error/zero-warning standalone, prior 52-host real runtime evidence and
+owner visual QA 1-5 PASS complete the scoped T-020 acceptance. Check only T-020.
+No code/test/dependency/workflow change follows the tested commit; closure
+updates documents only. Whole Milestone 2, full import, cold physical paint
+and production import memory/performance remain separate and unclaimed.
+Next chat is T-021 planning, following AGENTS and only its linked task pack.
+Owner pushes closure records; preserve all unrelated working-tree edits.
+
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
 - [ ] The dirty marker appears and clears correctly; write mode is clearly indicated.
@@ -3755,3 +3780,4 @@ Then triage the findings yourself. For each real one, write a failing test first
 - T-020 canonical race fixture (2026-10-14): Record 38572461954/ceb05b2 hosted Ubuntu full success, Windows ECONNRESET install failure and macOS alias-injector failure. Preserve exact local red regression, canonical test-only repair and independent review; 37 reader/3 targeted POSIX cases and 588-test zero-diagnostic standalone pass, with fresh current-candidate full CI still required.
 - T-020 vendor startup gate (2026-10-14): Record 38585494750/5dd4770 Windows/Ubuntu full passes and macOS 588-unit/52-host passes followed by strict remoteStatusIndicator warning failure. Report both approved records and the exact unapproved record; preserve official-source evidence and an unapplied fifth-family proposal pending explicit owner approval. No checker, test, launch flag or active policy change.
 - T-020 HOST-005 decision (2026-10-14): Owner delegates judgement on the exact reviewed proposal; adopt only remoteStatusIndicator's unsigned timing family with unchanged guards/reporting. Preserve red-first acceptance failures and 48 passing policy cases; independent implementation review and 601-test zero-diagnostic standalone pass. Original CI remains failed; fresh candidate three-platform full is pending.
+- T-020 completion (2026-10-14): Independently confirm 38592857439/attempt 1 at exact 6f19368 succeeds for all three locked installs/applicable full checks. Close only T-020 after local 601-test clean standalone, scoped independent reviews and owner QA 1-5 PASS; preserve every failure and explicit diagnostic/raw-log limit. Hand off T-021 planning to the next chat; owner pushes documents.
