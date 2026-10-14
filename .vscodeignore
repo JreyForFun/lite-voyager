@@ -14,6 +14,10 @@
 !dist/db-process.js
 !dist/db-worker.js
 !dist/cell-worker.js
+!dist/csv-preview-worker.js
+!dist/csv-preview.js
+!dist/csv-preview.css
+!dist/papaparse-LICENSE
 !dist/sql-wasm.cjs
 !dist/sql-wasm.wasm
 !dist/sql.js-LICENSE

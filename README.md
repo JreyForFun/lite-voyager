@@ -65,6 +65,23 @@ The supported minimum is VS Code 1.140.0, the lowest host tested by T-002.
 This is separate from the development Node version and does not claim that
 1.140.0 was the first historical VS Code version with node:sqlite.
 
+## Preview CSV / TSV (T-020)
+
+Run **Lite Voyager: Preview CSV / TSV** from the Command Palette and choose a
+saved local file. Normal CSV opening still uses the text editor. The preview
+reads only the start in a worker and displays up to 100 complete data rows in a
+virtualized grid; select a cell to read its complete text. CSV uses comma, TSV
+uses tab, and the first row is the header. Values stay exact text, including
+large integers, dates and empty fields. Missing ragged fields have a separate
+marker; duplicate/blank headers receive unique display names with an explanation.
+
+Cancel or close the tab to stop reading. The source is never modified. Preview
+limits (1,000 columns, 2 Mi UTF-16 code units of names/cells, 4 Mi per raw record)
+stop with a message and never truncate a cell. Full import, delimiter/inference
+controls and SQL for these files remain later tasks. Only UTF-8 is supported in
+this preview; malformed input fails clearly rather than replacing values.
+See [the T-020 preview guide](docs/t020-preview.md) for validation and owner checks.
+
 ## Export SQL results (T-015)
 
 Run a query, then choose **Export CSV** or **Export JSON** and a local destination.

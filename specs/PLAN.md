@@ -1021,15 +1021,49 @@ Define these once in `src/protocol.ts` and import in both host and webview, so p
 ## 6. Loader interface
 
 ```ts
-interface FileLoader {
-  extensions: string[];
-  preview(path: string, opts?: LoadOptions): Promise<PreviewResult>;
-  import(path: string, db: DbHandle, opts: LoadOptions,
+interface PreviewLoader<Result extends PreviewResult = PreviewResult> {
+  readonly extensions: readonly string[];
+  preview(path: string, opts?: LoadOptions, signal?: AbortSignal): Promise<Result>;
+}
+interface FileLoader extends PreviewLoader {
+  import(path: string, target: ImportTarget, opts: LoadOptions,
          onProgress: (p: Progress) => void, signal: AbortSignal): Promise<ImportedTable[]>;
 }
 ```
 
 SQLite files skip the loader and open directly. New formats such as Parquet implement the same interface later.
+
+**T-020 contract (owner-authorized, 2026-10-14):** define these types in
+`src/loaders/file-loader.ts`; serializable preview types and limits live in
+`src/protocol.ts`. `PreviewResult` is format-neutral; `PreviewLoader` has a result
+type parameter, and CSV specializes it with delimiter/header metadata.
+`ImportTarget` identifies an internal worker-owned SQLite path
+and engine, not a synchronous database handle in the extension host. It is only
+a future import contract; no writable engine or import stub is exposed in T-020.
+`CsvPreviewLoader` implements `PreviewLoader` until T-021 adds full import.
+Each preview has a dedicated worker; terminate and await its exit on cancel or
+completion. The worker opens a regular file read-only, validates UTF-8 and CSV
+record boundaries across 64-KiB reads, parses complete records with the already
+approved Papa Parse 5.7.0 (MIT), and checks the source snapshot before returning.
+No dependency/lockfile change is needed. Bundle the parser and its complete MIT
+notice; update the production license inventory/test to inspect the new worker.
+Host typechecking includes DOM declarations solely because Papa's installed
+upstream types reference browser File/BufferSource APIs, as in the T-004 tooling
+spike. The preview runs only in a Node worker; this grants no browser runtime use.
+Apply SPEC's explicit row/column/record/payload preview budgets before posting
+results. Generated headers use SQLite ASCII case folding for unique names;
+missing ragged fields remain `null` in transport and are labelled missing in the
+preview UI. No CSV empty field is converted to SQL NULL or a JavaScript number.
+Reuse the virtualized grid and render complete selected values with textContent.
+Use a separate preview command/tab in this task; T-025 owns production opening
+contributions. No source-derived HTML, SQL or webview script is generated.
+Configure scripts/resource roots at panel creation, avoiding an options update
+that renders empty initial HTML. Post the typed loading state to await the outer
+webview transport before starting the worker or returning the command session.
+This readiness promise has a 10-second failure deadline and settles immediately
+on disposal. It is separate from actual populated grid DOM timing. T-020's first
+full and focused host failures exposed these two initialization races; preserve
+both records in VALIDATION and accept no additional host exception.
 
 ## 7. Open behavior (D-5)
 
@@ -1144,3 +1178,4 @@ litevoyager/
 - v0.3: Renamed to Lite Voyager. D-3 now defines a primary engine plus fallback behind one interface.
 - v0.2: Engine changed from sql.js to `node:sqlite` in a worker (any-size requirement). Added import pipeline, open behavior, risks.
 - v0.1: Initial draft.
+- T-020 preview (2026-10-14): Define format-neutral loader results with a CSV specialization, worker-only parsing, bounded preview and parser notices. Configure CSP-safe panel creation and await transport before reading/returning the command; retain both diagnosed failed host records and all original diagnostic rules.

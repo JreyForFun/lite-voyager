@@ -175,6 +175,50 @@ T-012 acceptance (owner-authorized, 2026-10-10):
 - Queries run once the import finishes; browsing the preview works during import.
 - Handles a UTF-8 BOM, CRLF and LF line endings, and quoted fields that contain commas or line breaks. Non-UTF-8 files let the user pick an encoding (P2).
 
+#### T-020 CSV preview acceptance (owner-authorized, 2026-10-14)
+
+Owner approves judgement on uncertainties, fixture changes and necessary repairs,
+but explicitly retains one task per chat: this task implements only the loader
+contract and instant CSV/TSV preview. Full import, inference/options UI, temporary
+storage, other loaders and production opening menus remain T-021 through T-026.
+
+- Given a local CSV/TSV, the `Lite Voyager: Preview CSV / TSV` command opens a
+  read-only webview editor tab and reads only the start in a worker. CSV defaults
+  to comma, TSV to tab, with header on; typed internal options support an explicit
+  comma/tab/semicolon/pipe delimiter and header off. No automatic detection or
+  inference is claimed yet. Preview requires no SQLite import or source write.
+- Given BOM, LF/CRLF, quoted delimiters, escaped quotes, multiline fields,
+  Unicode, exact large integers/REAL spellings and dates, complete field text is
+  preserved. Empty text and literal `NULL` are distinct. Empty/header-only files
+  show an honest empty state. One terminal record separator adds no invented row;
+  interior blank records are retained. Malformed quoting, bare CR, NUL and invalid
+  UTF-8 fail clearly. Non-UTF-8 users are told encoding selection is not available
+  in this preview; no replacement decoding is allowed.
+- Blank/duplicate headers receive deterministic unique display names without
+  dropping any field. Extra ragged fields get additional names; missing fields
+  display a missing-field marker distinct from empty text and literal `NULL`.
+  Explain generated names and ragged rows. These are preview conventions, not
+  a decision about production SQLite storage or inference.
+- Preview sends at most 100 data rows and 1,000 columns, at most 2 Mi UTF-16
+  code units including column names/cells, and scans individual raw records of
+  at most 4 Mi code units. A budget stop retains only whole rows and names and
+  explicitly says the preview stopped and values were not truncated. These are
+  transport/preview limits, not source-file/import limits. The remaining file
+  is not validated, and queries/full import are not available in T-020.
+- Reads use at most 64 KiB chunks. A sparse multi-GB source proves only the start
+  is read; >1-MB cells and 1,000 columns within the preview budget remain exact.
+  The existing grid virtualizes both rows and columns, supports keyboard use and
+  themes, and shows complete selected text alongside abbreviated grid cells.
+- Closing/cancelling confirms worker exit and closes source handles. Worker
+  failures, missing/deleted/changing files and unsupported URI schemes show
+  actionable errors. Context IDs prevent stale messages from reviving closed or
+  cancelled previews. Two views own independent workers and cancellation.
+- Test first. `npm run verify` must pass without errors/warnings; real VS Code
+  tests cover command/message/CSP/DOM/source safety and the under-two-second
+  first-row DOM target, with exact approved host diagnostics reported separately.
+  DOM readiness is not physical paint. Production import memory, owner-visible
+  QA and three-platform evidence remain separate, unclaimed checks.
+
 **FR-005 (P1) Open JSON / JSONL.** JSONL is streamed. A top-level JSON array of objects is streamed with a streaming parser. Columns are the union of keys. Nested values are stored as JSON text and are queryable with `json_extract()`. Unsupported shapes get a clear explanation.
 
 **FR-006 (P1) Open XLSX.** One table per sheet, first row as header, formulas read as cached values. Honest limit (Constitution 6): XLSX is zipped XML and must be read into memory, so a warning appears above 100 MB.
@@ -564,3 +608,4 @@ Every screen must handle each of these, with a test or a manual checklist item:
 - v0.3: Renamed to Lite Voyager. Engine risk resolved with a fallback strategy (PLAN D-3). Added fallback behavior to FR-001.
 - v0.2: Split into multiple files. Added competitive analysis, any-size requirement, resolved Q1 to Q5.
 - v0.1: Initial single-file draft. Hex / BLOB viewer and SQLCipher moved to backlog.
+- T-020 preview (2026-10-14): Owner delegates decisions/fixtures/repairs but retains one task per chat. Define exact read-only CSV/TSV preview, bounded whole-record transport, generated-header/ragged-field conventions, cancellation and real-host acceptance; full import and later formats remain separate.

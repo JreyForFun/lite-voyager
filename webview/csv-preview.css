@@ -1,0 +1,3 @@
+#csv-status[role="alert"] { color: var(--vscode-errorForeground); }
+#csv-status, #csv-cell-title { overflow-wrap: anywhere; }
+#csv-cell-value { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height: 55vh; font-family: var(--vscode-editor-font-family, monospace); }

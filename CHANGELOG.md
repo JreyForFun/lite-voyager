@@ -6,6 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-020: add a read-only CSV/TSV preview command and format-neutral loader
+  contract. Read only the start in a worker, preserve complete exact text,
+  explain generated headers/missing fields and preview limits, and reuse the
+  virtualized grid with complete selected-cell inspection. Cancel/close release
+  workers; safe CSP initialization and a transport handshake preserve early
+  cancellation and recovery. Full import and SQL for these formats remain later
+  tasks; normal CSV opening still uses the text editor.
+
 - Milestone 1 checkpoint v0.1.0: complete read-only SQLite browsing, SQL,
   streamed CSV/JSON export, cancellation, paged schema inspection and isolated
   views of the same file. Review repairs preserve literal empty identifiers,

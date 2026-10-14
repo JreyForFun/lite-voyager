@@ -1141,6 +1141,95 @@ its scoped warm-input and sampled-process limits.
 - [ ] "Open With", the Explorer menu entry, the editor-title button, and the `openCsvByDefault` setting all behave as specified.
 - [ ] Autocomplete suggests real table and column names.
 
+#### T-020 CSV / TSV preview implementation (2026-10-14)
+
+Owner authorizes decisions, fixture edits and needed repairs, then explicitly
+selects T-020 only. Scope: format-neutral loader types and read-only CSV/TSV
+preview command; no import, storage service, other format or opening menus.
+
+Acceptance coverage:
+- `test/unit/file-loader.test.ts`: strict common contract accepts non-CSV preview
+  metadata, without inventing CSV delimiter/header fields.
+- `test/unit/csv-preview.test.ts`: real worker, exact BOM/CRLF/multiline/Unicode,
+  unsafe integers/REAL/date/leading-zero text, >1-MB cells, 1,000 columns, empty
+  and header-only files, generated headers/ragged/blank records, internal options,
+  explicit whole-row/payload/record/column limits, tiny byte boundaries, missing/
+  directory/binary/invalid-UTF-8 inputs, cancellation, crash/invalid replies and
+  reopening. Sparse 3 GB returns 100 complete rows after reading 65,536 bytes.
+- `csv-preview-snapshot.test.ts`: real reads/descriptors/metadata with injected
+  post-read replacement/deletion; stale rows rejected and source handles closed.
+- `csv-preview-ui.test.ts` and shared `browser-grid.test.ts`: bounded unknown
+  messages, correct host direction, sparse/oversize/phase-coercion rejection,
+  nonce CSP/escaped names, safe complete selected text, distinct missing/empty/
+  literal NULL, context/cancel guarding and existing keyboard/virtualization.
+- `csv-preview-panel.test.ts`: independent views, late success, cleanup/errors,
+  unsupported schemes, full command timing, secure startup and failed/closed
+  transport without reader leaks.
+- `src/test/csv-preview.test.ts`: three real-host cases for command/editor tab,
+  retained default text association, worker/message/CSP/DOM/source safety,
+  sparse-file timing and cancel/error/close/recovery.
+- Extended `dependency-audit.test.ts`: inspect actual parser worker, complete
+  MIT notice and package exclusions. Its missing inventory first failed.
+  No locked dependency or static fixture changes; new fixtures are disposable.
+
+Retained failures and repairs; no retry-to-green:
+- Initial sandbox Vitest startup failed `spawn EPERM`. Authorized process access
+  observed missing modules before implementation. Reader tests exposed blank
+  records. Enlarge the oversized fixture beyond one read chunk so early-stop I/O
+  remains measurable; keep the bound/assertion intact.
+- Red regressions exposed host-guard omission, missing-file guidance, bare CR at
+  row 100 and omitted panel-creation time; strict typing exposed CSV-only common
+  metadata. Later cases exposed array phase coercion, worker/snapshot failures.
+  Strict checks also caught parser typing/import and an untyped matcher; repair
+  them without lint suppression or unsafe casts.
+- First full: 564 unit/52 host cases passed but the gate FAILED on
+  `integration-profile-dXrSf7/logs/20261014T143355/window1/exthost/exthost.log:6`,
+  original severity `warning`: `jreyinnovarev.lite-voyager created a webview
+  without a content security policy: https://aka.ms/vscode-webview-missing-csp`.
+  Its approved HOST-001 warning was `window1/renderer.log:10`. Passing tests do
+  not make that run green. One focused test command overlapped part of its SQLite
+  observation; do not use it as final benchmark evidence. Final full runs alone.
+- Installed VS Code source confirms options updates send current HTML; initial
+  HTML was empty. A failing regression captured it. Configure scripts/roots at
+  creation. First focused repaired probe passed three cases but its log gate
+  FAILED on `integration-profile-n2O5JO/logs/20261014T144831/main.log:8`, severity
+  `error`: `Blocked vscode-webview request vscode-webview://06iqv2d9elcg6hh2ss0aqr70naobe63r0bur4877b8uv8dj0hrs2/index.html?id=60e678cf-5e89-4ceb-8280-9dc85d4ffaec&parentId=1&origin=922eef37-7aa7-4925-b314-afb5b46bc667&swVersion=6&extensionId=jreyinnovarev.lite-voyager&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app`.
+  Its HOST-001 warning was `window1/renderer.log:9`. Another failing regression
+  captured returning/reading before transport readiness. Await the typed loading
+  handshake, retaining immediate cancel and all closure assertions.
+- Corrected focused probe `integration-profile-MOQ7XC` passes all three cases and
+  full log scan with zero errors/warnings; first DOM 297.103 ms. A later full
+  stopped at the new matcher lint error; typed assertions repair it. One automatic
+  permission-review timeout prevented a command starting; permitted retry starts.
+
+Final `npm run verify:full`: strict types/lint, 572 unit tests/52 files, builds,
+24-file/646.33-KB VSIX dry run and 52 real-host cases pass on Windows x64,
+VS Code 1.140.0 / bundled Node 24.21.0. Sparse 3 GB CSV first-row DOM is 212.230 ms,
+65,536 bytes read, 100 cached rows. DOM readiness is not physical paint. Existing
+SQLite 1/5-GB hashes/scans/pages/sampled memory and 540/600-second budgets pass.
+
+Final full is NOT warning-free. Its only accepted record:
+- Source: `integration-profile-8Lzpli/logs/20261014T151322/window1/renderer.log:10`
+- Original severity: `warning`; rule: `VSCODE-HOST-001`
+- Exact message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`
+
+No HOST-002/003/004 occurs in the final run. No other warning or any error is
+accepted; CSP/blocked-request failures gain no exception. Earlier clean standalone
+verify passed 560 cases. Final standalone `npm run verify` passes 572 tests in
+52 files, strict types/lint, production builds and the 24-file/646.33-KB package
+check, with zero errors/warnings. The retained local preview is
+`out/t020-preview/lite-voyager-t020.vsix`; packaging/asset inspection is local,
+not an owner-installed or physical-preview claim.
+
+T-020 retained VSIX inspection: 24 ZIP entries and all 18 runtime assets match
+the verified `dist` build byte-for-byte by SHA-256. Artifact SHA-256:
+`BF6CD3283A9F6062531550D45181ACFC7C087D877A1B88C2A219F70B2308D3A2`.
+
+Owner preview/install steps and every task file: `docs/t020-preview.md`.
+T-020 remains unchecked pending owner preview/fresh review. New-code three-platform
+CI and physical/cold paint are unclaimed. Full import performance remains T-021.
+No other Milestone 2 task is implemented.
+
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
 - [ ] The dirty marker appears and clears correctly; write mode is clearly indicated.
@@ -3193,3 +3282,4 @@ Then triage the findings yourself. For each real one, write a failing test first
 - v0.1 T-007 CI (2026-10-09): Clarified approved full-gate execution on every platform and remote evidence required before checking T-007; local workflow checks do not establish CI success or engine coverage.
 - v0.1 T-005 fixtures (2026-10-09): Linked inventory, runtime recipes and generator evidence; documented format applicability. Corrected the impossible WITHOUT ROWID/no-primary-key QA item to match approved FR-020.
 - v0.1: Initial version.
+- T-020 preview (2026-10-14): Record exact coverage, red-first repairs, two failed host initialization records and final 572-unit/52-host full with explicit HOST-001 warning. Preserve original budgets, all four narrow diagnostic families and no-retry-to-green; owner preview/review and new-code CI remain separate.

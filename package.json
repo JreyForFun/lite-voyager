@@ -39,6 +39,10 @@
     },
     "commands": [
       {
+        "command": "lite-voyager.csvPreview",
+        "title": "Lite Voyager: Preview CSV / TSV"
+      },
+      {
         "command": "lite-voyager.engineCheck",
         "title": "Lite Voyager: T-009 Engine Check"
       },

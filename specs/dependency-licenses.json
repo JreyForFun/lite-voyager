@@ -81,6 +81,10 @@
       "notice": "dist/codemirror-LICENSES.txt"
     },
     {
+      "name": "papaparse",
+      "notice": "dist/papaparse-LICENSE"
+    },
+    {
       "name": "sql.js",
       "notice": "dist/sql.js-LICENSE"
     }

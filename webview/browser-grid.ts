@@ -27,7 +27,8 @@ export class BrowserGrid {
   private anchor: { row: number; column: number } | null = null;
 
   constructor(private readonly root: HTMLElement, private readonly changed: () => void = () => {}, private readonly sortRequested: (column: string) => void = () => {},
-    private readonly selected: (selection: GridSelection | null) => void = () => {}, private readonly copyRequested: () => void = () => {}) {
+    private readonly selected: (selection: GridSelection | null) => void = () => {}, private readonly copyRequested: () => void = () => {},
+    private readonly nullText = { display: 'NULL', label: 'SQL NULL' }) {
     this.viewport = this.element('browser-viewport'); this.track = this.element('browser-track');
     this.rows = this.element('browser-rows'); this.header = this.element('browser-header');
     this.viewport.addEventListener('scroll', () => { this.schedule(); }, { signal: this.events.signal });
@@ -128,9 +129,9 @@ export class BrowserGrid {
     cell.className = `browser-cell${value === null ? ' cell-null' : value === '' ? ' cell-empty' : ''}`;
     cell.setAttribute('role', 'gridcell'); cell.setAttribute('aria-colindex', String(column + 1));
     cell.style.left = `${String(column * COLUMN_WIDTH)}px`;
-    cell.textContent = value === null ? 'NULL' : value === '' ? '(empty)' : value;
+    cell.textContent = value === null ? this.nullText.display : value === '' ? '(empty)' : value;
     cell.title = cell.textContent;
-    if (value === null || value === '') { cell.setAttribute('aria-label', value === null ? 'SQL NULL' : 'Empty string'); }
+    if (value === null || value === '') { cell.setAttribute('aria-label', value === null ? this.nullText.label : 'Empty string'); }
     return cell;
   }
 

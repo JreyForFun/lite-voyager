@@ -115,7 +115,7 @@ v0.0.1. Owner pushes the final records/tag, then starts T-009 in a fresh chat.
 **Gate:** complete the universal gate and the Milestone 1 manual QA in `VALIDATION.md` section 4, run the independent review (section 6), tag `v0.1.0`, then start Milestone 2 in a fresh chat. Publish a preview and gather feedback before Milestone 2.
 
 ## Milestone 2: Other formats (release 0.2)
-- [ ] **T-020** `FileLoader` interface; instant preview for CSV. *(Plan section 6, FR-004)*
+- [ ] **T-020** `FileLoader` interface; instant preview for CSV. Owner authorizes judgement/fixtures/repairs but selects only this task (2026-10-14). Implementation adds a format-neutral contract and read-only CSV/TSV preview command with exact bounded complete records, worker cancel/cleanup, generated-header/ragged-field explanations, virtualized grid and complete cell inspection. Red-first CSP/transport repairs retain both failed host records. Final local full passes 572 unit/52 host cases with one explicitly reported HOST-001 warning, not warning-free; owner preview/fresh review remain pending and new-code three-platform CI is unclaimed. No full import, other format, new dependency or later task. *(Plan section 6, FR-004; SPEC T-020 acceptance; VALIDATION T-020; docs/t020-preview.md)*
 - [ ] **T-021** CSV / TSV streaming import with progress, cancel, delimiter detection, header toggle, type inference. *(FR-004)*
 - [ ] **T-022** Temp storage: disk-space check, cleanup on close, orphan cleanup on startup, "Save as SQLite". *(FR-007)*
 - [ ] **T-023** JSONL and JSON-array streaming import; nested values stored as JSON text. *(FR-005)*
@@ -220,3 +220,4 @@ When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part 
 - v0.3: Renamed to Lite Voyager. T-002 is no longer a gate; added T-009 (Engine interface and fallback).
 - v0.2: Added Milestone 0 spikes, any-size tasks, and open-behavior tasks.
 - v0.1: Initial draft.
+- T-020 implementation (2026-10-14): Record only loader/preview scope and tests-first local 572-unit/52-host validation with explicit diagnostics. Leave checkbox open for owner preview/fresh review; preserve later tasks and unrelated owner changes.

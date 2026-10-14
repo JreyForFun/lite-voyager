@@ -167,3 +167,11 @@ npm run verify
 Dependency changes require refreshing the inventory and audit fingerprint/result;
 the completeness test intentionally rejects stale evidence. No new dependency,
 source-feature change or fixture edit was necessary.
+
+## T-020 shipped-parser update (2026-10-14)
+
+The unchanged locked tree already contains approved MIT `papaparse` 5.7.0.
+T-020 now bundles it in `dist/csv-preview-worker.js` and ships its complete
+`dist/papaparse-LICENSE`. The production inventory and its bundle inspection
+include this worker/parser. No package, version, lockfile or audit result changes;
+the original T-050 assessment date remains historical evidence, not a new audit.

@@ -3,18 +3,72 @@ export const SPIKE_PAGE_SIZE = 128;
 export const SPIKE_CACHE_PAGES = 4;
 export const SPIKE_COLUMNS = ['Row', 'Exact int64', 'Name', 'Unicode', 'Literal text', 'BLOB placeholder'] as const;
 
+export const MAX_PREVIEW_ROWS = 100;
+export const MAX_PREVIEW_COLUMNS = 1000;
+export const MAX_PREVIEW_CHARACTERS = 2 * 1024 * 1024;
+export const MAX_PREVIEW_RECORD_CHARACTERS = 4 * 1024 * 1024;
+export type CsvDelimiter = ',' | '\t' | ';' | '|';
+export interface CsvLoadOptions { delimiter?: CsvDelimiter; header?: boolean; }
+export interface FilePreviewResult {
+  columns: string[]; rows: (string | null)[][];
+  bytesRead: string; totalBytes: string; reachedEnd: boolean; notice: string; threadId: number;
+}
+export interface CsvPreviewResult extends FilePreviewResult { delimiter: CsvDelimiter; header: boolean; }
+export type CsvPreviewRequest = { type: 'csvPreviewReady' | 'csvPreviewCancel'; contextId: string };
+export interface CsvPreviewStatus { type: 'csvPreviewStatus'; contextId: string; renderedRows: number; renderedColumns: number; }
+export type CsvPreviewState = { type: 'csvPreviewState'; contextId: string } & (
+  | { phase: 'loading' | 'cancelled' | 'error'; message: string }
+  | { phase: 'ready'; message: string; preview: CsvPreviewResult });
+
+export function isCsvPreviewResult(value: unknown): value is CsvPreviewResult {
+  if (!isRecord(value) || !Array.isArray(value['columns']) || value['columns'].length > MAX_PREVIEW_COLUMNS
+    || !Array.isArray(value['rows']) || value['rows'].length > MAX_PREVIEW_ROWS
+    || typeof value['delimiter'] !== 'string' || ![',', '\t', ';', '|'].includes(value['delimiter']) || typeof value['header'] !== 'boolean'
+    || typeof value['reachedEnd'] !== 'boolean' || typeof value['notice'] !== 'string' || value['notice'].length > 4096
+    || !integer(value['threadId'], 1, Number.MAX_SAFE_INTEGER)
+    || typeof value['bytesRead'] !== 'string' || !/^(0|[1-9]\d{0,30})$/u.test(value['bytesRead'])
+    || typeof value['totalBytes'] !== 'string' || !/^(0|[1-9]\d{0,30})$/u.test(value['totalBytes'])
+    || BigInt(value['bytesRead']) > BigInt(value['totalBytes'])) { return false; }
+  let characters = 0;
+  const columns = Array.from(value['columns']);
+  if (!columns.every((column: unknown) => {
+    if (typeof column !== 'string' || column === '' || column.includes('\0')) { return false; }
+    characters += column.length; return characters <= MAX_PREVIEW_CHARACTERS;
+  }) || (columns.length === 0 && value['rows'].length > 0)) { return false; }
+  return Array.from(value['rows']).every((row: unknown) => Array.isArray(row) && row.length === columns.length
+    && Array.from(row).every((cell: unknown) => {
+      if (cell !== null && (typeof cell !== 'string' || cell.includes('\0'))) { return false; }
+      characters += cell === null ? 1 : cell.length + 1;
+      return characters <= MAX_PREVIEW_CHARACTERS;
+    }));
+}
+function previewContext(value: Record<string, unknown>): boolean { return typeof value['contextId'] === 'string' && /^[a-f0-9]{32}$/u.test(value['contextId']); }
+export function isCsvPreviewRequest(value: unknown): value is CsvPreviewRequest {
+  return isRecord(value) && previewContext(value) && (value['type'] === 'csvPreviewReady' || value['type'] === 'csvPreviewCancel');
+}
+export function isCsvPreviewStatus(value: unknown): value is CsvPreviewStatus {
+  return isRecord(value) && previewContext(value) && value['type'] === 'csvPreviewStatus'
+    && integer(value['renderedRows'], 0, MAX_PREVIEW_ROWS) && integer(value['renderedColumns'], 0, MAX_PREVIEW_COLUMNS);
+}
+export function isCsvPreviewState(value: unknown): value is CsvPreviewState {
+  return isRecord(value) && previewContext(value) && value['type'] === 'csvPreviewState'
+    && typeof value['message'] === 'string' && value['message'].length <= 4096
+    && typeof value['phase'] === 'string'
+    && (value['phase'] === 'ready' ? isCsvPreviewResult(value['preview']) : ['loading', 'cancelled', 'error'].includes(value['phase']));
+}
+
 export interface SpikePageRequest { type: 'spikePageRequest'; requestId: number; offset: number; }
 export interface SpikePage { type: 'spikePage'; requestId: number; offset: number; rows: string[][]; }
 export interface SpikeStatus {
   type: 'spikeStatus'; editorReady: boolean; renderedRows: number;
   cachedRows: number; firstRow: number; requestInFlight: boolean;
 }
-export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest;
+export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest | CsvPreviewRequest | CsvPreviewStatus;
 export type HostToWebviewMessage = { type: 'error'; message: string; context: string }
   | { type: 'spikeInit'; rowCount: number } | SpikePage
   // Integration-only no-op for the SQLite editor. Delivery checks
   // VS Code's outer webview transport readiness, not content rendering.
-  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse;
+  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse | CsvPreviewState;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -23,6 +77,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function isWebviewMessage(value: unknown): value is WebviewToHostMessage {
   if (!isRecord(value)) { return false; }
   if (isBrowserRequest(value) || isBrowserStatus(value) || isCellRequest(value)) { return true; }
+  if (isCsvPreviewRequest(value) || isCsvPreviewStatus(value)) { return true; }
   if (value['type'] === 'ready') { return true; }
   if (value['type'] === 'spikePageRequest') { return pageAddress(value); }
   return value['type'] === 'spikeStatus' && typeof value['editorReady'] === 'boolean'
@@ -33,6 +88,7 @@ export function isWebviewMessage(value: unknown): value is WebviewToHostMessage 
 }
 
 export function isHostMessage(value: unknown): value is HostToWebviewMessage {
+  if (isCsvPreviewState(value)) { return true; }
   if (!isRecord(value)) { return false; }
   if (isBrowserResponse(value) || isBrowserExercise(value) || isCellResponse(value)) { return true; }
   if (value['type'] === 'sqliteEditorProbe') { return true; }
