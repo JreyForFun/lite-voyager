@@ -1553,6 +1553,15 @@ original severity `warning`, `VSCODE-HOST-001`, exact message
 This partial scan cannot establish a completed full run or explain the missing
 native WAL assertion. No tests are rerun for this read-only evidence scan.
 
+T-020 second owner compaction completes successfully (2026-10-14). Pasted
+output and preserved `out/t020-linux/compaction-after-full` operation logs
+confirm attachment, compaction and detachment. VHD bytes fall from
+7,819,231,232 to 5,907,677,184; pasted C: free bytes are 10,463,645,696.
+This recovers host headroom without another test run. Prior failures stay
+failed, and no originating WAL, graphics or space-loss cause is inferred.
+No additional large local Linux run follows; actual-candidate hosted CI
+after owner push remains the next T-020 gate.
+
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
 - [ ] The dirty marker appears and clears correctly; write mode is clearly indicated.

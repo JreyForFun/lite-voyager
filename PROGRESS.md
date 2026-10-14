@@ -33,7 +33,7 @@ Owner recovered 10.062 GB; resumed run exhausted host space again (69.9 MB).
 
 ## Next
 Reviewed T-020 repairs verified and prepared for owner push.
-Reviewed second compaction ready; no further large local Linux run.
+Owner second compaction PASS; C: free 10.464 GB; no large local Linux run.
 Record hosted CI after owner push; preserve unknown WAL/graphics causes.
 Keep T-020 unchecked until remaining gates pass; then hand off T-021.
 WSL copy: /home/pengging/lite-voyager-t020-ci.hFKC34; helpers out/t020-linux.
