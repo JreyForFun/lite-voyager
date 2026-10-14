@@ -1486,6 +1486,66 @@ Stage only the 11 reviewed repair/evidence files; leave the owner's pre-existing
 T-015 hunks and unrelated untracked files untouched. Fresh actual-candidate
 three-platform CI and the Linux diagnostic failure remain open in this chat.
 
+T-020 owner recovery evidence (2026-10-14): owner explicitly reports no
+intentional WSL restart during the interrupted full run; its originating
+filesystem/restart cause remains unconfirmed. The owner then runs the reviewed
+compaction helper in Administrator PowerShell and pastes successful read-only
+attachment, compaction and detachment. Retained operation logs corroborate
+completion. VHD bytes decrease from 12,417,236,992 to 5,906,628,608;
+C: free bytes are 10,061,910,016 in the pasted output. This restores test
+headroom without deleting allocated Linux files. Resume the unchanged Linux
+full after checking its writable filesystem, with original GPU configuration,
+all workloads/assertions/deadlines and prior failure evidence preserved.
+Use a new `out/post-compaction-full.log` in the isolated native copy, never
+overwrite the earlier read-only/SIGBUS failure or substitute a later pass for it.
+Post-compaction checks observe root `/dev/sdd` mounted read/write and a successful
+temporary write probe. All 186 tracked runtime, test, fixture and verification
+files match the reviewed workspace: only Git's CRLF/LF text conversion is
+normalized, while binary fixture bytes must match exactly. The resumed run
+uses native Node 26.5.0 and unmodified locked dependencies/VS Code 1.140.0.
+
+T-020 resumed unchanged Linux full FAILS/incompletes, profile `4bvgAe`:
+types/lint, all 587 unit tests in 53 files, production builds and VSIX dry run
+pass; host output records a failed native T-002 live-WAL case but the command
+exits 1 during subsequent multi-GB fixture generation, before the final failure
+summary. The exact WAL assertion/reason is unavailable and must not be guessed.
+The original mailbox error is not reproduced before interruption. Preserve
+`out/t020-linux/post-compaction-full-failure.log` and
+`out/t020-linux/post-compaction-profile-logs.tar` in the Windows workspace,
+plus original `out/post-compaction-full.log` and profile in the isolated copy.
+This is not a complete Linux pass or replacement CI. No new runtime defect
+or source repair is inferred from an interrupted run.
+
+C: free bytes fall to 69,865,472 while the Ubuntu VHD grows from
+5,906,628,608 to 7,785,676,800 bytes (later observed 7,819,231,232).
+Windows reports a 15,477-MB allocated paging file, 4,832 MB in use and
+5,347 MB peak use. No earlier paging-allocation baseline was captured;
+these observations do not prove the complete cause of the space loss.
+Subsequent Ubuntu inspection finds no active test processes, a writable root
+and boot journal evidence of an unclean shutdown. Preserve that interruption;
+do not retry the full workload under renewed host pressure.
+
+Emergency recovery removes only resolved, nonlinked, obsolete generated
+mounted Linux `out/t020-linux/tools`, `project/node_modules` and
+`project/.vscode-test/vscode-linux-x64-1.140.0`. Native tools/dependencies,
+all application sources, user files and every retained diagnostic log stay.
+Manifest: `out/t020-linux/removed-unused-mounted-tools.json`; C: free bytes
+recover to 1,637,785,600 (later 1,394,388,992). After archiving the new log/profile,
+remove only the exact verified native `out/t016-memory-Q0KxBs` disposable
+fixture directory: 1,285,033,984-byte small database, 511,713,280-byte unfinished
+large database and 9,728-byte journal. `fstrim -v /` discards unused guest blocks.
+Prepare `out/t020-linux/compact-after-test.ps1` for the owner to reclaim those
+blocks with Administrator rights. Independent review confirms only its separate
+fixed log directory and directory creation differ from the prior reviewed
+helper; exact disk/distro guards and checked/logged detachment remain intact.
+Parsing has zero errors. No second compaction is executed by the agent.
+
+Owner says repair commit `7748ac0` is not yet pushed. Public Actions metadata
+still reports the earlier `38539935087`/`256ebb2` failure; no fresh candidate
+CI exists. Continue remaining Linux validation on the hosted CI runner after
+owner push, preserving all assertions/budgets and these local failures. No
+test or diagnostic rule is weakened and T-020 remains unchecked in this chat.
+
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
 - [ ] The dirty marker appears and clears correctly; write mode is clearly indicated.
@@ -3544,3 +3604,4 @@ Then triage the findings yourself. For each real one, write a failing test first
 - T-020 WSL diagnostics (2026-10-14): Preserve mounted/native probe failures and the later instrumented six-case pass with exact HOST-001 records. No GPU failure reproduction or source repair; retain unknown timeout cause and fresh-context investigation/review.
 - T-020 independent repairs (2026-10-14): Owner authorizes fresh-context review in this chat. Record three confirmed red-first reader/controller fixes, independent follow-up and 48 focused passing cases. Preserve broad/Mesa/stage-trace failures and exact diagnostics; no GPU repair or weakened gate is claimed.
 - T-020 repaired gates (2026-10-14): Record red-first genuine sparse fixtures and independently cleared repairs, final 587-unit/52-host Windows full with explicit HOST-001, and retained native Linux setup/read-only/SIGBUS and rejected X11/Mesa failures. Prepare independently reviewed owner-run compaction without executing it or claiming a GPU repair or three-platform pass.
+- T-020 host recovery (2026-10-14): Preserve successful owner disk compaction, 186-file source parity and the failed resumed Linux full with unknown native WAL assertion and host-space exhaustion. Record guarded generated-tool/fixture cleanup and independently reviewed second compaction; continue with hosted actual-candidate CI, not further large local retries.

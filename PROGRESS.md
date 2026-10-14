@@ -5,7 +5,6 @@ Milestone 2, T-020 review repairs and post-push CI investigation.
 Owner keeps T-020 repairs in this chat; next chat will be T-021.
 
 ## Verify status
-Original 256ebb2: 572 unit/52 host cases pass; one HOST-001 warning.
 Owner visual checks 1-5 PASS; final standalone 587 tests, zero errors/warnings.
 CI 38539935087/attempt 1: Windows/macOS pass; Ubuntu fails on GPU errors.
 Final Windows full: 587 unit/53 files and 52 host cases pass; one HOST-001.
@@ -29,11 +28,12 @@ Four exact host families only; every other warning/error still fails.
 Ubuntu emitted 30 Chromium mailbox errors during preceding T-012.
 GPU cause not reproduced; no graphics repair claimed or rejected flag applied.
 All failed WSL probes retained; later passes do not erase intermittent timeouts.
-Linux 587 units pass; full host interrupted by read-only filesystem/SIGBUS.
-Guest recovered, but VHD retains host space; reviewed compaction needs Admin.
+Linux 587 units pass; both full host attempts interrupted; no Linux full pass.
+Owner recovered 10.062 GB; resumed run exhausted host space again (69.9 MB).
 
 ## Next
 Reviewed T-020 repairs verified and prepared for owner push.
-Owner runs guarded disk compaction; resume Linux checks and fresh CI here.
+Reviewed second compaction ready; no further large local Linux run.
+Record hosted CI after owner push; preserve unknown WAL/graphics causes.
 Keep T-020 unchecked until remaining gates pass; then hand off T-021.
 WSL copy: /home/pengging/lite-voyager-t020-ci.hFKC34; helpers out/t020-linux.
