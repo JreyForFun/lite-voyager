@@ -1545,6 +1545,13 @@ still reports the earlier `38539935087`/`256ebb2` failure; no fresh candidate
 CI exists. Continue remaining Linux validation on the hosted CI runner after
 owner push, preserving all assertions/budgets and these local failures. No
 test or diagnostic rule is weakened and T-020 remains unchecked in this chat.
+T-020 supplemental scan of the interrupted profile's retained logs passes
+the unchanged strict checker with one accepted record, not warning-free:
+`integration-profile-4bvgAe/logs/20261014T204652/window1/renderer.log:15`,
+original severity `warning`, `VSCODE-HOST-001`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This partial scan cannot establish a completed full run or explain the missing
+native WAL assertion. No tests are rerun for this read-only evidence scan.
 
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
