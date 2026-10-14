@@ -3022,15 +3022,47 @@ builds and a 20-file /626.65 KB package dry run with zero errors/warnings.
 No source change follows these passing gates. Current-code CI/release remain
 the outstanding T-019 phase steps; the checkbox is not ticked prematurely.
 
+#### T-019 exact-candidate CI and milestone closure (2026-10-14)
+
+The owner supplies [run 38516745918](https://github.com/JreyForFun/lite-voyager/actions/runs/38516745918)
+as PASS. Public GitHub API metadata independently confirms attempt 1,
+completed success at 2026-10-14 05:32:31 UTC, on main at exact local candidate
+`6e381571f9306b01b9d3e229281c1b41f7bf60fe`.
+
+- Ubuntu job 115697150635: locked installation and Linux session-bus/virtual-
+  display full verification succeed.
+- macOS job 115697150668: locked installation and Windows/macOS full
+  verification succeed.
+- Windows job 115697150733: locked installation and Windows/macOS full
+  verification succeed.
+
+Only each job's inapplicable alternative platform step is skipped. Remote
+raw logs/test counts/approved-warning counts were not retrieved; do not call
+these remote full runs warning-free. Existing local exact approved records,
+all prior failures and scoped DOM/memory limits remain above. No production
+source, tests, dependency or diagnostic policy changes after this candidate.
+
+The local full gate, source safety, requirement coverage, recorded numeric
+targets, independent review and owner-confirmed five physical preview checks
+now satisfy the Milestone 1 acceptance gate. Closure documents are committed
+and tagged locally v0.1.0 after clean `npm run verify`; owner pushes records
+and tag. This is a milestone checkpoint, not a Marketplace/Open VSX release.
+The installed owner preview remains version 0.0.1; publishing/versioning is
+T-070. Only T-019 is closed. Start Milestone 2 in a fresh chat.
+
+Closure-record `npm run verify` (`out/t019-ci-closure-verify.log`) exits 0:
+531 tests /47 files (193.43 s), strict host/webview/tooling types, lint,
+production builds and 20-file /626.85 KB package pass with zero errors/warnings.
+
 Milestone 1 gate status (separate from foundation):
 
 - [x] Current candidate `npm run verify:full` passes locally; approved record explicit.
-- [ ] Current candidate full CI succeeds on Windows/macOS/Ubuntu.
+- [x] Current candidate full CI succeeds on Windows/macOS/Ubuntu (run above).
 - [x] Current-code source safety, memory and first-DOM measurements recorded.
 - [x] Requirement scope and independent review reconciled; confirmed findings repaired.
 - [x] Observable delegated host QA passes on both engines; host-log failure is separate.
 - [x] Physical preview feedback is received; owner confirms all five checks.
-- [ ] Local preview, owner feedback and release `v0.1.0` tag recorded.
+- [x] Local preview, owner feedback and local milestone `v0.1.0` tag recorded.
 
 ## 5. Edge cases every format must be tested against
 
@@ -3093,6 +3125,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-019 milestone closure (2026-10-14): Independently confirm run 38516745918 /attempt 1 at exact 6e38157 with all three locked installs/applicable full gates passing. Close the acceptance gate and local checkpoint; preserve every failed run, exact local warning and remote raw-log limitation. Owner pushes; no Marketplace release or Milestone 2 work.
 - T-019 owner approvals (2026-10-14): Record all five physical preview checks PASS and explicit approval of only the preferencesActions/chatPetContext renderer timing families. Preserve every prior failure and diagnostic/performance rule. Red-first native-opening repair passes 531-unit/49-host full gate, refreshed installed preview passes four cases, and final verify passes 531 tests with zero errors/warnings. Exact approved host records remain explicit; current-code CI/release are still pending.
 - T-019 QA/review candidate (2026-10-13): Record owner delegation/local-preview choice, cumulative fresh-context review, red-first repairs and failed full candidates. Preserve source/workload/diagnostic limits and distinguish observable DOM/theme/key evidence from physical preview feedback; current-code full gate/CI/release remain pending.
 - T-016 repaired-candidate CI (2026-10-13): Independently confirm successful 38384170955 /attempt 1 at final repair 284fbee and all three applicable full gates/locked installs. Check only T-016 after clean 489-test completion verify; preserve prior failures, the exact approved local warning, remote raw-log limits and remaining milestone work.

@@ -540,6 +540,17 @@ passes four installed-artifact cases /17 s and strict logs; its sole approved
 HOST-001 record is explicit in VALIDATION. Browser/worker/WASM assets match
 the owner-tested UI; only the verified host-opening optimization changes.
 
+On 2026-10-14 the owner supplies successful CI run 38516745918. Public GitHub
+API metadata confirms attempt 1 at exact candidate
+6e381571f9306b01b9d3e229281c1b41f7bf60fe, with successful locked installs and
+applicable full-verification steps on Windows, macOS and Ubuntu. Remote raw
+diagnostic/test counts are not claimed. This closes current-code CI without
+changing source, tests, dependencies or measured limits. Record closure,
+verify, commit and tag the local v0.1.0 milestone checkpoint; owner pushes.
+The installed local preview stays 0.0.1. Marketplace/Open VSX versioning and
+publishing belong to T-070; no published release is claimed. Milestone 2
+starts in a fresh chat after this checkpoint.
+
 ### T-011 worker metadata contract (2026-10-10)
 
 The existing `Engine.schema(page)` remains the paged table/view catalog.
@@ -1081,6 +1092,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-019 milestone closure (2026-10-14): Record exact-candidate three-platform full CI success in run 38516745918 /attempt 1. Close the milestone with a local v0.1.0 checkpoint and owner push; keep preview version/publishing distinct and preserve remote-log limits.
 - T-019 owner approvals (2026-10-14): Record five visible preview checks PASS, two narrowly approved renderer timing families and tested native-opening optimization. Preserve prior failures and every remaining diagnostic/performance rule. Repaired 531-unit/49-host full gate, updated four-case packaged preview and clean 531-test verify pass; current-code CI/release remain external gate items.
 - T-019 gate plan (2026-10-13): Plan one owner-delegated QA/review closure task, fresh isolated cumulative review, tests-first schema/view/fidelity/paging repairs, real-host acceptance and honest release/visual limits. No new dependency or Milestone 2 feature.
 - T-016 repaired-candidate CI (2026-10-13): Confirm run 38384170955 /attempt 1 at 284fbee succeeds on Windows/macOS/Ubuntu, including locked installs and full checks. Close only T-016 after clean 489-test completion verify; retain failed runs, diagnostic evidence and remote raw-log limits. No milestone closure.

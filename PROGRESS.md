@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 1; T-019 QA/review candidate and installed preview. Owner pushes.
-No Milestone 2 work or v0.1.0 release/tag yet.
+Milestone 1 complete; T-019 QA/review closure and local v0.1.0 checkpoint.
+Owner pushes closure records/tag. Milestone 2 starts in a fresh chat.
 
 ## Verify status
-- Repaired full passes 531 unit/49 host cases on Windows; see VALIDATION.
-- Exact approved/unapproved records and prior failures are in VALIDATION.
-- Both large-file sorts/filters, original pages/scans and full hashes pass.
+- Local full passes 531 unit/49 host cases; exact diagnostics in VALIDATION.
+- Full/installed preview are not warning-free: approved HOST-001 in each.
+- Clean standalone verify passes 531 tests/47 files; zero errors/warnings.
+- Run 38516745918 /attempt 1 passes all three platforms at 6e38157.
+- Each locked install/applicable full step succeeds; remote raw counts unknown.
+- Original caps, pages/scans, full hashes and 540/600 s budgets pass.
 - First DOM 1,339.026/1,203.989 ms; sampled peaks 271.2/287.0 MB.
-- Original caps and 540/600 s budgets pass; workload 279,424.918 ms.
-- Refreshed installed VSIX passes four cases/logs; one approved HOST-001.
-- Full/preview are not warning-free; all exact records are in VALIDATION.
-- Final verify passes 531 tests/47 files; zero errors/warnings (237.04 s).
 
 ## Last session
-Fresh cumulative Bugbot review; schema/view/fidelity/paging defects repaired red-first.
-WITH DML refusal repaired; 2,112 read/352 write review probes find no defect.
-Native opening-frame repair follows a genuine 2.178 s failure; all 16 tests pass.
-Reviewer confirms consent/cancellation/lifetime guards; old failures preserved.
-Refreshed archive changes only host opening code; post-open UI assets unchanged.
+Fresh cumulative review and red-first schema/view/fidelity/paging repairs pass.
+Native opening repair preserves consent, cancellation and helper lifetimes.
+Refreshed installed VSIX passes four cases; all fourteen runtime assets match.
+Owner confirms all five physical preview checks PASS; CI matches final code.
 
 ## Decisions made this session
-No dependencies, vendor edits, warning suppression or Milestone 2 features.
-Owner approves exactly HOST-003/004; all other warnings/errors still fail.
-Preview guide/artifacts and 36-file inventory are in out/t019-preview.
+Only T-019 closed; no dependency or Milestone 2 feature added.
+Exactly four approved host families; every other warning/error still fails.
+v0.1.0 is a Git milestone checkpoint, not a Marketplace/Open VSX release.
+Installed local preview remains 0.0.1; publishing/versioning belongs to T-070.
+36-file implementation inventory and preview guide: out/t019-preview.
 
 ## Known issues / blockers
-Owner confirms all five physical preview checks PASS.
-Current-code three-platform CI and release/tag remain unobserved.
+No remaining Milestone 1 acceptance blocker; owner pushes local checkpoint.
 Desktop API unavailable; owner feedback supplies the physical observations.
-Physical/cold paint and subjective usability are not inferred from DOM checks.
-Pre-existing edits/unrelated files remain outside this task; T-019 stays unchecked.
+Cold/physical paint and unsampled memory peaks are not inferred from tests.
+Earlier failures and exact approved local records remain in VALIDATION.
+Pre-existing owner edits/unrelated files are preserved outside closure commit.
 
 ## Next
-Local candidate prepared; owner pushes after reviewing the recorded checks.
-Owner pushes; confirm fresh three-platform CI, then close the release gate.
-Complete release gate/tag before starting Milestone 2 in a fresh chat.
+Owner: git push; git push origin v0.1.0.
+Close this chat; read AGENTS/CONSTITUTION/PROGRESS in the fresh Milestone 2 chat.
+Plan one next task from TASKS; do not start coding before the kickoff approval.

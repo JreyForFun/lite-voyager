@@ -6,6 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Milestone 1 checkpoint v0.1.0: complete read-only SQLite browsing, SQL,
+  streamed CSV/JSON export, cancellation, paged schema inspection and isolated
+  views of the same file. Review repairs preserve literal empty identifiers,
+  exact text/int64 values, successful paging context and honest row totals.
+  Multi-GB source/memory/first-DOM gates, owner preview feedback and exact-
+  candidate Windows/macOS/Ubuntu CI pass. This Git checkpoint does not change
+  the installed 0.0.1 preview or publish to the Marketplace/Open VSX.
+
 - T-015 review repair: retain failed atomic-save diagnostics after editor closure
   and show their retry guidance in a notification. Keep historical export errors
   separate from cancellation/recovery of later SQL queries. Red-first tests also
