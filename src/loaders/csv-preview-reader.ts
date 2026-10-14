@@ -1,4 +1,4 @@
-import { closeSync, fstatSync, openSync, readSync, realpathSync, statSync, type BigIntStats } from 'node:fs';
+import { closeSync, constants, fstatSync, openSync, readSync, realpathSync, statSync, type BigIntStats } from 'node:fs';
 import { extname } from 'node:path';
 import { threadId } from 'node:worker_threads';
 import Papa from 'papaparse';
@@ -25,10 +25,15 @@ export function readCsvPreview(path: string, input: LoadOptions = {}, chunkBytes
   if (!Number.isSafeInteger(chunkBytes) || chunkBytes < 1 || chunkBytes > 65_536) { throw new Error('Invalid preview read size.'); }
   const delimiter = options.delimiter ?? (extname(path).toLowerCase() === '.tsv' ? '\t' : ',');
   const source = realpathSync(path);
-  const file = openSync(source, 'r');
+  const initial = statSync(source, { bigint: true });
+  if (!initial.isFile()) { throw new Error('Choose a regular local CSV or TSV file.'); }
+  // POSIX nonblocking open also protects a regular file replaced by a FIFO
+  // between stat and open. Windows does not expose O_NONBLOCK.
+  const file = openSync(source, constants.O_RDONLY | (process.platform === 'win32' ? 0 : constants.O_NONBLOCK));
   try {
     const snapshot = fstatSync(file, { bigint: true });
     if (!snapshot.isFile()) { throw new Error('Choose a regular local CSV or TSV file.'); }
+    if (!same(initial, snapshot)) { throw new Error('The CSV changed during preview. Close its writer and reopen it.'); }
     const decoder = new TextDecoder('utf-8', { fatal: true });
     const buffer = Buffer.alloc(chunkBytes);
     const columns: string[] = [];
@@ -124,10 +129,22 @@ export function readCsvPreview(path: string, input: LoadOptions = {}, chunkBytes
         reachedEnd = !stopped; break;
       }
       bytesRead += BigInt(count);
-      let text: string;
-      try { text = decoder.decode(buffer.subarray(0, count), { stream: true }); }
-      catch { throw new Error('CSV is not valid UTF-8. Encoding selection is not available in this preview.'); }
-      consume(text);
+      let offset = 0;
+      while (offset < count && !stopped) {
+        // ASCII LF cannot occur inside a UTF-8 code point. Decode through
+        // one physical line at a time so a completed sample can stop before
+        // validating its fetched-but-unscanned tail, including quoted lines.
+        const newline = buffer.indexOf(10, offset);
+        const lineEnd = newline < 0 ? count : Math.min(count, newline + 1);
+        // A carried astral code point can emit two UTF-16 units from one
+        // new byte. Leave one unit of slack, then decode byte-by-byte near
+        // the limit so the scanner stops before any subsequent bad bytes.
+        const end = Math.min(lineEnd, offset + Math.max(1, MAX_PREVIEW_RECORD_CHARACTERS - characters - 1));
+        let text: string;
+        try { text = decoder.decode(buffer.subarray(offset, end), { stream: true }); }
+        catch { throw new Error('CSV is not valid UTF-8. Encoding selection is not available in this preview.'); }
+        consume(text); offset = end;
+      }
     }
     if (!same(snapshot, fstatSync(file, { bigint: true })) || !same(snapshot, statSync(path, { bigint: true }))) { throw new Error('The CSV changed during preview. Close its writer and reopen it.'); }
     if (renamed) { notices.add('Blank or duplicate headers use unique display names; no fields were dropped.'); }

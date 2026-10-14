@@ -1,37 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 2, T-020 implementation locally verified.
-Only T-020; checkbox remains open for owner preview/fresh review.
+Milestone 2, T-020 review repairs and post-push CI investigation.
+Owner keeps T-020 repairs in this chat; next chat will be T-021.
 
 ## Verify status
-Full passes 572 unit tests/52 files and 52 real VS Code host cases.
-Full is not warning-free: one HOST-001; exact record in VALIDATION.
-Sparse 3 GB CSV: first-row DOM 212.230 ms; 65,536 bytes read; 100 cached rows.
-Both engines' existing SQLite/source/memory gates and original budgets pass.
-Final standalone verify passes 572 tests/52 files; zero errors/warnings.
-Local VSIX: out/t020-preview/lite-voyager-t020.vsix; install/visual QA pending.
+Original 256ebb2: 572 unit/52 host cases pass; one HOST-001 warning.
+Owner visual checks 1-5 PASS; final standalone 587 tests, zero errors/warnings.
+CI 38539935087/attempt 1: Windows/macOS pass; Ubuntu fails on GPU errors.
+Final Windows full: 587 unit/53 files and 52 host cases pass; one HOST-001.
+Genuine sparse 3 GB CSV: first DOM 237.054 ms; 65,536 bytes read; 100 rows.
 
 ## Last session
-Implemented format-neutral FileLoader types and worker-backed CSV/TSV preview.
-Exact text, bounded complete rows, virtualized grid and cell inspection pass.
-Cancel, independent views, snapshot faults and worker recovery pass.
-Red-first CSP/transport repairs pass; failed runs stay recorded.
+Independent fresh-context review authorized and performed in this chat.
+Fixed unscanned UTF-8 rejection with physical-line/budget-bounded decoding.
+Fixed FIFO blocking with preflight/nonblocking POSIX open/snapshot comparison.
+Fixed failed commands awaiting notification dismissal; all fixes are red-first.
+Independent follow-up clears all code/fixture findings; no concrete defect remains.
+Red-first sparse-fixture fix: unit/host stay 3 GB; focused 37 cases pass.
 
 ## Decisions made this session
 Separate preview command; normal CSV opening stays text; no import/SQL yet.
 Explicit preview limits stop without truncation; all values stay text.
-Approved Papa Parse/MIT notice; no dependency/lockfile/static-fixture change.
+No new dependency, lockfile, static-fixture or diagnostic-policy change.
 Four exact host families only; every other warning/error still fails.
-Preview stays 0.0.1; no publishing/tag or later Milestone 2 work.
 
 ## Known issues / blockers
-Owner physical preview and fresh independent review are pending.
-New-code three-platform CI, cold paint and full import targets are unclaimed.
-Desktop API unavailable; owner supplies visible observations.
-Pre-existing owner edits/unrelated files stay outside the T-020 commit.
+Ubuntu emitted 30 Chromium mailbox errors during preceding T-012.
+GPU cause not reproduced; no graphics repair claimed or rejected flag applied.
+All failed WSL probes retained; later passes do not erase intermittent timeouts.
+Linux 587 units pass; full host interrupted by read-only filesystem/SIGBUS.
+Guest recovered, but VHD retains host space; reviewed compaction needs Admin.
 
 ## Next
-Owner: install local VSIX; run docs/t020-preview.md checks 1-5 and fresh review.
-Owner pushes implementation and supplies current-code CI when available.
-Then finalize T-020 checkbox; plan T-022 in a fresh chat before T-021 import.
+Reviewed T-020 repairs verified and prepared for owner push.
+Owner runs guarded disk compaction; resume Linux checks and fresh CI here.
+Keep T-020 unchecked until remaining gates pass; then hand off T-021.
+WSL copy: /home/pengging/lite-voyager-t020-ci.hFKC34; helpers out/t020-linux.

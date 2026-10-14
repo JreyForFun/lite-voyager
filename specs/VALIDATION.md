@@ -1226,9 +1226,265 @@ the verified `dist` build byte-for-byte by SHA-256. Artifact SHA-256:
 `BF6CD3283A9F6062531550D45181ACFC7C087D877A1B88C2A219F70B2308D3A2`.
 
 Owner preview/install steps and every task file: `docs/t020-preview.md`.
-T-020 remains unchecked pending owner preview/fresh review. New-code three-platform
-CI and physical/cold paint are unclaimed. Full import performance remains T-021.
+Subsequent owner evidence (2026-10-14): installed extension in VS Code 1.141.1
+matches the verified runtime, is enabled, and its manifest includes the preview
+command. Owner explicitly reports `T-020 visual checks 1–5: PASS` for the guide's
+complete checklist: ordinary text opening, multiline cell inspection, generated
+headers/ragged fields, keyboard/theme/resize/scroll, errors/cancel/reopen, honest
+limits and unchanged source. These are owner observations, not new automated
+measurements or cold-paint/cross-platform evidence.
+T-020 remains unchecked pending fresh review. New-code three-platform
+CI and cold paint are unclaimed. Full import performance remains T-021.
 No other Milestone 2 task is implemented.
+
+T-020 first post-push CI (2026-10-14):
+[run 38539935087](https://github.com/JreyForFun/lite-voyager/actions/runs/38539935087),
+attempt 1 at `256ebb273ef273e2b37b72223380a1be2974e8b5`, FAILS overall.
+Public GitHub API metadata confirms locked installs succeeded on all three
+platforms; Windows/macOS full-verification steps succeed, Ubuntu's full step fails.
+The owner-pasted Ubuntu log passes 572 unit tests and 52 host cases, including
+all three T-020 cases (sparse 3 GB first DOM 59.040 ms, 65,536 bytes, 100 rows).
+The console contains 30 errors from
+`gpu/command_buffer/service/shared_image/shared_image_manager.cc:395`:
+`SharedImageManager::ProduceMemory: Trying to Produce a Memory representation from a non-existent mailbox.`
+They occur during T-012 before T-020; the strict gate correctly fails despite
+host exit 0. No error exception or retry-to-green is authorized. The existing
+test configuration already supplies `--disable-gpu`; the cause/repair is not
+yet established. Remote raw runtime logs were not independently downloaded.
+Local historical passes and owner QA stay valid; current three-platform CI and
+fresh review remain open.
+
+Focused Ubuntu 24.04 WSL diagnostics (2026-10-14), not replacement CI:
+- Owner's installation permission covers Xvfb/Xauth, VS Code runtime libraries
+  and libatomic1 in the existing distro, plus a checksum-verified portable Node
+  26.5.0 in `out/t020-linux`. An isolated source archive is exactly pushed HEAD.
+  Locked npm installs emit the existing glob@10.5.0 deprecation and pending
+  vsce-sign/esbuild install-script warnings; scripts stay disabled. These setup
+  commands are not warning-free verification. No project dependency is changed.
+- First probe uses Windows-mounted source/tools and original tests/limits.
+  Profile `out/t020-linux/project/out/integration-profile-Gpo9Us`: four of six
+  selected cases pass; T-012 native first rows 2171.780 ms fails the 2000-ms bound,
+  and its ten-million-row case exceeds the unchanged 60000-ms test deadline.
+  T-020's three cases pass (sparse first DOM 280.729 ms). Strict logs also reject
+  `20261014T173627/window1/renderer.log:2`, original severity `warning`:
+  `Creation of workbench contribution 'workbench.contrib.remoteStatusIndicator' took 23ms.`
+  Test-runner errors remain failures. The accepted HOST-001 record is renderer
+  line 18 with its exact CloudSandboxApi message above; no other family is added.
+- Native `/tmp` source copy, unchanged tests/limits, profile
+  `/tmp/lite-voyager-t020-linux-vYyqgP/out/integration-profile-DhdKoN`: five of six
+  cases pass. T-020 sparse rows render in 199.934 ms, but the case later exceeds
+  its unchanged 15000-ms total deadline; the stalled stage is not established.
+  Test-runner errors fail the log gate. The exact HOST-001 message above is
+  accepted at `20261014T174835/window1/renderer.log:14`. WSL subsequently clears
+  `/tmp` between sessions, preventing an instrumented startup there; tool output
+  preserves the failure, but that temporary profile is no longer on disk.
+- Persistent source copy `/home/pengging/lite-voyager-t020-ci.hFKC34` links only
+  to the already installed tools/cache. Add stage timestamps to its compiled
+  sparse test only; preserve every assertion/deadline and production byte.
+  Six selected T-012/T-020 cases pass, with no GPU mailbox error reproduced.
+  Sparse setup 12.107 ms; first DOM 251.638 ms, 65,536 bytes and 100 rows;
+  session closure 266.686 ms and removal 270.633 ms from test start.
+  Profile `out/integration-profile-tRiwYa`, exact accepted HOST-001 message above
+  at `20261014T175727/window1/renderer.log:17`, original severity `warning`.
+  This focused run is NOT warning-free and is not a full verification or repair.
+  The earlier timeout's cause remains unknown; a later pass does not erase it.
+
+No extension, test-source, configuration, fixture or diagnostic-policy change
+is made from these observations. GPU failure is not reproduced or repaired;
+the first GitHub CI failure and both failed local probes remain valid evidence.
+Next fresh-context investigation should exercise the full preceding webview
+sequence and inspect the actual Linux renderer/graphics state before proposing
+a tested repair. T-020 stays unchecked; owner QA remains PASS.
+
+T-020 continued investigation and independent review (2026-10-14):
+The owner explicitly keeps repairs in this chat and authorizes a separate
+fresh-context review agent here, satisfying section 6's independent review
+without starting T-021. The reviewer reads the actual T-020 diff and acceptance
+criteria; no production edits or heavy benchmarks are delegated.
+
+- Broad original webview sequence, profile `out/integration-profile-9VpVZQ`,
+  passes 22 of 23 cases; the BOM preview case exceeds its unchanged 15000-ms
+  deadline. Sparse first DOM is 272.917 ms. No mailbox error is reproduced.
+  Exact HOST-001 message above, severity `warning`, is at
+  `20261014T181624/window1/renderer.log:17`; test errors still fail.
+- A Mesa software-rendering experiment initially fails to remove `--disable-gpu`
+  because its replacement misses CRLF. Profile `out/integration-profile-CPBo7l`
+  passes 23 cases with the original flag still present (sparse 330.198 ms).
+  This is not evidence of a backend change. Exact HOST-001 message above,
+  severity `warning`, is at `20261014T183747/window1/renderer.log:17`.
+- Corrected experiment removes that flag only in the isolated copy and sets
+  Mesa's documented `LIBGL_ALWAYS_SOFTWARE=true`. Profile
+  `out/integration-profile-YQnd4P` fails: 22 of 23 cases pass; BOM again exceeds
+  15000 ms, and Chromium emits `gpu/ipc/client/command_buffer_proxy_impl.cc:285`:
+  `ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.`
+  Exact HOST-001 message above, severity `warning`, is at
+  `20261014T184211/window1/renderer.log:17`. This configuration is rejected and
+  is NOT applied to the repository. All earlier failures remain recorded.
+- Independent review confirms two reader defects: decoding an entire fetched
+  chunk validates bad UTF-8 beyond a completed preview; opening a POSIX FIFO
+  can block indefinitely before regular-file validation and worker termination.
+  Red regressions precede line/budget-bounded decoding, regular-file preflight,
+  POSIX nonblocking open and descriptor-snapshot comparison. A further red
+  astral-code-point carry case precedes the one-unit decoding slack fix.
+  Windows and Linux each pass 38 focused reader/snapshot cases afterward.
+- Review confirms a third defect with an undismissed error notification:
+  failed transport closes its panel but leaves `open()` pending indefinitely.
+  Three new regressions fail for remote/construction/transport errors before
+  removing the notification-dismissal wait; all 48 reader/controller cases pass.
+  The reviewer independently confirms all three fixes and finds no further
+  concrete defect. This does not attribute or fix Chromium's CI mailbox error.
+- Stage tracing with the original GPU flag restored, profile
+  `out/integration-profile-T0sxFl`, passes all 23 selected cases. BOM text open,
+  preview initialization, worker exit, rendered rows, disposal, closure,
+  close-all-editors and source removal all settle. Sparse first DOM is
+  281.347 ms; closure/removal are prompt. The strict log gate still FAILS on
+  `20261014T185409/window1/renderer.log:2`, severity `warning`:
+  `Creation of workbench contribution 'workbench.contrib.remoteStatusIndicator' took 23ms.`
+  Exact HOST-001 message above, severity `warning`, is at renderer line 18.
+  The earlier intermittent timeout cause remains unconfirmed. No new diagnostic
+  family is accepted; none of these probes is warning-free full verification.
+
+All persistent profiles above are under
+`/home/pengging/lite-voyager-t020-ci.hFKC34`; helpers and original mounted tools
+are in ignored `out/t020-linux`. Source repairs are reviewed, but final local
+verification and fresh three-platform CI remain required. The GPU cause remains
+unresolved, and the T-020 checkbox stays open.
+
+Repaired-source Windows `npm run verify` passes strict host/webview/tooling
+types, lint, all 586 unit tests in 52 files, production builds and the
+24-file/646.48-KB VSIX dry run, with zero errors and zero warnings. Fourteen
+regressions were added to the existing files; no test was weakened, removed or
+skipped. Full verification is still pending at this point.
+
+Repaired-source Windows full attempt, profile `out/integration-profile-0YryqQ`,
+retained in `out/t020-preview/t020-review-full.log`, FAILS after 586 passing
+unit tests and 50 passing host cases. The unchanged T-016 preflight requires
+9 GB free; Windows reports about 2.7 GB during this run. T-020's 3 GB fixture
+then fails with `ENOSPC: no space left on device, ftruncate`. Neither threshold,
+workload nor assertion is relaxed. Its accepted severity `warning`, HOST-001
+exact message above, is at `20261014T191244/window1/renderer.log:10`;
+test-runner errors still fail. This run is not warning-free and is not a pass.
+
+Free space subsequently recovers to about 9.6 GB without the assistant deleting
+files; the reason for that external-state change is not established. A new
+Windows OS-attribute regression proves that ordinary truncate does NOT make
+the supposed sparse CSV fixture sparse (`False`, expected `True`). The test
+precedes a disposable-test-only helper using Windows' built-in `fsutil sparse
+setflag` before truncation; both unit and host 3 GB fixtures use it, preserving
+their size, rows, byte-read bounds and timing assertions. POSIX truncation
+remains sparse, checked through allocated blocks. Official behavior:
+[Microsoft fsutil sparse](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-sparse)
+and [FileAttributes.SparseFile](https://learn.microsoft.com/en-us/dotnet/api/system.io.fileattributes).
+The helper uses exclusive creation, closes handles in finally, and does not
+ship or introduce an extension dependency. Windows focused reader/fixture
+checks pass 37 cases. Independent review finds the remaining unflagged unit
+fixture and it is routed through the same tested helper without weaker checks.
+
+To restore test headroom, remove only 355 old generated profile browser-cache
+directories after verifying their resolved paths remain inside workspace out,
+their fixed cache names and the signed-out development-fixture publisher.
+All logs, settings, test data, source files and current profiles are retained.
+Manifest: `out/t020-linux/cleared-cache-paths.json`; C: has 9,901,101,056 free
+bytes afterward. No user files or old failure evidence are deleted. Final
+verification of the corrected fixture and repaired source is pending.
+
+Final corrected-source Windows full gate PASSES (`out/t020-preview/t020-repair-full.log`):
+strict types/lint, 587 unit tests/53 files, production builds, 24-file/646.48-KB
+VSIX dry run and all 52 real VS Code 1.140.0 host cases. The populated
+1,285,033,984-byte and 5,874,388,992-byte SQLite fixtures, source hashes, complete
+scans, grids and original 540/600-second budgets pass (354,535 ms workload).
+Sampled extension/helper peaks are 270,188,544 and 280,723,456 bytes; file-size
+memory growth is 10,534,912 bytes. T-020 genuine sparse 3 GB first-row DOM is
+237.054 ms, reading 65,536 bytes and caching 100 rows. DOM is not physical paint.
+All confirmed review findings, including both sparse fixtures, are independently
+cleared. No source change follows this passing gate.
+
+This full run is NOT warning-free. Its only accepted record:
+- Source: `integration-profile-UfrsrS/logs/20261014T193346/window1/renderer.log:10`
+- Original severity: `warning`; rule: `VSCODE-HOST-001`
+- Exact message: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`
+No HOST-002/003/004 or other warning/error occurs in the complete log scan.
+The earlier space/fixture failure remains a failure. Native Linux full and
+fresh actual-candidate three-platform CI remain pending; no GPU repair is claimed.
+
+Native Linux full setup attempt is retained as
+`/home/pengging/lite-voyager-t020-ci.hFKC34/out/native-full-setup-failure.log`.
+Types pass, but ESLint 10.12.0 correctly fails when a copied tool directory
+outside ignored paths exposes VS Code's `ms-vscode.js-debug-companion/eslint.config.mjs`
+and its unavailable `@eslint/js` dependency. This is a setup/layout defect,
+not a completed Linux validation. Relocate only generated tool folders into
+the existing `out` and `.vscode-test` locations; preserve that failure, the
+original lint configuration and all assertions. Node and locked packages are
+now native; VS Code 1.140.0 is downloaded through the installed official
+test-electron package. No product dependency or additional lint ignore is added.
+
+The next native attempt passes types/lint and 586 of 587 unit cases; it fails
+only `fixture-generator.test.ts`'s existing T-005 Git-ignore contract because
+`git archive` omits `.git`. Preserve `out/native-full-git-setup-failure.log` in
+the isolated copy. Initialize private local Git metadata there, confirm both
+generated-output paths are ignored, and rerun the unchanged full gate. No
+test, ignore rule, application source, remote or owner's repository is altered
+to accommodate the copy. All Linux setup failures remain failures.
+
+Native Linux's corrected setup passes strict types/lint, all 587 unit cases
+in 53 files, production builds and packaging. Its full host run, profile
+`out/integration-profile-CZ8L92`, is interrupted while generating the unchanged
+multi-GB T-016 fixtures: `tee: out/native-full.log: Read-only file system` and
+VS Code exits `SIGBUS`. This is a FAILED/incomplete Linux full, not replacement CI.
+Preserve the partial raw log as `out/t020-linux/native-full-io-failure.log` in
+the Windows workspace and `out/native-full-io-failure.log` in the isolated copy.
+The final termination is also captured in tool output. No graphics error cause
+or successful Linux large-file gate is inferred from this interruption.
+
+Subsequent WSL commands observe a restarted distro: root `/dev/sdd` is mounted
+read/write; boot diagnostics record an unclean journal shutdown. A write probe
+confirms recovery. Remove only the verified disposable
+`out/t016-memory-N1zhBR` fixture directory (1,285,033,984-byte small database,
+5,279,277,056-byte unfinished large database and its 9,728-byte journal), after
+preserving the failed log. No user's Linux files are removed. `fstrim -v /`
+discards unused guest blocks, but the non-sparse 12,417,236,992-byte Ubuntu VHDX
+still occupies host space; C: has about 3.6 GB free. Current Windows token is
+not Administrator and Optimize-VHD is unavailable. Prepare a guarded,
+owner-run Administrator PowerShell compaction script in ignored
+`out/t020-linux/compact-test-distro.ps1`; its syntax is parsed, but no disk
+compaction or forced distro shutdown has been executed. It selects only the
+registry-verified Ubuntu disk, attaches read-only, compacts unused blocks and
+detaches; no formatting/deletion operation exists. Official compaction semantics:
+[Microsoft compact vdisk](https://learn.microsoft.com/windows-server/administration/windows-commands/compact-vdisk).
+The cause of the WSL restart/read-only episode remains unconfirmed; optional
+owner clarification is pending. Further complete Linux large-file runs require
+restored host space and a stable environment; existing budgets remain intact.
+
+T-020 bounded post-recovery graphics experiment, profile `GaZF20`, replaces
+`--disable-gpu` only in the isolated copy with the documented
+`--ozone-platform=x11` and uses Mesa `LIBGL_ALWAYS_SOFTWARE=true`.
+All 23 selected cases pass, including genuine sparse 3 GB preview first DOM
+226.490 ms, 65,536 bytes read and 100 rows. The strict diagnostic gate FAILS:
+`gpu/ipc/client/command_buffer_proxy_impl.cc:285` reports
+`ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.`
+The accepted record is `VSCODE-HOST-001`, original severity `warning`, at
+`integration-profile-GaZF20/logs/20261014T201728/window1/renderer.log:14`:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+Preserve `out/x11-mesa-probe.log` in the isolated native copy. This experiment
+is rejected, the isolated configuration is restored by its exit trap, and
+the owner's root configuration is unchanged. The original mailbox error is
+still not reproduced; no graphics repair or Linux full pass is claimed.
+
+Independent read-only review of the ignored compaction helper identifies
+unchecked final detachment. Repair it to retain all three operation logs,
+check detachment failure before completion metrics and refuse overwriting
+prior operation logs. Follow-up clears the finding; PowerShell syntax parsing
+reports zero errors. No compaction or forced shutdown is executed by the agent.
+
+T-020 final repaired standalone verification PASSES. Run the unchanged
+`scripts/verify.mts` entry point used by `npm run verify`; raw output is
+`out/t020-preview/t020-repair-verify.log`. Strict host/webview/tooling types,
+lint, all 587 unit tests in 53 files, production builds and the 24-file,
+646.48-KB VSIX dry run pass with zero errors and zero warnings. No runtime
+source change follows either this run or the passing Windows full gate.
+Stage only the 11 reviewed repair/evidence files; leave the owner's pre-existing
+T-015 hunks and unrelated untracked files untouched. Fresh actual-candidate
+three-platform CI and the Linux diagnostic failure remain open in this chat.
 
 ### Milestone 3 manual QA (editing)
 - [ ] Edit, save, close, reopen: the change persisted. Edit then revert: the file is unchanged.
@@ -3283,3 +3539,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - v0.1 T-005 fixtures (2026-10-09): Linked inventory, runtime recipes and generator evidence; documented format applicability. Corrected the impossible WITHOUT ROWID/no-primary-key QA item to match approved FR-020.
 - v0.1: Initial version.
 - T-020 preview (2026-10-14): Record exact coverage, red-first repairs, two failed host initialization records and final 572-unit/52-host full with explicit HOST-001 warning. Preserve original budgets, all four narrow diagnostic families and no-retry-to-green; owner preview/review and new-code CI remain separate.
+- T-020 owner QA (2026-10-14): Record installed/enabled verified runtime and the owner's explicit visual checks 1-5 PASS. Preserve automated evidence, cold-paint/remote limits and pending fresh review; no code or fixture changes.
+- T-020 first CI failure (2026-10-14): Confirm 38539935087/attempt 1/256ebb2 fails Ubuntu on 30 Chromium GPU mailbox errors despite passing tests; Windows/macOS succeed. Preserve the failure and diagnostic policy; investigate without claiming a repair or three-platform pass.
+- T-020 WSL diagnostics (2026-10-14): Preserve mounted/native probe failures and the later instrumented six-case pass with exact HOST-001 records. No GPU failure reproduction or source repair; retain unknown timeout cause and fresh-context investigation/review.
+- T-020 independent repairs (2026-10-14): Owner authorizes fresh-context review in this chat. Record three confirmed red-first reader/controller fixes, independent follow-up and 48 focused passing cases. Preserve broad/Mesa/stage-trace failures and exact diagnostics; no GPU repair or weakened gate is claimed.
+- T-020 repaired gates (2026-10-14): Record red-first genuine sparse fixtures and independently cleared repairs, final 587-unit/52-host Windows full with explicit HOST-001, and retained native Linux setup/read-only/SIGBUS and rejected X11/Mesa failures. Prepare independently reviewed owner-run compaction without executing it or claiming a GPU repair or three-platform pass.

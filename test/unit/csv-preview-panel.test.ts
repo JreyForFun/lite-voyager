@@ -29,7 +29,7 @@ function deferred() {
 }
 const result: PreviewResult = { columns: ['value'], rows: [['9007199254740993']], delimiter: ',', header: true,
   bytesRead: '10', totalBytes: '10', reachedEnd: true, notice: '', threadId: 1 };
-beforeEach(() => { vi.clearAllMocks(); mocks.dialog.mockResolvedValue(undefined); });
+beforeEach(() => { vi.clearAllMocks(); mocks.dialog.mockResolvedValue(undefined); mocks.error.mockResolvedValue(undefined); });
 
 test('FR-004: Given a new preview, When messages arrive before/after completion, Then the current context receives state and old contexts have no effect', async () => {
   const view = panel(); const task = deferred(); mocks.panel.mockReturnValue(view);
@@ -143,6 +143,24 @@ test('FR-004: Given failed webview transport, When opening, Then an actionable e
   expect(await controller.open(uri())).toBeUndefined();
   expect(task.loader.preview).not.toHaveBeenCalled(); expect(controller.sessions(uri())).toEqual([]);
   expect(mocks.error).toHaveBeenCalledWith(expect.stringMatching(/frame.*ready.*Reopen/iu)); controller.dispose();
+});
+
+test.each(['remote', 'construction', 'transport'] as const)('FR-004: Given %s failure and an undismissed error notification, When opening, Then the command settles after cleanup without waiting for dismissal', async (failure) => {
+  const view = panel(); const task = deferred(); mocks.panel.mockReturnValue(view);
+  if (failure === 'transport') { view.webview.postMessage.mockResolvedValue(false); }
+  const controller = new CsvPreviewController('/extension', () => {
+    if (failure === 'construction') { throw new Error('Loader unavailable'); } return task.loader;
+  });
+  let dismiss: () => void = () => {};
+  mocks.error.mockImplementation(() => new Promise<undefined>((accept) => { dismiss = () => { accept(undefined); }; }));
+  let settled = false;
+  const opening = controller.open(uri(failure === 'remote' ? 'vscode-remote' : 'file')).then((session) => { settled = true; return session; });
+  try {
+    await new Promise<void>((accept) => { setImmediate(accept); });
+    expect(mocks.error).toHaveBeenCalledOnce(); expect(settled).toBe(true);
+    expect(await opening).toBeUndefined(); expect(controller.sessions(uri())).toEqual([]);
+    expect(task.loader.preview).not.toHaveBeenCalled();
+  } finally { dismiss(); await opening; controller.dispose(); }
 });
 
 test('FR-004: Given closure before transport initializes, When disposing the panel, Then opening settles without a worker, timeout or late revival', async () => {

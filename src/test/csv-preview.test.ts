@@ -1,9 +1,10 @@
 import * as assert from 'node:assert/strict';
-import { mkdtemp, open, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
 import type { CsvPreviewSession } from '../editor/csv-preview';
+import { createSparseCsv } from './csv-preview-fixture';
 
 async function preview(path: string): Promise<CsvPreviewSession> {
   const session = await vscode.commands.executeCommand<CsvPreviewSession>('lite-voyager.csvPreview', vscode.Uri.file(path));
@@ -48,8 +49,7 @@ suite('T-020 real CSV preview', () => {
     const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-preview-large-host-'));
     const path = join(directory, 'large.csv'); let session: CsvPreviewSession | undefined;
     try {
-      await writeFile(path, `id,name\n${Array.from({ length: 101 }, (_, index) => `${String(index)},name`).join('\n')}\n`);
-      const file = await open(path, 'r+'); try { await file.truncate(3_000_000_000); } finally { await file.close(); }
+      await createSparseCsv(path, `id,name\n${Array.from({ length: 101 }, (_, index) => `${String(index)},name`).join('\n')}\n`, 3_000_000_000);
       session = await preview(path); assert.equal(session.state.phase, 'ready');
       assert.equal(session.state.preview.rows.length, 100);
       assert.ok(BigInt(session.state.preview.bytesRead) <= 65_536n); await rendered(session);

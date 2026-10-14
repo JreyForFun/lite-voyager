@@ -107,10 +107,15 @@ export class CsvPreviewController implements vscode.Disposable {
   private disposed = false;
   constructor(private readonly extensionPath: string, private readonly createLoader: (directory: string) => PreviewLoader<CsvPreviewResult> = (directory) => new CsvPreviewLoader(directory)) {}
   sessions(uri: vscode.Uri): CsvPreviewSession[] { return [...this.active].filter((session) => session.uri.toString() === uri.toString()); }
+  private showFailure(message: string): void {
+    // A notification resolves only on dismissal. Command cleanup must finish
+    // independently; the closing host may also reject notification delivery.
+    void vscode.window.showErrorMessage(message).then(undefined, () => {});
+  }
   async open(input?: vscode.Uri): Promise<CsvPreviewSession | undefined> {
     const uri = input ?? (await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFolders: false, filters: { 'CSV / TSV': ['csv', 'tsv'] }, title: 'Preview CSV / TSV in Lite Voyager' }))?.[0];
     if (uri === undefined || this.disposed) { return undefined; }
-    if (uri.scheme !== 'file') { await vscode.window.showErrorMessage('CSV preview supports saved local files only. Save a local CSV or TSV copy and reopen it.'); return undefined; }
+    if (uri.scheme !== 'file') { this.showFailure('CSV preview supports saved local files only. Save a local CSV or TSV copy and reopen it.'); return undefined; }
     const started = performance.now();
     const directory = join(this.extensionPath, 'dist');
     // Setting options after creation would send the still-empty initial HTML
@@ -119,13 +124,13 @@ export class CsvPreviewController implements vscode.Disposable {
       { enableScripts: true, localResourceRoots: [vscode.Uri.file(directory)], retainContextWhenHidden: true });
     let session: CsvPreviewSession;
     try { session = new CsvPreviewSession(uri, panel, directory, this.createLoader(directory), () => { this.active.delete(session); }, started); }
-    catch { panel.dispose(); await vscode.window.showErrorMessage('Unable to create the CSV preview. Rebuild the extension and reopen the file.'); return undefined; }
+    catch { panel.dispose(); this.showFailure('Unable to create the CSV preview. Rebuild the extension and reopen the file.'); return undefined; }
     this.active.add(session);
     if (!await session.initialized) {
       await session.finished;
       const failure = session.state.phase === 'error' ? session.state.message : undefined;
       session.dispose(); panel.dispose(); await session.closed;
-      if (failure !== undefined) { await vscode.window.showErrorMessage(failure); }
+      if (failure !== undefined) { this.showFailure(failure); }
       return undefined;
     }
     if (this.disposed || session.state.phase === 'cancelled') { return undefined; }

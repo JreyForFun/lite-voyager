@@ -67,6 +67,7 @@ Created:
 - `src/loaders/csv-preview-reader.ts`
 - `src/worker/csv-preview-worker.ts`
 - `src/test/csv-preview.test.ts`
+- `src/test/csv-preview-fixture.ts` (disposable sparse test data; Windows uses built-in fsutil before expansion)
 - `webview/csv-preview.ts`
 - `webview/csv-preview.css`
 - `test/unit/file-loader.test.ts`
@@ -74,6 +75,7 @@ Created:
 - `test/unit/csv-preview-ui.test.ts`
 - `test/unit/csv-preview-panel.test.ts`
 - `test/unit/csv-preview-snapshot.test.ts`
+- `test/unit/csv-preview-fixture.test.ts` (real OS sparse-file attribute/block verification)
 
 Modified:
 - `.vscodeignore`
@@ -96,3 +98,23 @@ Modified:
 
 Build output and the local VSIX are generated, ignored artifacts. Existing
 static fixtures and the owner's unrelated working-tree files are unchanged.
+
+## Reviewed follow-up repairs
+
+The follow-up to commit `256ebb2` changes only:
+- `src/loaders/csv-preview-reader.ts` and `test/unit/csv-preview.test.ts`
+  (unscanned UTF-8 tails and POSIX FIFO safety, with failing regressions first).
+- `src/editor/csv-preview.ts` and `test/unit/csv-preview-panel.test.ts`
+  (failure cleanup completes without waiting for notification dismissal).
+- `src/test/csv-preview-fixture.ts`, `test/unit/csv-preview-fixture.test.ts`
+  and `src/test/csv-preview.test.ts` (genuine sparse disposable fixtures;
+  the original 3 GB size, read bounds and timing assertions remain intact).
+- This guide, `PROGRESS.md`, `specs/TASKS.md` and `specs/VALIDATION.md`
+  (file inventory and passing/failing evidence).
+
+Independent review clears these repairs. Windows full passes 587 unit and
+52 integration cases with one explicitly recorded HOST-001 warning. Linux
+full and fresh candidate CI remain open; T-020 is not yet ticked. Run
+`npm run verify` and `npm run verify:full`; Linux's full command is
+`dbus-run-session -- xvfb-run -a npm run verify:full`. All failed probes
+remain recorded in `specs/VALIDATION.md`.
