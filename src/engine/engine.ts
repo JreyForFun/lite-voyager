@@ -45,7 +45,12 @@ export interface Engine {
   close(): Promise<void>;
 }
 
-export interface Cursor { columns: string[]; rows: Iterable<unknown[]>; close(): void; }
+export interface Cursor {
+  columns: string[]; rows: Iterable<unknown[]>;
+  /** Before reading rows, discard up to count without decoding unrequested values; return the actual count. */
+  skipRows?(count: number): number;
+  close(): void;
+}
 /** Worker-only implementations of the common database operations. */
 export interface ReadBackend {
   cursor(sql: string, parameters: Parameter[]): Cursor;

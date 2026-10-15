@@ -84,6 +84,22 @@ All exact data/hashes, 80 pages, timing, sample coverage and unchanged memory
 guards pass. Prior failures stay in VALIDATION; T-021 remains unchecked only for
 owner push and fresh actual-candidate three-platform CI.
 
+Second CI run 38706558502/f1be89d passes Windows/Ubuntu but fails macOS at
+51,216,384-byte actual paging growth. The native cursor now traverses unrequested
+offset rows without Buffer/TEXT decoding, using the same iterator and exact skipped
+count. Exports still traverse/decode every row. Red-first allocation, one-execution,
+fidelity and end-count regressions plus independent review pass. Source-skip-only
+full subsequently passes, but
+RSS still shows transient worker reserve growth; the reviewed final configuration
+uses a 4-MiB database-worker nursery, with the import worker's 8-MiB setting and
+default old/large-object limits unchanged. The 16-MiB record/page-refusal/recovery
+check passes. Final standalone passes 668 units/65 files with zero diagnostics;
+final full passes 668 units/all 57 hosts with one exact reported HOST-001 warning.
+Final peaks 373,563,392 /404,877,312 bytes and paging growth
+31,764,480 /26,832,896 bytes pass all unchanged guards and exact-data/hash/80-page
+checks. Only owner push/fresh three-platform CI remains. No workload, limit or
+warning policy is relaxed; unobserved repaired macOS success is not claimed.
+
 Automated acceptance coverage:
 
 - `test/unit/csv-import.test.ts`: both engines, exact int64/REAL/text, late
@@ -140,6 +156,7 @@ Modified:
 
 - `.vscodeignore`, `esbuild.js`, `package.json`
 - `src/extension.ts`, `src/protocol.ts`
+- `src/engine/engine.ts`, `src/engine/node-sqlite.ts`, `src/engine/read-engine.ts`
 - `src/loaders/file-loader.ts`, `src/loaders/csv-loader.ts`, `src/loaders/csv-preview-reader.ts`
 - `src/worker/csv-preview-worker.ts`, `src/worker/db-process.ts`
 - `src/test/sqlite-memory-support.ts`
@@ -158,6 +175,7 @@ Created:
 - `scripts/csv-memory.mts`, `src/test/csv-memory-cache.ts`, `src/test/csv-memory-metadata.ts`
 - `src/test/csv-import-data-check.ts`, `test/unit/csv-import-data-check.test.ts`
 - `src/test/csv-memory-support.ts`, `test/unit/csv-memory-phases.test.ts`
+- `test/unit/native-paging.test.ts`
 - `src/test/csv-import.test.ts`, `src/test/csv-import-memory.test.ts`, `src/test/csv-import-memory-observer.ts`
 - `test/unit/csv-import.test.ts`, `test/unit/csv-import-panel.test.ts`, `test/unit/csv-import-ui.test.ts`
 - `test/unit/csv-import-view.test.ts`, `test/unit/csv-import-fixture.test.ts`, `test/unit/csv-import-memory.test.ts`

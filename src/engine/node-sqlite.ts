@@ -43,9 +43,23 @@ export class NodeSqliteEngine implements ReadBackend {
     statement.setReturnArrays(true);
     const iterator = statement.iterate(...parameters);
     const decoder = this.decoder;
+    let exhausted = false;
     return {
       columns,
+      // Advance the same native iterator. Offset rows never need Buffer/text
+      // decoding, and an exhausted iterator still gives the exact observed total.
+      skipRows: (count) => {
+        let skipped = 0;
+        while (!exhausted && skipped < count) {
+          if (iterator.next().done) { exhausted = true; }
+          else { skipped++; }
+        }
+        return skipped;
+      },
       rows: (function* () {
+        // A native iterator can restart after exhaustion. Never re-enter it
+        // after skipRows reaches the end, or rerun nondeterministic SQL.
+        if (exhausted) { return; }
         for (const row of iterator) {
           const value: unknown = row;
           if (!Array.isArray(value)) { throw new Error('Invalid native result shape.'); }
@@ -57,7 +71,7 @@ export class NodeSqliteEngine implements ReadBackend {
           }) : value as unknown[];
         }
       })(),
-      close: () => { iterator.return?.(); },
+      close: () => { exhausted = true; iterator.return?.(); },
     };
   }
 

@@ -32,9 +32,9 @@ process.on('message', (request: DatabaseHelperRequest) => {
   if (failed) { return; }
   try {
     if (request.type === 'open' && worker === undefined) {
-      // Repeated TEXT pages create short-lived decoding objects. Collect them
-      // promptly, as in the import worker; keep default old/large-object limits.
-      worker = new Worker(request.workerPath, { workerData: request.options, resourceLimits: { maxYoungGenerationSizeMb: 8 } });
+      // Paging creates short-lived iterator/decoding objects. A small nursery
+      // collects them promptly; old/large-object limits stay at runtime defaults.
+      worker = new Worker(request.workerPath, { workerData: request.options, resourceLimits: { maxYoungGenerationSizeMb: 4 } });
       worker.on('message', (message: DatabaseResponse) => {
         if (message.type === 'exportProgress') { progress(message); }
         else { if (message.type === 'exported' || message.type === 'queryFailed') { latestProgress = undefined; } reply(message); }

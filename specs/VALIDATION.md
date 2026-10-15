@@ -1549,6 +1549,114 @@ Local acceptance, delegated visual QA and independent review are complete. Keep
 T-021 unchecked until owner push and fresh actual-candidate Windows/macOS/Ubuntu
 CI pass. No owner visual-QA wait, T-022 work, release or milestone closure.
 
+T-021 second post-push CI and native offset repair (2026-10-15):
+
+[Run 38706558502](https://github.com/JreyForFun/lite-voyager/actions/runs/38706558502),
+attempt 1, tests exact `f1be89d0437e70ae1197b73f02965e416ac59d9c`. Public GitHub
+API metadata confirms Windows job 116327295157 and Ubuntu job 116327295673 PASS
+their locked installs and applicable full checks. macOS job 116327295569 installs
+successfully but FAILS full verification. No raw warning counts are claimed for
+the successful remote jobs. The owner's macOS arm64 log passes 666 units/64 files
+(76.07 seconds) and 56 host cases, then the 1-GB CSV's actual paging growth fails:
+`Repeated-paging memory growth 51216384 exceeds 50 MB.`
+
+Its five initial browser samples have host/helper 127,582,208 /90,587,136 bytes;
+final samples reach 151,535,616 /117,850,112 bytes. Host grows 23,953,408 bytes
+and helper 27,262,976 bytes. All 60 Browse/20 SQL pages complete before failure.
+The macOS calibration passes, but no 5-GB CSV completion or successful strict
+runtime-log scan is established. Keep this run failed; no unchanged retry.
+
+The existing small nursery reduced growth but does not remove needless work:
+collectPage discards offset rows after the native cursor hex-decodes their TEXT
+into Buffer/string objects. A failing-first regression reads 100 rows at offset
+6,000 from 7,000 populated 4,095-character rows: 6,101 decoder calls instead of
+101 (including existing lookahead). Its companion one-execution/fidelity case
+already passes. Do not raise memory limits or move the settled baseline.
+
+Add an optional worker-only Cursor.skipRows operation, used after page-address
+validation. Native skips advance the same raw iterator and report actual skipped
+rows before TEXT decoding. Fallback keeps its original streaming path. A first
+candidate exposes native iterator restart after exhaustion, failing both past-end
+total checks; guard exhaustion explicitly instead of weakening those assertions.
+The corrected 20 focused native/fidelity/legacy-memory/phase tests pass. Exact-end
+and empty-result assertions are also added before final verification.
+
+Returned/lookahead rows keep the existing fatal decoding and exact type handling.
+Unrequested offset rows are traversed without value conversion; the SQL executes
+once, without rewriting parameters, issuing a count query or retaining rows.
+Exports never invoke skipRows and still decode every result. A fresh read-only
+independent review finds no concrete defect. Build/integration compilation pass.
+All memory, timing, sample-coverage and diagnostic guards remain unchanged.
+Source-skip-only `npm run verify` PASS: 668 tests/65 files (234.65-second units), strict
+host/webview/tooling types, lint, build and 28-file/670.90-KB package, zero errors
+and warnings. This includes exact-end/empty results and the complete existing
+native/fallback, large-record and export coverage.
+
+Source-skip-only full verification PASS, before the final nursery change:
+668 units/65 files (249.44-second units), all 57 hosts (13 minutes), strict logs.
+Profile `out/integration-profile-EAWi3C`, Windows x64 /VS Code 1.140.0 / Node 24.21.0.
+Both populated CSVs complete all exact-data/hash and 60 Browse/20 SQL page checks:
+1/5-GB peaks 395,771,904 /429,641,728 bytes, paging growth 39,489,536 /42,983,424.
+Sample gaps 809.2592 /972.5332 ms; first DOM 279.8724 /638.7133 ms; host timer
+gaps 42.7375 /99.1710 ms. Cross-file peak-growth guard passes. Sole approved log
+record: `20261015T171023/window1/renderer.log:10`, original severity `warning`,
+`VSCODE-HOST-001`, exact `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This full run is not warning-free. Its passing result is preserved separately
+from the final configuration; it is not evidence of a macOS repair pass.
+
+The 1-GB samples still show host/helper growth 21,741,568 /17,747,968 bytes.
+Removing decoding reduces work, but transient raw hex/iterator allocations still
+fill the worker's nursery. Independent read-only assessment favors a 4-MiB
+database-worker nursery for margin against the actual macOS failure. This is
+not proof of a particular RSS saving or macOS pass; more minor GC is a tradeoff.
+Importer nursery stays 8 MiB, default old/large-object limits stay unchanged.
+No further sampling/baseline/threshold change is made. The existing 16-MiB
+record/page-refusal/exact-query-recovery test passes on this final configuration.
+Independent final review finds no concrete defect, including exact-end/empty
+results. Final-configuration `npm run verify` PASS: 668 tests/65 files,
+238.36-second units, all types/lint/build and 28-file/670.90-KB packaging checks,
+zero errors and warnings.
+
+Final 4-MiB configuration `npm run verify:full` PASS: 668 units/65 files
+(193.12-second units), all types/lint/build/package checks, integration compilation,
+all 57 hosts (12 minutes), then strict runtime logs. Profile
+`out/integration-profile-JKelee`, Windows x64 /VS Code 1.140.0 / Node 24.21.0.
+Existing native/fallback exact cell, SQL, export, source-safety, independent-view
+and cancellation checks pass. CSV controls first DOM 441.8097 /238.5373 ms;
+primary cancellation 46.7189 ms. Existing SQLite 1/5-GB peaks are
+234,954,752 /245,448,704 bytes; cross-file peak growth 10,493,952 bytes.
+
+- CSV calibration: one million rows/all 80 pages, peak 287,137,792 bytes, paging
+  growth 1,167,360 bytes. 50 samples, 28 import/20 browser, 5 baseline/10 paging/
+  5 final; maximum gap 693.7427 ms. Renderer peak 960,978,944 bytes is separate.
+- 1-GB CSV: 1,000,013,832 bytes /244,144 rows, exact full-data SQL and all
+  60 Browse/20 SQL pages PASS. Peak 373,563,392 bytes; actual paging growth
+  31,764,480 bytes. 139 samples, 89 import/47 browser, 5 baseline/26 paging/5 final.
+  Maximum sample gap 714.6748 ms; first DOM 255.3729 ms; host timer gap 43.6710 ms.
+  Renderer peak 636,588,032 bytes is separate.
+- 5-GB CSV: 5,000,003,592 bytes /1,220,704 rows, exact full-data SQL and all
+  60 Browse/20 SQL pages PASS. Peak 404,877,312 bytes; actual paging growth
+  26,832,896 bytes. 480 samples, 378 import/100 browser, 5 baseline/24 paging/5 final.
+  Maximum sample gap 661.8453 ms; first DOM 457.2054 ms; host timer gap 35.7311 ms.
+  Renderer peak 622,387,200 bytes is separate. Cross-file peak growth 31,313,920
+  bytes passes the unchanged 50-MB guard. No sample/window/identity check changes.
+- Before/after source bytes and SHA-256 stay exact: 1-GB
+  `d9ca2d901ce394b65f350d58e6acfb7aa5de1ff6c709ef59cc165cfb0de68789`;
+  5-GB `350d6e4f39ac41dfa814bb65b80c11f24ff58469c4df6beb8d2b6888cb871e68`.
+  The warm single-TEXT-column/sampled host+helper scope remains; renderer is
+  separate. Physical paint, unsampled peaks and a repaired macOS pass are not claimed.
+
+The final full log scan accepts exactly one record:
+`20261015T173711/window1/renderer.log:10`, original severity `warning`,
+`VSCODE-HOST-001`, exact `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This final full run is not warning-free. Earlier source-skip-only full has its
+separate exact record above. Every other warning and every error still fails.
+
+Final local acceptance and independent review pass; unchanged delegated visual QA
+remains valid. All old failures and every memory/timing/sample/diagnostic guard
+remain. Keep T-021 unchecked only for owner push and fresh actual-candidate
+Windows/macOS/Ubuntu CI. No owner visual-QA wait or T-022 work.
+
 #### T-020 CSV / TSV preview implementation (2026-10-14)
 
 Owner authorizes decisions, fixture edits and needed repairs, then explicitly
@@ -4105,6 +4213,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-021 native paging repair (2026-10-15): Record exact second-CI jobs/SHA and macOS failure, retained red allocation/iterator-total failures, independent reviews and separate source-skip/final 4-MiB gates. Final 668 units/65 files and 57 hosts pass with exact HOST-001 reporting and unchanged guards; no repaired macOS or warning-free full claim. Retain owner push/fresh CI.
 - T-021 CI repair (2026-10-15): Record exact failed CI jobs/SHA, red-first phase regressions, real 80-page failures, residency diagnosis and independently reviewed worker allocation repair. Preserve every failed run and unchanged limit. Final 666-unit clean standalone and 57-host full pass; report the sole exact HOST-001 warning and retain actual-candidate three-platform CI as the open gate.
 - T-021 reviewed local handoff (2026-10-15): Record independently cleared export-close repair, 663-unit/57-host full with exact sole HOST-001 record and populated CSV peaks 375.7/343.9 MB. After a help-text-only cleanup, fresh rebuilt visual/native-import inspection and final 663-test zero-diagnostic standalone pass; retain the third rejected debugging launch and all physical/CI limits. Only owner push/actual-candidate CI remain external.
 - T-021 delegated QA/review (2026-10-15): Owner removes the visual-QA wait and retains push/CI. Record scoped actual VS Code visual passes, unavailable native helper, rejected debugging-flag instrumentation runs, exact HOST-001 runtime record, fresh independent export-close finding, two red-first notification repairs and cleared follow-up. Preserve the strict-type regression failure and all existing gates/limits.

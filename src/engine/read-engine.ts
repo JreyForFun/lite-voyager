@@ -38,7 +38,7 @@ export function collectPage(cursor: Cursor, address: PageAddress): EnginePage {
     const { offset, limit } = pageAddress(address);
     const rows: Cell[][] = [];
     let bytes = Buffer.byteLength(JSON.stringify({ columns: cursor.columns, rows, hasMore: false }));
-    let skipped = 0;
+    let skipped = cursor.skipRows?.(offset) ?? 0;
     for (const row of cursor.rows) {
       if (skipped < offset) { skipped++; continue; }
       if (rows.length === limit) { return finish(true); }

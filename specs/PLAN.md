@@ -1113,6 +1113,25 @@ bytes. All source/data, 80-page, phase/identity, timing and cross-file guards pa
 Exact diagnostics and retained failures are in VALIDATION. Only owner push/new
 three-platform CI remains; no checkbox or policy is relaxed.
 
+Second T-021 CI run 38706558502/f1be89d passes Windows/Ubuntu but fails macOS
+at 51,216,384-byte actual paging growth. Preserve the failure and every guard.
+Remove offset-row Buffer/TEXT decoding and bound transient nursery growth: an
+optional Cursor.skipRows advances the same native iterator and reports actual
+skipped rows; fallback and full export keep their existing traversal. Guard native
+exhaustion against restart. Red-first tests require 101 decodes for a 100-row page
+at offset 6,000, exact end totals and one nondeterministic execution. Corrected
+focused checks and independent review pass. Source-skip-only 668-unit/57-host full
+also passes, with exact HOST-001 reporting retained in VALIDATION. Its RSS still
+shows transient reserve growth; adopt the reviewed 4-MiB database-worker nursery
+for additional margin while the import worker's 8-MiB setting and default old/
+large-object limits remain unchanged. The 16-MiB page-refusal/recovery guard passes.
+Final standalone passes 668 tests/65 files with zero diagnostics; final full passes
+the same units and all 57 hosts with one exact reported HOST-001 warning. CSV
+1/5-GB peaks 373,563,392 /404,877,312 bytes and actual paging growth
+31,764,480 /26,832,896 bytes pass every unchanged guard, exact-data/hash and
+80-page check. Final independent review finds no concrete defect. Only owner
+push/new-code three-platform CI remains; no repaired macOS pass is predicted.
+
 ## 6. Loader interface
 
 ```ts
@@ -1221,6 +1240,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-021 native paging repair (2026-10-15): Preserve run 38706558502/f1be89d outcomes; remove offset-row decoding while preserving one iterator/execution, exact totals and full export. Guard exhausted native iteration and adopt reviewed 4-MiB DB nursery, retaining importer 8 MiB and default old/large limits. Final clean 668-test standalone and 57-host full pass; fresh actual-candidate CI remains required.
 - T-021 CI repair (2026-10-15): Separate startup/import from real paging while retaining the complete absolute-peak window and every guard. Preserve the three-platform CI and newly exposed local paging failures; apply the reviewed existing nursery setting to the database worker. Final clean 666-unit standalone and 57-host full pass, with exact HOST-001 reporting and fresh owner-pushed CI still required.
 - T-021 delegated QA/review (2026-10-15): Replace the owner visual-QA wait with assistant inspection and fresh independent review. Preserve instrumentation failure/observation limits; repair export errors after imported-tab closure with one early closed-session notifier and failing-first tests. Owner retains push and actual-candidate CI.
 - T-021 import implementation (2026-10-15): Add scoped worker staging, inference, exclusive publication/cleanup, existing browser handoff and bounded progress design without dependencies. Record real populated CSV measurements and Windows native sampler/GC decisions; preserve failed evidence, all thresholds and owner QA/review/CI gates.
