@@ -6,7 +6,7 @@ export type PreviewResult = FilePreviewResult;
 export interface Progress { bytes: string; totalBytes: string; rows: string; phase?: 'reading' | 'publishing'; engine?: EngineName; notice?: string; processId?: number; }
 export interface ImportedTable { name: string; columns: string[]; rowCount: string; engine?: EngineName; notice?: string; }
 /** Internal fresh destination owned by an import worker, never the user's source. */
-export interface ImportTarget { path: string; engine: EngineName; }
+export interface ImportTarget { path: string; engine: EngineName; ownerDirectory?: string; }
 export interface PreviewLoader<Result extends PreviewResult = PreviewResult> {
   readonly extensions: readonly string[];
   preview(path: string, options?: LoadOptions, signal?: AbortSignal): Promise<Result>;

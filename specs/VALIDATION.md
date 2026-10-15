@@ -10,6 +10,81 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ## 1. Three layers of validation
 
+### T-022 storage / SQLite save evidence (2026-10-16)
+
+Owner delegates implementation, fixture changes, fixes and visual QA; owner retains
+push/CI. Acceptance is SPEC FR-007/T-022 and PLAN section 5/T-022. The complete
+file list, coverage, exact failing-first history, independent review and visual
+observation limits are in [docs/t022-storage.md](../docs/t022-storage.md).
+
+An earlier standalone candidate passes 702 units/71 files, types/lint/build and
+28-file/675.26-KB packaging without errors/warnings. It predates the reviewed
+source-identity/cleanup repairs and worker-whitelist fix. Preserve its initial
+two-assertion lint failure and the genuine missing-worker package regression.
+Three independent-review regressions first fail; repaired focused tests and
+independent follow-up clear original-rename overwrite, absent-original save
+refusal and unhandled live cleanup failure. Actual-vsce-list worker inclusion
+now passes. No dependency, guard, deadline or diagnostic policy is relaxed.
+
+Earlier targeted VS Code 1.140.0 tests pass all three T-022 cases. Only approved
+diagnostic: `VSCODE-HOST-001`, original severity `warning`,
+`20261016T021502/window1/renderer.log:10`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+That run is not warning-free and predates the final reviewed host assertions.
+
+Delegated light/dark/narrow/keyboard visual observations pass within their stated
+Chromium scope. Native Computer Use fails its documented recovery. The separate
+visual bridge passes/host exits 0, but the strict runner rejects its exact console
+warning: `Warning: 'remote-debugging-port' is not in the list of known options, but still passed to Electron/Chromium.`
+This failed instrumentation gate is retained; there is no new diagnostic exception
+or retry-to-green. Native OS picker appearance and other platforms are unobserved.
+
+After explicit low-space-decision wiring (its new regression fails first), the
+full gate stops at units: 706 pass / one native foundation test fails, 70 passing
+files / one failing file, 437.89 seconds. Exact failure:
+`test/unit/sqlite-spike.test.ts:169`, `NFR-002: Given zero-byte.sqlite, When opened,
+Then it fails clearly without falling back on database errors`, exceeding its
+existing 5,000-ms test deadline. The full invocation has no package/host/log pass.
+All T-022 units pass; that full invocation remains failed. Preserve
+`out/t022-full.log`. A separate real-helper stage diagnostic completes in 524.516
+ms (invalid open 271.382, recovery open 223.693, query 2.794, close 20.138 ms),
+without reproducing/explaining the timeout. This is diagnostic evidence only.
+No deadline, assertion or automatic unchanged retry is allowed to clear it.
+Owner explicitly answers "Authorize one rerun; retain the failure" on 2026-10-16
+after the reported 706/707 outcome and 524.516-ms diagnostic. This permits exactly
+one unchanged full rerun after the independent host QA, retaining the failed gate
+and unknown cause. It adds no diagnostic exception or permission for more retries.
+
+Independent `npm run test:integration` passes all 60 real-host cases in 15 minutes.
+Unchanged populated 1/5-GB CSV combined peaks are 408,854,528 / 396,554,240 bytes;
+actual paging growth is 29,298,688 / 30,691,328 bytes, with source hashes preserved.
+Its only approved diagnostic is `VSCODE-HOST-001`, severity `warning`, source
+`20261016T024746/window1/renderer.log:10`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This is not warning-free.
+
+The ONE owner-authorized unchanged `npm run verify:full` rerun passes: 707 units /
+71 files in 278.63 seconds, strict types/lint/build, 29-file / 676.66-KB VSIX with
+the save worker, integration compilation and all 60 hosts in 14 minutes. Its only
+approved diagnostic is `VSCODE-HOST-001`, severity `warning`, source
+`20261016T031110/window1/renderer.log:10`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The full run is not warning-free. The explicit one-rerun authorization is consumed;
+the earlier 5-second timeout remains unexplained and retained.
+
+Passing full-run populated 1/5-GB CSV combined peaks: 365,527,040 / 364,597,248
+bytes; actual paging growth: 25,387,008 / 33,861,632 bytes. First-DOM reports:
+482.377 / 505.156 ms; maximum host timer gaps: 60.132 / 48.650 ms. All 60 Browse /
+20 SQL pages per size and source hashes pass. SQLite combined peaks:
+276,332,544 / 284,983,296 bytes; paging growth: 8,011,776 / 14,503,936 bytes;
+source hashes unchanged. Renderer residency remains separate, with sampled warm
+workload/physical-paint limits stated in docs/t022-storage.md. All guards remain
+unchanged. Final standalone `npm run verify` after the full/evidence update also
+passes all 707 units / 71 files (287.38 s), strict types/lint/build and 29-file /
+676.66-KB packaging with zero errors and zero warnings. Only documentation status
+updates follow; code, tests and guards remain unchanged.
+Keep T-022 unchecked for owner-pushed actual-candidate three-platform CI.
+
 ### Layer 1: Automatic gate (every task, every commit)
 
 Two commands, defined in task T-006:
@@ -4238,6 +4313,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-022 implementation (2026-10-16): Record red-first storage/save/review/package repairs, delegated visual scope and independent 60-host pass. The owner's single unchanged full rerun passes 707 units/60 hosts with its exact HOST-001 record; final 707-unit standalone passes with zero errors/warnings. Preserve every guard, prior 706/707 failure, unexplained timeout, rejected debugging launch and actual-candidate three-platform CI gate.
 - T-021 completion (2026-10-15): Independently confirm run 38718762528/attempt 1 at exact e97ea57 and all three successful locked installs/full steps. Close only T-021 with passing local acceptance, delegated QA and independent review; retain failed evidence, exact approved diagnostics and remote raw-log limits.
 - T-021 native paging repair (2026-10-15): Record exact second-CI jobs/SHA and macOS failure, retained red allocation/iterator-total failures, independent reviews and separate source-skip/final 4-MiB gates. Final 668 units/65 files and 57 hosts pass with exact HOST-001 reporting and unchanged guards; no repaired macOS or warning-free full claim. Retain owner push/fresh CI.
 - T-021 CI repair (2026-10-15): Record exact failed CI jobs/SHA, red-first phase regressions, real 80-page failures, residency diagnosis and independently reviewed worker allocation repair. Preserve every failed run and unchanged limit. Final 666-unit clean standalone and 57-host full pass; report the sole exact HOST-001 warning and retain actual-candidate three-platform CI as the open gate.

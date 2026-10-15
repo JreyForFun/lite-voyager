@@ -104,6 +104,14 @@ suite('T-021 production CSV memory', () => {
           await monitor.next();
           session = await vscode.commands.executeCommand<CsvImportSession>('lite-voyager.csvImport', vscode.Uri.file(path)); assert.ok(session); await session.finished;
           assert.equal(session.state.phase, 'ready'); const current = session;
+          // T-022's conservative estimate can exceed this fixture's measured
+          // staging need. Exercise explicit approval, preserving the 13-GB
+          // real-space guard, complete workload, deadlines and memory limits.
+          session.configureImportSpace(({ available, required }) => {
+            assert.ok(available >= 0n && available < required);
+            process.stdout.write(`T-022 explicit low-space acceptance: ${String(available)} available / ${String(required)} estimated bytes; T-021 working-space guard remains unchanged.\n`);
+            return Promise.resolve(true);
+          });
           if (session.firstRowsMs === undefined) {
             await new Promise<void>((accept, reject) => {
               const timer = setTimeout(() => { remove(); reject(new Error('T-021 memory preview DOM deadline.')); }, 15000);

@@ -28,3 +28,15 @@ test('FR-002: Given a built extension, When listing actual VSIX contents, Then b
     expect(files.some((file) => file.includes('browser-fixture') || file.endsWith('.sqlite'))).toBe(false);
   } finally { await rm(directory, { recursive: true, force: true }); }
 }, 30000);
+
+test('FR-007: Given the SQLite save worker build, When listing the actual VSIX whitelist, Then the required worker ships', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-save-package-'));
+  try {
+    for (const name of ['package.json', '.vscodeignore', 'README.md', 'CHANGELOG.md', 'LICENSE']) { await copyFile(name, join(directory, name)); }
+    await mkdir(join(directory, 'dist'));
+    const built = await build({ entryPoints: [resolve('src/worker/sqlite-save-worker.ts')], outfile: join(directory, 'dist/sqlite-save-worker.js'), bundle: true, platform: 'node', format: 'cjs', target: 'es2022', logLevel: 'silent' });
+    expect(built.warnings).toEqual([]);
+    const packaged = await promisify(execFile)(process.execPath, [resolve('node_modules/@vscode/vsce/vsce'), 'ls', '--no-dependencies'], { cwd: directory });
+    expect(packaged.stderr).toBe(''); expect(packaged.stdout.trim().split(/\r?\n/u)).toContain('dist/sqlite-save-worker.js');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+}, 30000);

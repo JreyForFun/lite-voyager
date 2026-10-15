@@ -6,7 +6,7 @@ function escapeHtml(value: string): string {
 
 export interface SqliteEditorAssets { scriptUri: string; styleUri: string; nonce: string; cspSource: string; }
 
-export function sqliteEditorHtml(name: string, state: SqliteEditorState, assets?: SqliteEditorAssets): string {
+export function sqliteEditorHtml(name: string, state: SqliteEditorState, assets?: SqliteEditorAssets, saveContext?: string): string {
   const browser = state.phase === 'opened' && assets !== undefined;
   const csp = browser ? `default-src 'none'; script-src 'nonce-${assets.nonce}'; style-src ${assets.cspSource} 'nonce-${assets.nonce}'; base-uri 'none'; form-action 'none'`
     : "default-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'";
@@ -17,6 +17,10 @@ ${browser ? `<meta name="style-nonce" content="${escapeHtml(assets.nonce)}"><lin
 <body><h1>Lite Voyager</h1><p>${escapeHtml(name)}</p>
 ${state.mode === undefined ? '' : `<aside role="status" aria-label="Database engine mode"><strong>${escapeHtml(state.mode.notice)}</strong></aside>`}
 <p role="${state.phase === 'error' ? 'alert' : 'status'}">${escapeHtml(state.message)}</p>
+${browser && saveContext !== undefined ? `<section aria-label="Save imported database" data-save-context="${escapeHtml(saveContext)}">
+<div class="browser-toolbar"><button id="sqlite-save">Save as SQLite</button><button id="sqlite-save-cancel" disabled>Cancel save</button></div>
+<p id="sqlite-save-status" role="status" aria-live="polite">Save the entire imported database, including all rows and original BLOB bytes.</p>
+<p class="browser-help">Saving keeps this tab open and the original source unchanged. Cancel works until Saving begins.</p></section>` : ''}
 ${browser ? browserShell(assets) : ''}
 </body></html>`;
 }

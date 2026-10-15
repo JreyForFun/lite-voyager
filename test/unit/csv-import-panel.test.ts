@@ -1,14 +1,23 @@
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type * as vscode from 'vscode';
-import { expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import type { Engine } from '../../src/engine/engine';
 import type { FileLoader, ImportedTable } from '../../src/loaders/file-loader';
 import { CsvImportSession } from '../../src/editor/csv-import';
 import { SqliteSession } from '../../src/editor/sqlite-session';
+import { SqliteSaveService } from '../../src/editor/sqlite-save';
+import { TempStorage } from '../../src/storage/temp-storage';
 
 const notifyError = vi.hoisted(() => vi.fn());
+const disk = vi.hoisted(() => ({ low: false }));
+vi.mock('node:fs/promises', async (original) => {
+  const fs = await original<typeof import('node:fs/promises')>();
+  return { ...fs, statfs: async (...args: Parameters<typeof fs.statfs>) => {
+    const result = await fs.statfs(...args); return disk.low ? { ...result, bavail: 0n, bsize: 1n } : result;
+  } };
+});
 vi.mock('vscode', () => ({ Uri: { file: (path: string) => ({ fsPath: path, toString: () => path }) },
   env: { clipboard: { writeText: vi.fn() } }, window: { showSaveDialog: vi.fn(), showErrorMessage: notifyError } }));
 function panel() {
@@ -19,6 +28,8 @@ function panel() {
     dispose: () => { for (const fn of closes) { fn(); } }, receive: (message: unknown) => { for (const fn of receive) { fn(message); } } };
 }
 const preview = { columns: ['a'], rows: [['1']], delimiter: ',' as const, header: true, bytesRead: '4', totalBytes: '4', reachedEnd: true, notice: '', threadId: 1 };
+const fixtureRoots: string[] = [];
+afterEach(async () => { disk.low = false; for (const root of fixtureRoots.splice(0)) { await rm(root, { recursive: true, force: true }); } });
 function engine() {
   const page = { columns: ['a'], rows: [['1']], hasMore: false };
   return { open: vi.fn().mockResolvedValue({ engine: 'node:sqlite', memoryLimited: false, bytes: '4096', needsConsent: false, notice: '', threadId: 1, processId: 1, sqlite: 'test' }),
@@ -26,8 +37,10 @@ function engine() {
     page: vi.fn().mockResolvedValue(page), grid: vi.fn().mockResolvedValue(page), query: vi.fn().mockResolvedValue(page), exportResults: vi.fn(), cancel: vi.fn().mockResolvedValue(undefined), close: vi.fn().mockResolvedValue(undefined) } satisfies Engine;
 }
 async function fixture(loader: FileLoader, started?: number) {
-  const directory = await mkdtemp(join(tmpdir(), 'lv-import-panel-')); const view = panel(); const db = engine();
-  const session = new CsvImportSession({ fsPath: join(directory, 'source.csv') } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started);
+  const root = await mkdtemp(join(tmpdir(), 'lv-import-panel-')); fixtureRoots.push(root);
+  const directory = join(root, 'storage'); await mkdir(directory); const source = join(root, 'source.csv'); await writeFile(source, 'a\n1\n');
+  const view = panel(); const db = engine();
+  const session = new CsvImportSession({ fsPath: source } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started);
   await session.finished; return { directory, view, db, session };
 }
 
@@ -49,6 +62,52 @@ test('FR-004: Given import controls and preview, When applying header-off and st
     expect(run.session.browserProcessId).toBe(1);
     expect(run.view.webview.html).toContain('sql-editor'); expect(run.view.webview.html).toContain('records');
   } finally { run.view.dispose(); await run.session.closed; expect(await readdir(run.directory)).toEqual([]); await rm(run.directory, { recursive: true, force: true }); }
+});
+
+test('FR-007: Given an opened import, When rendering SQL, Then Save as SQLite belongs to this import context only', async () => {
+  const run = await fixture({ extensions: ['csv'], preview: () => Promise.resolve(preview), import: async (_source, target) => { await writeFile(target.path, 'owned'); return []; } });
+  try {
+    await run.session.startImport(); expect(run.view.webview.html).toContain('id="sqlite-save"');
+    expect(run.view.webview.html).toContain(`data-save-context="${run.session.contextId}"`);
+  } finally { run.view.dispose(); await run.session.closed; }
+});
+
+test('FR-007: Given a SQLite save still settling after closure, When publication or cleanup fails, Then shutdown waits and notifies the exact actionable error once', async () => {
+  notifyError.mockClear(); let fail!: () => void; const failure = 'SQLite save could not publish the complete database. Check permissions and retry.';
+  const saving = vi.spyOn(SqliteSaveService.prototype, 'run').mockImplementation(() => new Promise((_accept, reject) => { fail = () => { reject(new Error(failure)); }; }));
+  const settled = vi.spyOn(SqliteSaveService.prototype, 'settled').mockRejectedValue(new Error(failure));
+  const run = await fixture({ extensions: ['csv'], preview: () => Promise.resolve(preview), import: async (_source, target) => { await writeFile(target.path, 'owned'); return []; } });
+  try {
+    await run.session.startImport(); const task = run.session.saveAsSqlite(); run.view.dispose(); let closed = false;
+    void run.session.closed.then(() => { closed = true; }); await Promise.resolve(); expect(closed).toBe(false);
+    fail(); await task; await run.session.closed;
+    expect(notifyError).toHaveBeenCalledExactlyOnceWith(failure); expect(await readdir(run.directory)).toEqual([]);
+  } finally { saving.mockRestore(); settled.mockRestore(); run.view.dispose(); await run.session.closed; }
+});
+
+test('FR-007: Given a live import failure and locked storage, When cleanup fails, Then the operation settles visibly and retry cleans the retained directory before creating another', async () => {
+  notifyError.mockClear(); const remove = vi.spyOn(TempStorage.prototype, 'remove');
+  remove.mockRejectedValueOnce(new Error('locked')).mockRejectedValueOnce(new Error('still locked'));
+  const load = vi.fn<FileLoader['import']>().mockRejectedValueOnce(new Error('Disk full. Free space and retry.')).mockImplementation(async (_source, target) => { await writeFile(target.path, 'valid'); return []; });
+  const run = await fixture({ extensions: ['csv'], preview: () => Promise.resolve(preview), import: load });
+  try {
+    await expect(run.session.startImport()).resolves.toBeUndefined(); expect(run.session.state.phase).toBe('error');
+    expect(notifyError).toHaveBeenCalledWith(expect.stringMatching(/storage.*removed.*permissions/iu));
+    expect(await readdir(run.directory)).toHaveLength(1);
+    await run.session.refresh({}); await run.session.startImport();
+    expect(load).toHaveBeenCalledTimes(1); expect(await readdir(run.directory)).toHaveLength(1);
+    await run.session.refresh({}); await run.session.startImport(); expect(load).toHaveBeenCalledTimes(2);
+    expect(run.session.state.phase).toBe('opened'); expect(await readdir(run.directory)).toHaveLength(1);
+  } finally { remove.mockRestore(); run.view.dispose(); await run.session.closed; }
+});
+
+test('FR-007: Given low estimated storage and explicit headless approval, When importing, Then the exact preflight decision is exercised without disabling the disk check', async () => {
+  const run = await fixture({ extensions: ['csv'], preview: () => Promise.resolve(preview), import: async (_source, target) => { await writeFile(target.path, 'owned'); return []; } });
+  try {
+    const approve = vi.fn().mockResolvedValue(true); run.session.configureImportSpace(approve); disk.low = true;
+    await run.session.startImport(); expect(run.session.state.phase).toBe('opened');
+    expect(approve).toHaveBeenCalledExactlyOnceWith({ available: 0n, required: 64n * 1024n * 1024n + 12n });
+  } finally { run.view.dispose(); await run.session.closed; }
 });
 
 test('NFR-004: Given time spent creating an import panel, When preview DOM reports arrive, Then first-row timing includes the command start', async () => {

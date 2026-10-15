@@ -285,6 +285,51 @@ storage, other loaders and production opening menus remain T-021 through T-026.
 
 **FR-007 (P1) Temporary storage.** Imported data lives in a temp SQLite file in the extension's storage folder. Check free disk space before import. Clean up on close, and clean up orphaned temp files on next startup. Offer "Save as SQLite file".
 
+#### T-022 storage and SQLite save acceptance (owner-delegated, 2026-10-15)
+
+- Given a full import, check the storage filesystem's available bytes first using
+  exact integer arithmetic. Estimate three source copies plus 64 MiB for staging,
+  final tables and SQLite overhead. Explain that this is an estimate, not a
+  reservation or guarantee. Below the estimate, offer Cancel or explicit Import
+  anyway; no primary-engine file-size cap is introduced. An unavailable disk
+  check or actual exhaustion fails visibly and permits retry. Preview needs no
+  full-import storage or preflight. Existing fallback caps remain unchanged.
+- Each new session has a versioned private directory with its host PID in its
+  name. Register helper PIDs before allowing them to access storage. On close,
+  cancel work and await helper/SQLite-save-worker exit before deleting the owned
+  directory. On startup, remove only recognized directories whose host and every
+  registered helper are demonstrably absent. Treat permission/unknown liveness
+  as live; PID reuse retains storage conservatively. Never traverse a linked
+  session directory or delete unknown/legacy directories, user files or live
+  sessions in another window. Report cleanup failures with recovery guidance.
+- Given an opened imported database on either engine, Save as SQLite offers a
+  local destination and saves the entire committed database, independently of
+  SQL, filters or the displayed page. Keep the session open. Preserve exact
+  int64, Unicode, empty text, NULL and BLOB bytes; do not reconstruct SQL rows.
+  Empty imported databases can also be saved. No original source is written.
+  Retain the original source's canonical path and file identity at import time:
+  renamed sources and their hard-link aliases remain protected, while deleting
+  or renaming the source does not prevent saving the intact imported database.
+- Copy with bounded buffers in a worker, report byte progress and allow cancel
+  before Saving begins. Sync and close the complete temporary sibling before
+  atomic publication. Check destination free space for the copy plus 1 MiB.
+  Existing output requires explicit replacement consent; new output is published
+  exclusively. Recheck source identity and destination state before publication.
+  Refuse source/sidecar paths and aliases, links, directories, private session
+  storage and destinations with SQLite sidecars. Failure/cancellation preserves
+  existing output, removes owned partial files and permits another save.
+- Closing during destination/replacement dialogs prevents late answers from
+  saving. Closing during copying cancels and awaits worker exit. Once atomic
+  publication starts, finish it and report any publication/cleanup failure even
+  after the tab closes. Concurrent Save requests are refused visibly.
+  A failed session cleanup is visible while the tab is open, never rejects an
+  unobserved UI operation, and retains ownership for another cleanup attempt
+  before retrying import or on the next startup after its host exits.
+- Tests precede code, including low-space simulation, live/orphan ownership,
+  cancellation, source/destination aliases and faults. Run warning/error-free
+  `npm run verify`, real-host coverage on both engines and delegated visual QA.
+  Record exact diagnostics for full verification; owner retains push and CI.
+
 ### Querying
 
 #### T-008 foundation spike acceptance (owner-authorized, 2026-10-09)
@@ -638,6 +683,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-022 (2026-10-16): Define exact disk estimates/override, conservative PID ownership, complete atomic SQLite saving, moved/deleted original protection and visible retained-storage cleanup failures under owner-delegated judgment. No dependency or later-task scope change.
 - T-021 QA delegation (2026-10-15): Owner assigns visual QA and fixes to the assistant and retains push/CI. Remove the owner visual confirmation prerequisite while preserving evidence, observation limits and actual-candidate platform checks.
 - T-021 import acceptance (2026-10-15): Record owner-delegated command/options, deterministic detection, exact text staging and conservative inference, UTF-8/data conventions, exclusive session publication, fallback-only limits and measured validation scope. Preserve primary size, source safety and existing later-task boundaries.
 - T-019 opening performance (2026-10-14): After an observed 2.178-second first-DOM failure, require one native opening document before the ready browser, retaining fallback consent/error/cancellation rendering and the unchanged two-second target.

@@ -39,6 +39,10 @@
     },
     "commands": [
       {
+        "command": "lite-voyager.saveAsSqlite",
+        "title": "Lite Voyager: Save as SQLite"
+      },
+      {
         "command": "lite-voyager.csvImport",
         "title": "Lite Voyager: Import CSV / TSV"
       },

@@ -1,6 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, extname, join } from 'node:path';
 import * as vscode from 'vscode';
 import type { Engine } from '../engine/engine';
 import { EngineClient } from '../engine/engine-client';
@@ -12,6 +11,9 @@ import { CellService } from './cell-service';
 import { csvImportHtml } from './csv-import-ui';
 import { SqliteSession } from './sqlite-session';
 import { sqliteEditorHtml, type SqliteEditorAssets } from './sqlite-editor-ui';
+import { checkImportSpace, TempStorage, type SpaceApproval } from '../storage/temp-storage';
+import { captureOriginalSource, SqliteSaveService, type OriginalSourceSnapshot } from './sqlite-save';
+import { isSqliteSaveDom, isSqliteSaveRequest, type SqliteSaveDom, type SqliteSaveState } from '../protocol';
 
 export class CsvImportSession {
   readonly contextId = randomBytes(16).toString('hex');
@@ -20,6 +22,8 @@ export class CsvImportSession {
   state: CsvImportState = { type: 'csvImportState', contextId: this.contextId, phase: 'loading', message: 'Reading preview…', options: {} };
   firstRowsMs: number | undefined;
   browserStatus: BrowserStatus | undefined;
+  saveDom: SqliteSaveDom | undefined;
+  saveState: SqliteSaveState = { type: 'sqliteSaveState', contextId: this.contextId, phase: 'idle', message: 'Save the entire imported database, including all rows and original BLOB bytes.', bytes: '0', total: '0' };
   private readonly started = performance.now();
   private readonly listeners = new Set<() => void>();
   private readonly subscriptions: vscode.Disposable[] = [];
@@ -28,6 +32,10 @@ export class CsvImportSession {
   private storage: string | undefined;
   private database: SqliteSession | undefined;
   private cells: CellService | undefined;
+  private save: SqliteSaveService | undefined;
+  private saving: Promise<void> | undefined;
+  private originalSource: OriginalSourceSnapshot | undefined;
+  private spaceApproval: SpaceApproval | undefined;
   private disposed = false;
   private closeComplete: () => void = () => {};
   private finishTransport: (ready: boolean) => void = () => {};
@@ -38,7 +46,7 @@ export class CsvImportSession {
   get browserProcessId(): number | undefined { return this.database?.state.opened?.processId; }
   constructor(readonly uri: vscode.Uri, readonly panel: vscode.WebviewPanel, private readonly directory: string, private readonly storageRoot: string,
     private readonly loader: FileLoader, private readonly remove: () => void,
-    private readonly createEngine: (fallback: boolean) => Engine = (fallback) => new EngineClient({ directory, forceFallback: fallback }), started?: number) {
+    private readonly createEngine: (fallback: boolean) => Engine = (fallback) => new EngineClient({ directory, forceFallback: fallback, ...(this.storage === undefined ? {} : { ownerDirectory: this.storage }) }), started?: number) {
     this.started = started ?? this.started;
     this.closed = new Promise((accept) => { this.closeComplete = accept; });
     panel.webview.html = csvImportHtml(basename(uri.fsPath), this.contextId, this.assets('csv-import'));
@@ -104,16 +112,29 @@ export class CsvImportSession {
   }
   private async importTable(): Promise<void> {
     try {
-      await mkdir(this.storageRoot, { recursive: true });
-      this.storage = await mkdtemp(join(this.storageRoot, 'csv-session-'));
+      if (this.storage !== undefined && !await this.cleanup()) { return; }
+      const storage = new TempStorage(this.storageRoot); const root = await storage.initialize();
+      const original = await captureOriginalSource(this.uri.fsPath);
+      await checkImportSpace(root, original.metadata.size, this.spaceApproval ?? (async ({ available, required }) => {
+        const answer = await vscode.window.showWarningMessage(`Low disk space: ${String(available)} bytes available; estimated ${String(required)} bytes needed (three source copies plus 64 MiB). This is an estimate, not reserved space. Import can fail if space runs out.`, { modal: true }, 'Import anyway');
+        return answer === 'Import anyway' && !this.disposed && !this.cancellation.signal.aborted;
+      }), undefined, this.cancellation.signal);
+      if (this.disposed || this.cancellation.signal.aborted) { return; }
+      this.storage = await storage.create();
       if (this.disposed || this.cancellation.signal.aborted) { return; }
       const path = join(this.storage, 'table.sqlite'); let fallback = process.env['LITE_VOYAGER_FORCE_FALLBACK'] === '1';
-      const tables = await this.loader.import(this.uri.fsPath, { path, engine: fallback ? 'sql.js' : 'node:sqlite' }, this.state.options, (progress) => {
+      const tables = await this.loader.import(this.uri.fsPath, { path, engine: fallback ? 'sql.js' : 'node:sqlite', ownerDirectory: this.storage }, this.state.options, (progress) => {
         fallback = progress.engine === 'sql.js';
         this.update({ phase: 'importing', progress,
           message: `${progress.notice ?? ''} ${progress.phase === 'publishing' ? 'Finalizing types' : 'Reading'}: ${progress.bytes} / ${progress.totalBytes} bytes; ${progress.rows} rows. Preview remains browsable.` });
       }, this.cancellation.signal);
       if (this.disposed || this.cancellation.signal.aborted) { return; }
+      const current = await captureOriginalSource(this.uri.fsPath);
+      if (current.path !== original.path || current.metadata.dev !== original.metadata.dev || current.metadata.ino !== original.metadata.ino
+        || current.metadata.size !== original.metadata.size || current.metadata.mtimeNs !== original.metadata.mtimeNs || current.metadata.ctimeNs !== original.metadata.ctimeNs) {
+        throw new Error('The source changed while importing. Reopen the source after its writer closes it.');
+      }
+      this.originalSource = original;
       this.update({ phase: 'opening', message: 'Import complete. Opening read-only SQL browser…' });
       const database = new SqliteSession(path, this.createEngine(fallback)); this.database = database;
       void database.closed.then(() => {
@@ -133,7 +154,8 @@ export class CsvImportSession {
       const table = tables[0];
       this.update({ phase: 'opened', message: table === undefined ? 'The file is empty; no table was created. Source file was not modified.'
         : `Imported ${table.rowCount} rows into ${table.name}. ${table.notice ?? 'Source file was not modified.'}` });
-      this.panel.webview.html = sqliteEditorHtml(basename(this.uri.fsPath), { ...database.state, message: this.state.message }, this.assets('sqlite-browser'));
+      this.configureSqliteSave();
+      this.panel.webview.html = sqliteEditorHtml(basename(this.uri.fsPath), { ...database.state, message: this.state.message }, this.assets('sqlite-browser'), this.contextId);
     } catch (error: unknown) {
       await this.cleanup(); this.failure(error);
     } finally { if (this.disposed || this.cancellation.signal.aborted) { await this.cleanup(); } }
@@ -141,7 +163,13 @@ export class CsvImportSession {
   private failure(error: unknown): void { this.update({ phase: 'error', message: `${error instanceof Error ? error.message : 'Import failed.'} Apply options / preview or reopen to retry.`.slice(0, 4096) }); }
   private receive(value: unknown): void {
     if (this.disposed) { return; }
-    if (isCsvImportRequest(value) && value.contextId === this.contextId) {
+    if (isSqliteSaveDom(value) && value.contextId === this.contextId) {
+      this.saveDom = value; for (const listener of this.listeners) { listener(); }
+    } else if (isSqliteSaveRequest(value) && value.contextId === this.contextId && this.state.phase === 'opened') {
+      if (value.type === 'sqliteSaveReady') { this.send(this.saveState); }
+      else if (value.type === 'sqliteSaveCancel') { this.save?.abort(); }
+      else { void this.saveAsSqlite(); }
+    } else if (isCsvImportRequest(value) && value.contextId === this.contextId) {
       if (value.type === 'csvImportStart') { void this.startImport(); }
       else if (value.type === 'csvImportRefresh') { void this.refresh(value.options); }
       else { void this.cancel(); }
@@ -166,27 +194,78 @@ export class CsvImportSession {
     this.cancellation.abort(); this.finishTransport(false);
     await this.database?.close(); await this.work; await this.cleanup();
   }
-  private async cleanup(): Promise<void> {
+  private async cleanup(): Promise<boolean> {
     this.cells?.dispose(); this.cells = undefined;
+    this.save?.abort(); await this.saving;
+    const save = this.save; this.save = undefined;
+    try { await save?.settled(); }
+    catch (error: unknown) { void vscode.window.showErrorMessage(error instanceof Error ? error.message : 'SQLite save could not finish. Check the output and retry.'); }
     await this.database?.close(); this.database = undefined;
     const storage = this.storage;
-    if (storage !== undefined) { await rm(storage, { recursive: true, force: true }); if (this.storage === storage) { this.storage = undefined; } }
+    if (storage !== undefined) {
+      try { await new TempStorage(this.storageRoot).remove(storage); if (this.storage === storage) { this.storage = undefined; } }
+      catch {
+        const message = 'Import session storage could not be removed. Check permissions and close programs locking extension storage, then retry or reload VS Code. Owned files were retained for cleanup.';
+        this.failure(new Error(message)); void vscode.window.showErrorMessage(message); return false;
+      }
+    }
+    return true;
   }
   dispose(): void {
     if (this.disposed) { return; }
-    this.disposed = true; this.cancellation.abort(); this.finishTransport(false); this.remove();
+    this.disposed = true; this.cancellation.abort(); this.save?.abort(); this.finishTransport(false); this.remove();
     this.cells?.dispose(); this.listeners.clear(); for (const item of this.subscriptions) { item.dispose(); }
     this.shutdown = (async () => { await this.database?.close(); await this.work; await this.cleanup(); })();
     void this.shutdown.then(this.closeComplete, () => { this.closeComplete(); void vscode.window.showErrorMessage('CSV session storage could not be removed. Close programs locking extension storage, then reload VS Code.'); });
+  }
+  configureImportSpace(approve: SpaceApproval): void {
+    if (this.disposed || this.state.phase !== 'ready') { throw new Error('Review an import preview before configuring its disk-space decision.'); }
+    this.spaceApproval = approve;
+  }
+  configureSqliteSave(choose: () => Promise<string | undefined> = async () => {
+    const choice = await vscode.window.showSaveDialog({ title: 'Save imported database as SQLite', saveLabel: 'Save SQLite',
+      defaultUri: vscode.Uri.file(join(dirname(this.uri.fsPath), basename(this.uri.fsPath, extname(this.uri.fsPath)) + '.sqlite')), filters: { SQLite: ['sqlite', 'sqlite3', 'db'] } });
+    if (choice === undefined || this.disposed) { return undefined; }
+    if (choice.scheme !== 'file') { throw new Error('Choose a local SQLite save destination.'); } return choice.fsPath;
+  }, confirmReplace: (path: string) => Promise<boolean> = async () => {
+    return await vscode.window.showWarningMessage('Replace the existing file with the entire imported SQLite database? Existing contents will be replaced only after the complete copy is ready.', { modal: true }, 'Replace') === 'Replace';
+  }): void {
+    if (this.storage === undefined || this.originalSource === undefined || this.state.phase !== 'opened' || this.saving !== undefined) { throw new Error('Open an imported database and wait for the current save before configuring Save as SQLite.'); }
+    this.save = new SqliteSaveService({ source: join(this.storage, 'table.sqlite'), original: this.uri.fsPath, storageRoot: this.storageRoot,
+      workerDirectory: this.directory, choose, confirmReplace, originalSnapshot: this.originalSource });
+  }
+  saveAsSqlite(): Promise<void> {
+    if (this.disposed || this.state.phase !== 'opened' || this.save === undefined) { return Promise.resolve(); }
+    if (this.saving !== undefined) { void vscode.window.showErrorMessage('A SQLite save is already running. Wait or cancel it.'); return this.saving; }
+    const service = this.save; this.updateSave({ phase: 'choosing', message: 'Choose a local SQLite destination. Cancel save prevents late dialog answers from saving.', bytes: '0', total: '0' });
+    const task = (async () => {
+      try {
+        const result = await service.run((value) => { this.updateSave({ ...value, message: value.phase === 'saving' ? 'Saving complete SQLite database. The atomic save cannot be cancelled.' : `Copying SQLite database: ${value.bytes} / ${value.total} bytes.` }); });
+        this.updateSave({ phase: result === undefined ? 'idle' : 'saved', message: result === undefined ? 'Save dismissed. Choose Save as SQLite to try again.' : `Saved complete SQLite database (${result.bytes} bytes). The original source is unchanged.`, ...(result === undefined ? {} : { bytes: result.bytes, total: result.bytes }) });
+      } catch (error: unknown) { this.updateSave({ phase: service.isCancelled ? 'cancelled' : 'error', message: error instanceof Error ? error.message : 'SQLite save failed. Check the destination and retry.' }); }
+    })();
+    this.saving = task;
+    void task.then(() => { if (this.saving === task) { this.saving = undefined; } }); return task;
+  }
+  private updateSave(value: Partial<SqliteSaveState>): void {
+    if (this.disposed) { return; }
+    this.saveState = { ...this.saveState, ...value, message: (value.message ?? this.saveState.message).slice(0, 4096) }; this.send(this.saveState);
+    for (const listener of this.listeners) { listener(); }
   }
 }
 
 export class CsvImportController implements vscode.Disposable {
   private readonly active = new Set<CsvImportSession>();
   private disposed = false;
-  constructor(private readonly extensionPath: string, private readonly storageRoot: string) {}
+  readonly ready: Promise<void>;
+  constructor(private readonly extensionPath: string, private readonly storageRoot: string) {
+    this.ready = new TempStorage(storageRoot).cleanupOrphans().catch((error: unknown) => {
+      void vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Import storage cleanup failed. Check extension storage permissions and reload VS Code.');
+    });
+  }
   sessions(uri: vscode.Uri): CsvImportSession[] { return [...this.active].filter((session) => session.uri.toString() === uri.toString()); }
   async open(input?: vscode.Uri): Promise<CsvImportSession | undefined> {
+    await this.ready;
     const uri = input ?? (await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFolders: false, filters: { 'CSV / TSV': ['csv', 'tsv'] }, title: 'Import CSV / TSV in Lite Voyager' }))?.[0];
     if (uri === undefined || this.disposed) { return undefined; }
     if (uri.scheme !== 'file') { void vscode.window.showErrorMessage('Import supports saved local UTF-8 CSV / TSV files only.'); return undefined; }
@@ -202,6 +281,11 @@ export class CsvImportController implements vscode.Disposable {
     } catch {
       panel?.dispose(); void vscode.window.showErrorMessage('Unable to open the CSV import tab. Rebuild and reopen a local file.'); return undefined;
     }
+  }
+  async saveActive(): Promise<void> {
+    const session = [...this.active].find((item) => item.panel.active && item.state.phase === 'opened');
+    if (session === undefined) { void vscode.window.showInformationMessage('Open an imported CSV / TSV database tab before choosing Save as SQLite.'); return; }
+    await session.saveAsSqlite();
   }
   dispose(): void { this.disposed = true; for (const session of this.active) { session.panel.dispose(); } this.active.clear(); }
 }

@@ -21,6 +21,7 @@
 !dist/csv-import.css
 !dist/csv-import-process.js
 !dist/csv-import-worker.js
+!dist/sqlite-save-worker.js
 !dist/papaparse-LICENSE
 !dist/sql-wasm.cjs
 !dist/sql-wasm.wasm

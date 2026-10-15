@@ -94,6 +94,7 @@ test('T-050: Given production bundles, When building, Then every embedded depend
     ['src/worker/sqlite-spike-worker.ts', 'node'], ['webview/main.ts', 'browser'],
     ['src/worker/csv-preview-worker.ts', 'node'],
     ['src/worker/csv-import-worker.ts', 'node'], ['src/worker/csv-import-process.ts', 'node'], ['webview/csv-import.ts', 'browser'],
+    ['src/worker/sqlite-save-worker.ts', 'node'],
   ] as const) {
     const result = await build({
       absWorkingDir: root, entryPoints: [entryPoint], platform, bundle: true,

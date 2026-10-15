@@ -1,38 +1,37 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-021 closure. Owner delegates QA/fixes and retains pushing.
-Repaired-candidate three-platform CI now passes. T-022 starts in a fresh chat.
+Milestone 2: T-022 storage lifecycle and Save as SQLite, local handoff.
+Owner delegates implementation, fixes and visual QA; owner retains push/CI.
 
 ## Verify status
-Run 38718762528 / attempt 1 / e97ea5724757a66293382d7de46e7ffce2b6486c: PASS.
-Public GitHub API confirms Windows/macOS/Ubuntu locked installs and full steps PASS.
-Remote raw test/diagnostic counts were not retrieved; no warning-free remote claim.
-Final implementation verify: 668 tests/65 files, zero errors/warnings.
-Final implementation full: 668 units, all 57 hosts and strict runtime logs PASS.
-Closure-only npm run verify PASS: 668 tests/65 files (194.88-second units),
-all type/lint/build checks and 28-file/670.9-KB packaging, zero errors/warnings.
+Owner-authorized single unchanged verify:full rerun PASS: 707 units/71 files,
+60 hosts, strict types/lint/build, 29-file/676.66-KB VSIX including save worker.
+One approved HOST-001 warning; exact record in VALIDATION, not warning-free.
+Final standalone verify PASS: same 707 units, zero errors/warnings.
+Retain earlier full failure: 706 pass, sqlite-spike.test.ts:169 timeout at 5 s.
+Separate real-helper diagnostic: 524.516 ms; timeout cause remains unproven.
+Independent 60-host run also PASS; exact HOST-001 separately recorded.
+Retain red regressions, first lint failure and rejected visual instrumentation.
 
 ## Last session
-Native offset traversal avoids decoding discarded TEXT rows on the same iterator.
-Guard exhaustion to preserve exact totals and one nondeterministic execution.
-Database-worker nursery is 4 MiB; importer is 8 MiB; old/large limits stay default.
-Red-first regressions, 16-MiB record/recovery and independent final review pass.
-Populated 1/5-GB CSV sampled host/helper peaks: 373,563,392 / 404,877,312 bytes.
-Actual paging growth: 31,764,480 / 26,832,896 bytes; exact rows/hashes/all 80 pages pass.
-Delegated visual QA passes; no owner visual-QA wait remains.
-New CI confirms repaired macOS as well as Windows/Ubuntu; only T-021 is checked.
+Exact disk estimate/override, PID-owned storage and conservative orphan cleanup.
+Bounded-worker full SQLite copy, atomic publication, typed Save/Cancel/command.
+Failing-first helper-registration and pending-low-space cancellation repairs.
+Independent review's source-rename, absent-source and cleanup failures repaired;
+follow-up clears them and the red-first package whitelist/worker audit repair.
+Delegated light/dark/narrow save/error and fallback keyboard visual QA inspected.
+Full CSV 1/5-GB peaks 365,527,040 /364,597,248 bytes; all original guards pass.
 
 ## Decisions / limits
-Keep all memory/timing/sample/diagnostic guards and earlier failed evidence.
-Final local full approved warning: VSCODE-HOST-001, original severity warning,
-20261015T173711/window1/renderer.log:10; exact message in VALIDATION T-021.
-That full run is not warning-free. Renderer is separate from host/helper sampling;
-physical paint and unsampled peaks are not claimed.
-Preserve unrelated owner README/T-015 edits and fixtures.
+No dependencies or diagnostic/timing/memory guard changes.
+Native Computer Use unavailable after recovery; isolated Chromium QA used.
+Debugging-flag warning rejects that visual launch as a verification gate.
+Native OS picker appearance and other-platform behavior are not claimed.
+Unrelated owner README/T-015 edits and fixtures preserved.
 
 ## Next
-Owner pushes the verified local closure commit: git push origin main.
-Start a fresh chat for T-022: disk-space checks, storage cleanup and Save as SQLite.
-Read AGENTS, CONSTITUTION, PROGRESS and only T-022-linked task/spec/plan sections.
-No T-022 implementation or whole-milestone/release closure in this chat.
+Scoped local T-022 commit prepared after passing checks; owner handles push.
+Owner supplies fresh Windows/macOS/Ubuntu CI URL and tested candidate SHA.
+Keep T-022 unchecked until that evidence passes; next task starts a fresh chat.
+No T-023 or whole-milestone/release closure in this chat.

@@ -4,8 +4,9 @@ import type { DatabaseHelperRequest, DatabaseMetadata, DatabaseOperation, Databa
 import type { Engine, EngineOpened, EnginePage, ExportFormat, ExportReport, OpenOptions, PageAddress, Parameter } from './engine';
 import { checkParameters, pageAddress, quoteIdentifier } from './read-engine';
 import { isGridOptions, type GridOptions } from '../protocol';
+import { registerStorageHelper } from '../storage/temp-storage';
 
-interface ClientOptions { directory: string; workerPath?: string; forceFallback?: boolean; }
+interface ClientOptions { directory: string; workerPath?: string; forceFallback?: boolean; ownerDirectory?: string; }
 interface Pending {
   id: number; resolve: (value: EnginePage) => void; reject: (error: Error) => void; started: (() => void) | undefined;
 }
@@ -55,6 +56,8 @@ export class EngineClient implements Engine {
       this.failPending(session, 'The database helper failed. Reopen the file to recover.');
     });
     try {
+      if (this.options.ownerDirectory !== undefined && child.pid !== undefined) { await registerStorageHelper(this.options.ownerDirectory, child.pid); }
+      if (this.session !== session || session.failed || !child.connected) { throw new Error('The database helper stopped before opening. Reopen the file.'); }
       const opened = await new Promise<EngineOpened>((resolve, reject) => {
         session.rejectOpen = reject;
         child.on('message', (message: DatabaseResponse) => {

@@ -3,6 +3,7 @@ import { link, mkdtemp, rm, stat, unlink } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import type { ImportedTable, ImportTarget, LoadOptions, Progress } from './file-loader';
 import { isCsvImportProgress } from '../protocol';
+import { registerStorageHelper } from '../storage/temp-storage';
 
 function cancelled(): Error { return new Error('CSV import cancelled. Source is unchanged; reopen to retry.'); }
 function validTables(value: unknown): value is ImportedTable[] {
@@ -32,7 +33,12 @@ export async function runCsvImport(directory: string, source: string, target: Im
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
     });
     const helper = child;
+    let spawnFailed = false;
+    helper.on('error', () => { spawnFailed = true; });
     exited = new Promise<void>((accept) => { helper.once('close', () => { accept(); }); });
+    // No storage work starts before its PID marker is durable in the owned session.
+    if (target.ownerDirectory !== undefined && helper.pid !== undefined) { await registerStorageHelper(target.ownerDirectory, helper.pid); }
+    if (spawnFailed || !helper.connected || helper.exitCode !== null || helper.signalCode !== null) { throw new Error('CSV import helper stopped before starting. Reopen the file.'); }
     const tables = await new Promise<ImportedTable[]>((accept, reject) => {
       let settled = false;
       const fail = (error: Error): void => { if (!settled) { settled = true; reject(error); } };

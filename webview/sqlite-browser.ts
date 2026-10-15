@@ -5,6 +5,7 @@ import { SqlEditor } from './sql-editor';
 import { CellDetails } from './cell-details';
 import { SchemaView } from './schema-view';
 import './sqlite-browser.css';
+import { installSqliteSave } from './sqlite-save';
 
 type Post = (message: BrowserRequest | BrowserStatus | CellRequest) => void;
 type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'>;
@@ -503,7 +504,7 @@ export class BrowserView {
 }
 
 declare function acquireVsCodeApi(): {
-  postMessage(message: BrowserRequest | BrowserStatus | CellRequest): void;
+  postMessage(message: import('../src/protocol').WebviewToHostMessage): void;
   getState(): unknown;
   setState(state: BrowserSavedState): BrowserSavedState;
 };
@@ -514,6 +515,7 @@ if (typeof acquireVsCodeApi === 'function') {
     let view: BrowserView | undefined;
     const events = new AbortController();
     try {
+      installSqliteSave(document, (message) => { api.postMessage(message); }, events.signal);
       view = new BrowserView(root, (message) => {
         if (view !== undefined) { api.setState(view.savedState()); }
         api.postMessage(message);

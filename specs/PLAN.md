@@ -1011,6 +1011,33 @@ Define these once in `src/protocol.ts` and import in both host and webview, so p
 
 ## 5. Import pipeline (CSV, JSONL, JSON)
 
+### T-022 storage lifecycle and saving (owner-delegated, 2026-10-15)
+
+Use only Node built-ins. `TempStorage` creates versioned PID-owned directories,
+checks `statfs` with BigInt, registers helper PID markers before starting their
+work, and conservatively scans orphans once on controller startup. Keep unknown
+legacy storage. Helpers already self-terminate on IPC disconnect; their markers
+also prevent deleting storage before exit after a host crash. Canonicalize the
+root and verify direct-child ownership before recursive removal.
+
+Save the immutable committed import file directly with a bounded-buffer worker;
+no Engine SQL or in-memory serialization is needed, including for sql.js imports.
+Host `SqliteSaveService` owns destination checks, replacement consent, cancellation
+and atomic publication. Use a fresh destination sibling, fsync/close in the worker,
+exclusive hard-link publication for new files and rename for approved replacements.
+Retain the pre-import canonical source path and inode identity through save-dialog
+reconfiguration; revalidate that snapshot after import. Saving an intact database
+does not require the CSV path to remain present. Cleanup errors settle visibly and
+keep the owned directory so retry must clean it before creating another session.
+Whitelist the new worker explicitly in the VSIX and audit its embedded imports.
+The existing 5-GB acceptance fixture explicitly supplies its low-space decision;
+retain its real 13-GB working-space guard and every workload/memory/timing guard.
+The production default remains the modal approval, not an automatic override.
+Expose a Save as SQLite button only for imported sessions and a matching command.
+Use typed protocol messages for button/progress/cancel; preserve existing browser
+operations and default file associations. Add tests before implementation, then
+run the task/full gates and delegated visual QA. No dependency/lockfile changes.
+
 1. Read the first N rows directly for the instant preview and type inference sample.
 2. Create a temp SQLite file in the extension storage folder (check free disk space first, FR-007).
 3. Stream the file in chunks. Insert in batches of several thousand rows inside transactions.
@@ -1249,6 +1276,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-022 (2026-10-16): Use versioned owned storage/helper markers, exact preflight and a bounded copy worker with host-owned atomic publication, retained original identity and real VSIX inclusion. Preserve owner push/CI and all diagnostic/memory/timing guards.
 - T-021 completion (2026-10-15): Confirm run 38718762528/attempt 1/exact e97ea57 passes locked installs and applicable full checks on Windows/macOS/Ubuntu. Close only T-021; retain prior failures, exact local diagnostics and remote-log limits. T-022 starts in a fresh chat.
 - T-021 native paging repair (2026-10-15): Preserve run 38706558502/f1be89d outcomes; remove offset-row decoding while preserving one iterator/execution, exact totals and full export. Guard exhausted native iteration and adopt reviewed 4-MiB DB nursery, retaining importer 8 MiB and default old/large limits. Final clean 668-test standalone and 57-host full pass; fresh actual-candidate CI remains required.
 - T-021 CI repair (2026-10-15): Separate startup/import from real paging while retaining the complete absolute-peak window and every guard. Preserve the three-platform CI and newly exposed local paging failures; apply the reviewed existing nursery setting to the database worker. Final clean 666-unit standalone and 57-host full pass, with exact HOST-001 reporting and fresh owner-pushed CI still required.

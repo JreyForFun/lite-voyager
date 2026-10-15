@@ -103,12 +103,35 @@ export interface SpikeStatus {
   type: 'spikeStatus'; editorReady: boolean; renderedRows: number;
   cachedRows: number; firstRow: number; requestInFlight: boolean;
 }
-export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest | CsvPreviewRequest | CsvPreviewStatus | CsvImportRequest;
+export type SqliteSaveRequest = { type: 'sqliteSave' | 'sqliteSaveCancel' | 'sqliteSaveReady'; contextId: string };
+export interface SqliteSaveState {
+  type: 'sqliteSaveState'; contextId: string; phase: 'idle' | 'choosing' | 'copying' | 'saving' | 'saved' | 'cancelled' | 'error';
+  message: string; bytes: string; total: string;
+}
+export interface SqliteSaveDom { type: 'sqliteSaveDom'; contextId: string; phase: SqliteSaveState['phase']; saveDisabled: boolean; cancelDisabled: boolean; }
+export interface SqliteSaveExercise { type: 'sqliteSaveExercise'; action: 'save' | 'cancel'; }
+export function isSqliteSaveRequest(value: unknown): value is SqliteSaveRequest {
+  return isRecord(value) && ['sqliteSave', 'sqliteSaveCancel', 'sqliteSaveReady'].includes(String(value['type']))
+    && typeof value['contextId'] === 'string' && /^[a-f0-9]{32}$/u.test(value['contextId']);
+}
+function savePhase(value: unknown): boolean { return ['idle', 'choosing', 'copying', 'saving', 'saved', 'cancelled', 'error'].includes(String(value)); }
+export function isSqliteSaveState(value: unknown): value is SqliteSaveState {
+  return isRecord(value) && value['type'] === 'sqliteSaveState' && typeof value['contextId'] === 'string' && /^[a-f0-9]{32}$/u.test(value['contextId'])
+    && savePhase(value['phase']) && typeof value['message'] === 'string' && value['message'].length <= 4096 && decimal(value['bytes']) && decimal(value['total']);
+}
+export function isSqliteSaveDom(value: unknown): value is SqliteSaveDom {
+  return isRecord(value) && value['type'] === 'sqliteSaveDom' && typeof value['contextId'] === 'string' && /^[a-f0-9]{32}$/u.test(value['contextId'])
+    && savePhase(value['phase']) && typeof value['saveDisabled'] === 'boolean' && typeof value['cancelDisabled'] === 'boolean';
+}
+export function isSqliteSaveExercise(value: unknown): value is SqliteSaveExercise {
+  return isRecord(value) && value['type'] === 'sqliteSaveExercise' && (value['action'] === 'save' || value['action'] === 'cancel');
+}
+export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest | CsvPreviewRequest | CsvPreviewStatus | CsvImportRequest | SqliteSaveRequest | SqliteSaveDom;
 export type HostToWebviewMessage = { type: 'error'; message: string; context: string }
   | { type: 'spikeInit'; rowCount: number } | SpikePage
   // Integration-only no-op for the SQLite editor. Delivery checks
   // VS Code's outer webview transport readiness, not content rendering.
-  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse | CsvPreviewState | CsvImportState | CsvImportExercise;
+  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse | CsvPreviewState | CsvImportState | CsvImportExercise | SqliteSaveState | SqliteSaveExercise;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -119,6 +142,7 @@ export function isWebviewMessage(value: unknown): value is WebviewToHostMessage 
   if (isBrowserRequest(value) || isBrowserStatus(value) || isCellRequest(value)) { return true; }
   if (isCsvPreviewRequest(value) || isCsvPreviewStatus(value)) { return true; }
   if (isCsvImportRequest(value)) { return true; }
+  if (isSqliteSaveRequest(value) || isSqliteSaveDom(value)) { return true; }
   if (value['type'] === 'ready') { return true; }
   if (value['type'] === 'spikePageRequest') { return pageAddress(value); }
   return value['type'] === 'spikeStatus' && typeof value['editorReady'] === 'boolean'
@@ -132,6 +156,7 @@ export function isHostMessage(value: unknown): value is HostToWebviewMessage {
   if (isCsvPreviewState(value)) { return true; }
   if (isCsvImportState(value)) { return true; }
   if (isCsvImportExercise(value)) { return true; }
+  if (isSqliteSaveState(value) || isSqliteSaveExercise(value)) { return true; }
   if (!isRecord(value)) { return false; }
   if (isBrowserResponse(value) || isBrowserExercise(value) || isCellResponse(value)) { return true; }
   if (value['type'] === 'sqliteEditorProbe') { return true; }
