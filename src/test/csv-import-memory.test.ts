@@ -6,10 +6,57 @@ import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 import type { CsvImportSession } from '../editor/csv-import';
 import { observeCsvImport } from './csv-import-memory-observer';
-import { checkMemoryRun, checkMemoryComparison, type MemoryReport } from './sqlite-memory-support';
+import { checkMemoryComparison, type MemoryReport } from './sqlite-memory-support';
+import { checkCsvMemoryRun, type CsvMemoryPhases } from './csv-memory-support';
+import type { BrowserExercise, BrowserStatus } from '../protocol';
 import { sourceDigest } from './sqlite-exercise';
 import { TestBudget } from './sqlite-budget';
 import { csvFixtureCheckSql } from './csv-import-data-check';
+
+let exerciseId = 3_000_000;
+async function pagingPhases(session: CsvImportSession, monitor: ReturnType<typeof observeCsvImport>, budget: TestBudget,
+  column: 'a' | 'payload', importHelperPid: number): Promise<CsvMemoryPhases> {
+  const wait = (predicate: (status: BrowserStatus) => boolean): Promise<void> => {
+    if (session.browserStatus !== undefined && predicate(session.browserStatus)) { return Promise.resolve(); }
+    return new Promise((accept, reject) => {
+      const timer = setTimeout(() => { remove(); reject(new Error('CSV repeated-paging DOM deadline.')); }, budget.remaining(15000));
+      const remove = session.onStatus(() => {
+        if (session.browserStatus !== undefined && predicate(session.browserStatus)) { clearTimeout(timer); remove(); accept(); }
+      });
+    });
+  };
+  await wait((status) => status.editorReady === true && !status.busy && status.renderedRows > 0);
+  const browserHelperPid = session.browserProcessId; assert.ok(browserHelperPid);
+  const action = async (name: BrowserExercise['action'], predicate: (status: BrowserStatus) => boolean, value?: string): Promise<void> => {
+    const id = ++exerciseId; const contextId = session.browserStatus?.contextId; assert.ok(contextId);
+    await Promise.all([
+      wait((status) => status.contextId === contextId && status.exerciseId === id && predicate(status)),
+      session.panel.webview.postMessage({ type: 'browserExercise', action: name, exerciseId: id,
+        ...(value === undefined ? {} : { value }) } satisfies BrowserExercise).then((sent) => { assert.equal(sent, true); }),
+    ]);
+  };
+  const shown = (status: BrowserStatus): boolean => !status.busy && status.cachedRows === 100 && status.renderedRows > 0 && status.renderedRows < 100;
+  await action('browse', (status) => shown(status) && !status.query && status.offset === 0);
+  const at = (): number => { const sample = monitor.samples.at(-1); assert.ok(sample); return sample.at; };
+  await monitor.next(browserHelperPid); const baselineAt = at();
+  for (let checkpoint = 0; checkpoint < 4; checkpoint++) { await monitor.next(browserHelperPid); }
+  const pagingStartedAt = at();
+  const pages = async (count: number, query: boolean, checkpoint: number): Promise<void> => {
+    for (let page = 1; page <= count; page++) {
+      await action('next', (status) => shown(status) && Boolean(status.query) === query && status.offset === page * 100);
+      assert.equal(session.browserStatus?.firstRow[0]?.length, column === 'a' ? 1 : 4095);
+      if (page % checkpoint === 0) { await monitor.next(browserHelperPid); }
+    }
+  };
+  await pages(60, false, 10);
+  const sql = column === 'a' ? 'SELECT a FROM records' : 'SELECT payload FROM records';
+  await action('sql', (status) => !status.busy && status.sqlLength === sql.length, sql);
+  await action('run', (status) => shown(status) && status.query === true && status.offset === 0);
+  await pages(20, true, 5);
+  const pagingFinishedAt = at();
+  for (let checkpoint = 0; checkpoint < 5; checkpoint++) { await monitor.next(browserHelperPid); }
+  return { importHelperPid, browserHelperPid, baselineAt, pagingStartedAt, pagingFinishedAt };
+}
 
 suite('T-021 production CSV memory', () => {
   test('NFR-003: Given the native CSV sampler and a real import, When sampling and stopping, Then actual import helpers and renderer residency are observed with strict snapshot deadlines', async function () {
@@ -24,8 +71,9 @@ suite('T-021 production CSV memory', () => {
       monitor = observeCsvImport(extension.extensionPath, budget.signal); await monitor.next();
       session = await vscode.commands.executeCommand<CsvImportSession>('lite-voyager.csvImport', vscode.Uri.file(path)); assert.ok(session); await session.finished;
       assert.equal(session.state.phase, 'ready'); await session.startImport(); assert.equal(session.state.phase, 'opened');
-      const helper = session.state.progress?.processId; assert.ok(helper); await monitor.next(); await monitor.stop();
-      const report = checkMemoryRun(monitor.samples, helper); assert.ok(report.rendererPeakBytes > 0);
+      const helper = session.state.progress?.processId; assert.ok(helper);
+      const phases = await pagingPhases(session, monitor, budget, 'a', helper); await monitor.stop();
+      const report = checkCsvMemoryRun(monitor.samples, phases); assert.ok(report.rendererPeakBytes > 0);
       process.stdout.write(`T-021 CSV observer calibration: ${JSON.stringify(report)}; one-million-row input, fresh native counters and identity-checked metadata.\n`);
     } finally {
       budget.signal.removeEventListener('abort', cancel); session?.panel.dispose(); await session?.closed; await monitor?.stop(); budget.dispose();
@@ -33,7 +81,7 @@ suite('T-021 production CSV memory', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
-  test('NFR-003: Given populated 1 GB and 5 GB CSVs, When the real native import runs, Then sampled host/helper memory stays below 500 MB with bounded growth and exact source hashes', async function () {
+  test('NFR-003: Given populated 1 GB and 5 GB CSVs, When native import and 60 Browse plus 20 SQL pages run, Then full-window memory stays below 500 MB with bounded actual paging growth and exact source hashes', async function () {
     this.timeout(1200000);
     const extension = vscode.extensions.getExtension('jreyinnovarev.lite-voyager'); assert.ok(extension); await extension.activate();
     const root = join(extension.extensionPath, 'out'); await mkdir(root, { recursive: true });
@@ -91,8 +139,11 @@ suite('T-021 production CSV memory', () => {
             current.panel.webview.postMessage({ type: 'browserExercise', action: 'run' }).then((sent) => { assert.equal(sent, true); }),
           ]);
           assert.deepEqual(current.browserStatus?.firstRow.map((cell) => cell.text), [String(recipe.rows), '0']);
-          await monitor.next(); await monitor.stop();
-          const report = checkMemoryRun(monitor.samples, helper); reports.push(report);
+          const phases = await pagingPhases(session, monitor, budget, 'payload', helper); await monitor.stop();
+          process.stdout.write(`T-021 CSV memory phases: ${JSON.stringify({ minimum, ...phases })}; 60 Browse /20 SQL pages; all samples retained.\n`);
+          const browserSamples = monitor.samples.filter((sample) => sample.helperIds.includes(phases.browserHelperPid) && sample.at >= phases.baselineAt);
+          process.stdout.write(`T-021 CSV paging residency: ${JSON.stringify({ minimum, first: browserSamples.slice(0, 5), last: browserSamples.slice(-5) })}\n`);
+          const report = checkCsvMemoryRun(monitor.samples, phases); reports.push(report);
           const after = await sourceDigest(path, budget.signal); assert.deepEqual(after, before);
           assert.equal((await stat(path)).size, before.bytes);
           process.stdout.write(`T-021 memory evidence: ${JSON.stringify({ minimum, bytes: before.bytes, rows: recipe.rows, sha256: before.sha256,

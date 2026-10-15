@@ -1085,6 +1085,34 @@ final standalone recheck passes 663 tests/63 files, types/lint/build and the
 28-file/670.78-KB package check with zero errors/warnings. Backend/observer code
 and all limits stay unchanged. Only owner push/actual-candidate CI remain external.
 
+First T-021 CI run 38689094274/e03f357 fails on all platforms: CSV validation
+mistakes import-worker startup growth for settled paging growth. Repair only the
+measurement phases: retain the entire observed window for the 500-MB peak/gap
+checks and keep import-helper coverage; use the actual separate database helper
+after readiness for five baseline observations, 60 Browse/20 SQL pages with at
+least five paging observations, and five final observations. Apply the unchanged
+50-MB paging-growth and file-size-growth guards. Full-data SQL/hashes, populated
+fixtures and every deadline remain unchanged. A readonly session getter exposes
+the existing Engine process ID for validation; the import algorithm is unchanged.
+Red-first phase/identity regressions and all 18 focused checks pass. Independent
+review clears the repair; actual host calibration observes 45,056-byte paging
+growth, 324,210,688-byte full-window peak and all phase/helper coverage. Exact
+HOST-001 and old failures remain in VALIDATION. The first repaired full gate then
+exposes actual paging growth of 81,838,080 bytes, reproduced by diagnostic output
+at 82,309,120 bytes, mostly native helper transient decoding allocations. Apply
+the existing import worker's 8-MiB young-generation setting to the database worker
+without changing old/large-object limits. The same populated 1/5-GB regression
+passes with 31,555,584 /44,941,312-byte paging growth and 395,177,984 /394,162,176-byte
+full-window peaks; source hashes and all 80 pages pass. Independent review finds
+no concrete defect. A strengthened 16-MiB record check passes explicit oversized-
+page rejection followed by exact length/endpoints recovery. Final standalone
+passes 666 units/64 files with zero diagnostics; final full passes the same 666
+units and all 57 hosts with one explicitly reported HOST-001 warning. Final CSV
+peaks 428,367,872 /368,214,016 bytes; actual paging growth 33,869,824 /36,433,920
+bytes. All source/data, 80-page, phase/identity, timing and cross-file guards pass.
+Exact diagnostics and retained failures are in VALIDATION. Only owner push/new
+three-platform CI remains; no checkbox or policy is relaxed.
+
 ## 6. Loader interface
 
 ```ts
@@ -1193,6 +1221,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-021 CI repair (2026-10-15): Separate startup/import from real paging while retaining the complete absolute-peak window and every guard. Preserve the three-platform CI and newly exposed local paging failures; apply the reviewed existing nursery setting to the database worker. Final clean 666-unit standalone and 57-host full pass, with exact HOST-001 reporting and fresh owner-pushed CI still required.
 - T-021 delegated QA/review (2026-10-15): Replace the owner visual-QA wait with assistant inspection and fresh independent review. Preserve instrumentation failure/observation limits; repair export errors after imported-tab closure with one early closed-session notifier and failing-first tests. Owner retains push and actual-candidate CI.
 - T-021 import implementation (2026-10-15): Add scoped worker staging, inference, exclusive publication/cleanup, existing browser handoff and bounded progress design without dependencies. Record real populated CSV measurements and Windows native sampler/GC decisions; preserve failed evidence, all thresholds and owner QA/review/CI gates.
 - T-019 milestone closure (2026-10-14): Record exact-candidate three-platform full CI success in run 38516745918 /attempt 1. Close the milestone with a local v0.1.0 checkpoint and owner push; keep preview version/publishing distinct and preserve remote-log limits.

@@ -67,6 +67,23 @@ check passes. The final standalone check after that copy cleanup also passes:
 663 tests/63 files, strict types/lint/build and 28-file/670.78-KB package check,
 zero errors and zero warnings. Local QA/review is complete; only push/CI remain.
 
+First post-push run 38689094274 fails on all three platforms: the CSV test labels
+import-worker startup allocation as repeated paging. The phase repair keeps every
+sample in the 500-MB peak/gap checks and keeps both 50-MB growth guards. It adds
+actual post-import 60 Browse/20 SQL pages and explicit baseline/final observations
+of the separate database helper. Eighteen focused checks and real host calibration
+pass. Actual paging then exposes an 81.8-MB failure, independently reproduced at
+82.3 MB. The database worker now uses the import worker's existing small nursery
+with default old/large-object limits. Both populated sizes and all 80 pages pass
+the unchanged guards (31.6/44.9-MB paging growth); the 16-MiB record remains intact
+after explicit oversized-page rejection. Final standalone passes 666 units/64
+files with zero diagnostics; final full passes 666 units and all 57 host cases
+with one explicitly reported HOST-001 warning. Final 1/5-GB peaks are
+428,367,872 /368,214,016 bytes; actual paging growth 33,869,824 /36,433,920 bytes.
+All exact data/hashes, 80 pages, timing, sample coverage and unchanged memory
+guards pass. Prior failures stay in VALIDATION; T-021 remains unchecked only for
+owner push and fresh actual-candidate three-platform CI.
+
 Automated acceptance coverage:
 
 - `test/unit/csv-import.test.ts`: both engines, exact int64/REAL/text, late
@@ -124,7 +141,7 @@ Modified:
 - `.vscodeignore`, `esbuild.js`, `package.json`
 - `src/extension.ts`, `src/protocol.ts`
 - `src/loaders/file-loader.ts`, `src/loaders/csv-loader.ts`, `src/loaders/csv-preview-reader.ts`
-- `src/worker/csv-preview-worker.ts`
+- `src/worker/csv-preview-worker.ts`, `src/worker/db-process.ts`
 - `src/test/sqlite-memory-support.ts`
 - `src/test/sqlite-memory-observer.ts`, `test/unit/sqlite-memory.test.ts`
 - `test/unit/dependency-audit.test.ts`
@@ -140,6 +157,7 @@ Created:
 - `webview/csv-import.ts`, `scripts/csv-memory-fixture.mts`
 - `scripts/csv-memory.mts`, `src/test/csv-memory-cache.ts`, `src/test/csv-memory-metadata.ts`
 - `src/test/csv-import-data-check.ts`, `test/unit/csv-import-data-check.test.ts`
+- `src/test/csv-memory-support.ts`, `test/unit/csv-memory-phases.test.ts`
 - `src/test/csv-import.test.ts`, `src/test/csv-import-memory.test.ts`, `src/test/csv-import-memory-observer.ts`
 - `test/unit/csv-import.test.ts`, `test/unit/csv-import-panel.test.ts`, `test/unit/csv-import-ui.test.ts`
 - `test/unit/csv-import-view.test.ts`, `test/unit/csv-import-fixture.test.ts`, `test/unit/csv-import-memory.test.ts`

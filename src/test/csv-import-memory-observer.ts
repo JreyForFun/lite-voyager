@@ -20,9 +20,9 @@ export function observeCsvImport(directory: string, signal: AbortSignal) {
   let stopped: Promise<void> | undefined;
   return {
     samples,
-    async next(): Promise<void> {
+    async next(helperPid?: number): Promise<void> {
       const previous = samples.length; const started = performance.now();
-      while (samples.length === previous) {
+      while (samples.length === previous || (helperPid !== undefined && !samples.at(-1)?.helperIds.includes(helperPid))) {
         signal.throwIfAborted(); if (failure !== undefined) { throw failure; }
         if (child.exitCode !== null) { await closed; throw new Error('CSV memory observer stopped early.'); }
         if (performance.now() - started > (previous === 0 ? 25000 : 5000)) { throw new Error(`CSV memory observer deadline: ${diagnostic}`); }

@@ -35,6 +35,7 @@ export class CsvImportSession {
   private sendingState = false;
   private latestState: CsvImportState | undefined;
   get finished(): Promise<void> { return this.work; }
+  get browserProcessId(): number | undefined { return this.database?.state.opened?.processId; }
   constructor(readonly uri: vscode.Uri, readonly panel: vscode.WebviewPanel, private readonly directory: string, private readonly storageRoot: string,
     private readonly loader: FileLoader, private readonly remove: () => void,
     private readonly createEngine: (fallback: boolean) => Engine = (fallback) => new EngineClient({ directory, forceFallback: fallback }), started?: number) {

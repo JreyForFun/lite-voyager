@@ -40,11 +40,13 @@ test('FR-004: Given import controls and preview, When applying header-off and st
   const run = await fixture({ extensions: ['csv'], preview: read, import: load });
   try {
     expect(run.session.state.phase).toBe('ready'); expect(run.db.open).not.toHaveBeenCalled();
+    expect(run.session.browserProcessId).toBeUndefined();
     await run.session.refresh({ delimiter: ';', header: false, allText: true });
     expect(read).toHaveBeenLastCalledWith(expect.any(String), { delimiter: ';', header: false, allText: true }, expect.any(AbortSignal));
     await run.session.startImport();
     expect(load).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ engine: 'node:sqlite' }), expect.objectContaining({ header: false, allText: true }), expect.any(Function), expect.any(AbortSignal));
     expect(run.session.state.phase).toBe('opened'); expect(run.db.open).toHaveBeenCalledOnce();
+    expect(run.session.browserProcessId).toBe(1);
     expect(run.view.webview.html).toContain('sql-editor'); expect(run.view.webview.html).toContain('records');
   } finally { run.view.dispose(); await run.session.closed; expect(await readdir(run.directory)).toEqual([]); await rm(run.directory, { recursive: true, force: true }); }
 });

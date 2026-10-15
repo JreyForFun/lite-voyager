@@ -132,10 +132,11 @@ test('FR-004: Given a >1-MB cell and 1,000-column row, When importing, Then prev
   finally { await run.client.close(); }
 }, 15000);
 
-test('FR-004: Given a 16-MiB record larger than the parser nursery and preview budget, When importing, Then its complete stored length and endpoints survive', async () => {
+test('FR-004: Given a 16-MiB record larger than either worker nursery and preview budget, When importing and requesting an oversized page, Then an explicit page limit preserves the complete stored value and query recovery', async () => {
   const value = `A${'x'.repeat(16 * 1024 * 1024)}Z`;
   const run = await imported(`value\n${value}\n`, 'node:sqlite', { allText: true });
   try {
+    await expect(run.client.page('records', { limit: 1 })).rejects.toThrow('result page exceeds 4 MiB');
     expect((await run.client.query('SELECT length(value),substr(value,1,1),substr(value,-1) FROM records')).rows).toEqual([[String(value.length), 'A', 'Z']]);
     expect(run.tables[0]?.rowCount).toBe('1');
   } finally { await run.client.close(); }
