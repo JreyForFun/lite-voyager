@@ -100,6 +100,13 @@ Final peaks 373,563,392 /404,877,312 bytes and paging growth
 checks. Only owner push/fresh three-platform CI remains. No workload, limit or
 warning policy is relaxed; unobserved repaired macOS success is not claimed.
 
+Repaired-candidate CI is now confirmed: [run 38718762528](https://github.com/JreyForFun/lite-voyager/actions/runs/38718762528),
+attempt 1 at exact `e97ea5724757a66293382d7de46e7ffce2b6486c`, passes Windows,
+macOS and Ubuntu, including locked installs and applicable full checks. T-021
+acceptance, delegated QA and independent review are complete. Prior pending-CI
+statements above are historical. Remote raw counts/diagnostics were not retrieved;
+no warning-free remote claim is made. T-022 and the milestone remain open.
+
 Automated acceptance coverage:
 
 - `test/unit/csv-import.test.ts`: both engines, exact int64/REAL/text, late

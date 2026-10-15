@@ -1132,6 +1132,15 @@ the same units and all 57 hosts with one exact reported HOST-001 warning. CSV
 80-page check. Final independent review finds no concrete defect. Only owner
 push/new-code three-platform CI remains; no repaired macOS pass is predicted.
 
+T-021 repaired-candidate CI confirmation (2026-10-15): run 38718762528,
+attempt 1, succeeds at exact e97ea5724757a66293382d7de46e7ffce2b6486c.
+Public GitHub API metadata confirms successful Windows, macOS and Ubuntu jobs,
+locked installs and applicable full-verification steps. This clears the remaining
+T-021 CI gate. Local acceptance, delegated visual QA and independent review remain
+valid; T-021 is complete. Remote raw test/diagnostic counts are not retrieved and
+no warning-free remote claim is made. Preserve all prior failures and exact local
+approved diagnostics. T-022 and the rest of Milestone 2 remain open.
+
 ## 6. Loader interface
 
 ```ts
@@ -1240,6 +1249,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-021 completion (2026-10-15): Confirm run 38718762528/attempt 1/exact e97ea57 passes locked installs and applicable full checks on Windows/macOS/Ubuntu. Close only T-021; retain prior failures, exact local diagnostics and remote-log limits. T-022 starts in a fresh chat.
 - T-021 native paging repair (2026-10-15): Preserve run 38706558502/f1be89d outcomes; remove offset-row decoding while preserving one iterator/execution, exact totals and full export. Guard exhausted native iteration and adopt reviewed 4-MiB DB nursery, retaining importer 8 MiB and default old/large limits. Final clean 668-test standalone and 57-host full pass; fresh actual-candidate CI remains required.
 - T-021 CI repair (2026-10-15): Separate startup/import from real paging while retaining the complete absolute-peak window and every guard. Preserve the three-platform CI and newly exposed local paging failures; apply the reviewed existing nursery setting to the database worker. Final clean 666-unit standalone and 57-host full pass, with exact HOST-001 reporting and fresh owner-pushed CI still required.
 - T-021 delegated QA/review (2026-10-15): Replace the owner visual-QA wait with assistant inspection and fresh independent review. Preserve instrumentation failure/observation limits; repair export errors after imported-tab closure with one early closed-session notifier and failing-first tests. Owner retains push and actual-candidate CI.

@@ -1657,6 +1657,31 @@ remains valid. All old failures and every memory/timing/sample/diagnostic guard
 remain. Keep T-021 unchecked only for owner push and fresh actual-candidate
 Windows/macOS/Ubuntu CI. No owner visual-QA wait or T-022 work.
 
+#### T-021 repaired-candidate CI confirmation and closure (2026-10-15)
+
+Owner supplies [run 38718762528](https://github.com/JreyForFun/lite-voyager/actions/runs/38718762528)
+as PASS. Public GitHub API metadata independently confirms attempt 1, completed
+success, at `e97ea5724757a66293382d7de46e7ffce2b6486c`, matching local HEAD and
+the final native paging/nursery repair:
+
+- macOS job 116367823036: locked install and Windows/macOS full verification PASS.
+- Ubuntu job 116367823496: locked install and Linux session-bus/virtual-display
+  full verification PASS.
+- Windows job 116367823508: locked install and Windows/macOS full verification PASS.
+
+This establishes repaired actual-candidate CI on all three platforms. Remote raw
+logs, test counts and warning counts were not retrieved; do not describe these
+remote runs as warning-free. Preserve all previous failed candidates, local
+measurements, exact approved warning records and observation limits above.
+Local acceptance, delegated visual QA and independent review pass. Closure changes
+only documentation. Fresh closure-only `npm run verify` PASS (exit 0): 668 tests/
+65 files, 194.88-second units, all strict type/lint/build checks and 28-file/
+670.9-KB packaging, zero errors and warnings. No unchanged full retry is needed
+for documentation-only records; the actual implementation's local full and fresh
+three-platform CI evidence remain valid. T-021 is checked and complete. T-022,
+later formats, whole-Milestone-2 QA/review and release/tag remain open; owner
+retains pushing.
+
 #### T-020 CSV / TSV preview implementation (2026-10-14)
 
 Owner authorizes decisions, fixture edits and needed repairs, then explicitly
@@ -4213,6 +4238,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-021 completion (2026-10-15): Independently confirm run 38718762528/attempt 1 at exact e97ea57 and all three successful locked installs/full steps. Close only T-021 with passing local acceptance, delegated QA and independent review; retain failed evidence, exact approved diagnostics and remote raw-log limits.
 - T-021 native paging repair (2026-10-15): Record exact second-CI jobs/SHA and macOS failure, retained red allocation/iterator-total failures, independent reviews and separate source-skip/final 4-MiB gates. Final 668 units/65 files and 57 hosts pass with exact HOST-001 reporting and unchanged guards; no repaired macOS or warning-free full claim. Retain owner push/fresh CI.
 - T-021 CI repair (2026-10-15): Record exact failed CI jobs/SHA, red-first phase regressions, real 80-page failures, residency diagnosis and independently reviewed worker allocation repair. Preserve every failed run and unchanged limit. Final 666-unit clean standalone and 57-host full pass; report the sole exact HOST-001 warning and retain actual-candidate three-platform CI as the open gate.
 - T-021 reviewed local handoff (2026-10-15): Record independently cleared export-close repair, 663-unit/57-host full with exact sole HOST-001 record and populated CSV peaks 375.7/343.9 MB. After a help-text-only cleanup, fresh rebuilt visual/native-import inspection and final 663-test zero-diagnostic standalone pass; retain the third rejected debugging launch and all physical/CI limits. Only owner push/actual-candidate CI remain external.
