@@ -175,6 +175,66 @@ T-012 acceptance (owner-authorized, 2026-10-10):
 - Queries run once the import finishes; browsing the preview works during import.
 - Handles a UTF-8 BOM, CRLF and LF line endings, and quoted fields that contain commas or line breaks. Non-UTF-8 files let the user pick an encoding (P2).
 
+#### T-021 streaming import acceptance (owner-delegated, 2026-10-15)
+
+The owner authorizes implementation, fixtures and necessary repairs, delegates
+the following decisions, and retains pushing. Only T-021 is implemented.
+On 2026-10-15 the owner further delegates QA/visual inspection and fixes to the
+assistant; owner visual confirmation is no longer a prerequisite. Push and
+actual-candidate cross-platform CI remain with the owner. Record observed scope
+and limitations separately from physical paint and unobserved platform claims.
+
+- A separate `Lite Voyager: Import CSV / TSV` command previews a saved local
+  UTF-8 file before import. The existing preview-only command and normal text
+  associations remain available. Import is explicitly started after reviewing
+  delimiter, header (default on), and all-text controls. Applying options refreshes
+  the preview before import; controls lock during import. Preview stays browsable.
+- Detect comma/tab/semicolon/pipe from bounded complete preview records. Prefer
+  candidates with consistent multi-field rows, then field count; ties prefer tab
+  for TSV and comma otherwise, followed by the fixed candidate order. Ambiguous
+  or single-column input displays the chosen delimiter and allows override.
+- Stream UTF-8 with fatal decoding, BOM removal only at file start, LF/CRLF,
+  quoted delimiters/newlines and doubled quotes. Preserve interior blank records;
+  a terminal separator creates no invented row. Invalid UTF-8, NUL, bare CR or
+  malformed quotes fails the whole import visibly, including errors after preview.
+- Generate unique nonblank headers with SQLite ASCII case folding, as in preview.
+  Ragged extra fields add columns; missing fields become SQL NULL, empty fields
+  remain empty TEXT, and literal NULL remains text. Explain these conventions.
+  Header-off generates column_N names and imports the first record as data.
+- Stage original field text on disk. Infer from at most the first 100 data rows;
+  canonical signed decimal int64 strings become INTEGER. Finite canonical REAL
+  spellings that round-trip through JavaScript numbers become REAL only when the
+  whole column is compatible; other spellings, dates, booleans and out-of-range
+  integers remain TEXT. Integers never pass through JavaScript numbers. Any later
+  conflict widens the entire column to TEXT using the original staged values.
+  All-text disables inference. Missing fields do not conflict; empty fields do.
+- Import uses a worker inside a killable helper, 64-KiB source reads, bounded
+  transaction batches and throttled exact decimal progress counters. Memory
+  depends on one record and engine caches, not file row count. Preview budgets
+  never cap import. SQLite's actual column/record/runtime constraints fail clearly
+  without truncation; no artificial primary source-file size limit is imposed.
+- Publish one `records` table only after full parse and unchanged source snapshot
+  checks. Empty input shows an empty state; header-only produces an empty table.
+  SQL and existing paged browser/schema/cell/export facilities become available
+  only after success. Sources are never written. Destinations are exclusively
+  created; existing files, aliases and pre-existing destinations are never replaced.
+- Native engine selection is feature detected. Fallback announces memory-limited
+  mode before starting, with hard limits of 20,000,000 source bytes and 64,000,000
+  allocated SQLite bytes (including staging/final tables). No silent loading above
+  those limits. These are fallback-only limits; update VS Code to use native mode.
+- Cancel/close kills and confirms helper exit before removing owned partial files;
+  completion, option refresh and browser opening cannot revive a closed session.
+  Separate views have independent workers and storage. Worker failure/source
+  changes are actionable and a fresh command permits recovery. T-021 owns only
+  its fresh session storage and cleanup; disk-space preflight, startup orphan
+  cleanup and Save as SQLite remain T-022. Disk exhaustion fails visibly.
+- Tests precede code and cover relevant VALIDATION section 5 cases on both engines.
+  `npm run verify` must be warning/error free. Real-host tests cover controls,
+  preview DOM, progress/cancel, SQL, worker cleanup and unchanged sources. Measure
+  production primary import memory on populated 1-GB/5-GB CSVs against NFR-003,
+  and host responsiveness against NFR-005; report DOM timing separately from
+  physical paint, owner-visible QA and unobserved cross-platform evidence.
+
 #### T-020 CSV preview acceptance (owner-authorized, 2026-10-14)
 
 Owner approves judgement on uncertainties, fixture changes and necessary repairs,
@@ -578,6 +638,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-021 QA delegation (2026-10-15): Owner assigns visual QA and fixes to the assistant and retains push/CI. Remove the owner visual confirmation prerequisite while preserving evidence, observation limits and actual-candidate platform checks.
+- T-021 import acceptance (2026-10-15): Record owner-delegated command/options, deterministic detection, exact text staging and conservative inference, UTF-8/data conventions, exclusive session publication, fallback-only limits and measured validation scope. Preserve primary size, source safety and existing later-task boundaries.
 - T-019 opening performance (2026-10-14): After an observed 2.178-second first-DOM failure, require one native opening document before the ready browser, retaining fallback consent/error/cancellation rendering and the unchanged two-second target.
 - T-019 gate acceptance (2026-10-13): Define the missing opt-in paged schema UI and isolated same-source views; reconcile review regressions for literal empty names, successful paging context, observed totals and cross-engine lossless text without relaxing any existing limit.
 - T-016 WAL clarification (2026-10-13): Owner approves SQLite-managed transient SHM reader coordination after the red-first idle-writer test shows reader marks changing. Preserve strict database/WAL hashes and constrain the observed SHM changes; no production change or source restoration.

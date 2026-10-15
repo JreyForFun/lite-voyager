@@ -39,6 +39,10 @@
     },
     "commands": [
       {
+        "command": "lite-voyager.csvImport",
+        "title": "Lite Voyager: Import CSV / TSV"
+      },
+      {
         "command": "lite-voyager.csvPreview",
         "title": "Lite Voyager: Preview CSV / TSV"
       },

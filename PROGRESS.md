@@ -1,38 +1,36 @@
-# Progress
+﻿# Progress
 
 ## Current phase / task
-Milestone 2, T-020 complete; next chat is T-021 planning only.
-Owner retains pushing; no later task is implemented in this chat.
+Milestone 2, T-021 local QA/review and verification PASS; ready for owner push/CI.
+Owner delegates QA/fixes and retains push/CI. No owner visual-QA wait.
+Keep T-021 unchecked until actual-candidate Windows/macOS/Ubuntu CI passes.
 
 ## Verify status
-Owner visual checks 1-5 PASS; final standalone 601 tests, zero errors/warnings.
-CI 38592857439/attempt 1/6f19368: all three locked installs/full gates PASS.
-Prior runtime Windows full: 587 unit/53 files and 52 host pass; one HOST-001.
-Genuine sparse 3 GB CSV: first DOM 237.054 ms; 65,536 bytes read; 100 rows.
+Final `npm run verify`: 663 tests/63 files, types/lint/build/package PASS;
+zero errors/warnings. Package: 28 files, 670.78 KB.
+Reviewed `npm run verify:full`: 663 units/57 host cases PASS.
+Full contains one exact HOST-001 renderer warning; not warning-free.
+Exact source/line/severity/message and every prior failure: VALIDATION T-021.
+After full, only help text changes; fresh rebuilt screenshot/native import and
+final standalone pass. Backend/observer unchanged; no repeated large benchmark.
 
 ## Last session
-Read-only CSV/TSV preview and neutral loader contract are complete.
-Red-first UTF-8/FIFO/notification/sparse/alias repairs independently cleared.
-Owner delegates reviewed exact HOST-005; 13 new cases preserve all guards.
-Final 601-test standalone and current-code three-platform CI pass.
-Owner physical QA 1-5 PASS; source files stay unchanged.
+Delegated actual VS Code visual checks pass: themes/exact cells/options/SQL/schema,
+progress/cancel/isolation/fallback/errors/recovery. All generated QA sources match.
+Fresh independent review finds one MEDIUM export-close notification omission;
+two failing-first FR-014 regressions repair it. Independent follow-up clears.
+Populated 1/5-GB CSV host/helper peaks 375,705,600 /343,932,928 bytes.
+All rows/source hashes pass; host timer gaps 41.81 /90.65 ms.
+Warm first-row DOM 362.95 /494.93 ms; renderer measured separately.
 
-## Decisions made this session
-Separate preview command; normal CSV opening stays text; no import/SQL yet.
-Explicit preview limits stop without truncation; all values stay text.
-No new dependency, lockfile or static fixture; policy now has five exact families.
-Unsigned timing only; structured renderer warnings reported; all other diagnostics fail.
-
-## Known issues / blockers
-No remaining T-020 acceptance blocker; old CI/local failures stay failed.
-Remote raw logs/counts are not retrieved; no warning-free remote claim.
-All failed WSL probes retained; later passes do not erase intermittent timeouts.
-Local WSL full interrupted twice; no further large local Linux run.
-Cold physical paint and full import memory/performance remain unclaimed.
+## Decisions / limits
+Owner visual confirmation is no longer required; docs/t021-qa.md records scope.
+Native helper unavailable; Chromium inspection uses real isolated webview pixels.
+Debugging launches fail strict console gates on their unapproved flag warning;
+no exception added. Native picker/physical-paint timing/other platforms unobserved.
+No dependency/lockfile/static fixture changes; unrelated owner edits preserved.
 
 ## Next
-Owner pushes only T-020 closure records; unrelated owner edits remain unstaged.
-Start a new chat: read AGENTS/CONSTITUTION/PROGRESS; plan T-021 only.
-Restate acceptance/files/uncertainties and wait for owner OK before T-021 code.
-T-020 checkbox is checked; Milestone 2 and later task gates stay open.
-WSL copy: /home/pengging/lite-voyager-t020-ci.hFKC34; helpers out/t020-linux.
+Owner pushes the local T-021 commit on main, then supplies fresh CI.
+Confirm actual-candidate locked installs/full checks on all three platforms.
+Keep T-021 unchecked for CI. Do not start T-022 or large local WSL retries.

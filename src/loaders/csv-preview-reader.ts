@@ -7,11 +7,14 @@ import { previewOptions, type LoadOptions } from './file-loader';
 
 function parseRecord(text: string, delimiter: string): string[] {
   if (text === '') { return ['']; }
-  const result = Papa.parse<string[]>(text, { delimiter, newline: '\n', header: false, dynamicTyping: false, skipEmptyLines: false });
+  // Papa strips a BOM from every string parse. The decoder already removed the
+  // file BOM; later record-leading BOMs are data. Protect only that rare case.
+  const protectBom = text.charCodeAt(0) === 0xfeff;
+  const result = Papa.parse<string[]>(protectBom ? `x${delimiter}${text}` : text, { delimiter, newline: '\n', header: false, dynamicTyping: false, skipEmptyLines: false });
   if (result.errors.length !== 0 || result.data.length !== 1) { throw new Error('Malformed CSV record. Check quotes and delimiters.'); }
   const row: unknown = result.data[0];
   if (!Array.isArray(row) || !Array.from(row).every((field: unknown) => typeof field === 'string')) { throw new Error('Invalid CSV parser response. Rebuild and reopen the preview.'); }
-  return row as string[];
+  return protectBom ? (row as string[]).slice(1) : row as string[];
 }
 function same(a: BigIntStats, b: BigIntStats): boolean {
   return a.dev === b.dev && a.ino === b.ino && a.size === b.size && a.mtimeNs === b.mtimeNs && a.ctimeNs === b.ctimeNs;

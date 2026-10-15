@@ -3,10 +3,11 @@ import { createInterface } from 'node:readline';
 
 /** One persistent OS reader. Cold initialization precedes the observed window;
  * every subsequent snapshot still has the strict 3 s watchdog and gap gate. */
-export function observeProcessLines(command: string, args: string[], onLine: (line: string) => void, signal: AbortSignal, startupMs = 20000, snapshotMs = 3000): Promise<void> {
+export function observeProcessLines(command: string, args: string[], onLine: (line: string) => void | Promise<void>, signal: AbortSignal, startupMs = 20000, snapshotMs = 3000, acknowledge = false): Promise<void> {
   if (signal.aborted) { return Promise.resolve(); }
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = acknowledge ? spawn(command, args, { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] })
+      : spawn(command, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     const lines = createInterface({ input: child.stdout });
     let failure: Error | undefined;
     let timer: ReturnType<typeof setTimeout>;
@@ -24,7 +25,10 @@ export function observeProcessLines(command: string, args: string[], onLine: (li
       if (failure !== undefined || signal.aborted) { return; }
       try {
         if (Buffer.byteLength(line) > 4 * 1024 * 1024) { throw new Error('OS observer snapshot exceeds 4 MiB.'); }
-        arm('snapshot', snapshotMs); onLine(line);
+        arm('snapshot', snapshotMs);
+        void Promise.resolve(onLine(line)).then(() => {
+          if (acknowledge && failure === undefined && !signal.aborted) { child.stdin?.write('\n'); }
+        }, (error: unknown) => { fail(error instanceof Error ? error : new Error('OS observer snapshot failed.')); });
       } catch (error: unknown) { fail(error instanceof Error ? error : new Error('OS observer snapshot failed.')); }
     });
     child.once('close', (code, exitSignal) => {

@@ -43,7 +43,7 @@ export function memorySample(rows: ProcessMemory[], hostPid: number, at: number)
   const host = processes.get(hostPid);
   if (host === undefined || host.rss === 0) { throw new Error('The extension host memory could not be observed.'); }
   const helpers = rows.filter((row) => row.pid !== hostPid && descendant(row.pid, hostPid, processes)
-    && /(?:^|[\\/])db-process\.js(?:["']?\s|["']?$)/u.test(row.command));
+    && /(?:^|[\\/])(?:db|csv-import)-process\.js(?:["']?\s|["']?$)/u.test(row.command));
   const renderers = rows.filter((row) => /(?:^|\s)--type=renderer(?:\s|$)/u.test(row.command)
     && descendant(row.pid, host.parent, processes));
   if (renderers.length === 0 || renderers.some((row) => row.rss === 0)) { throw new Error('The test-host renderer memory could not be observed.'); }

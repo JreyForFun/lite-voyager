@@ -8,7 +8,7 @@ export const MAX_PREVIEW_COLUMNS = 1000;
 export const MAX_PREVIEW_CHARACTERS = 2 * 1024 * 1024;
 export const MAX_PREVIEW_RECORD_CHARACTERS = 4 * 1024 * 1024;
 export type CsvDelimiter = ',' | '\t' | ';' | '|';
-export interface CsvLoadOptions { delimiter?: CsvDelimiter; header?: boolean; }
+export interface CsvLoadOptions { delimiter?: CsvDelimiter; header?: boolean; allText?: boolean; }
 export interface FilePreviewResult {
   columns: string[]; rows: (string | null)[][];
   bytesRead: string; totalBytes: string; reachedEnd: boolean; notice: string; threadId: number;
@@ -19,6 +19,46 @@ export interface CsvPreviewStatus { type: 'csvPreviewStatus'; contextId: string;
 export type CsvPreviewState = { type: 'csvPreviewState'; contextId: string } & (
   | { phase: 'loading' | 'cancelled' | 'error'; message: string }
   | { phase: 'ready'; message: string; preview: CsvPreviewResult });
+
+export type CsvImportRequest = { contextId: string } & (
+  | { type: 'csvImportStart' | 'csvImportCancel' }
+  | { type: 'csvImportRefresh'; options: CsvLoadOptions });
+/** Local integration uses the same DOM controls; no file paths or worker access. */
+export interface CsvImportExercise { type: 'csvImportExercise'; contextId: string; action: 'start' | 'refresh' | 'cancel'; options?: CsvLoadOptions; }
+export function isCsvImportExercise(value: unknown): value is CsvImportExercise {
+  return isRecord(value) && previewContext(value) && value['type'] === 'csvImportExercise'
+    && typeof value['action'] === 'string' && ['start', 'refresh', 'cancel'].includes(value['action']) && (value['options'] === undefined || isCsvLoadOptions(value['options']));
+}
+export interface CsvImportState {
+  type: 'csvImportState'; contextId: string;
+  phase: 'loading' | 'ready' | 'importing' | 'opening' | 'opened' | 'error' | 'cancelled';
+  message: string; options: CsvLoadOptions; preview?: CsvPreviewResult;
+  progress?: import('./loaders/file-loader').Progress;
+}
+export function isCsvLoadOptions(value: unknown): value is CsvLoadOptions {
+  return isRecord(value) && Object.keys(value).every((key) => ['delimiter', 'header', 'allText'].includes(key))
+    && (value['delimiter'] === undefined || typeof value['delimiter'] === 'string' && [',', '\t', ';', '|'].includes(value['delimiter']))
+    && (value['header'] === undefined || typeof value['header'] === 'boolean') && (value['allText'] === undefined || typeof value['allText'] === 'boolean');
+}
+export function isCsvImportRequest(value: unknown): value is CsvImportRequest {
+  return isRecord(value) && previewContext(value) && (value['type'] === 'csvImportStart' || value['type'] === 'csvImportCancel'
+    || value['type'] === 'csvImportRefresh' && isCsvLoadOptions(value['options']));
+}
+export function isCsvImportProgress(value: unknown): value is import('./loaders/file-loader').Progress {
+  return isRecord(value) && ['bytes', 'totalBytes', 'rows'].every((key) => typeof value[key] === 'string' && /^(0|[1-9]\d{0,30})$/u.test(value[key]))
+    && BigInt(value['bytes'] as string) <= BigInt(value['totalBytes'] as string)
+    && (value['engine'] === 'node:sqlite' || value['engine'] === 'sql.js') && (value['phase'] === 'reading' || value['phase'] === 'publishing')
+    && typeof value['notice'] === 'string' && value['notice'].length <= 4096
+    && (value['processId'] === undefined || integer(value['processId'], 1, Number.MAX_SAFE_INTEGER));
+}
+export function isCsvImportState(value: unknown): value is CsvImportState {
+  return isRecord(value) && previewContext(value) && value['type'] === 'csvImportState'
+    && typeof value['phase'] === 'string' && ['loading', 'ready', 'importing', 'opening', 'opened', 'error', 'cancelled'].includes(value['phase'])
+    && typeof value['message'] === 'string' && value['message'].length <= 4096 && isCsvLoadOptions(value['options'])
+    && (value['preview'] === undefined || isCsvPreviewResult(value['preview']))
+    && (value['phase'] !== 'ready' || isCsvPreviewResult(value['preview']))
+    && (value['progress'] === undefined || isCsvImportProgress(value['progress']));
+}
 
 export function isCsvPreviewResult(value: unknown): value is CsvPreviewResult {
   if (!isRecord(value) || !Array.isArray(value['columns']) || value['columns'].length > MAX_PREVIEW_COLUMNS
@@ -63,12 +103,12 @@ export interface SpikeStatus {
   type: 'spikeStatus'; editorReady: boolean; renderedRows: number;
   cachedRows: number; firstRow: number; requestInFlight: boolean;
 }
-export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest | CsvPreviewRequest | CsvPreviewStatus;
+export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest | CsvPreviewRequest | CsvPreviewStatus | CsvImportRequest;
 export type HostToWebviewMessage = { type: 'error'; message: string; context: string }
   | { type: 'spikeInit'; rowCount: number } | SpikePage
   // Integration-only no-op for the SQLite editor. Delivery checks
   // VS Code's outer webview transport readiness, not content rendering.
-  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse | CsvPreviewState;
+  | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse | CsvPreviewState | CsvImportState | CsvImportExercise;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -78,6 +118,7 @@ export function isWebviewMessage(value: unknown): value is WebviewToHostMessage 
   if (!isRecord(value)) { return false; }
   if (isBrowserRequest(value) || isBrowserStatus(value) || isCellRequest(value)) { return true; }
   if (isCsvPreviewRequest(value) || isCsvPreviewStatus(value)) { return true; }
+  if (isCsvImportRequest(value)) { return true; }
   if (value['type'] === 'ready') { return true; }
   if (value['type'] === 'spikePageRequest') { return pageAddress(value); }
   return value['type'] === 'spikeStatus' && typeof value['editorReady'] === 'boolean'
@@ -89,6 +130,8 @@ export function isWebviewMessage(value: unknown): value is WebviewToHostMessage 
 
 export function isHostMessage(value: unknown): value is HostToWebviewMessage {
   if (isCsvPreviewState(value)) { return true; }
+  if (isCsvImportState(value)) { return true; }
+  if (isCsvImportExercise(value)) { return true; }
   if (!isRecord(value)) { return false; }
   if (isBrowserResponse(value) || isBrowserExercise(value) || isCellResponse(value)) { return true; }
   if (value['type'] === 'sqliteEditorProbe') { return true; }

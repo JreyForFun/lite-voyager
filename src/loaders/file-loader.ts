@@ -3,8 +3,8 @@ import type { CsvDelimiter, CsvLoadOptions, FilePreviewResult } from '../protoco
 
 export type LoadOptions = CsvLoadOptions;
 export type PreviewResult = FilePreviewResult;
-export interface Progress { bytes: string; totalBytes: string; rows: string; }
-export interface ImportedTable { name: string; columns: string[]; rowCount: string; }
+export interface Progress { bytes: string; totalBytes: string; rows: string; phase?: 'reading' | 'publishing'; engine?: EngineName; notice?: string; processId?: number; }
+export interface ImportedTable { name: string; columns: string[]; rowCount: string; engine?: EngineName; notice?: string; }
 /** Internal fresh destination owned by an import worker, never the user's source. */
 export interface ImportTarget { path: string; engine: EngineName; }
 export interface PreviewLoader<Result extends PreviewResult = PreviewResult> {
@@ -25,4 +25,14 @@ export function previewOptions(value: unknown): CsvLoadOptions {
   }
   return { ...(options['delimiter'] === undefined ? {} : { delimiter: options['delimiter'] as CsvDelimiter }),
     ...(options['header'] === undefined ? {} : { header: options['header'] }) };
+}
+
+export function importOptions(value: unknown): LoadOptions {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) { throw new Error('Invalid CSV import options.'); }
+  const options = value as Record<string, unknown>;
+  if (Object.keys(options).some((key) => !['delimiter', 'header', 'allText'].includes(key))
+    || (options['allText'] !== undefined && typeof options['allText'] !== 'boolean')) { throw new Error('Invalid CSV import options.'); }
+  return { ...previewOptions({ ...(options['delimiter'] === undefined ? {} : { delimiter: options['delimiter'] }),
+    ...(options['header'] === undefined ? {} : { header: options['header'] }) }),
+    ...(options['allText'] === undefined ? {} : { allText: options['allText'] }) };
 }

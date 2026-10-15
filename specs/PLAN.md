@@ -1018,6 +1018,73 @@ Define these once in `src/protocol.ts` and import in both host and webview, so p
 5. Create the table with inferred types; on a type conflict, widen to text instead of failing.
 6. On close, delete the temp file. On startup, delete orphans.
 
+### T-021 production CSV import (owner-delegated, 2026-10-15)
+
+Use the existing MIT Papa Parse 5.7.0 and sql.js assets; add no dependency or lockfile
+change. A separate Import CSV / TSV command leaves default text associations and
+the preview-only command intact. Detection samples four bounded candidate previews;
+the options UI requires reviewing/applying settings before starting background import.
+
+`CsvLoader` implements the existing FileLoader contract. A dedicated helper supervises
+a worker; cancellation kills the helper and awaits exit. Full parsing uses fatal
+streaming UTF-8 and 64-KiB reads without the preview's record/payload budgets. Keep
+one record, fixed engine caches, and at most 1,000 rows per transaction. Progress is
+coalesced/throttled; counters are decimal strings. Staging preserves exact TEXT; final
+INTEGER/REAL columns are created only if every row is compatible with the first
+100-row inference sample. Conflicts retain the original strings. Use a collision-free
+rowid alias or private stage order column so hostile headers cannot reorder data.
+
+Publish through an exclusive hard link from fresh storage on the same filesystem;
+never overwrite a pre-existing target. Reuse the read-only Engine/SqliteSession,
+browser, schema, cell and export paths after import. Each view owns its import and
+database helpers and fresh storage. Delete owned partial/session files only after
+helper exit. Source snapshot checks cover parsing and finalization. Fallback announces
+20,000,000 source/64,000,000 SQLite-byte caps before reading the full file. No native
+source-file cap applies. SQLite's actual record/column/runtime limits remain explicit
+errors. Per-record memory and real single-value limits are reported honestly.
+
+T-021 handles its fresh storage ownership and error/close cleanup. FR-007 disk-space
+preflight, startup orphan cleanup and Save as SQLite stay T-022. Test-only populated
+1/5-GB CSV fixtures run sequentially with streaming hashes and the OS observer;
+include csv-import-process as well as db-process, exclude fixture generators/observer,
+and report renderer separately. Existing source-safety, diagnostic and phase gates
+remain unchanged. Owner retains pushing and physical QA; new-code CI remains separate.
+
+CSV validation's Windows sampler uses refreshed native WorkingSet64 counters for
+the bundled executable family, with PID/start-time-checked metadata caching and
+a persistent prewarmed CIM reader. Acknowledgements keep snapshots non-overlapping;
+no memory counter is cached, snapshot skipped, or 3-second deadline relaxed.
+The original full-CIM sampler's timeout and the per-query-startup calibration gap
+remain failed evidence. Linux/macOS retain ps-based sampling. Test tooling never
+ships. The import worker tunes only its young-generation nursery to 8 MiB; its
+old-generation/runtime limits remain defaults. A complete 16-MiB record proves
+this is GC tuning rather than an import record/file-size cap.
+
+Final local full gate: 661 units/63 files and 57 real-host cases pass. Populated
+1,000,013,832 /5,000,003,592-byte CSVs have combined sampled host/helper peaks
+404,656,128 /386,256,896 bytes; maximum host timer gaps 48.9489 /36.6253 ms;
+first-row DOM 358.4108 /439.3129 ms. All rows and full source hashes pass.
+These are warm single-TEXT-column Windows measurements, not physical paint,
+unsampled peak or cross-platform proof. Exact HOST-001/002 warnings, previous
+failed runs and observer limits are in VALIDATION. Owner QA/review/CI stay open.
+
+2026-10-15 follow-up: owner delegates visual QA and review to the assistant, keeping
+push/CI. Scoped actual-webview visual checks pass; a fresh independent agent finds
+one export-close notification defect. Red-first regression and cleared repair
+attach a closed-session notifier before repeated cleanup can reset its state.
+Methods, instrumentation failures and remaining physical/CI limits are documented
+in docs/t021-qa.md; owner visual confirmation is no longer a prerequisite.
+
+Reviewed-repair gates pass: 663 units/63 files and 57 host cases, with only the
+explicitly reported HOST-001 warning. Populated 1/5-GB CSV sampled host/helper
+peaks 375,705,600 /343,932,928 bytes; host timer gaps 41.8086 /90.6496 ms;
+first DOM 362.9496 /494.9270 ms. All rows and source hashes pass. A subsequent
+help-text-only cleanup removes the internal task reference and clearly explains
+temporary storage; fresh rebuilt visual inspection/native import passes, and its
+final standalone recheck passes 663 tests/63 files, types/lint/build and the
+28-file/670.78-KB package check with zero errors/warnings. Backend/observer code
+and all limits stay unchanged. Only owner push/actual-candidate CI remain external.
+
 ## 6. Loader interface
 
 ```ts
@@ -1126,6 +1193,8 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-021 delegated QA/review (2026-10-15): Replace the owner visual-QA wait with assistant inspection and fresh independent review. Preserve instrumentation failure/observation limits; repair export errors after imported-tab closure with one early closed-session notifier and failing-first tests. Owner retains push and actual-candidate CI.
+- T-021 import implementation (2026-10-15): Add scoped worker staging, inference, exclusive publication/cleanup, existing browser handoff and bounded progress design without dependencies. Record real populated CSV measurements and Windows native sampler/GC decisions; preserve failed evidence, all thresholds and owner QA/review/CI gates.
 - T-019 milestone closure (2026-10-14): Record exact-candidate three-platform full CI success in run 38516745918 /attempt 1. Close the milestone with a local v0.1.0 checkpoint and owner push; keep preview version/publishing distinct and preserve remote-log limits.
 - T-019 owner approvals (2026-10-14): Record five visible preview checks PASS, two narrowly approved renderer timing families and tested native-opening optimization. Preserve prior failures and every remaining diagnostic/performance rule. Repaired 531-unit/49-host full gate, updated four-case packaged preview and clean 531-test verify pass; current-code CI/release remain external gate items.
 - T-019 gate plan (2026-10-13): Plan one owner-delegated QA/review closure task, fresh isolated cumulative review, tests-first schema/view/fidelity/paging repairs, real-host acceptance and honest release/visual limits. No new dependency or Milestone 2 feature.

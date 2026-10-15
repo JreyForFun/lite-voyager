@@ -1146,6 +1146,255 @@ its scoped warm-input and sampled-process limits.
 - [ ] "Open With", the Explorer menu entry, the editor-title button, and the `openCsvByDefault` setting all behave as specified.
 - [ ] Autocomplete suggests real table and column names.
 
+#### T-021 streaming CSV / TSV import (2026-10-15)
+
+The owner approves full T-021 implementation, fixture edits and necessary repairs,
+delegates unresolved decisions, and retains pushing. SPEC's T-021 acceptance and
+PLAN's scoped import design precede implementation. Other tasks remain open.
+
+Tests-first evidence and preserved failures:
+
+- Initial sandbox Vitest startup fails with spawn EPERM. Normal process access
+  resolves the tooling restriction; this is not an application pass.
+- First loader suite: 24 failures because CsvLoader is not implemented. First
+  UI/session suites: missing import modules. Implementation follows these failures.
+- Loader implementation initially passes 23/24: empty native import creates an
+  invalid zero-byte database. Explicit SQLite initialization repairs it.
+- Two new rowid-shadow cases fail on both engines with reordered source records.
+  A collision-free alias/private stage order column repairs finalization.
+- Initial real-host baseline: 0/3 pass because the DOM exercise driver is absent.
+  After wiring controls, both engine cases pass but the hidden-first-view DOM
+  wait fails. The fixture now observes the first view before opening the second.
+- The next focused host run passes both engine controls and both populated CSV
+  memory workloads but fails cancellation notification. State is already cancelled;
+  status listeners are not notified. A new unit regression reproduces importing
+  instead of cancelled; using the normal state update path repairs it.
+- OS-observer regression initially omits csv-import-process residency. Extend only
+  helper recognition; preserve the 500-MB cap, sample/gap guards and observer
+  exclusion. Generator test initially fails with the generator absent.
+- An early standalone gate encounters that new fixture test before its generator
+  exists: 633 pass/1 fail, 58 files. Preserve this failed run. Scoped generator/
+  observer/protocol/session checks subsequently pass after implementation.
+- The first full gate stops on an unused destructured preview in lint. Replace it
+  with a copied state and remove the preview only from progress delivery.
+- Strict ready-state validation and bounded final-progress relay tests start red.
+  Ready requires a bounded preview; coalescing keeps final counters before terminal
+  completion and ignores later worker-exit notifications.
+- A DOM clock-origin regression initially reports 0 instead of 550 ms. The
+  controller now supplies the timestamp taken before panel creation.
+
+Pre-final measured evidence (not a passing focused run because cancellation fails):
+
+- Windows x64, VS Code 1.140.0 / Node 24.21.0. Real controls/250-row exact paging
+  and SQL pass on native and fallback; first-row DOM 856.0499/515.2942 ms.
+- Populated 1,000,013,832-byte CSV: 244,144 rows, sampled combined host/helper
+  peak 434,991,104 bytes; 78 samples/75 actual import-helper samples; max OS gap
+  645.0603 ms; host timer max gap 62.9674 ms. First-row DOM 442.5711 ms.
+- Populated 5,000,003,592-byte CSV: 1,220,704 rows, combined peak 459,517,952
+  bytes; 483 samples/480 import-helper samples; max OS gap 665.0587 ms;
+  host timer max gap 47.5366 ms. First-row DOM 597.2002 ms. File-size peak
+  growth is 24,526,848 bytes, below the scoped 50-MB guard.
+- Every row is a real 4,096-byte record, not sparse padding. Full pre/post source
+  hashes match generation: 1 GB d9ca2d901ce394b65f350d58e6acfb7aa5de1ff6c709ef59cc165cfb0de68789;
+  5 GB 350d6e4f39ac41dfa814bb65b80c11f24ff58469c4df6beb8d2b6888cb871e68.
+  Host and actual import/database helpers include worker residency; generators/
+  observer are excluded; renderer peaks are separate (383,410,176/379,559,936).
+  These are warm single-TEXT-column sampled measurements, not physical paint,
+  every possible record shape, unsampled peaks, or cross-platform evidence.
+
+Additional pre-final evidence and preserved failures:
+
+- Full candidate: 646 units/60 files and 28-file/670.68-KB packaging pass; 55
+  real-host tests pass, but the CSV 5-GB OS reader exceeds its unchanged 3,000-ms
+  watchdog. The run fails. Its 1-GB sampled peak is 493,944,832 bytes. No complete
+  5-GB measurement is claimed for that run; later success cannot erase it.
+- Four new BOM cases fail: Papa's string API strips a record-leading data BOM.
+  Protect only that rare case with a temporary parser field; remove that field
+  after parsing. Preview/full stream retain all data BOMs and only the decoder
+  removes the file-start BOM. The four cases then pass. Real-host assertions now
+  inspect the later BOM-bearing value in preview and SQL on both engines.
+- Native-counter metadata caching and acknowledged-snapshot tests start red,
+  then pass with PID/start-time identity guards and fresh RSS on every snapshot.
+  First native calibration fails the existing 3,000-ms maximum observation gap:
+  per-discovery PowerShell startup is too expensive. Preserve this failure.
+- A persistent, prewarmed metadata-reader suite starts with the module absent.
+  Its first implementation rejects malformed JSON without an actionable domain
+  diagnostic; the test fails. Domain diagnostics repair it; all 15 memory/cache/
+  reader/watchdog cases pass, including original timeout/error rejection cases.
+- Persistent reader calibration passes in the real Windows host: one million
+  rows, combined peak 415,342,592 bytes; 28 samples/25 actual import-helper
+  samples; maximum gap 1,301.2599 ms. Metadata caching never caches RSS or
+  accepts a reused PID without rediscovery. Incomplete identities fail.
+- Import worker young-generation GC is tuned to 8 MiB; old-generation limits
+  stay at runtime defaults. The 16-MiB full-record test passes complete length
+  and endpoints; no preview or nursery limit becomes a primary import cap.
+- All 35 worker cases (including canonical tiny/large REALs) pass before the
+  new large-record case. Empty-import summary regression starts red and is
+  repaired to say no table exists, rather than claiming rows went into records.
+
+- Next full candidate: 660 units/62 files and 28-file/670.77-KB package pass.
+  56 host cases pass, including BOM SQL, cancellation (47.3211 ms) and native
+  calibration (323,878,912-byte peak; 790.1773-ms gap). Its 1-GB CSV peak is
+  383,365,120 bytes; 132 samples/68 actual helper samples; OS gap 830.3797 ms;
+  host timer gap 59.3321 ms; first-row DOM 337.9489 ms. The 5-GB full-data SQL
+  check then hits the unchanged 120-second deadline, so this full run fails.
+- Repair the verification algorithm, not its deadline or coverage: compare every
+  payload with the fixed generated 4,095-x TEXT using NULL-aware binary equality
+  instead of repeated length/GLOB scans. This detects changed ends, changed length,
+  NULL and BLOB storage; a new test starts with the helper absent, then passes
+  all corruption/valid-data cases. No row/sample is skipped and no limit changes.
+  Timeout diagnostics now include operation state without fixture cell contents.
+
+Focused final T-021 host gate (profile out/integration-profile-wLPvoN) passes five
+cases with strict runtime-log validation. Windows x64 / VS Code 1.140.0 / Node
+24.21.0. Native/fallback controls, BOM-bearing data, paged SQL, exact values,
+independent sessions and source safety pass. First DOM 802.8872/369.9352 ms;
+native cancel and cleanup 71.8302 ms. Sampler calibration: 351,068,160-byte peak,
+27 samples/24 actual helper samples, 1,010.6197-ms maximum gap.
+
+- 1-GB CSV: 1,000,013,832 bytes /244,144 actual SQL-verified records, combined
+  peak 375,255,040 bytes; 74 samples/64 actual import-helper samples; OS gap
+  777.7134 ms; host timer gap 40.1621 ms; first DOM 324.7697 ms.
+- 5-GB CSV: 5,000,003,592 bytes /1,220,704 actual SQL-verified records, peak
+  406,544,384 bytes; 392 samples/316 actual import-helper samples; OS gap
+  1,133.4434 ms; host timer gap 44.0706 ms; first DOM 1,009.0309 ms. Peak
+  file-size growth 31,289,344 bytes. Every payload is exact TEXT; NULL/BLOB,
+  byte/length changes would fail the full-data equality check. Source hashes
+  match the recipe and the previous full-source hashes listed above.
+- Renderer peaks remain separate: 387,416,064 /376,434,688 bytes. These are warm
+  generated single-column sampled resident-memory/DOM observations, not physical
+  paint, unsampled instantaneous peaks, every record shape or cross-platform proof.
+- Accepted host record: source `20261015T022741/window1/renderer.log`, line 9,
+  original severity `warning`, rule `VSCODE-HOST-001`, message
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  No other diagnostic is accepted; this focused run is not warning-free.
+
+Final standalone `npm run verify` passes: 661 tests/63 files, strict host/webview/
+tooling types, zero-warning lint, production builds and 28-file/670.78-KB package
+dry run, with zero errors and zero warnings.
+
+Final `npm run verify:full` on the frozen implementation passes those same 661
+unit tests and checks, integration compilation and all 57 real-host cases.
+Profile: `out/integration-profile-xLJe8S`; Windows x64, VS Code 1.140.0 / Node
+24.21.0. Host exit code is 0. After output recovery, a read-only invocation of the
+unchanged `checkIntegrationLogs` confirms exactly the two approved records below.
+No tests are rerun unchanged to replace failed evidence.
+
+- Native/fallback options, BOM data, exact values and paged SQL pass; first-row
+  DOM 597.0196/320.4753 ms. Primary cancel/cleanup 42.9740 ms; independent preview
+  and recovery pass. Calibration observes 27 samples/24 actual helper samples,
+  peak 312,680,448 bytes and maximum gap 1,034.0094 ms.
+- Populated 1-GB CSV: 1,000,013,832 bytes /244,144 records, combined sampled
+  host/helper peak 404,656,128 bytes; host peak 155,430,912; helper peak
+  258,793,472. 83 samples/71 helper samples; maximum OS gap 1,213.6146 ms;
+  host timer gap 48.9489 ms; first-row DOM 358.4108 ms; measured workload
+  57,356.3549 ms. Renderer peak, separately, 421,810,176 bytes.
+- Populated 5-GB CSV: 5,000,003,592 bytes /1,220,704 records, combined peak
+  386,256,896 bytes; host peak 159,358,976; helper peak 229,728,256. 379 samples/
+  321 helper samples; maximum OS gap 1,337.6764 ms; host timer gap 36.6253 ms;
+  first-row DOM 439.3129 ms; measured workload 251,806.6056 ms. Renderer peak
+  410,497,024 bytes. Combined peak decreases by 18,399,232 bytes rather than
+  growing with file size. Paging growth is zero in both workloads.
+- Full source hashes before/after match the generated recipes listed above.
+  Every stored payload and row count passes the NULL-aware exact TEXT check.
+  Both sampled peaks are below 500,000,000 bytes, file-size growth below
+  50,000,000 bytes, OS gaps below 3,000 ms and host timer gaps below 100 ms.
+  Scope remains warm generated single-TEXT-column CSV, host plus actual helpers/
+  workers; renderer separately. Physical paint, unsampled peaks, universal record
+  shapes and other platforms are not established by these measurements.
+
+Final full is not warning-free. Accepted records (original severity `warning`):
+
+- Source `20261015T025102/window1/renderer.log`, line 2; rule `VSCODE-HOST-002`;
+  exact message `Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 24ms.`
+- Source `20261015T025102/window1/renderer.log`, line 11; rule `VSCODE-HOST-001`;
+  exact message `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+No HOST-003/004/005 occurs. Every other warning and every error remains a failure.
+Owner physical QA, fresh-chat independent review and new-code three-platform CI
+remain pending. Exact commands, five owner checks and every task file are in
+`docs/t021-import.md`. T-021 remains unchecked; no later task is started.
+
+T-021 delegated QA/review follow-up (2026-10-15): the owner explicitly asks the
+assistant to perform QA and fixes, removing the owner visual-QA wait and retaining
+only push/CI. A fresh independent read-only agent finds one MEDIUM export-close
+notification defect. Two FR-014 regressions fail with zero notifications; observing
+the imported database's closed promise repairs both. All seven panel tests pass;
+independent follow-up clears the repair with no remaining concrete finding.
+The first repair verify fails strict TS2683 in the test mock; adding the explicit
+`this: SqliteSession` annotation repairs it without unsafe types or suppression.
+
+All five delegated visual/interaction checks pass within the documented scope:
+actual isolated VS Code pixels and webview controls, light/dark themes, complete
+multiline/int64 values, keyboard selection, tab/semicolon/header-off/all-text,
+native schema/SQL, fallback paging, progress/retained cells, independent cancel,
+fallback refusal and malformed/UTF-8 errors with fresh preview recovery. Seven
+generated sources match their recipes after inspection. Native OS picker, physical
+paint latency and other-platform behavior are unobserved. `docs/t021-qa.md` records
+the exact method, screenshots, hashes, input corrections and limits.
+
+Preserve QA tooling failures: Computer Use native pipe stays unavailable after
+retry/reset; first disposable bridge glob finds zero cases. Corrected bridge case
+passes/host exits 0, but both debugging launches FAIL the unchanged strict console
+gate on `Warning: 'remote-debugging-port' is not in the list of known options, but still passed to Electron/Chromium.`
+No exception/filter is added. The corrected profile's sole accepted runtime-log
+record: `20261015T125240/window1/renderer.log:10`, severity `warning`, HOST-001,
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+An attempted sandbox build fails spawn EPERM; authorized canonical gates use
+normal process access and no debugging flag. Repaired final gates follow below.
+
+Repaired final standalone `npm run verify` PASS: 663 tests/63 files, all strict
+type/lint checks, production build and 28-file/670.8-KB VSIX package check.
+Zero errors and zero warnings. Retain the earlier 661-unit full as earlier evidence.
+
+Repaired canonical full `npm run verify:full` PASS (exit 0): 663 units/63 files,
+all types/lint/build/package checks (28 files/670.8 KB), integration compilation and
+57 real-host cases. Profile `out/integration-profile-I4pQJG`; complete capture
+`out/t021-reviewed-full.log`. Windows x64 / VS Code 1.140.0 / Node 24.21.0.
+Native/fallback import DOM 454.2316 /199.7250 ms; native cancellation/recovery
+41.8827 ms. Existing SQLite source safety, populated multi-GB, export, metadata,
+SQL and independent-view suites pass. No checker, deadline or threshold changes.
+
+- CSV calibration: peak 296,636,416 bytes, 37 samples/34 actual helper samples,
+  maximum OS gap 960.9174 ms; renderer separately 931,074,048 bytes.
+- Populated 1-GB CSV: 1,000,013,832 bytes /244,144 exact TEXT rows; combined
+  sampled host/helper peak 375,705,600 bytes, host peak 131,149,824 and helper
+  peak 256,864,256. Renderer separately 431,632,384. 135 samples/114 helper
+  samples; OS gap 645.8867 ms; host timer gap 41.8086 ms; first DOM 362.9496 ms;
+  measured workload 55,923.2586 ms. Paging growth zero.
+- Populated 5-GB CSV: 5,000,003,592 bytes /1,220,704 exact TEXT rows; combined
+  peak 343,932,928 bytes, host peak 132,206,592 and helper peak 214,675,456.
+  Renderer separately 429,801,472. 569 samples/481 helper samples; OS gap
+  790.4200 ms; host timer gap 90.6496 ms; first DOM 494.9270 ms; measured
+  workload 236,560.3908 ms. Paging growth zero. Combined peak decreases by
+  31,772,672 bytes with the larger file; the 50-MB size-growth guard passes.
+- Full source hashes still match pre/post generation recipes above. Every stored
+  payload and row count passes exact NULL-aware SQL verification. Both peaks are
+  below 500,000,000 bytes, OS gaps below 3,000 ms and host gaps below 100 ms.
+  Scope remains warm single-TEXT-column sampled host plus actual helpers/workers;
+  renderer separate. No physical-paint, unsampled-peak, universal-shape or
+  other-platform claim is made.
+
+Repaired full is not warning-free. Exactly one accepted record: source
+`20261015T131059/window1/renderer.log`, line 10, original severity `warning`,
+rule `VSCODE-HOST-001`, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No HOST-002/003/004/005 occurs. Every other warning and every error still fails.
+
+After full verification, help-text-only cleanup removes the internal T-022
+reference and states directly that imported storage is removed on tab closure.
+No import/parser/worker/observer behavior changes; no expensive benchmark repeat
+is needed for that copy edit. Fresh rebuilt inspection confirms the text, exact
+multiline preview and completed two-row native import (`11-final-help.png`).
+The bridge case passes/host exits 0, but its strict console gate again FAILS on the
+same unapproved debugging-flag warning above. Preserve this third instrumentation
+failure; its sole runtime record is HOST-001 at
+`20261015T132559/window1/renderer.log:10`, severity `warning`, the exact
+CloudSandboxApi message above. Final standalone after the copy edit PASSes:
+663 tests/63 files, strict host/webview/tooling types, zero-warning lint, production
+build and 28-file/670.78-KB package check. Zero errors and zero warnings.
+Owner push and actual-candidate three-platform CI remain; no owner visual wait.
+
 #### T-020 CSV / TSV preview implementation (2026-10-14)
 
 Owner authorizes decisions, fixture edits and needed repairs, then explicitly
@@ -3702,6 +3951,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-021 reviewed local handoff (2026-10-15): Record independently cleared export-close repair, 663-unit/57-host full with exact sole HOST-001 record and populated CSV peaks 375.7/343.9 MB. After a help-text-only cleanup, fresh rebuilt visual/native-import inspection and final 663-test zero-diagnostic standalone pass; retain the third rejected debugging launch and all physical/CI limits. Only owner push/actual-candidate CI remain external.
+- T-021 delegated QA/review (2026-10-15): Owner removes the visual-QA wait and retains push/CI. Record scoped actual VS Code visual passes, unavailable native helper, rejected debugging-flag instrumentation runs, exact HOST-001 runtime record, fresh independent export-close finding, two red-first notification repairs and cleared follow-up. Preserve the strict-type regression failure and all existing gates/limits.
+- T-021 local implementation (2026-10-15): Record tests-first streaming import, exact staging/options/cancellation/source safety, preserved failing runs and scoped repairs. Final standalone passes 661 tests/63 files with zero diagnostics; full passes 57 host tests and populated 1/5-GB memory/data gates with both exact approved HOST-001/002 records. Keep owner QA, fresh review and new-code three-platform CI pending; no task closure or diagnostic relaxation.
 - T-019 milestone closure (2026-10-14): Independently confirm run 38516745918 /attempt 1 at exact 6e38157 with all three locked installs/applicable full gates passing. Close the acceptance gate and local checkpoint; preserve every failed run, exact local warning and remote raw-log limitation. Owner pushes; no Marketplace release or Milestone 2 work.
 - T-019 owner approvals (2026-10-14): Record all five physical preview checks PASS and explicit approval of only the preferencesActions/chatPetContext renderer timing families. Preserve every prior failure and diagnostic/performance rule. Red-first native-opening repair passes 531-unit/49-host full gate, refreshed installed preview passes four cases, and final verify passes 531 tests with zero errors/warnings. Exact approved host records remain explicit; current-code CI/release are still pending.
 - T-019 QA/review candidate (2026-10-13): Record owner delegation/local-preview choice, cumulative fresh-context review, red-first repairs and failed full candidates. Preserve source/workload/diagnostic limits and distinguish observable DOM/theme/key evidence from physical preview feedback; current-code full gate/CI/release remain pending.

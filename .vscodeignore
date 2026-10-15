@@ -17,6 +17,10 @@
 !dist/csv-preview-worker.js
 !dist/csv-preview.js
 !dist/csv-preview.css
+!dist/csv-import.js
+!dist/csv-import.css
+!dist/csv-import-process.js
+!dist/csv-import-worker.js
 !dist/papaparse-LICENSE
 !dist/sql-wasm.cjs
 !dist/sql-wasm.wasm

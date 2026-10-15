@@ -73,7 +73,7 @@ async function main() {
     external: ['node:sqlite'],
   });
   await mkdir('dist', { recursive: true });
-  for (const name of ['db-process', 'db-worker', 'cell-worker', 'csv-preview-worker']) {
+  for (const name of ['db-process', 'db-worker', 'cell-worker', 'csv-preview-worker', 'csv-import-process', 'csv-import-worker']) {
     await buildBundle({
       entryPoints: [`src/worker/${name}.ts`],
       platform: 'node', format: 'cjs', target: 'es2022',
@@ -105,6 +105,9 @@ async function main() {
     entryPoints: ['webview/csv-preview.ts'],
     platform: 'browser', format: 'iife', target: 'es2022',
     outfile: 'dist/csv-preview.js',
+  });
+  await buildBundle({
+    entryPoints: ['webview/csv-import.ts'], platform: 'browser', format: 'iife', target: 'es2022', outfile: 'dist/csv-import.js',
   });
 }
 

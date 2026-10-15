@@ -33,6 +33,16 @@ test('NFR-003: Given a cold observer that starts slower than its sampling interv
     .rejects.toThrow(/startup.*100 ms/);
 }, 10000);
 
+test('NFR-003: Given acknowledged native snapshots and asynchronous metadata discovery, When collecting, Then one complete observation is acknowledged at a time and slow discovery still fails the watchdog', async () => {
+  const abort = new AbortController(); const seen: number[] = [];
+  const code = 'let n=0;const send=()=>console.log(String(++n));process.stdin.on("data",send);send();';
+  await observeProcessLines(process.execPath, ['-e', code], async (line) => {
+    await new Promise<void>((accept) => { setTimeout(accept, 20); }); seen.push(Number(line)); if (seen.length === 3) { abort.abort(); }
+  }, abort.signal, 3000, 500, true);
+  expect(seen).toEqual([1, 2, 3]);
+  await expect(observeProcessLines(process.execPath, ['-e', code], () => new Promise<void>(() => {}), new AbortController().signal, 3000, 100, true)).rejects.toThrow(/snapshot.*100 ms/);
+}, 10000);
+
 test('NFR-003: Given a many-chunk source hash, When reading outside the measured workload, Then one fixed buffer is reused instead of retaining size-dependent chunk allocations in the extension host', async () => {
   const buffers = new Set<Buffer>(); const expected = createHash('sha256'); let remaining = 12 * 1024 * 1024 + 7;
   const result = await digestChunks((buffer) => {
