@@ -1,7 +1,7 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-022 storage lifecycle and Save as SQLite, local handoff.
+Milestone 2: T-022 storage lifecycle and Save as SQLite, complete.
 Owner delegates implementation, fixes and visual QA; owner retains push/CI.
 
 ## Verify status
@@ -13,6 +13,9 @@ Retain earlier full failure: 706 pass, sqlite-spike.test.ts:169 timeout at 5 s.
 Separate real-helper diagnostic: 524.516 ms; timeout cause remains unproven.
 Independent 60-host run also PASS; exact HOST-001 separately recorded.
 Retain red regressions, first lint failure and rejected visual instrumentation.
+CI run 38795642328 /attempt 1 at exact a1c1fce: all three platforms PASS.
+Public API confirms locked installs/applicable full checks; raw counts unclaimed.
+Closure verify PASS: 707 units, zero errors/warnings; owner pushes records.
 
 ## Last session
 Exact disk estimate/override, PID-owned storage and conservative orphan cleanup.
@@ -31,7 +34,6 @@ Native OS picker appearance and other-platform behavior are not claimed.
 Unrelated owner README/T-015 edits and fixtures preserved.
 
 ## Next
-Scoped local T-022 commit prepared after passing checks; owner handles push.
-Owner supplies fresh Windows/macOS/Ubuntu CI URL and tested candidate SHA.
-Keep T-022 unchecked until that evidence passes; next task starts a fresh chat.
+T-022 is checked after exact-candidate CI, scoped QA, review and local acceptance.
+Closure commit is prepared; owner pushes records, then fresh chat for T-023.
 No T-023 or whole-milestone/release closure in this chat.

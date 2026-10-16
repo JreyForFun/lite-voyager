@@ -83,7 +83,32 @@ unchanged. Final standalone `npm run verify` after the full/evidence update also
 passes all 707 units / 71 files (287.38 s), strict types/lint/build and 29-file /
 676.66-KB packaging with zero errors and zero warnings. Only documentation status
 updates follow; code, tests and guards remain unchanged.
-Keep T-022 unchecked for owner-pushed actual-candidate three-platform CI.
+
+#### T-022 actual-candidate CI and closure (2026-10-16)
+
+Owner reports [run 38795642328](https://github.com/JreyForFun/lite-voyager/actions/runs/38795642328)
+PASS. Public GitHub API run/job metadata independently confirms attempt 1,
+completed success, at exact `a1c1fceb12fe25e52c01dda809d45426b7927e07`, the
+T-022 implementation commit and local HEAD before these closure records.
+
+- Windows job 116631182411: locked installation and Windows/macOS full-verification
+  step succeed.
+- Ubuntu job 116631182912: locked installation and Linux session-bus/virtual-display
+  full-verification step succeed.
+- macOS job 116631182924: locked installation and Windows/macOS full-verification
+  step succeed.
+
+Remote raw logs, test counts and diagnostic counts are not retrieved; no
+warning-free remote claim. Preserve every earlier failure, the unexplained
+5-second unit timeout, the explicit single-rerun authorization, exact local host
+diagnostics, visual observation limits and unchanged data/memory/timing guards.
+Together with observed local acceptance, delegated visual QA and cleared
+independent review, this completes only T-022. Check its task box. Closure changes
+documentation only. Local closure `npm run verify` passes 707 units /71 files
+(342.08 s), strict types/lint/build and 29-file /676.66-KB packaging with zero
+errors and zero warnings. Only final documentation status updates follow. Owner pushes the
+closure records, then T-023 planning starts in a fresh chat. No whole-milestone
+closure, release or tag is claimed.
 
 ### Layer 1: Automatic gate (every task, every commit)
 
@@ -4313,6 +4338,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-022 completion (2026-10-16): Independently confirm run 38795642328 /attempt 1/exact a1c1fce succeeds on all three platforms with locked installs and applicable full steps. Close only T-022 using existing local acceptance/QA/review; retain prior failures, exact diagnostics, remote raw-log limits and all remaining milestone work.
 - T-022 implementation (2026-10-16): Record red-first storage/save/review/package repairs, delegated visual scope and independent 60-host pass. The owner's single unchanged full rerun passes 707 units/60 hosts with its exact HOST-001 record; final 707-unit standalone passes with zero errors/warnings. Preserve every guard, prior 706/707 failure, unexplained timeout, rejected debugging launch and actual-candidate three-platform CI gate.
 - T-021 completion (2026-10-15): Independently confirm run 38718762528/attempt 1 at exact e97ea57 and all three successful locked installs/full steps. Close only T-021 with passing local acceptance, delegated QA and independent review; retain failed evidence, exact approved diagnostics and remote raw-log limits.
 - T-021 native paging repair (2026-10-15): Record exact second-CI jobs/SHA and macOS failure, retained red allocation/iterator-total failures, independent reviews and separate source-skip/final 4-MiB gates. Final 668 units/65 files and 57 hosts pass with exact HOST-001 reporting and unchanged guards; no repaired macOS or warning-free full claim. Retain owner push/fresh CI.

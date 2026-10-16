@@ -215,13 +215,28 @@ Final `npm run verify` passes after the full rerun/evidence update: all 707 unit
 29-file / 676.66-KB packaging. Zero errors and zero warnings. The final evidence
 status updates change documentation only; no code/test/guard changes follow.
 
+### Actual-candidate CI and closure (2026-10-16)
+
+Owner reports [run 38795642328](https://github.com/JreyForFun/lite-voyager/actions/runs/38795642328)
+PASS. Public GitHub API metadata independently confirms attempt 1, completed
+success, at exact `a1c1fceb12fe25e52c01dda809d45426b7927e07`. Windows job
+116631182411, Ubuntu job 116631182912 and macOS job 116631182924 all pass locked
+installation and their applicable full-verification steps. This matches the
+reviewed T-022 implementation commit. Remote raw logs, test counts and diagnostic
+counts are not retrieved; do not describe remote full runs as warning-free.
+
 Reproduction commands are `npm run verify` and `npm run verify:full`.
 Local acceptance covers all scoped T-022 behavior, both-engine real-host tests,
 independent review and delegated visual observations described above. Native OS
 picker appearance and other-platform behavior remain unobserved locally. The
-owner pushes the scoped local commit and supplies fresh Windows/macOS/Ubuntu CI
-URL and tested SHA. Keep T-022 unchecked until that candidate evidence passes.
-No T-023, milestone closure or release/tag is included here.
+actual-candidate platform gate now passes as recorded above. All scoped T-022
+acceptance is complete and its checkbox is checked. Earlier failures and visual
+limits remain recorded. These closure changes touch documentation only. Local
+closure `npm run verify` passes 707 units /71 files (342.08 s), strict
+types/lint/build and 29-file /676.66-KB packaging with zero errors and zero
+warnings. Only final documentation status updates follow. Owner pushes the closure records, then starts T-023
+planning in a fresh chat. No T-023 implementation, milestone closure or release/tag
+is included here.
 
 ## Complete task file list
 
