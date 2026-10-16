@@ -42,7 +42,8 @@ suite('T-021 real CSV / TSV import', () => {
       let session: CsvImportSession | undefined;
       try {
         await writeFile(path, contents); session = await open(path); const current = session;
-        assert.equal(session.state.preview?.delimiter, ';'); assert.equal(session.state.preview.rows[0]?.[0], '9007199254740993');
+        assert.ok(session.state.preview !== undefined && 'delimiter' in session.state.preview);
+        assert.equal(session.state.preview.delimiter, ';'); assert.equal(session.state.preview.rows[0]?.[0], '9007199254740993');
         assert.equal(session.state.preview.rows[1]?.[0], '\ufeff9007199254740994');
         await waitFor(session, () => current.firstRowsMs !== undefined, 'Preview DOM deadline');
         assert.ok(session.firstRowsMs !== undefined && session.firstRowsMs < 2000, `first-row DOM ${String(session.firstRowsMs)}ms`);

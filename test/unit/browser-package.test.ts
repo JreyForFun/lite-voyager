@@ -6,6 +6,21 @@ import { join, resolve } from 'node:path';
 import { build } from 'esbuild';
 import { expect, test } from 'vitest';
 
+test('FR-005: Given JSON production workers, When listing the actual package, Then both required workers ship without fixtures', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-json-package-'));
+  try {
+    for (const name of ['package.json', '.vscodeignore', 'README.md', 'CHANGELOG.md', 'LICENSE']) { await copyFile(name, join(directory, name)); }
+    await mkdir(join(directory, 'dist'));
+    for (const name of ['json-preview-worker', 'json-import-worker']) {
+      const built = await build({ entryPoints: [resolve(`src/worker/${name}.ts`)], outfile: join(directory, `dist/${name}.js`), bundle: true, platform: 'node', format: 'cjs', target: 'es2022', external: ['node:sqlite'], logLevel: 'silent' });
+      expect(built.warnings).toEqual([]);
+    }
+    const result = await promisify(execFile)(process.execPath, [resolve('node_modules/@vscode/vsce/vsce'), 'ls', '--no-dependencies'], { cwd: directory });
+    expect(result.stderr).toBe(''); const files = result.stdout.trim().split(/\r?\n/u);
+    expect(files).toContain('dist/json-preview-worker.js'); expect(files).toContain('dist/json-import-worker.js');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+}, 30000);
+
 test('FR-002: Given a built extension, When listing actual VSIX contents, Then both browser assets ship and disposable test fixtures do not', async () => {
   const execute = promisify(execFile);
   // Exercise the real whitelist with real built assets, without recursively

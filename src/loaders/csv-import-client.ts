@@ -19,7 +19,7 @@ function validTables(value: unknown): value is ImportedTable[] {
 
 /** Fresh private storage; publish via exclusive hard link, never replace a destination. */
 export async function runCsvImport(directory: string, source: string, target: ImportTarget, options: LoadOptions,
-  progress: (value: Progress) => void, signal: AbortSignal): Promise<ImportedTable[]> {
+  progress: (value: Progress) => void, signal: AbortSignal, format?: 'json' | 'jsonl'): Promise<ImportedTable[]> {
   if (signal.aborted) { throw cancelled(); }
   if (typeof target.path !== 'string' || target.path.length === 0 || target.path.includes('\0') || !['node:sqlite', 'sql.js'].includes(target.engine)) { throw new Error('Invalid internal CSV import target.'); }
   const destination = resolve(target.path);
@@ -56,7 +56,7 @@ export async function runCsvImport(directory: string, source: string, target: Im
         } else if (reply['type'] === 'imported' && validTables(reply['tables'])) { settled = true; accept(reply['tables']); }
         else { fail(new Error('Invalid CSV import response. Rebuild and reopen.')); }
       });
-      helper.send({ source, path: output, directory, engine: target.engine, options }, (error) => { if (error !== null) { fail(new Error('CSV helper could not receive import request.')); } });
+      helper.send({ source, path: output, directory, engine: target.engine, options, ...(format === undefined ? {} : { format }) }, (error) => { if (error !== null) { fail(new Error('Import helper could not receive import request.')); } });
       if (signal.aborted) { abort(); }
     });
     if (helper.exitCode === null && helper.signalCode === null && helper.pid !== undefined) { helper.kill('SIGKILL'); }

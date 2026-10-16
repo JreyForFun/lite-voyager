@@ -17,6 +17,19 @@ beforeEach(() => {
 afterEach(() => { view.dispose(); vi.unstubAllGlobals(); });
 const ready = { type: 'csvImportState', contextId, phase: 'ready', message: 'ready', options: { delimiter: ',', header: true },
   preview: { columns: ['a'], rows: [['1']], delimiter: ',', header: true, bytesRead: '4', totalBytes: '4', reachedEnd: true, notice: '', threadId: 1 } };
+
+test('FR-005: Given JSON controls, When retrying preview and starting import, Then only empty JSON options are sent and exact preview rows render', () => {
+  view.dispose(); root.setAttribute('data-format', 'json'); view = new CsvImportView(root as unknown as HTMLElement, contextId, post);
+  view.receive({ ...ready, options: {}, preview: { columns: ['a'], rows: [['9007199254740993']], format: 'json', bytesRead: '30', totalBytes: '30', reachedEnd: true, notice: '', threadId: 1 } });
+  expect(view.preview.grid.metrics().cachedRows).toBe(1); expect(element('import-start').disabled).toBe(false);
+  element('import-refresh').click(); expect(post).toHaveBeenLastCalledWith({ type: 'csvImportRefresh', contextId, options: {} });
+});
+
+test('FR-005: Given a JSON preview failure, When showing the error then retrying, Then inner status stops loading and preview recovers without a stale cancel control', () => {
+  view.receive({ type: 'csvImportState', contextId, phase: 'error', options: {}, message: 'Malformed JSON. Retry preview.' });
+  expect(element('csv-status').textContent).toBe('Malformed JSON. Retry preview.'); expect(element('csv-cancel').disabled).toBe(true);
+  view.receive(ready); expect(view.preview.grid.metrics().cachedRows).toBe(1); expect(element('csv-status').textContent).toBe('');
+});
 test('FR-004: Given ready controls, When changing options, Then import locks until a refreshed preview and the header/text selections are sent literally', () => {
   view.receive(ready); expect(element('import-start').disabled).toBe(false);
   element('import-delimiter').value = ';'; Object.assign(element('import-header'), { checked: false }); Object.assign(element('import-text'), { checked: true });

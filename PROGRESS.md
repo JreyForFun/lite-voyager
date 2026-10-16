@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-022 storage lifecycle and Save as SQLite, complete.
-Owner delegates implementation, fixes and visual QA; owner retains push/CI.
+Milestone 2: T-023 JSON / JSONL streaming import implemented; closure pending.
+Owner delegates implementation, fixes/fixtures, judgement and visual QA.
+Owner retains push and actual-candidate CI. No other task is in scope.
 
 ## Verify status
-Owner-authorized single unchanged verify:full rerun PASS: 707 units/71 files,
-60 hosts, strict types/lint/build, 29-file/676.66-KB VSIX including save worker.
-One approved HOST-001 warning; exact record in VALIDATION, not warning-free.
-Final standalone verify PASS: same 707 units, zero errors/warnings.
-Retain earlier full failure: 706 pass, sqlite-spike.test.ts:169 timeout at 5 s.
-Separate real-helper diagnostic: 524.516 ms; timeout cause remains unproven.
-Independent 60-host run also PASS; exact HOST-001 separately recorded.
-Retain red regressions, first lint failure and rejected visual instrumentation.
-CI run 38795642328 /attempt 1 at exact a1c1fce: all three platforms PASS.
-Public API confirms locked installs/applicable full checks; raw counts unclaimed.
-Closure verify PASS: 707 units, zero errors/warnings; owner pushes records.
+Final standalone verify: 777 units /77 files, zero errors and warnings.
+Separate complete host suite: 65 passing, exit 0; all new stress cases pass.
+Exact HOST-004 line 2 and HOST-001 line 11 warnings: docs/t023-json.md.
+Host run is not warning-free; strict log audit accepts only those records.
+First full: 760 units pass; 63 hosts pass /2 SQL-step timeouts, repaired red-first.
+Repaired full: 776/777 units; unchanged T-015 export cleanup times out at 30 s.
+A long timing interruption is observed; timeout cause remains unproven.
+No unchanged full retry-to-green. Both failed full runs remain failed.
 
 ## Last session
-Exact disk estimate/override, PID-owned storage and conservative orphan cleanup.
-Bounded-worker full SQLite copy, atomic publication, typed Save/Cancel/command.
-Failing-first helper-registration and pending-low-space cancellation repairs.
-Independent review's source-rename, absent-source and cleanup failures repaired;
-follow-up clears them and the red-first package whitelist/worker audit repair.
-Delegated light/dark/narrow save/error and fallback keyboard visual QA inspected.
-Full CSV 1/5-GB peaks 365,527,040 /364,597,248 bytes; all original guards pass.
+Lossless streaming parser/importer, bounded preview and both-engine fidelity.
+Command reuses supervised helpers, storage, SQL browser and atomic SQLite save.
+Exact int64/nested text, late keys, NULL/empty, cancellation and recovery covered.
+Red-first NUL, keyless, fallback-cap, control/status and harness readiness repairs.
+Independent review clears source and confirms no weakened guards in harness/CI.
+Both ten-million-row aggregates and all populated JSON/JSONL 1/5-GB checks pass.
+JSON peaks 293.6-296.8 MB; host gaps below 48 ms; hashes/full-data checks pass.
+All existing SQLite/CSV large-file guards pass in the separate host suite.
 
 ## Decisions / limits
-No dependencies or diagnostic/timing/memory guard changes.
-Native Computer Use unavailable after recovery; isolated Chromium QA used.
-Debugging-flag warning rejects that visual launch as a verification gate.
-Native OS picker appearance and other-platform behavior are not claimed.
-Unrelated owner README/T-015 edits and fixtures preserved.
+No new dependencies or per-test timing/memory/diagnostic policy changes.
+Aggregate CI budget 20 to 60 min accommodates expanded sequential workloads.
+Light/dark/narrow-error/progress component renders inspected; native tools unavailable.
+Native picker/physical paint/other-platform behavior are not claimed.
+Complete file list, failed evidence, exact warnings and commands: docs/t023-json.md.
+Unrelated owner README/spec edits and untracked fixtures preserved.
 
 ## Next
-T-022 is checked after exact-candidate CI, scoped QA, review and local acceptance.
-Closure commit is prepared; owner pushes records, then fresh chat for T-023.
-No T-023 or whole-milestone/release closure in this chat.
+Owner pushes scoped implementation, then supplies actual-candidate CI run URL.
+Resolve canonical full failure with evidence; retain T-023 unchecked until clean CI.
+No whole-milestone closure, release/tag or T-024 work is claimed.

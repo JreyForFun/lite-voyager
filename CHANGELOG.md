@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Add **Import JSON / JSONL** with a bounded preview, streaming imports,
+  progress and cancellation. Preserve exact int64 values, late object keys,
+  nested JSON text and complete Unicode strings. Imported data uses the existing
+  SQL browser and Save as SQLite; source files remain unchanged. Invalid shapes,
+  duplicate keys and memory-limited fallback restrictions are explained.
+
 - T-020: add a read-only CSV/TSV preview command and format-neutral loader
   contract. Read only the start in a worker, preserve complete exact text,
   explain generated headers/missing fields and preview limits, and reuse the

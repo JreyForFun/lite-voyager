@@ -1011,6 +1011,13 @@ Define these once in `src/protocol.ts` and import in both host and webview, so p
 
 ## 5. Import pipeline (CSV, JSONL, JSON)
 
+T-023 owner-authorized design and acceptance (2026-10-16):
+[JSON / JSONL import](../docs/t023-json.md). Use a built-in-only lossless streaming
+parser, existing supervised import transport/database adapter and shared editor
+lifecycle; no dependency changes. Preserve all T-021/T-022 safety policies.
+Allow 60 minutes for the expanded aggregate CI job; individual test deadlines,
+workloads, memory and responsiveness thresholds remain unchanged.
+
 ### T-022 storage lifecycle and saving (owner-delegated, 2026-10-15)
 
 Use only Node built-ins. `TempStorage` creates versioned PID-owned directories,
@@ -1276,6 +1283,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-023 planning (2026-10-16): Link dependency-free streaming JSON design and shared import lifecycle; preserve existing unrelated edits and all prior safety/diagnostic guards.
 - T-022 (2026-10-16): Use versioned owned storage/helper markers, exact preflight and a bounded copy worker with host-owned atomic publication, retained original identity and real VSIX inclusion. Preserve owner push/CI and all diagnostic/memory/timing guards.
 - T-021 completion (2026-10-15): Confirm run 38718762528/attempt 1/exact e97ea57 passes locked installs and applicable full checks on Windows/macOS/Ubuntu. Close only T-021; retain prior failures, exact local diagnostics and remote-log limits. T-022 starts in a fresh chat.
 - T-021 native paging repair (2026-10-15): Preserve run 38706558502/f1be89d outcomes; remove offset-row decoding while preserving one iterator/execution, exact totals and full export. Guard exhausted native iteration and adopt reviewed 4-MiB DB nursery, retaining importer 8 MiB and default old/large limits. Final clean 668-test standalone and 57-host full pass; fresh actual-candidate CI remains required.

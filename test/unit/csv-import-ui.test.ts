@@ -2,6 +2,12 @@ import { expect, test } from 'vitest';
 import { isCsvImportRequest, isCsvImportState, isHostMessage, isWebviewMessage } from '../../src/protocol';
 import { csvImportHtml } from '../../src/editor/csv-import-ui';
 
+test('FR-005: Given a JSON import shell, When hiding the preview-only cancel button, Then all import controls remain present with JSON help', () => {
+  const html = csvImportHtml('input.json', '1'.repeat(32), { scriptUri: 'local:script', styleUri: 'local:style', nonce: 'test', cspSource: 'local:' }, 'json');
+  for (const id of ['import-delimiter', 'import-header', 'import-text', 'import-refresh', 'import-start', 'import-cancel', 'import-status', 'import-progress']) { expect(html).toContain(`id="${id}"`); }
+  expect(html).toContain('id="csv-cancel" hidden'); expect(html).toContain('JSON / JSONL import'); expect(html).toContain('data-format="json"');
+});
+
 const contextId = '1'.repeat(32);
 test('FR-004: Given import control requests, When validating, Then only typed options and matching message structures are accepted', () => {
   expect(isWebviewMessage({ type: 'csvImportStart', contextId })).toBe(true);

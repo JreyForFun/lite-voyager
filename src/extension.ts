@@ -96,7 +96,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(csvPreview, vscode.commands.registerCommand('lite-voyager.csvPreview', (file?: vscode.Uri) => csvPreview.open(file)));
 	const csvImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'));
 	context.subscriptions.push(csvImport, vscode.commands.registerCommand('lite-voyager.csvImport', (file?: vscode.Uri) => csvImport.open(file)));
-	context.subscriptions.push(vscode.commands.registerCommand('lite-voyager.saveAsSqlite', () => csvImport.saveActive()));
+	const jsonImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'json');
+	context.subscriptions.push(jsonImport, vscode.commands.registerCommand('lite-voyager.jsonImport', (file?: vscode.Uri) => jsonImport.open(file)));
+	context.subscriptions.push(vscode.commands.registerCommand('lite-voyager.saveAsSqlite', () => (jsonImport.hasActive ? jsonImport : csvImport).saveActive()));
 	context.subscriptions.push(sqliteEditor, vscode.window.registerCustomEditorProvider(SQLITE_EDITOR_VIEW_TYPE, sqliteEditor,
 		{ supportsMultipleEditorsPerDocument: true }));
 	const output = vscode.window.createOutputChannel('Lite Voyager T-002');
@@ -106,7 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('lite-voyager.sqliteSpike', () => runSqliteSpike(context, output, false)),
 		vscode.commands.registerCommand('lite-voyager.sqliteSpikeFallback', () => runSqliteSpike(context, output, true)),
 	);
-	return { sqliteEditor, csvPreview, csvImport };
+	return { sqliteEditor, csvPreview, csvImport, jsonImport };
 }
 
 // This method is called when your extension is deactivated

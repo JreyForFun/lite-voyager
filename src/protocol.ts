@@ -14,11 +14,13 @@ export interface FilePreviewResult {
   bytesRead: string; totalBytes: string; reachedEnd: boolean; notice: string; threadId: number;
 }
 export interface CsvPreviewResult extends FilePreviewResult { delimiter: CsvDelimiter; header: boolean; }
+export interface JsonPreviewResult extends FilePreviewResult { format: 'json' | 'jsonl'; }
+export type ImportPreviewResult = CsvPreviewResult | JsonPreviewResult;
 export type CsvPreviewRequest = { type: 'csvPreviewReady' | 'csvPreviewCancel'; contextId: string };
 export interface CsvPreviewStatus { type: 'csvPreviewStatus'; contextId: string; renderedRows: number; renderedColumns: number; }
 export type CsvPreviewState = { type: 'csvPreviewState'; contextId: string } & (
   | { phase: 'loading' | 'cancelled' | 'error'; message: string }
-  | { phase: 'ready'; message: string; preview: CsvPreviewResult });
+  | { phase: 'ready'; message: string; preview: ImportPreviewResult });
 
 export type CsvImportRequest = { contextId: string } & (
   | { type: 'csvImportStart' | 'csvImportCancel' }
@@ -32,7 +34,7 @@ export function isCsvImportExercise(value: unknown): value is CsvImportExercise 
 export interface CsvImportState {
   type: 'csvImportState'; contextId: string;
   phase: 'loading' | 'ready' | 'importing' | 'opening' | 'opened' | 'error' | 'cancelled';
-  message: string; options: CsvLoadOptions; preview?: CsvPreviewResult;
+  message: string; options: CsvLoadOptions; preview?: ImportPreviewResult;
   progress?: import('./loaders/file-loader').Progress;
 }
 export function isCsvLoadOptions(value: unknown): value is CsvLoadOptions {
@@ -55,15 +57,22 @@ export function isCsvImportState(value: unknown): value is CsvImportState {
   return isRecord(value) && previewContext(value) && value['type'] === 'csvImportState'
     && typeof value['phase'] === 'string' && ['loading', 'ready', 'importing', 'opening', 'opened', 'error', 'cancelled'].includes(value['phase'])
     && typeof value['message'] === 'string' && value['message'].length <= 4096 && isCsvLoadOptions(value['options'])
-    && (value['preview'] === undefined || isCsvPreviewResult(value['preview']))
-    && (value['phase'] !== 'ready' || isCsvPreviewResult(value['preview']))
+    && (value['preview'] === undefined || isImportPreviewResult(value['preview']))
+    && (value['phase'] !== 'ready' || isImportPreviewResult(value['preview']))
     && (value['progress'] === undefined || isCsvImportProgress(value['progress']));
 }
 
 export function isCsvPreviewResult(value: unknown): value is CsvPreviewResult {
+  return isRecord(value) && typeof value['delimiter'] === 'string' && [',', '\t', ';', '|'].includes(value['delimiter'])
+    && typeof value['header'] === 'boolean' && isFilePreviewResult(value);
+}
+export function isJsonPreviewResult(value: unknown): value is JsonPreviewResult {
+  return isRecord(value) && (value['format'] === 'json' || value['format'] === 'jsonl') && isFilePreviewResult(value, true);
+}
+export function isImportPreviewResult(value: unknown): value is ImportPreviewResult { return isCsvPreviewResult(value) || isJsonPreviewResult(value); }
+function isFilePreviewResult(value: unknown, allowNul = false): value is FilePreviewResult {
   if (!isRecord(value) || !Array.isArray(value['columns']) || value['columns'].length > MAX_PREVIEW_COLUMNS
     || !Array.isArray(value['rows']) || value['rows'].length > MAX_PREVIEW_ROWS
-    || typeof value['delimiter'] !== 'string' || ![',', '\t', ';', '|'].includes(value['delimiter']) || typeof value['header'] !== 'boolean'
     || typeof value['reachedEnd'] !== 'boolean' || typeof value['notice'] !== 'string' || value['notice'].length > 4096
     || !integer(value['threadId'], 1, Number.MAX_SAFE_INTEGER)
     || typeof value['bytesRead'] !== 'string' || !/^(0|[1-9]\d{0,30})$/u.test(value['bytesRead'])
@@ -77,7 +86,7 @@ export function isCsvPreviewResult(value: unknown): value is CsvPreviewResult {
   }) || (columns.length === 0 && value['rows'].length > 0)) { return false; }
   return Array.from(value['rows']).every((row: unknown) => Array.isArray(row) && row.length === columns.length
     && Array.from(row).every((cell: unknown) => {
-      if (cell !== null && (typeof cell !== 'string' || cell.includes('\0'))) { return false; }
+      if (cell !== null && (typeof cell !== 'string' || !allowNul && cell.includes('\0'))) { return false; }
       characters += cell === null ? 1 : cell.length + 1;
       return characters <= MAX_PREVIEW_CHARACTERS;
     }));
@@ -94,7 +103,7 @@ export function isCsvPreviewState(value: unknown): value is CsvPreviewState {
   return isRecord(value) && previewContext(value) && value['type'] === 'csvPreviewState'
     && typeof value['message'] === 'string' && value['message'].length <= 4096
     && typeof value['phase'] === 'string'
-    && (value['phase'] === 'ready' ? isCsvPreviewResult(value['preview']) : ['loading', 'cancelled', 'error'].includes(value['phase']));
+    && (value['phase'] === 'ready' ? isImportPreviewResult(value['preview']) : ['loading', 'cancelled', 'error'].includes(value['phase']));
 }
 
 export interface SpikePageRequest { type: 'spikePageRequest'; requestId: number; offset: number; }

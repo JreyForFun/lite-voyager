@@ -12,6 +12,7 @@ export class CsvPreviewView {
   private phase = 'loading';
   private disposed = false;
   constructor(root: HTMLElement, private readonly contextId: string, private readonly post: Post) {
+    const json = root.getAttribute('data-format') === 'json';
     const element = <T extends HTMLElement>(id: string): T => {
       const found = root.querySelector<T>(`#${id}`); if (found === null) { throw new Error(`Missing preview element: ${id}`); } return found;
     };
@@ -24,15 +25,15 @@ export class CsvPreviewView {
     }, () => {}, (selection) => {
       title.textContent = selection === null ? 'Selected cell' : `Row ${String(selection.rowNumber)} · ${selection.name}`;
       value.textContent = selection === null ? 'Select a cell to read its complete text.'
-        : selection.value === null ? '(missing field)' : selection.value === '' ? '(empty string)' : selection.value;
-    }, () => {}, { display: '(missing)', label: 'Missing CSV field' });
+        : selection.value === null ? (json ? '(SQL NULL / missing key)' : '(missing field)') : selection.value === '' ? '(empty string)' : selection.value;
+    }, () => {}, json ? { display: 'NULL', label: 'JSON null or missing key' } : { display: '(missing)', label: 'Missing CSV field' });
     this.cancel.addEventListener('click', () => {
       if (this.phase === 'loading') { this.cancel.disabled = true; this.post({ type: 'csvPreviewCancel', contextId }); }
     }, { signal: this.events.signal });
     this.post({ type: 'csvPreviewReady', contextId });
   }
   receive(message: unknown): void {
-    if (this.disposed || !isCsvPreviewState(message) || message.contextId !== this.contextId || this.phase === 'cancelled' || this.phase === 'error') { return; }
+    if (this.disposed || !isCsvPreviewState(message) || message.contextId !== this.contextId || this.phase === 'cancelled') { return; }
     this.phase = message.phase; this.status.textContent = message.message;
     this.status.setAttribute('role', message.phase === 'error' ? 'alert' : 'status');
     this.cancel.disabled = message.phase !== 'loading';

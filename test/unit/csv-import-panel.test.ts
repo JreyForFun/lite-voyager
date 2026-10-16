@@ -9,6 +9,7 @@ import { CsvImportSession } from '../../src/editor/csv-import';
 import { SqliteSession } from '../../src/editor/sqlite-session';
 import { SqliteSaveService } from '../../src/editor/sqlite-save';
 import { TempStorage } from '../../src/storage/temp-storage';
+import type { JsonPreviewResult } from '../../src/protocol';
 
 const notifyError = vi.hoisted(() => vi.fn());
 const disk = vi.hoisted(() => ({ low: false }));
@@ -36,13 +37,27 @@ function engine() {
     schema: vi.fn().mockResolvedValue(page), columns: vi.fn().mockResolvedValue(page), indexes: vi.fn().mockResolvedValue(page), indexColumns: vi.fn().mockResolvedValue(page),
     page: vi.fn().mockResolvedValue(page), grid: vi.fn().mockResolvedValue(page), query: vi.fn().mockResolvedValue(page), exportResults: vi.fn(), cancel: vi.fn().mockResolvedValue(undefined), close: vi.fn().mockResolvedValue(undefined) } satisfies Engine;
 }
-async function fixture(loader: FileLoader, started?: number) {
+async function fixture(loader: FileLoader, started?: number, format: 'csv' | 'json' = 'csv') {
   const root = await mkdtemp(join(tmpdir(), 'lv-import-panel-')); fixtureRoots.push(root);
   const directory = join(root, 'storage'); await mkdir(directory); const source = join(root, 'source.csv'); await writeFile(source, 'a\n1\n');
   const view = panel(); const db = engine();
-  const session = new CsvImportSession({ fsPath: source } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started);
+  const session = new CsvImportSession({ fsPath: source } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started, format);
   await session.finished; return { directory, view, db, session };
 }
+
+test('FR-005: Given a JSON preview/session, When retrying then importing, Then CSV options never reach the loader and shared storage/save/browser lifecycle works', async () => {
+  const preview: JsonPreviewResult = { columns: ['a'], rows: [['1']], format: 'json', bytesRead: '9', totalBytes: '9', reachedEnd: true, notice: '', threadId: 1 };
+  const read = vi.fn<FileLoader['preview']>().mockResolvedValue(preview);
+  const load = vi.fn<FileLoader['import']>().mockImplementation(async (_source, target) => { await writeFile(target.path, 'owned'); return [{ name: 'records', columns: ['a'], rowCount: '1' }]; });
+  const run = await fixture({ extensions: ['json', 'jsonl'], preview: read, import: load }, undefined, 'json');
+  try {
+    expect(run.session.state.phase).toBe('ready'); expect(run.session.state.options).toEqual({}); expect(run.view.webview.html).toContain('JSON / JSONL import');
+    await run.session.refresh({}); expect(read).toHaveBeenLastCalledWith(expect.any(String), {}, expect.any(AbortSignal));
+    await run.session.startImport(); expect(run.session.state.phase).toBe('opened');
+    expect(load).toHaveBeenCalledWith(expect.any(String), expect.any(Object), {}, expect.any(Function), expect.any(AbortSignal));
+    expect(run.view.webview.html).toContain('id="sqlite-save"');
+  } finally { run.view.dispose(); await run.session.closed; expect(await readdir(run.directory)).toEqual([]); }
+});
 
 test('FR-004: Given import controls and preview, When applying header-off and starting import, Then options reach the worker and SQL becomes available only after success', async () => {
   const load = vi.fn<FileLoader['import']>().mockImplementation(async (_path, target, _options, progress) => {

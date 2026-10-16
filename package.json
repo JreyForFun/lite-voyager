@@ -39,6 +39,10 @@
     },
     "commands": [
       {
+        "command": "lite-voyager.jsonImport",
+        "title": "Lite Voyager: Import JSON / JSONL"
+      },
+      {
         "command": "lite-voyager.saveAsSqlite",
         "title": "Lite Voyager: Save as SQLite"
       },

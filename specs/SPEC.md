@@ -281,6 +281,9 @@ storage, other loaders and production opening menus remain T-021 through T-026.
 
 **FR-005 (P1) Open JSON / JSONL.** JSONL is streamed. A top-level JSON array of objects is streamed with a streaming parser. Columns are the union of keys. Nested values are stored as JSON text and are queryable with `json_extract()`. Unsupported shapes get a clear explanation.
 
+T-023 detailed acceptance, including exact scalar storage, streaming/preview
+budgets, key handling and invalid-input policy: [docs/t023-json.md](../docs/t023-json.md).
+
 **FR-006 (P1) Open XLSX.** One table per sheet, first row as header, formulas read as cached values. Honest limit (Constitution 6): XLSX is zipped XML and must be read into memory, so a warning appears above 100 MB.
 
 **FR-007 (P1) Temporary storage.** Imported data lives in a temp SQLite file in the extension's storage folder. Check free disk space before import. Clean up on close, and clean up orphaned temp files on next startup. Offer "Save as SQLite file".
@@ -683,6 +686,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-023 planning (2026-10-16): Link owner-delegated JSON/JSONL acceptance before implementation; specify lossless values, supported shapes, bounded streaming/preview, key handling and unchanged safety policies in docs/t023-json.md.
 - T-022 (2026-10-16): Define exact disk estimates/override, conservative PID ownership, complete atomic SQLite saving, moved/deleted original protection and visible retained-storage cleanup failures under owner-delegated judgment. No dependency or later-task scope change.
 - T-021 QA delegation (2026-10-15): Owner assigns visual QA and fixes to the assistant and retains push/CI. Remove the owner visual confirmation prerequisite while preserving evidence, observation limits and actual-candidate platform checks.
 - T-021 import acceptance (2026-10-15): Record owner-delegated command/options, deterministic detection, exact text staging and conservative inference, UTF-8/data conventions, exclusive session publication, fallback-only limits and measured validation scope. Preserve primary size, source safety and existing later-task boundaries.

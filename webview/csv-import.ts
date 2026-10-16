@@ -16,7 +16,9 @@ export class CsvImportView {
   private dirty = false;
   private phase = 'loading';
   private disposed = false;
+  private readonly json: boolean;
   constructor(root: HTMLElement, private readonly contextId: string, post: Post) {
+    this.json = root.getAttribute('data-format') === 'json';
     const element = <T extends HTMLElement>(id: string): T => {
       const result = root.querySelector<T>(`#${id}`); if (result === null) { throw new Error(`Missing import element: ${id}`); } return result;
     };
@@ -29,6 +31,7 @@ export class CsvImportView {
     }
     this.refresh.addEventListener('click', () => {
       if (!['ready', 'error'].includes(this.phase)) { return; }
+      if (this.json) { this.refresh.disabled = true; this.start.disabled = true; post({ type: 'csvImportRefresh', contextId, options: {} }); return; }
       const delimiter = this.delimiter.value;
       if (delimiter !== ',' && delimiter !== '\t' && delimiter !== ';' && delimiter !== '|') { return; }
       this.refresh.disabled = true; this.start.disabled = true;
@@ -59,8 +62,11 @@ export class CsvImportView {
       this.progress.value = total === 0n ? 0 : Number(bytes * 10000n / total) / 100;
     }
     if (value.phase === 'ready' && value.preview !== undefined) {
-      this.dirty = false; this.delimiter.value = value.preview.delimiter; this.header.checked = value.options.header !== false; this.text.checked = value.options.allText === true;
+      this.dirty = false; if ('delimiter' in value.preview) { this.delimiter.value = value.preview.delimiter; }
+      this.header.checked = value.options.header !== false; this.text.checked = value.options.allText === true;
       this.preview.receive({ type: 'csvPreviewState', contextId: this.contextId, phase: 'ready', message: value.preview.notice, preview: value.preview });
+    } else if (value.phase === 'loading' || value.phase === 'error' || value.phase === 'cancelled') {
+      this.preview.receive({ type: 'csvPreviewState', contextId: this.contextId, phase: value.phase, message: value.message });
     }
   }
   dispose(): void { this.disposed = true; this.events.abort(); this.preview.dispose(); }

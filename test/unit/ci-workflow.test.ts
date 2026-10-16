@@ -3,6 +3,12 @@ import { expect, test } from 'vitest';
 
 const workflow = (): Promise<string> => readFile('.github/workflows/ci.yml', 'utf8');
 
+test('NFR-003: Given the added sequential JSON acceptance workloads, When CI runs, Then the aggregate job budget accommodates the full suite without filtering tests', async () => {
+  const text = await workflow(); expect(text).toMatch(/^    timeout-minutes: 60\s*$/m);
+  expect(text).not.toMatch(/--grep|--exclude|--run\s|continue-on-error/);
+  expect(text.match(/npm run verify:full/g)).toHaveLength(2);
+});
+
 // These contract checks guard the gate's wiring. GitHub Actions must still run
 // the workflow; text checks cannot establish runner compatibility or YAML validity.
 test('T-007: Given a push or pull request, When CI is configured, Then verification has no branch or path exclusions', async () => {

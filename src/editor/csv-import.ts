@@ -4,8 +4,9 @@ import * as vscode from 'vscode';
 import type { Engine } from '../engine/engine';
 import { EngineClient } from '../engine/engine-client';
 import { CsvLoader } from '../loaders/csv-loader';
+import { JsonLoader } from '../loaders/json-loader';
 import { importOptions, type FileLoader, type LoadOptions } from '../loaders/file-loader';
-import { isBrowserRequest, isBrowserStatus, isCellRequest, isCsvImportRequest, isCsvPreviewRequest, isCsvPreviewResult, isCsvPreviewStatus,
+import { isBrowserRequest, isBrowserStatus, isCellRequest, isCsvImportRequest, isCsvPreviewRequest, isImportPreviewResult, isCsvPreviewResult, isCsvPreviewStatus,
   type BrowserStatus, type CsvImportState, type CsvPreviewStatus, type HostToWebviewMessage } from '../protocol';
 import { CellService } from './cell-service';
 import { csvImportHtml } from './csv-import-ui';
@@ -46,10 +47,11 @@ export class CsvImportSession {
   get browserProcessId(): number | undefined { return this.database?.state.opened?.processId; }
   constructor(readonly uri: vscode.Uri, readonly panel: vscode.WebviewPanel, private readonly directory: string, private readonly storageRoot: string,
     private readonly loader: FileLoader, private readonly remove: () => void,
-    private readonly createEngine: (fallback: boolean) => Engine = (fallback) => new EngineClient({ directory, forceFallback: fallback, ...(this.storage === undefined ? {} : { ownerDirectory: this.storage }) }), started?: number) {
+    private readonly createEngine: (fallback: boolean) => Engine = (fallback) => new EngineClient({ directory, forceFallback: fallback, ...(this.storage === undefined ? {} : { ownerDirectory: this.storage }) }), started?: number,
+    private readonly format: 'csv' | 'json' = 'csv') {
     this.started = started ?? this.started;
     this.closed = new Promise((accept) => { this.closeComplete = accept; });
-    panel.webview.html = csvImportHtml(basename(uri.fsPath), this.contextId, this.assets('csv-import'));
+    panel.webview.html = csvImportHtml(basename(uri.fsPath), this.contextId, this.assets('csv-import'), format);
     this.subscriptions.push(panel.webview.onDidReceiveMessage((value: unknown) => { this.receive(value); }), panel.onDidDispose(() => { this.dispose(); }));
     this.initialized = new Promise<boolean>((accept) => {
       let settled = false;
@@ -96,13 +98,15 @@ export class CsvImportSession {
     this.update({ phase: 'loading', options, message: 'Reading preview with selected options…' });
     try {
       const preview = await this.loader.preview(this.uri.fsPath, options, this.cancellation.signal);
-      if (!isCsvPreviewResult(preview)) { throw new Error('CSV loader returned an invalid bounded preview. Rebuild and reopen.'); }
-      this.update({ phase: 'ready', preview, options: { ...options, delimiter: preview.delimiter },
-        message: 'Review delimiter, header and type options, then Import table. Source file remains unchanged.' });
+      if (!isImportPreviewResult(preview) || (this.format === 'csv') !== isCsvPreviewResult(preview)) { throw new Error('Loader returned an invalid bounded preview. Rebuild and reopen.'); }
+      this.update({ phase: 'ready', preview, options: isCsvPreviewResult(preview) ? { ...options, delimiter: preview.delimiter } : {},
+        message: this.format === 'json' ? 'Review the JSON preview, then Import table. Full import validates the entire file; the source remains unchanged.'
+          : 'Review delimiter, header and type options, then Import table. Source file remains unchanged.' });
     } catch (error: unknown) { this.failure(error); }
   }
   refresh(options: LoadOptions): Promise<void> {
     if (this.disposed || !['ready', 'error'].includes(this.state.phase)) { return this.work; }
+    if (this.format === 'json' && Object.keys(options).length !== 0) { this.failure(new Error('JSON import does not accept CSV options. Retry preview.')); return this.work; }
     const clean = importOptions(options); this.work = this.readPreview(clean); return this.work;
   }
   startImport(): Promise<void> {
@@ -258,33 +262,35 @@ export class CsvImportController implements vscode.Disposable {
   private readonly active = new Set<CsvImportSession>();
   private disposed = false;
   readonly ready: Promise<void>;
-  constructor(private readonly extensionPath: string, private readonly storageRoot: string) {
+  constructor(private readonly extensionPath: string, private readonly storageRoot: string, private readonly format: 'csv' | 'json' = 'csv') {
     this.ready = new TempStorage(storageRoot).cleanupOrphans().catch((error: unknown) => {
       void vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Import storage cleanup failed. Check extension storage permissions and reload VS Code.');
     });
   }
   sessions(uri: vscode.Uri): CsvImportSession[] { return [...this.active].filter((session) => session.uri.toString() === uri.toString()); }
+  get hasActive(): boolean { return [...this.active].some((item) => item.panel.active && item.state.phase === 'opened'); }
   async open(input?: vscode.Uri): Promise<CsvImportSession | undefined> {
     await this.ready;
-    const uri = input ?? (await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFolders: false, filters: { 'CSV / TSV': ['csv', 'tsv'] }, title: 'Import CSV / TSV in Lite Voyager' }))?.[0];
+    const json = this.format === 'json'; const label = json ? 'JSON / JSONL' : 'CSV / TSV';
+    const uri = input ?? (await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFolders: false, filters: json ? { 'JSON / JSONL': ['json', 'jsonl'] } : { 'CSV / TSV': ['csv', 'tsv'] }, title: `Import ${label} in Lite Voyager` }))?.[0];
     if (uri === undefined || this.disposed) { return undefined; }
-    if (uri.scheme !== 'file') { void vscode.window.showErrorMessage('Import supports saved local UTF-8 CSV / TSV files only.'); return undefined; }
+    if (uri.scheme !== 'file') { void vscode.window.showErrorMessage(`Import supports saved local UTF-8 ${label} files only.`); return undefined; }
     const started = performance.now(); const directory = join(this.extensionPath, 'dist');
     let panel: vscode.WebviewPanel | undefined;
     try {
-      panel = vscode.window.createWebviewPanel('lite-voyager.csvImport', `CSV import: ${basename(uri.fsPath)}`, vscode.ViewColumn.Active,
+      panel = vscode.window.createWebviewPanel(json ? 'lite-voyager.jsonImport' : 'lite-voyager.csvImport', `${json ? 'JSON' : 'CSV'} import: ${basename(uri.fsPath)}`, vscode.ViewColumn.Active,
         { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.file(directory)] });
-      const session = new CsvImportSession(uri, panel, directory, this.storageRoot, new CsvLoader(directory), () => { this.active.delete(session); }, undefined, started);
+      const session = new CsvImportSession(uri, panel, directory, this.storageRoot, json ? new JsonLoader(directory) : new CsvLoader(directory), () => { this.active.delete(session); }, undefined, started, this.format);
       this.active.add(session);
       if (!await session.initialized || this.disposed) { panel.dispose(); await session.closed; return undefined; }
       return session;
     } catch {
-      panel?.dispose(); void vscode.window.showErrorMessage('Unable to open the CSV import tab. Rebuild and reopen a local file.'); return undefined;
+      panel?.dispose(); void vscode.window.showErrorMessage(`Unable to open the ${label} import tab. Rebuild and reopen a local file.`); return undefined;
     }
   }
   async saveActive(): Promise<void> {
     const session = [...this.active].find((item) => item.panel.active && item.state.phase === 'opened');
-    if (session === undefined) { void vscode.window.showInformationMessage('Open an imported CSV / TSV database tab before choosing Save as SQLite.'); return; }
+    if (session === undefined) { void vscode.window.showInformationMessage('Open an imported database tab before choosing Save as SQLite.'); return; }
     await session.saveAsSqlite();
   }
   dispose(): void { this.disposed = true; for (const session of this.active) { session.panel.dispose(); } this.active.clear(); }

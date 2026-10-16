@@ -11,18 +11,18 @@ import { streamRecords } from './csv-records';
 export const FALLBACK_IMPORT_SOURCE_BYTES = 20_000_000;
 export const FALLBACK_IMPORT_DATABASE_BYTES = 64_000_000;
 type ColumnType = 'INTEGER' | 'REAL' | 'TEXT';
-interface Insert { run(values: (string | null)[]): void; close(): void; }
+export interface Insert { run(values: (string | null)[]): void; close(): void; }
 interface ImportDatabase {
   exec(sql: string): void; insert(sql: string): Insert; size(): number; finish(path: string): void; close(): void;
 }
-interface WasmStatement { bind(values: (string | null)[]): boolean; step(): boolean; free(): boolean; }
+interface WasmStatement { bind(values: (string | null | Uint8Array)[]): boolean; step(): boolean; free(): boolean; }
 interface WasmDatabase {
   run(sql: string): void; prepare(sql: string): WasmStatement; exec(sql: string): { values: unknown[][] }[];
   export(): Uint8Array; close(): void;
 }
 interface WasmModule { Database: new () => WasmDatabase; }
 type InitializeWasm = (options: { wasmBinary: Uint8Array }) => Promise<WasmModule>;
-export interface CsvImportJob { source: string; path: string; directory: string; engine: EngineName; options: LoadOptions; }
+export interface CsvImportJob { source: string; path: string; directory: string; engine: EngineName; options: LoadOptions; format?: 'json' | 'jsonl'; }
 
 export function inferredType(value: string): ColumnType {
   if (/^(0|-[1-9]\d*|[1-9]\d*)$/u.test(value)) {
@@ -38,7 +38,7 @@ export function inferredType(value: string): ColumnType {
   return 'TEXT';
 }
 
-async function database(job: CsvImportJob): Promise<{ db: ImportDatabase; engine: EngineName }> {
+export async function openImportDatabase(job: CsvImportJob): Promise<{ db: ImportDatabase; engine: EngineName }> {
   const requireLocal = createRequire(__filename);
   if (job.engine !== 'sql.js') {
     let native: { DatabaseSync: typeof DatabaseSync } | undefined;
@@ -57,14 +57,18 @@ async function database(job: CsvImportJob): Promise<{ db: ImportDatabase; engine
     }
   }
   const inputBytes = statSync(job.source, { bigint: true }).size;
-  if (inputBytes > BigInt(FALLBACK_IMPORT_SOURCE_BYTES)) { throw new Error('Memory-limited mode: CSV imports are limited to 20,000,000 source bytes and 64,000,000 SQLite bytes. Update VS Code to use the disk-backed engine. Nothing was imported.'); }
+  if (inputBytes > BigInt(FALLBACK_IMPORT_SOURCE_BYTES)) { throw new Error('Memory-limited mode: imports are limited to 20,000,000 source bytes and 64,000,000 SQLite bytes. Update VS Code to use the disk-backed engine. Nothing was imported.'); }
   const initialize: unknown = requireLocal(join(job.directory, 'sql-wasm.cjs'));
   if (typeof initialize !== 'function') { throw new Error('Packaged sql.js could not initialize. Rebuild the extension.'); }
   const module = await (initialize as InitializeWasm)({ wasmBinary: readFileSync(join(job.directory, 'sql-wasm.wasm')) });
   const db = new module.Database();
   return { engine: 'sql.js', db: {
     exec: (sql) => { db.run(sql); }, insert: (sql) => {
-      const statement = db.prepare(sql); return { run: (values) => { statement.bind(values); statement.step(); }, close: () => { statement.free(); } };
+      const statement = db.prepare(sql); return { run: (values) => {
+        // sql.js bindString passes -1 to sqlite3_bind_text, so embedded NUL needs
+        // length-aware blob binding. JSON's placeholder casts it back to TEXT.
+        statement.bind(values.map((value) => value?.includes('\0') === true ? new TextEncoder().encode(value) : value)); statement.step();
+      }, close: () => { statement.free(); } };
     }, size: () => {
       const pages = db.exec('PRAGMA page_count')[0]?.values[0]?.[0]; const pageSize = db.exec('PRAGMA page_size')[0]?.values[0]?.[0];
       if (typeof pages !== 'number' || typeof pageSize !== 'number') { throw new Error('Memory-limited engine could not report storage usage.'); }
@@ -77,7 +81,7 @@ async function database(job: CsvImportJob): Promise<{ db: ImportDatabase; engine
 export async function importCsv(job: CsvImportJob, onProgress: (progress: Progress) => void): Promise<ImportedTable[]> {
   const sourceSnapshot = statSync(job.source, { bigint: true });
   const preview = detectedPreview(job.source, job.options);
-  const { db, engine } = await database(job);
+  const { db, engine } = await openImportDatabase(job);
   let insert: Insert | undefined; let transaction = false; let rows = 0n; let first = true;
   const columns: string[] = []; const names = new Set<string>(); const types: (ColumnType | undefined)[] = [];
   let renamed = false; let ragged = false; let lastProgress = 0; let finalBytes = '0'; let totalBytes = preview.totalBytes;
