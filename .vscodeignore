@@ -24,6 +24,9 @@
 !dist/sqlite-save-worker.js
 !dist/json-preview-worker.js
 !dist/json-import-worker.js
+!dist/xlsx-preview-worker.js
+!dist/xlsx-import-worker.js
+!dist/xlsx-LICENSE
 !dist/papaparse-LICENSE
 !dist/sql-wasm.cjs
 !dist/sql-wasm.wasm

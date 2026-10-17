@@ -15,7 +15,8 @@ export interface FilePreviewResult {
 }
 export interface CsvPreviewResult extends FilePreviewResult { delimiter: CsvDelimiter; header: boolean; }
 export interface JsonPreviewResult extends FilePreviewResult { format: 'json' | 'jsonl'; }
-export type ImportPreviewResult = CsvPreviewResult | JsonPreviewResult;
+export interface XlsxPreviewResult extends FilePreviewResult { format: 'xlsx'; sheetName: string; sheetCount: number; }
+export type ImportPreviewResult = CsvPreviewResult | JsonPreviewResult | XlsxPreviewResult;
 export type CsvPreviewRequest = { type: 'csvPreviewReady' | 'csvPreviewCancel'; contextId: string };
 export interface CsvPreviewStatus { type: 'csvPreviewStatus'; contextId: string; renderedRows: number; renderedColumns: number; }
 export type CsvPreviewState = { type: 'csvPreviewState'; contextId: string } & (
@@ -69,7 +70,11 @@ export function isCsvPreviewResult(value: unknown): value is CsvPreviewResult {
 export function isJsonPreviewResult(value: unknown): value is JsonPreviewResult {
   return isRecord(value) && (value['format'] === 'json' || value['format'] === 'jsonl') && isFilePreviewResult(value, true);
 }
-export function isImportPreviewResult(value: unknown): value is ImportPreviewResult { return isCsvPreviewResult(value) || isJsonPreviewResult(value); }
+export function isXlsxPreviewResult(value: unknown): value is XlsxPreviewResult {
+  return isRecord(value) && value['format'] === 'xlsx' && typeof value['sheetName'] === 'string' && value['sheetName'].length > 0
+    && value['sheetName'].length <= MAX_PREVIEW_CHARACTERS && integer(value['sheetCount'], 1, Number.MAX_SAFE_INTEGER) && isFilePreviewResult(value, true);
+}
+export function isImportPreviewResult(value: unknown): value is ImportPreviewResult { return isCsvPreviewResult(value) || isJsonPreviewResult(value) || isXlsxPreviewResult(value); }
 function isFilePreviewResult(value: unknown, allowNul = false): value is FilePreviewResult {
   if (!isRecord(value) || !Array.isArray(value['columns']) || value['columns'].length > MAX_PREVIEW_COLUMNS
     || !Array.isArray(value['rows']) || value['rows'].length > MAX_PREVIEW_ROWS

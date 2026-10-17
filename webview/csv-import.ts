@@ -16,9 +16,10 @@ export class CsvImportView {
   private dirty = false;
   private phase = 'loading';
   private disposed = false;
-  private readonly json: boolean;
+  private readonly fixedOptions: boolean;
+  private readonly workbook: boolean;
   constructor(root: HTMLElement, private readonly contextId: string, post: Post) {
-    this.json = root.getAttribute('data-format') === 'json';
+    this.fixedOptions = ['json', 'xlsx'].includes(root.getAttribute('data-format') ?? ''); this.workbook = root.getAttribute('data-format') === 'xlsx';
     const element = <T extends HTMLElement>(id: string): T => {
       const result = root.querySelector<T>(`#${id}`); if (result === null) { throw new Error(`Missing import element: ${id}`); } return result;
     };
@@ -31,7 +32,7 @@ export class CsvImportView {
     }
     this.refresh.addEventListener('click', () => {
       if (!['ready', 'error'].includes(this.phase)) { return; }
-      if (this.json) { this.refresh.disabled = true; this.start.disabled = true; post({ type: 'csvImportRefresh', contextId, options: {} }); return; }
+      if (this.fixedOptions) { this.refresh.disabled = true; this.start.disabled = true; post({ type: 'csvImportRefresh', contextId, options: {} }); return; }
       const delimiter = this.delimiter.value;
       if (delimiter !== ',' && delimiter !== '\t' && delimiter !== ';' && delimiter !== '|') { return; }
       this.refresh.disabled = true; this.start.disabled = true;
@@ -66,7 +67,7 @@ export class CsvImportView {
       this.header.checked = value.options.header !== false; this.text.checked = value.options.allText === true;
       this.preview.receive({ type: 'csvPreviewState', contextId: this.contextId, phase: 'ready', message: value.preview.notice, preview: value.preview });
     } else if (value.phase === 'loading' || value.phase === 'error' || value.phase === 'cancelled') {
-      this.preview.receive({ type: 'csvPreviewState', contextId: this.contextId, phase: value.phase, message: value.message });
+      this.preview.receive({ type: 'csvPreviewState', contextId: this.contextId, phase: value.phase, message: this.workbook ? '' : value.message });
     }
   }
   dispose(): void { this.disposed = true; this.events.abort(); this.preview.dispose(); }

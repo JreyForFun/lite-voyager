@@ -25,6 +25,19 @@ test('FR-005: Given JSON controls, When retrying preview and starting import, Th
   element('import-refresh').click(); expect(post).toHaveBeenLastCalledWith({ type: 'csvImportRefresh', contextId, options: {} });
 });
 
+test('FR-006: Given an XLSX preview failure, When rendering it, Then the actionable error appears once and the grid clears', () => {
+  view.dispose(); root.setAttribute('data-format', 'xlsx'); view = new CsvImportView(root as unknown as HTMLElement, contextId, post);
+  view.receive({ type: 'csvImportState', contextId, phase: 'error', options: {}, message: 'Corrupt XLSX. Retry preview.' });
+  expect(element('import-status').textContent).toBe('Corrupt XLSX. Retry preview.'); expect(element('csv-status').textContent).toBe('');
+  expect(view.preview.grid.metrics().cachedRows).toBe(0);
+});
+
+test('FR-006: Given XLSX controls, When retrying preview, Then CSV delimiter/header settings cannot leak into workbook loading', () => {
+  view.dispose(); root.setAttribute('data-format', 'xlsx'); view = new CsvImportView(root as unknown as HTMLElement, contextId, post);
+  view.receive({ ...ready, options: {}, preview: { columns: ['a'], rows: [['1']], format: 'xlsx', sheetName: 'Data', sheetCount: 3, bytesRead: '30', totalBytes: '30', reachedEnd: true, notice: '', threadId: 1 } });
+  element('import-refresh').click(); expect(post).toHaveBeenLastCalledWith({ type: 'csvImportRefresh', contextId, options: {} });
+});
+
 test('FR-005: Given a JSON preview failure, When showing the error then retrying, Then inner status stops loading and preview recovers without a stale cancel control', () => {
   view.receive({ type: 'csvImportState', contextId, phase: 'error', options: {}, message: 'Malformed JSON. Retry preview.' });
   expect(element('csv-status').textContent).toBe('Malformed JSON. Retry preview.'); expect(element('csv-cancel').disabled).toBe(true);

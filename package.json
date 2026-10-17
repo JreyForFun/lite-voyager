@@ -24,7 +24,9 @@
         "viewType": "lite-voyager.sqlite",
         "displayName": "Lite Voyager",
         "selector": [
-          { "filenamePattern": "**/*" }
+          {
+            "filenamePattern": "**/*"
+          }
         ],
         "priority": "option"
       }
@@ -38,6 +40,10 @@
       }
     },
     "commands": [
+      {
+        "command": "lite-voyager.xlsxImport",
+        "title": "Lite Voyager: Import XLSX"
+      },
       {
         "command": "lite-voyager.jsonImport",
         "title": "Lite Voyager: Import JSON / JSONL"
@@ -124,6 +130,7 @@
     "serialize-javascript": "^7.0.6"
   },
   "dependencies": {
-    "sql.js": "1.14.2"
+    "sql.js": "1.14.2",
+    "xlsx": "file:vendor/xlsx-0.20.3.tgz"
   }
 }

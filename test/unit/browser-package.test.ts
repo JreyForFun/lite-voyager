@@ -6,6 +6,23 @@ import { join, resolve } from 'node:path';
 import { build } from 'esbuild';
 import { expect, test } from 'vitest';
 
+test('FR-006: Given XLSX workers and notice, When listing the actual VSIX, Then the two workers and Apache license ship without the vendor tarball', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-xlsx-package-'));
+  try {
+    for (const name of ['package.json', '.vscodeignore', 'README.md', 'CHANGELOG.md', 'LICENSE']) { await copyFile(name, join(directory, name)); }
+    await mkdir(join(directory, 'dist'));
+    for (const name of ['xlsx-preview-worker', 'xlsx-import-worker']) {
+      const built = await build({ entryPoints: [resolve(`src/worker/${name}.ts`)], outfile: join(directory, `dist/${name}.js`), bundle: true, platform: 'node', format: 'cjs', target: 'es2022', external: ['node:sqlite'], logLevel: 'silent' });
+      expect(built.warnings).toEqual([]);
+    }
+    await copyFile('node_modules/xlsx/LICENSE', join(directory, 'dist/xlsx-LICENSE'));
+    const result = await promisify(execFile)(process.execPath, [resolve('node_modules/@vscode/vsce/vsce'), 'ls', '--no-dependencies'], { cwd: directory });
+    expect(result.stderr).toBe(''); const files = result.stdout.trim().split(/\r?\n/u);
+    for (const name of ['xlsx-preview-worker.js', 'xlsx-import-worker.js', 'xlsx-LICENSE']) { expect(files).toContain(`dist/${name}`); }
+    expect(files.some((file) => file.endsWith('.tgz') || file.endsWith('.xlsx'))).toBe(false);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+}, 30000);
+
 test('FR-005: Given JSON production workers, When listing the actual package, Then both required workers ship without fixtures', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'lv-json-package-'));
   try {

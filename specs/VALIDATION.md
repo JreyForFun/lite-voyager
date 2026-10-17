@@ -4296,6 +4296,12 @@ Milestone 1 gate status (separate from foundation):
 
 ## 5. Edge cases every format must be tested against
 
+T-024 XLSX scoped acceptance/evidence: [XLSX import](../docs/t024-xlsx.md).
+Preserve all existing gates and diagnostic rules. Test both engines, cached/missing
+formulas, exact raw numeric tokens, hidden/empty/header-only sheets, implicit and
+sparse addresses, names, malformed ZIP/XML, memory-consent boundaries/cancellation,
+fallback expansion refusal, source mutation, cleanup, paging and complete SQLite save.
+
 T-023 scoped acceptance/evidence: [JSON / JSONL import](../docs/t023-json.md).
 T-023 Windows CI repair and exact retained failures: [repair record](../docs/t023-windows-ci.md).
 No existing diagnostic, memory, per-operation timing or source-safety gate is
@@ -4361,6 +4367,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-024 (2026-10-17): Link scoped XLSX acceptance and delegated QA/evidence record; retain all historical failures, diagnostics and unchanged gate policies. Candidate full checks/CI remain separate evidence.
 - T-023 completion (2026-10-17): Independently confirm run 39002490041 /attempt 1/exact db28c92 passes locked installs/applicable full verification on Windows/macOS/Ubuntu. Close only T-023; preserve earlier failures, unknown causes, local warning records and remote raw-log limits. No guard change or unchanged retry-to-green.
 - T-023 Windows CI repair (2026-10-17): Record exact dfab68e/run 38857662893 Windows preview failure, conservative delimiter optimization, red-first regressions, 790-unit standalone, separate 995.4049-ms 5-GB preview diagnostic and unresolved local failures. Keep all original clocks/bounds/workloads/diagnostic rules and T-023 closure open; no unchanged retry-to-green.
 - T-023 implementation (2026-10-16): Link scoped acceptance, 777-unit standalone and separate 65-host/stress pass with exact HOST-004/HOST-001 warnings. Preserve red-first repairs, failed canonical full runs including unexplained T-015 unit timeout, and component-rendering limitations in docs/t023-json.md. Completion gates remain open pending clean actual-candidate full CI.

@@ -6,11 +6,11 @@ import { isCsvImportProgress } from '../protocol';
 import { registerStorageHelper } from '../storage/temp-storage';
 
 function cancelled(): Error { return new Error('CSV import cancelled. Source is unchanged; reopen to retry.'); }
-function validTables(value: unknown): value is ImportedTable[] {
-  return Array.isArray(value) && value.length <= 1 && Array.from(value).every((item: unknown) => {
+function validTables(value: unknown, xlsx: boolean): value is ImportedTable[] {
+  return Array.isArray(value) && (xlsx || value.length <= 1) && Array.from(value).every((item: unknown) => {
     if (typeof item !== 'object' || item === null) { return false; }
     const table = item as Record<string, unknown>;
-    return table['name'] === 'records' && Array.isArray(table['columns']) && table['columns'].length > 0
+    return (xlsx ? typeof table['name'] === 'string' && table['name'].length > 0 && !table['name'].includes('\0') : table['name'] === 'records') && Array.isArray(table['columns']) && table['columns'].length > 0
       && Array.from(table['columns']).every((name: unknown) => typeof name === 'string' && name.length > 0 && !name.includes('\0'))
       && typeof table['rowCount'] === 'string' && /^(0|[1-9]\d{0,30})$/u.test(table['rowCount'])
       && (table['engine'] === 'node:sqlite' || table['engine'] === 'sql.js') && typeof table['notice'] === 'string' && table['notice'].length <= 4096;
@@ -19,7 +19,7 @@ function validTables(value: unknown): value is ImportedTable[] {
 
 /** Fresh private storage; publish via exclusive hard link, never replace a destination. */
 export async function runCsvImport(directory: string, source: string, target: ImportTarget, options: LoadOptions,
-  progress: (value: Progress) => void, signal: AbortSignal, format?: 'json' | 'jsonl'): Promise<ImportedTable[]> {
+  progress: (value: Progress) => void, signal: AbortSignal, format?: 'json' | 'jsonl' | 'xlsx', xlsxSnapshot?: import('./xlsx-consent').XlsxSnapshot): Promise<ImportedTable[]> {
   if (signal.aborted) { throw cancelled(); }
   if (typeof target.path !== 'string' || target.path.length === 0 || target.path.includes('\0') || !['node:sqlite', 'sql.js'].includes(target.engine)) { throw new Error('Invalid internal CSV import target.'); }
   const destination = resolve(target.path);
@@ -53,10 +53,10 @@ export async function runCsvImport(directory: string, source: string, target: Im
         if (reply['type'] === 'failure' && typeof reply['message'] === 'string') { fail(new Error(reply['message'].slice(0, 4096))); }
         else if (reply['type'] === 'progress' && isCsvImportProgress(reply['value'])) {
           try { progress(reply['value']); } catch (error: unknown) { fail(error instanceof Error ? error : new Error('CSV progress observer failed.')); }
-        } else if (reply['type'] === 'imported' && validTables(reply['tables'])) { settled = true; accept(reply['tables']); }
+        } else if (reply['type'] === 'imported' && validTables(reply['tables'], format === 'xlsx')) { settled = true; accept(reply['tables']); }
         else { fail(new Error('Invalid CSV import response. Rebuild and reopen.')); }
       });
-      helper.send({ source, path: output, directory, engine: target.engine, options, ...(format === undefined ? {} : { format }) }, (error) => { if (error !== null) { fail(new Error('Import helper could not receive import request.')); } });
+      helper.send({ source, path: output, directory, engine: target.engine, options, ...(format === undefined ? {} : { format }), ...(xlsxSnapshot === undefined ? {} : { xlsxSnapshot }) }, (error) => { if (error !== null) { fail(new Error('Import helper could not receive import request.')); } });
       if (signal.aborted) { abort(); }
     });
     if (helper.exitCode === null && helper.signalCode === null && helper.pid !== undefined) { helper.kill('SIGKILL'); }

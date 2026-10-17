@@ -14,7 +14,7 @@ process.once('message', (job: CsvImportJob) => {
   try {
     // Collect transient parser objects promptly. Large objects/old-generation
     // limits remain the runtime defaults; this sets no file or record size cap.
-    worker = new Worker(join(job.directory, job.format === undefined ? 'csv-import-worker.js' : 'json-import-worker.js'), { workerData: job, resourceLimits: { maxYoungGenerationSizeMb: 8 } });
+    worker = new Worker(join(job.directory, job.format === 'xlsx' ? 'xlsx-import-worker.js' : job.format === undefined ? 'csv-import-worker.js' : 'json-import-worker.js'), { workerData: job, resourceLimits: { maxYoungGenerationSizeMb: 8 } });
     worker.on('message', (value: unknown) => { relay.accept(value); });
     worker.on('error', () => { relay.accept({ type: 'failure', message: 'CSV import worker failed. Rebuild and reopen the file.' }); });
     worker.on('exit', () => { relay.accept({ type: 'failure', message: 'CSV import worker exited. Reopen the file.' }); });

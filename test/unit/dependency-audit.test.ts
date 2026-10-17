@@ -40,6 +40,14 @@ const sha256 = (text: string) => createHash('sha256').update(text).digest('hex')
 const execute = promisify(execFile);
 const inventory = async () => JSON.parse(await readFile(resolve(root, 'specs/dependency-licenses.json'), 'utf8')) as Inventory;
 
+test('FR-006: Given the vendored SheetJS dependency, When checking its pinned identity, Then the official tarball bytes, lock integrity and Apache license agree', async () => {
+  const tarball = await readFile(resolve(root, 'vendor/xlsx-0.20.3.tgz'));
+  expect(createHash('sha256').update(tarball).digest('hex')).toBe('8dc73fc3b00203e72d176e85b50938627c7b086e607c682e8d3c22c02bb99fe8');
+  const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8')) as { packages: Record<string, { version: string; integrity?: string }> };
+  expect(lock.packages['node_modules/xlsx']).toMatchObject({ version: '0.20.3', integrity: `sha512-${createHash('sha512').update(tarball).digest('base64')}` });
+  expect((await inventory()).packages.find((entry) => entry.name === 'xlsx')?.license).toBe('Apache-2.0');
+});
+
 test('T-050: Given the lockfile, When reviewing licenses, Then every package path version license and scope is recorded without omissions', async () => {
   const report = await inventory();
   const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8')) as {
@@ -96,6 +104,7 @@ test('T-050: Given production bundles, When building, Then every embedded depend
     ['src/worker/csv-import-worker.ts', 'node'], ['src/worker/csv-import-process.ts', 'node'], ['webview/csv-import.ts', 'browser'],
     ['src/worker/sqlite-save-worker.ts', 'node'],
     ['src/worker/json-preview-worker.ts', 'node'], ['src/worker/json-import-worker.ts', 'node'],
+    ['src/worker/xlsx-preview-worker.ts', 'node'], ['src/worker/xlsx-import-worker.ts', 'node'],
   ] as const) {
     const result = await build({
       absWorkingDir: root, entryPoints: [entryPoint], platform, bundle: true,
@@ -115,6 +124,6 @@ test('T-050: Given production bundles, When building, Then every embedded depend
   for (const entry of report.shippedPackages) {
     expect(ignore.split(/\r?\n/)).toContain(`!${entry.notice}`);
     expect(await readFile(resolve(root, entry.notice), 'utf8')).toContain(await readFile(resolve(root, `node_modules/${entry.name}/LICENSE`), 'utf8'));
-    expect(report.packages.find((candidate) => candidate.path === `node_modules/${entry.name}`)?.license).toBe('MIT');
+    expect(report.packages.find((candidate) => candidate.path === `node_modules/${entry.name}`)?.license).toBe(entry.name === 'xlsx' ? 'Apache-2.0' : 'MIT');
   }
 }, 20_000);

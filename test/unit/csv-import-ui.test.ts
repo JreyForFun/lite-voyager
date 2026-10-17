@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { isCsvImportRequest, isCsvImportState, isHostMessage, isWebviewMessage } from '../../src/protocol';
+import { isCsvImportRequest, isCsvImportState, isHostMessage, isWebviewMessage, isXlsxPreviewResult } from '../../src/protocol';
 import { csvImportHtml } from '../../src/editor/csv-import-ui';
 
 test('FR-005: Given a JSON import shell, When hiding the preview-only cancel button, Then all import controls remain present with JSON help', () => {
@@ -9,6 +9,19 @@ test('FR-005: Given a JSON import shell, When hiding the preview-only cancel but
 });
 
 const contextId = '1'.repeat(32);
+test('FR-006: Given the XLSX import shell, When opening it, Then workbook semantics, memory limits and all-sheet import are visible without CSV options', () => {
+  const html = csvImportHtml('book.xlsx', contextId, { scriptUri: 'local:script', styleUri: 'local:style', nonce: 'test', cspSource: 'local:' }, 'xlsx');
+  expect(html).toContain('XLSX import'); expect(html).toContain('data-format="xlsx"'); expect(html).toContain('Import workbook');
+  expect(html).toContain('cached'); expect(html).toContain('100 MB'); expect(html).toContain('serial');
+  expect(html).toContain('<span hidden>'); expect(html).toContain('id="csv-cancel" hidden');
+});
+
+test('FR-006: Given XLSX preview transport, When validating worker responses, Then missing sheet metadata and unsafe row shapes cannot enter the import view', () => {
+  const preview = { format: 'xlsx', sheetName: 'Data', sheetCount: 3, columns: ['a'], rows: [['1']], bytesRead: '10', totalBytes: '10', threadId: 1, reachedEnd: true, notice: '' };
+  expect(isXlsxPreviewResult(preview)).toBe(true);
+  for (const malformed of [{ ...preview, sheetCount: 0 }, { ...preview, sheetCount: 1.5 }, { ...preview, sheetName: '' }, { ...preview, rows: [[1]] }, { ...preview, rows: [new Array<string>(1)] }, { ...preview, bytesRead: '11' }]) { expect(isXlsxPreviewResult(malformed)).toBe(false); }
+});
+
 test('FR-004: Given import control requests, When validating, Then only typed options and matching message structures are accepted', () => {
   expect(isWebviewMessage({ type: 'csvImportStart', contextId })).toBe(true);
   expect(isWebviewMessage({ type: 'csvImportRefresh', contextId, options: { header: false, delimiter: ';', allText: true } })).toBe(true);

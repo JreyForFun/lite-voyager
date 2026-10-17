@@ -175,3 +175,27 @@ T-020 now bundles it in `dist/csv-preview-worker.js` and ships its complete
 `dist/papaparse-LICENSE`. The production inventory and its bundle inspection
 include this worker/parser. No package, version, lockfile or audit result changes;
 the original T-050 assessment date remains historical evidence, not a new audit.
+
+## T-024 XLSX parser update (2026-10-17)
+
+Add only the plan-approved SheetJS CE 0.20.3, Apache-2.0, from the official
+vendored tarball. [Provenance and SHA-256](../vendor/README.md) and lockfile
+SHA-512 pin the retrieved bytes. Official Node install guidance still identifies
+0.20.3; official CVE-2023-30533 and CVE-2024-22363 advisories identify fixes in
+0.19.3 and 0.20.2 respectively. This is a dated review of those advisories, not
+proof that no unknown or unlisted vulnerability exists.
+
+The exact inventory now has 577 non-root locked paths. Existing custom-license
+evidence is preserved. Both XLSX worker bundles retain `dist/xlsx-LICENSE` with
+the full upstream Apache-2.0 text; no additional NOTICE file is present in the
+package. Vendor tarball, library CLI and development tools are excluded from
+the VSIX. No runtime networking, HTML rendering or formula evaluation is added.
+New integrity/inventory/bundle assertions fail first against stale records.
+The initial external npm audit request was rejected by automatic approval review
+because it transmits dependency metadata. The owner explicitly approves that
+destination/payload in response to the audit question. The subsequent
+`npm audit --json --cache out/npm-cache` exits 0 with zero reported vulnerabilities
+for 577 dependencies on Node 26.5.0; stderr is empty. Raw results are retained in
+`out/t024-dependency-audit.json`. Registry auditing of a local vendored tarball
+has limits; the dated official advisory review above supplements it. Earlier
+T-050 results retain their original historical scope.

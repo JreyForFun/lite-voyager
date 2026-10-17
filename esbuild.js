@@ -73,7 +73,7 @@ async function main() {
     external: ['node:sqlite'],
   });
   await mkdir('dist', { recursive: true });
-  for (const name of ['db-process', 'db-worker', 'cell-worker', 'csv-preview-worker', 'csv-import-process', 'csv-import-worker', 'sqlite-save-worker', 'json-preview-worker', 'json-import-worker']) {
+  for (const name of ['db-process', 'db-worker', 'cell-worker', 'csv-preview-worker', 'csv-import-process', 'csv-import-worker', 'sqlite-save-worker', 'json-preview-worker', 'json-import-worker', 'xlsx-preview-worker', 'xlsx-import-worker']) {
     await buildBundle({
       entryPoints: [`src/worker/${name}.ts`],
       platform: 'node', format: 'cjs', target: 'es2022',
@@ -84,6 +84,7 @@ async function main() {
   await copyFile('node_modules/sql.js/dist/sql-wasm.wasm', 'dist/sql-wasm.wasm');
   await copyFile('node_modules/sql.js/LICENSE', 'dist/sql.js-LICENSE');
   await copyFile('node_modules/papaparse/LICENSE', 'dist/papaparse-LICENSE');
+  await copyFile('node_modules/xlsx/LICENSE', 'dist/xlsx-LICENSE');
   const editorLicenses = [];
   for (const name of ['@codemirror/state', '@codemirror/view', '@codemirror/commands', '@codemirror/lang-sql', '@codemirror/language', '@codemirror/autocomplete', '@codemirror/streamparser', '@marijn/find-cluster-break', '@lezer/common', '@lezer/highlight', '@lezer/lr', 'style-mod', 'w3c-keyname', 'crelt']) {
     editorLicenses.push(`${name}\n${await readFile(`node_modules/${name}/LICENSE`, 'utf8')}`);

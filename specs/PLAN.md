@@ -11,7 +11,7 @@ Status: Draft v0.2 | Implements `SPEC.md` under `CONSTITUTION.md`.
 | Engine isolation | `worker_threads` inside a killable helper process | Database work runs in a worker; cancellation kills its enclosing helper and awaits confirmed process exit. The bundled Node/Electron executable is reused; no external CLI or shipped binary. |
 | CSV | `papaparse` in streaming mode | Chunked reads, batched inserts in transactions |
 | JSON / JSONL | Line reader for JSONL; a streaming JSON parser for big arrays | |
-| XLSX | SheetJS Community Edition, for the future XLSX task | Memory-bound by format. T-050 checked official CDN 0.20.3, Apache-2.0 and advisories; prefer an integrity-checked vendor tarball and recheck when implementing. Do not use outdated npm `xlsx` 0.18.5. No XLSX dependency is installed yet. |
+| XLSX | SheetJS Community Edition 0.20.3 (Apache-2.0), official vendored tarball | T-024 rechecks official install guidance/advisories and pins tarball integrity. Worker-only parsing, raw numeric XML fidelity and validated conventional ZIP containers; memory-bound with explicit consent above 100,000,000 bytes. ZIP64 is an explained codec limitation; no outdated npm `xlsx` 0.18.5. See docs/t024-xlsx.md and vendor/README.md. |
 | SQL editor | CodeMirror 6 | Confirmed by owner T-008 manual QA (2026-10-09) |
 | Grid | Virtualized, windowed rendering | Must stay smooth with very tall tables |
 | Build | `esbuild`, two bundles (host and webview) | |
@@ -1177,6 +1177,14 @@ approved diagnostics. T-022 and the rest of Milestone 2 remain open.
 
 ## 6. Loader interface
 
+**T-024 XLSX:** [detailed acceptance/design](../docs/t024-xlsx.md). Reuse the
+shared import controller, temporary storage, supervised helper, both engines,
+browser and SQLite save. XLSX has a dedicated command and worker-only SheetJS
+bundles; no T-025 associations. Preserve raw numeric XML tokens before Number
+coercion, validate ZIP bounds/CRCs/deflate and XML structure, and consent to the
+exact source snapshot above the decimal 100-MB boundary before any workbook read.
+No existing performance, diagnostic, fallback or source-safety guard is relaxed.
+
 ```ts
 interface PreviewLoader<Result extends PreviewResult = PreviewResult> {
   readonly extensions: readonly string[];
@@ -1283,6 +1291,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-024 planning/implementation (2026-10-17): Record owner-delegated XLSX semantics, consent, exact numeric tokens, validated worker parsing and official vendored Apache-2.0 SheetJS. Preserve existing unrelated edits, earlier failures and all verification guards; owner retains push/CI.
 - T-023 planning (2026-10-16): Link dependency-free streaming JSON design and shared import lifecycle; preserve existing unrelated edits and all prior safety/diagnostic guards.
 - T-022 (2026-10-16): Use versioned owned storage/helper markers, exact preflight and a bounded copy worker with host-owned atomic publication, retained original identity and real VSIX inclusion. Preserve owner push/CI and all diagnostic/memory/timing guards.
 - T-021 completion (2026-10-15): Confirm run 38718762528/attempt 1/exact e97ea57 passes locked installs and applicable full checks on Windows/macOS/Ubuntu. Close only T-021; retain prior failures, exact local diagnostics and remote-log limits. T-022 starts in a fresh chat.

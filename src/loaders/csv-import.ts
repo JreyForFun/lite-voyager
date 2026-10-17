@@ -22,7 +22,7 @@ interface WasmDatabase {
 }
 interface WasmModule { Database: new () => WasmDatabase; }
 type InitializeWasm = (options: { wasmBinary: Uint8Array }) => Promise<WasmModule>;
-export interface CsvImportJob { source: string; path: string; directory: string; engine: EngineName; options: LoadOptions; format?: 'json' | 'jsonl'; }
+export interface CsvImportJob { source: string; path: string; directory: string; engine: EngineName; options: LoadOptions; format?: 'json' | 'jsonl' | 'xlsx'; xlsxSnapshot?: import('./xlsx-consent').XlsxSnapshot; }
 
 export function inferredType(value: string): ColumnType {
   if (/^(0|-[1-9]\d*|[1-9]\d*)$/u.test(value)) {

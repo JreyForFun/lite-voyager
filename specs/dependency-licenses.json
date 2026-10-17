@@ -1,13 +1,13 @@
 {
   "task": "T-050",
   "assessedOn": "2026-10-09",
-  "lockfileSha256": "65c6a5a55c72e953c236cdd9a154d3dfe1084e979935be41c25c54d525605890",
+  "lockfileSha256": "3abe0c4a2aab3daa1c36dd180bfd4523d35e017c56b59a6c0a2299e5657e8367",
   "hashMethod": "SHA-256 of UTF-8 JSON.stringify(JSON.parse(package-lock.json)); insensitive to whitespace and line endings",
   "scope": "All non-root lockfile package paths, including peer and platform-optional development packages",
-  "packageCount": 576,
+  "packageCount": 577,
   "licenses": {
     "MIT": 459,
-    "Apache-2.0": 19,
+    "Apache-2.0": 20,
     "ISC": 36,
     "LicenseRef-Microsoft-VSCE-Sign": 10,
     "Python-2.0": 1,
@@ -87,6 +87,10 @@
     {
       "name": "sql.js",
       "notice": "dist/sql.js-LICENSE"
+    },
+    {
+      "name": "xlsx",
+      "notice": "dist/xlsx-LICENSE"
     }
   ],
   "packages": [
@@ -6880,6 +6884,18 @@
       "direct": false
     },
     {
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json license metadata",
+      "path": "node_modules/xlsx",
+      "name": "xlsx",
+      "version": "0.20.3",
+      "declaredLicense": "Apache-2.0",
+      "dev": false,
+      "optional": false,
+      "peer": false,
+      "direct": true
+    },
+    {
       "path": "node_modules/xml2js",
       "name": "xml2js",
       "version": "0.5.0",
@@ -7022,6 +7038,13 @@
       "optional": false,
       "peer": false,
       "direct": false
+    }
+  ],
+  "updates": [
+    {
+      "task": "T-024",
+      "date": "2026-10-17",
+      "note": "Add official vendored SheetJS CE 0.20.3, Apache-2.0; preserve T-050 license evidence for all other locked packages."
     }
   ]
 }
