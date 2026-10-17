@@ -118,7 +118,9 @@ suite('T-021 production CSV memory', () => {
               const remove = current.onStatus(() => { if (current.firstRowsMs !== undefined) { clearTimeout(timer); remove(); accept(); } });
             });
           }
-          assert.ok(session.firstRowsMs !== undefined && session.firstRowsMs < 2000, `first-row DOM ${String(session.firstRowsMs)}ms`);
+          process.stdout.write(`T-023 CSV preview timing evidence: ${JSON.stringify({ minimum, firstDomMs: session.firstRowsMs, ...session.previewTimings,
+            scope: 'command start through host-received populated preview DOM; stages are command-relative and never subtracted' })}\n`);
+          assert.ok(session.firstRowsMs !== undefined && session.firstRowsMs < 2000, `first-row DOM ${String(session.firstRowsMs)}ms; stages=${JSON.stringify(session.previewTimings)}`);
           let helper = 0; let ticks = 0; let maxGapMs = 0; let last = performance.now();
           const remove = session.onStatus(() => { helper = current.state.progress?.processId ?? helper; });
           const timer = setInterval(() => { const now = performance.now(); maxGapMs = Math.max(maxGapMs, now - last); last = now; ticks++; }, 10);

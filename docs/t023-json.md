@@ -3,12 +3,14 @@
 Owner authorizes full implementation, necessary fixes, fixture changes and assistant
 visual QA on 2026-10-16; owner retains push and actual-candidate CI.
 
-Current handoff: implementation and independent review are complete; standalone
-verification passes 777 units and the separate complete host suite passes 65
-tests, including all new stress workloads. Component visual inspection passes
-within the limitations below. The canonical full gate remains failed on an
-unexplained unchanged T-015 unit timeout. No automatic unchanged retry is taken.
-T-023 stays unchecked pending resolution and owner-pushed actual-candidate CI.
+Current handoff (2026-10-17): [Windows CI repair](t023-windows-ci.md) records
+run 38857662893 at dfab68e: Ubuntu/macOS jobs pass, Windows fails the 5-GB CSV
+preview at 2005.2729 ms. Repaired standalone passes 790 units; the exact 5-GB
+preview diagnostic passes at 995.4049 ms. A separate local full build-hook
+timeout and host 127.3266-ms responsiveness failure remain failed. All original
+guards remain intact; no unchanged gate is retried. Original slow-stage causes
+remain unproven. T-023 stays unchecked pending clean repaired actual-candidate CI.
+Historical implementation/777-unit/65-host evidence is retained below.
 
 Use Command Palette → **Lite Voyager: Import JSON / JSONL**, select a saved
 local UTF-8 file, review its preview, then choose **Import table**. SQL becomes

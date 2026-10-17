@@ -22,6 +22,7 @@ export class CsvImportSession {
   readonly closed: Promise<void>;
   state: CsvImportState = { type: 'csvImportState', contextId: this.contextId, phase: 'loading', message: 'Reading preview…', options: {} };
   firstRowsMs: number | undefined;
+  readonly previewTimings: { transportMs?: number; readStartedMs?: number; readFinishedMs?: number; webviewReadyMs?: number } = {};
   browserStatus: BrowserStatus | undefined;
   saveDom: SqliteSaveDom | undefined;
   saveState: SqliteSaveState = { type: 'sqliteSaveState', contextId: this.contextId, phase: 'idle', message: 'Save the entire imported database, including all rows and original BLOB bytes.', bytes: '0', total: '0' };
@@ -55,7 +56,10 @@ export class CsvImportSession {
     this.subscriptions.push(panel.webview.onDidReceiveMessage((value: unknown) => { this.receive(value); }), panel.onDidDispose(() => { this.dispose(); }));
     this.initialized = new Promise<boolean>((accept) => {
       let settled = false;
-      const finish = (ready: boolean): void => { if (settled) { return; } settled = true; clearTimeout(timer); accept(ready); };
+      const finish = (ready: boolean): void => {
+        if (settled) { return; } settled = true; clearTimeout(timer);
+        this.previewTimings.transportMs = performance.now() - this.started; accept(ready);
+      };
       const timer = setTimeout(() => { finish(false); }, 10000); this.finishTransport = finish;
       void panel.webview.postMessage(this.state).then(finish, () => { finish(false); });
     });
@@ -96,6 +100,7 @@ export class CsvImportSession {
   }
   private async readPreview(options: LoadOptions): Promise<void> {
     this.update({ phase: 'loading', options, message: 'Reading preview with selected options…' });
+    this.previewTimings.readStartedMs ??= performance.now() - this.started;
     try {
       const preview = await this.loader.preview(this.uri.fsPath, options, this.cancellation.signal);
       if (!isImportPreviewResult(preview) || (this.format === 'csv') !== isCsvPreviewResult(preview)) { throw new Error('Loader returned an invalid bounded preview. Rebuild and reopen.'); }
@@ -103,6 +108,7 @@ export class CsvImportSession {
         message: this.format === 'json' ? 'Review the JSON preview, then Import table. Full import validates the entire file; the source remains unchanged.'
           : 'Review delimiter, header and type options, then Import table. Source file remains unchanged.' });
     } catch (error: unknown) { this.failure(error); }
+    finally { this.previewTimings.readFinishedMs ??= performance.now() - this.started; }
   }
   refresh(options: LoadOptions): Promise<void> {
     if (this.disposed || !['ready', 'error'].includes(this.state.phase)) { return this.work; }
@@ -178,7 +184,7 @@ export class CsvImportSession {
       else if (value.type === 'csvImportRefresh') { void this.refresh(value.options); }
       else { void this.cancel(); }
     } else if (isCsvPreviewRequest(value) && value.contextId === this.contextId) {
-      if (value.type === 'csvPreviewReady') { this.sendState(); }
+      if (value.type === 'csvPreviewReady') { this.previewTimings.webviewReadyMs ??= performance.now() - this.started; this.sendState(); }
       else { void this.cancel(); }
     } else if (isCsvPreviewStatus(value) && value.contextId === this.contextId && this.state.preview !== undefined) {
       this.previewStatus(value);

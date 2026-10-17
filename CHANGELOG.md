@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Avoid reopening and rescanning complete CSV/TSV preview samples for alternative
+  delimiters when their raw records establish that the preferred delimiter wins.
+  Preserve candidate scoring for ambiguous and partial samples.
+
 - Add **Import JSON / JSONL** with a bounded preview, streaming imports,
   progress and cancellation. Preserve exact int64 values, late object keys,
   nested JSON text and complete Unicode strings. Imported data uses the existing

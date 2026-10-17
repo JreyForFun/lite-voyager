@@ -4280,6 +4280,7 @@ Milestone 1 gate status (separate from foundation):
 ## 5. Edge cases every format must be tested against
 
 T-023 scoped acceptance/evidence: [JSON / JSONL import](../docs/t023-json.md).
+T-023 Windows CI repair and exact retained failures: [repair record](../docs/t023-windows-ci.md).
 No existing diagnostic, memory, per-operation timing or source-safety gate is
 relaxed. The aggregate CI job budget becomes 60 minutes for the added sequential
 JSON workloads; all individual test deadlines and full-gate commands stay intact.
@@ -4343,6 +4344,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-023 Windows CI repair (2026-10-17): Record exact dfab68e/run 38857662893 Windows preview failure, conservative delimiter optimization, red-first regressions, 790-unit standalone, separate 995.4049-ms 5-GB preview diagnostic and unresolved local failures. Keep all original clocks/bounds/workloads/diagnostic rules and T-023 closure open; no unchanged retry-to-green.
 - T-023 implementation (2026-10-16): Link scoped acceptance, 777-unit standalone and separate 65-host/stress pass with exact HOST-004/HOST-001 warnings. Preserve red-first repairs, failed canonical full runs including unexplained T-015 unit timeout, and component-rendering limitations in docs/t023-json.md. Completion gates remain open pending clean actual-candidate full CI.
 - T-022 completion (2026-10-16): Independently confirm run 38795642328 /attempt 1/exact a1c1fce succeeds on all three platforms with locked installs and applicable full steps. Close only T-022 using existing local acceptance/QA/review; retain prior failures, exact diagnostics, remote raw-log limits and all remaining milestone work.
 - T-022 implementation (2026-10-16): Record red-first storage/save/review/package repairs, delegated visual scope and independent 60-host pass. The owner's single unchanged full rerun passes 707 units/60 hosts with its exact HOST-001 record; final 707-unit standalone passes with zero errors/warnings. Preserve every guard, prior 706/707 failure, unexplained timeout, rejected debugging launch and actual-candidate three-platform CI gate.

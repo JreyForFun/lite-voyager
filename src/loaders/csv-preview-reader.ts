@@ -23,7 +23,7 @@ const fold = (name: string): string => name.replace(/[A-Z]/g, (character) => cha
 const limited = 'Preview limit reached; only complete rows are shown. Values were not truncated. The rest of the file has not been validated.';
 
 /** Worker-only: retain one bounded raw record and one bounded result page. */
-export function readCsvPreview(path: string, input: LoadOptions = {}, chunkBytes = 65_536): CsvPreviewResult {
+export function readCsvPreview(path: string, input: LoadOptions = {}, chunkBytes = 65_536, observeRecord?: (text: string) => void): CsvPreviewResult {
   const options = previewOptions(input);
   if (!Number.isSafeInteger(chunkBytes) || chunkBytes < 1 || chunkBytes > 65_536) { throw new Error('Invalid preview read size.'); }
   const delimiter = options.delimiter ?? (extname(path).toLowerCase() === '.tsv' ? '\t' : ',');
@@ -66,6 +66,9 @@ export function readCsvPreview(path: string, input: LoadOptions = {}, chunkBytes
       return true;
     };
     const record = (text: string): void => {
+      // Detection needs original headers/quotes, before normalization or decoding
+      // escapes in parsed fields. Observe only complete bounded records.
+      observeRecord?.(text);
       const row = parseRecord(text, delimiter);
       if (first) {
         first = false;

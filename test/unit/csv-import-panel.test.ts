@@ -134,6 +134,24 @@ test('NFR-004: Given time spent creating an import panel, When preview DOM repor
   } finally { run.view.dispose(); await run.session.closed; await rm(run.directory, { recursive: true, force: true }); clock.mockRestore(); }
 });
 
+test('NFR-004: Given delayed transport, worker result and first DOM report, When diagnosing preview time, Then stages use the original command clock and never replace the total', async () => {
+  let now = 150; const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+  let transport!: (ready: boolean) => void; const ready = new Promise<boolean>((accept) => { transport = accept; });
+  let parsed!: (result: typeof preview) => void; const read = vi.fn<FileLoader['preview']>(() => new Promise((accept) => { parsed = accept; }));
+  const view = panel(); view.webview.postMessage.mockImplementationOnce(() => ready);
+  const session = new CsvImportSession({ fsPath: '/source.csv' } as vscode.Uri, view as unknown as vscode.WebviewPanel,
+    '/extension/dist', '/unused-storage', { extensions: ['csv'], preview: read, import: () => Promise.resolve([]) }, () => {}, undefined, 100);
+  try {
+    expect(read).not.toHaveBeenCalled(); now = 300; transport(true); await session.initialized;
+    expect(read).toHaveBeenCalledOnce(); now = 450; parsed(preview); await session.finished;
+    now = 500; view.receive({ type: 'csvPreviewReady', contextId: session.contextId });
+    now = 650; view.receive({ type: 'csvPreviewStatus', contextId: session.contextId, renderedRows: 1, renderedColumns: 1 });
+    expect(session).toMatchObject({ firstRowsMs: 550, previewTimings: { transportMs: 200, readStartedMs: 200, readFinishedMs: 350, webviewReadyMs: 400 } });
+    now = 900; view.receive({ type: 'csvPreviewReady', contextId: session.contextId });
+    expect(session).toMatchObject({ firstRowsMs: 550, previewTimings: { webviewReadyMs: 400 } });
+  } finally { view.dispose(); await session.closed; clock.mockRestore(); }
+});
+
 test.each([
   'Export temporary files could not be removed. Check the .lite-voyager-export- folder beside the destination.',
   'The export could not be saved. Close programs using the destination and retry. Existing output was not replaced.',
