@@ -8,9 +8,9 @@ export async function xlsxSnapshot(path: string): Promise<XlsxSnapshot> {
   return { path: canonical, dev: String(metadata.dev), ino: String(metadata.ino), size: String(metadata.size), mtimeNs: String(metadata.mtimeNs), ctimeNs: String(metadata.ctimeNs) };
 }
 export function sameXlsxSnapshot(a: XlsxSnapshot, b: XlsxSnapshot): boolean {
-  // VS Code file URIs and Node's sync/async realpath can disagree only on the
-  // drive-letter spelling. Preserve the rest of the canonical path and every
-  // identity/timestamp check, including on case-sensitive Windows directories.
+  // Both readers use native realpath. Normalize URI drive-letter spelling only;
+  // preserve canonical component casing and every identity/timestamp check,
+  // including on case-sensitive Windows directories.
   const spelling = (path: string): string => process.platform === 'win32' ? path.replace(/^[A-Z]:/iu, (drive) => drive.toLowerCase()) : path;
   return spelling(a.path) === spelling(b.path) && a.dev === b.dev && a.ino === b.ino && a.size === b.size && a.mtimeNs === b.mtimeNs && a.ctimeNs === b.ctimeNs;
 }

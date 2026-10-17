@@ -21,6 +21,11 @@ export function streamRecords(path: string, delimiter: CsvDelimiter, row: (field
     const record = (): void => {
       const text = parts.join(''); parts = []; characters = 0;
       if (text === '') { row(['']); return; }
+      // The scanner has already validated quoting, NULs and record endings.
+      // Plain records need only splitting (also Papa's own plain-record path).
+      // Avoid constructing a cyclic streamer/parser graph for every such row;
+      // that transient allocation grows the helper's heap on long imports.
+      if (!text.includes('"')) { row(text.split(delimiter)); return; }
       // Papa's string API strips a leading BOM each time. Only the streaming
       // decoder may remove the file-start BOM; protect later data BOMs.
       const protectBom = text.charCodeAt(0) === 0xfeff;

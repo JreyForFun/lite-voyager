@@ -1184,6 +1184,11 @@ bundles; no T-025 associations. Preserve raw numeric XML tokens before Number
 coercion, validate ZIP bounds/CRCs/deflate and XML structure, and consent to the
 exact source snapshot above the decimal 100-MB boundary before any workbook read.
 No existing performance, diagnostic, fallback or source-safety guard is relaxed.
+T-024 candidate CI repair: [exact failures/evidence](../docs/t024-ci-repair.md).
+Use native realpath consistently for XLSX snapshots, preserving component casing
+and metadata guards. After strict complete-record validation, split quote-free
+CSV fields directly to avoid per-row Papa streamer allocation; quoted records
+retain Papa. No fixture, nursery, old-generation limit or gate is changed.
 
 ```ts
 interface PreviewLoader<Result extends PreviewResult = PreviewResult> {
@@ -1291,6 +1296,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.
 - T-024 planning/implementation (2026-10-17): Record owner-delegated XLSX semantics, consent, exact numeric tokens, validated worker parsing and official vendored Apache-2.0 SheetJS. Preserve existing unrelated edits, earlier failures and all verification guards; owner retains push/CI.
 - T-023 planning (2026-10-16): Link dependency-free streaming JSON design and shared import lifecycle; preserve existing unrelated edits and all prior safety/diagnostic guards.
 - T-022 (2026-10-16): Use versioned owned storage/helper markers, exact preflight and a bounded copy worker with host-owned atomic publication, retained original identity and real VSIX inclusion. Preserve owner push/CI and all diagnostic/memory/timing guards.

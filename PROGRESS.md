@@ -1,36 +1,38 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-024 XLSX candidate verified standalone/current host; full gate open.
+Milestone 2: T-024 CI repairs pass local full gate; task remains unchecked.
 Owner delegates implementation/fixtures/repairs/visual QA; retains push/CI.
-Only T-024 is in scope. Acceptance/evidence/file list: docs/t024-xlsx.md.
+Acceptance/file list: docs/t024-xlsx.md; follow-up: docs/t024-ci-repair.md.
 
 ## Verify status
-Owner-approved single final verify passes 848 tests /84 files (367.92s units).
-Types/lint/build and 34-file /979.24-KB VSIX pass: zero errors/warnings.
-Current XLSX host cases: 3 pass /15s, both engines, after every source repair.
-Exact HOST-001 warning is recorded; that host run is not warning-free.
-Retain full pre-locator 67 pass /1 CSV5GB timer gap failure (1720ms >100ms).
-Retain prior focused sql.js five-second timeout; its cause remains unknown.
-Diagnostic non-reproductions do not replace failures; CSV profile export failed.
-Compiled diagnostic tests restored byte-for-byte; disposable QA test removed.
-Single-run exception used once; actual-candidate CI pending, T-024 unchecked.
+Run 39059472250 /attempt 1 /2139f7c fails Windows/macOS; Ubuntu passes.
+Windows: 808 units pass /40 XLSX source-identity failures, reproduced locally.
+macOS: 848 units pass; 67 hosts pass /1 CSV file-size memory-growth failure.
+CSV combined peaks 281886720/357597184; growth 75710464 >50000000 bytes.
+New Windows canonical-path regression fails first; repaired focused suite 42 pass.
+Both-engine CSV/BOM/boundary suite 48 pass, including complete 16-MiB record.
+Repaired verify:full passes 857 units /86 files and all 68 hosts (32 min).
+Types/lint/build/34-file VSIX pass without errors/warnings; full has HOST-001.
+Exact warning/source: docs/t024-ci-repair.md; full run is not warning-free.
+CSV peaks 312283136/308166656; paging growth 17317888/32956416 bytes pass.
+Keep every earlier failed gate/unknown timing cause; no unchanged retry-to-green.
 
 ## Last session
-All-sheet import, source-bound >100-MB consent, exact raw numbers implemented.
-Five original review findings, locator/ZIP aliases and Default type repaired.
-Independent reviewer clears targeted repairs; current host confirms both engines.
-Light/dark/narrow/error/progress component screenshots inspected after cleanup.
-Native capture fails twice with identical-owner binding error; no native QA claim.
-Approved npm audit exits 0, no reported vulnerabilities; full Apache notice ships.
+Use native sync realpath to match async snapshots; metadata guards unchanged.
+After strict scanning, split quote-free CSV records without per-row Papa graphs.
+Quoted parsing, source checks, fixtures and gate/resource limits retained.
+Parser diagnostic reduces sampled RSS/heap; actual Windows CSV full also passes.
+Independent Bugbot review finds no concrete bug; macOS proof remains pending.
+Prior scoped XLSX visuals/host coverage retained; no UI changes in CI repair.
+Native capture failed twice; no physical/native appearance claim.
 
 ## Decisions / limits
-No test/timing/memory/fallback/diagnostic rule relaxed; all failures retained.
-T-023 closure/run 39002490041/db28c92 keeps its original evidence/scope.
-ZIP64 is an explained reader limit; dates retain Excel serials/ISO text.
+All-sheet import, exact numeric/cached-formula semantics and consent retained.
+Original CSV timer failure, focused fallback timeout and failed CI retained.
 Owner README/T-015 edits and unrelated untracked fixtures stay excluded.
 
 ## Next
-Owner pushes the scoped T-024 candidate and supplies three-platform CI evidence.
-Keep full CSV failure/unknown timing causes visible; no task closure yet.
+Scoped repair is prepared; owner edits and all failed evidence remain preserved.
+Owner pushes; repaired-candidate three-platform CI remains required.
 No T-025, whole-milestone closure, release or tag is claimed.

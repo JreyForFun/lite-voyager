@@ -4297,6 +4297,15 @@ Milestone 1 gate status (separate from foundation):
 ## 5. Edge cases every format must be tested against
 
 T-024 XLSX scoped acceptance/evidence: [XLSX import](../docs/t024-xlsx.md).
+T-024 candidate run 39059472250 /2139f7c: Windows source-identity and macOS CSV growth
+fail; Ubuntu succeeds. [CI repair/evidence](../docs/t024-ci-repair.md) preserves
+both failures, red-first Windows reproduction, quoted/plain CSV fidelity,
+allocation diagnostic limits and all original guards. New candidate CI remains
+required; no unchanged retry or task closure is authorized by these records.
+Repaired local full passes 857 units /68 hosts; its single exact approved HOST-001
+warning is recorded in that link. The full run is not warning-free. Populated CSV
+combined peaks 312283136 /308166656 and paging growth 17317888 /32956416 bytes
+pass unchanged guards, exact complete-data SQL, all 80 pages and source hashes.
 Preserve all existing gates and diagnostic rules. Test both engines, cached/missing
 formulas, exact raw numeric tokens, hidden/empty/header-only sheets, implicit and
 sparse addresses, names, malformed ZIP/XML, memory-consent boundaries/cancellation,
@@ -4367,6 +4376,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-024 CI repair (2026-10-18): Retain failed run 39059472250 /2139f7c and original assertions; link native-path fix, exact CSV coverage, allocation diagnostic limits and 857-unit/68-host local full pass with one exact HOST-001 warning. No retry exception, fixture or policy change; new-candidate CI required.
 - T-024 (2026-10-17): Link scoped XLSX acceptance and delegated QA/evidence record; retain all historical failures, diagnostics and unchanged gate policies. Candidate full checks/CI remain separate evidence.
 - T-023 completion (2026-10-17): Independently confirm run 39002490041 /attempt 1/exact db28c92 passes locked installs/applicable full verification on Windows/macOS/Ubuntu. Close only T-023; preserve earlier failures, unknown causes, local warning records and remote raw-log limits. No guard change or unchanged retry-to-green.
 - T-023 Windows CI repair (2026-10-17): Record exact dfab68e/run 38857662893 Windows preview failure, conservative delimiter optimization, red-first regressions, 790-unit standalone, separate 995.4049-ms 5-GB preview diagnostic and unresolved local failures. Keep all original clocks/bounds/workloads/diagnostic rules and T-023 closure open; no unchanged retry-to-green.

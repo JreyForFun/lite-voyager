@@ -16,7 +16,7 @@ const nil = (): XlsxCell => ({ text: null, kind: 'null' });
 function record(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value); }
 function snapshot(path: string): XlsxSnapshot {
   const metadata = statSync(path, { bigint: true });
-  return { path: realpathSync(path), dev: String(metadata.dev), ino: String(metadata.ino), size: String(metadata.size), mtimeNs: String(metadata.mtimeNs), ctimeNs: String(metadata.ctimeNs) };
+  return { path: realpathSync.native(path), dev: String(metadata.dev), ino: String(metadata.ino), size: String(metadata.size), mtimeNs: String(metadata.mtimeNs), ctimeNs: String(metadata.ctimeNs) };
 }
 export function verifyXlsxSource(path: string, expected: XlsxSnapshot): void {
   if (!sameXlsxSnapshot(snapshot(path), expected)) { throw new Error('The XLSX source changed. Retry preview and approve the current file; no table was published.'); }

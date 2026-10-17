@@ -78,6 +78,14 @@ retain existing CSV/JSON behavior and all timing/memory/diagnostic guards.
 
 ## Evidence
 
+Candidate run 39059472250 at 2139f7c fails Windows source-identity checks and
+macOS CSV cross-file memory growth; Ubuntu succeeds. Follow-up reproduced path
+repair, bounded CSV allocation change and unchanged-gate evidence are retained
+in [the CI repair record](t024-ci-repair.md). T-024 remains unchecked.
+The repaired local full passes 857 units /68 hosts, including both populated CSV
+sizes and source hashes, with one exact approved HOST-001 warning recorded there.
+It is not warning-free. Fresh repaired-candidate three-platform CI remains required.
+
 T-024 remains unchecked until final acceptance and actual-candidate three-platform
 CI. The owner retains pushing. No release, tag or whole-milestone closure.
 
@@ -332,8 +340,9 @@ this is the explicitly authorized one-run exception, not a claimed causal repair
 Actual-candidate three-platform CI remains
 owner-triggered. T-024 stays unchecked; no phase closure, release or tag.
 Local packaging uses the owner's working-tree README; its unrelated edits remain
-excluded from the T-024 commit scope. Prepare only the 46 listed task files for
-a local checkpoint; owner retains push and CI.
+excluded from the T-024 commit scope. The initial 2139f7c checkpoint contains 46
+task files; subsequent CI repair files are included in the manifest below.
+The owner retains push and CI.
 
 ## Files created or changed for T-024
 
@@ -341,6 +350,7 @@ a local checkpoint; owner retains push and CI.
 - `src/editor/csv-import.ts`, `src/editor/csv-import-ui.ts`,
   `src/editor/xlsx-warning.ts`, `src/extension.ts`, `src/protocol.ts`.
 - `src/loaders/csv-import.ts`, `src/loaders/csv-import-client.ts`,
+  `src/loaders/csv-records.ts`,
   `src/loaders/xlsx-book.ts`, `src/loaders/xlsx-consent.ts`,
   `src/loaders/xlsx-import.ts`, `src/loaders/xlsx-loader.ts`,
   `src/loaders/xlsx-preview.ts`, `src/loaders/xlsx-xml.ts`,
@@ -349,6 +359,7 @@ a local checkpoint; owner retains push and CI.
   `src/worker/xlsx-preview-worker.ts`, `webview/csv-import.ts`.
 - `src/test/xlsx-fixture.ts`, `src/test/xlsx-import.test.ts`.
 - `test/unit/xlsx-consent.test.ts`, `test/unit/xlsx-import.test.ts`,
+  `test/unit/xlsx-canonical.test.ts`, `test/unit/csv-records.test.ts`,
   `test/unit/xlsx-warning.test.ts`, `test/unit/xlsx-xml.test.ts`,
   `test/unit/xlsx-zip.test.ts`, `test/unit/xlsx-parts.test.ts`,
   `test/unit/browser-package.test.ts`,
@@ -358,7 +369,7 @@ a local checkpoint; owner retains push and CI.
   `specs/dependency-licenses.json`, `specs/DEPENDENCIES.md`.
 - Scoped additions to `specs/SPEC.md`, `specs/PLAN.md`, `specs/VALIDATION.md`,
   `specs/TASKS.md`; `docs/t024-xlsx.md`, `docs/t024-dependency-audit.json`,
-  and `PROGRESS.md`.
+  `docs/t024-ci-repair.md`, and `PROGRESS.md`.
 
 Existing owner README/T-015 edits, debug.log, gingTryWan and unrelated
 untracked fixtures are excluded. Disposable diagnostics/screenshots/logs in
