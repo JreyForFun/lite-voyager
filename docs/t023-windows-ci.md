@@ -1,5 +1,10 @@
 # T-023 Windows CI repair
 
+Status (2026-10-17): T-023 acceptance is complete following independently
+confirmed repaired-candidate three-platform full CI. The failures and limits
+below remain historical evidence; their precise slow-stage causes are not
+retroactively explained by the passing run.
+
 Run [38857662893](https://github.com/JreyForFun/lite-voyager/actions/runs/38857662893),
 attempt 1, tests exact `dfab68e5669f0d03db93761f0bff12e23a9eb32b`.
 Public API metadata confirms Windows job 116832647357 fails; Ubuntu job
@@ -127,6 +132,41 @@ repaired actual-candidate three-platform full CI is clean. The original
 2005-ms CI cause and the separate local 127-ms gap remain unproven.
 
 ## Files and reproduction
+
+### Repaired actual-candidate CI and closure (2026-10-17)
+
+Owner reports [run 39002490041](https://github.com/JreyForFun/lite-voyager/actions/runs/39002490041)
+PASS. Public GitHub API run/job/step metadata independently confirms attempt 1,
+completed success, at exact `db28c92ea6e8406e02b999899a38843c8bfa0ce7`, the
+reviewed repair commit and local HEAD before these documentation updates.
+
+- Windows job 117308167927: locked installation and applicable Windows/macOS
+  full-verification step succeed.
+- Ubuntu job 117308167922: locked installation and Linux session-bus/virtual-display
+  full-verification step succeed.
+- macOS job 117308167800: locked installation and applicable Windows/macOS
+  full-verification step succeed.
+
+Remote raw logs, test counts and diagnostic counts are not retrieved; no
+warning-free remote claim. The configured full steps retain all original
+preview/import/paging/data/hash/memory/timing and exact diagnostic guards.
+Together with the observed local 790-unit standalone, original 65-host/stress
+acceptance, scoped visual QA and cleared independent review, this completes
+only T-023. Check its task box. Earlier CI/local failures remain failed and
+their original unknown causes stay unknown; no unchanged retry-to-green.
+Closure changes documentation only. Local closure `npm run verify` passes all
+790 units /78 files (334.99-second unit phase), strict type checks, lint,
+production build and 31-file /694.21-KB VSIX with zero errors and zero warnings.
+Preserve `out/t023-close-verify.log`. The temporary local idle-sleep execution
+request is released with exit 0 and no stored power setting changes. Only final
+documentation status updates follow; code, tests and guards remain unchanged.
+Owner retains push of the closure records. T-024 begins in a fresh chat;
+no whole-milestone closure, release or tag is claimed.
+
+Closure files only: `PROGRESS.md`, `docs/t023-json.md`, `docs/t023-windows-ci.md`,
+and T-023 entries in `specs/TASKS.md` /`specs/VALIDATION.md`.
+
+### Repair files and commands (historical)
 
 Modified: `src/loaders/csv-detection.ts`, `src/loaders/csv-preview-reader.ts`,
 `src/editor/csv-import.ts`, `src/test/csv-import-memory.test.ts`,

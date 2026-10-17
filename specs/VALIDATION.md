@@ -10,6 +10,23 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ## 1. Three layers of validation
 
+### T-023 repaired actual-candidate CI and closure (2026-10-17)
+
+Owner reports [run 39002490041](https://github.com/JreyForFun/lite-voyager/actions/runs/39002490041)
+PASS. Public GitHub API metadata independently confirms attempt 1 /completed
+success /exact `db28c92ea6e8406e02b999899a38843c8bfa0ce7`, the reviewed repair.
+Windows job 117308167927, Ubuntu job 117308167922 and macOS job 117308167800
+all succeed at locked installation and their applicable full-verification step.
+Remote raw logs, counts and diagnostic records are not retrieved; no warning-free
+remote claim. [Repair evidence](../docs/t023-windows-ci.md) preserves every earlier
+failure, unknown timing cause, exact local diagnostics and scoped visual limits.
+Together with prior local acceptance and independent review, this closes only
+T-023 under unchanged guards. Documentation-only local closure `npm run verify`
+passes 790 units /78 files (334.99 seconds), strict types/lint/build and 31-file
+/694.21-KB packaging with zero errors and zero warnings. Only final documentation
+status updates follow. Owner retains push; no whole-milestone closure, release/tag
+or T-024 work.
+
 ### T-022 storage / SQLite save evidence (2026-10-16)
 
 Owner delegates implementation, fixture changes, fixes and visual QA; owner retains
@@ -4344,6 +4361,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-023 completion (2026-10-17): Independently confirm run 39002490041 /attempt 1/exact db28c92 passes locked installs/applicable full verification on Windows/macOS/Ubuntu. Close only T-023; preserve earlier failures, unknown causes, local warning records and remote raw-log limits. No guard change or unchanged retry-to-green.
 - T-023 Windows CI repair (2026-10-17): Record exact dfab68e/run 38857662893 Windows preview failure, conservative delimiter optimization, red-first regressions, 790-unit standalone, separate 995.4049-ms 5-GB preview diagnostic and unresolved local failures. Keep all original clocks/bounds/workloads/diagnostic rules and T-023 closure open; no unchanged retry-to-green.
 - T-023 implementation (2026-10-16): Link scoped acceptance, 777-unit standalone and separate 65-host/stress pass with exact HOST-004/HOST-001 warnings. Preserve red-first repairs, failed canonical full runs including unexplained T-015 unit timeout, and component-rendering limitations in docs/t023-json.md. Completion gates remain open pending clean actual-candidate full CI.
 - T-022 completion (2026-10-16): Independently confirm run 38795642328 /attempt 1/exact a1c1fce succeeds on all three platforms with locked installs and applicable full steps. Close only T-022 using existing local acceptance/QA/review; retain prior failures, exact diagnostics, remote raw-log limits and all remaining milestone work.

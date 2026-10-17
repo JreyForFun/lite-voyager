@@ -1,36 +1,33 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-023 Windows CI repair prepared; closure pending.
-Owner delegates fixes, fixtures, judgement and QA; retains push/new-candidate CI.
-No other task is in scope. Details/files: docs/t023-windows-ci.md.
+Milestone 2: T-023 JSON / JSONL import complete after three-platform full CI.
+Owner delegates implementation/repairs/QA; retains push of closure records.
+No other task is in scope. Details: docs/t023-json.md /docs/t023-windows-ci.md.
 
 ## Verify status
-Run 38857662893 /attempt 1 /dfab68e: Ubuntu/macOS pass; Windows fails.
-Windows: 777 units /64 hosts pass; 5-GB CSV first DOM 2005.2729 ms fails 2000.
-Repaired standalone: 790 units /78 files, zero errors/warnings; VSIX passes.
-Local full: CSV build hook times out at 20 s; 754 pass /36 not run by Vitest.
-Confirmed Modern Standby overlaps unit phase; exact hook cause unproven.
-Separate host: 13 pass /1 fails at 127.3266-ms import gap versus 100 ms.
-Separate exact 5-GB preview diagnostic passes at 995.4049 ms; hash unchanged.
-Diagnostic warnings HOST-003/HOST-001 and failed-host error explicitly recorded.
-Neither host run is warning-free. No unchanged failed gate is retried.
+Run 39002490041 /attempt 1 /exact db28c92ea6e8406e02b999899a38843c8bfa0ce7.
+Public API confirms successful locked installs/applicable full checks on all 3 OSes.
+Windows job 117308167927; Ubuntu 117308167922; macOS 117308167800.
+Remote raw logs/counts/diagnostics not retrieved; no warning-free remote claim.
+Repaired standalone passes 790 units /78 files, zero errors/warnings; VSIX passes.
+Local closure verify: 790 units /78 files (334.99 s), zero errors/warnings.
+Strict types/lint/build and 31-file /694.21-KB VSIX pass; code/tests unchanged.
+Temporary local idle-sleep request released exit 0; no stored power change.
 
 ## Last session
-Seven red regressions expose redundant source opens and missing phase timings.
-Conservative raw-record proof removes three redundant delimiter scans.
-Alternative delimiters, raw headers and partial samples retain candidate scoring.
-Independent review finds no defect/guard weakening; 127-ms cause remains unproven.
-Historical implementation/65-host/stress/visual evidence stays in docs/t023-json.md.
+Confirm CI at the reviewed repair commit; mark only T-023 complete.
+Preserve all earlier CI/local failures and unknown causes, including 2005-ms preview,
+20-s build hook, 127-ms host gap and the earlier T-015 timeout.
+All exact local diagnostics, scoped visual QA and independent review stay recorded.
+No unchanged failed gate is retried or reclassified by the passing CI run.
 
 ## Decisions / limits
-No dependency, fixture, clock, deadline, memory or diagnostic policy changes.
-The original CI slow-stage cause remains unproven; no transient-failure dismissal.
-Temporary idle-sleep request used for remaining local QA, then released exit 0.
-No stored power setting/CI configuration change; diagnostic module removed.
-Owner README/T-015 spec changes and existing untracked fixtures stay excluded.
+Closure edits documentation only; guards, workloads, code/tests remain unchanged.
+No dependency, clock, deadline, memory or diagnostic-policy relaxation.
+Historical 65-host/ten-million-row/1-and-5-GB evidence retains original scope.
+Owner README/T-015 spec edits and existing untracked fixtures stay excluded.
 
 ## Next
-Owner pushes scoped repair and supplies new actual-candidate CI run URL.
-Keep T-023 unchecked until clean three-platform full evidence resolves open gates.
-No other task, whole milestone, release or tag is closed.
+Owner pushes closure records. Start T-024 planning in a fresh chat.
+No T-024 implementation, whole-milestone closure, release or tag is claimed.
