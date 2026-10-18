@@ -54,7 +54,8 @@ export class BrowserGrid {
     return result;
   }
 
-  setPage(page: EnginePage, offset: number): void {
+  setPage(page: EnginePage, offset: number, notify = true): void {
+    if (this.disposed) { return; }
     this.page = page; this.offset = offset;
     this.active = null; this.anchor = null; this.root.removeAttribute('aria-activedescendant');
     this.rows.replaceChildren(); this.header.replaceChildren();
@@ -67,7 +68,10 @@ export class BrowserGrid {
     this.track.style.width = `${String(page.columns.length * COLUMN_WIDTH)}px`;
     // Clear old DOM/metrics before the details callback can report this page.
     this.selected(null);
-    this.schedule();
+    cancelAnimationFrame(this.frame); this.frame = 0;
+    // New pages must not depend on animation frames being scheduled for a webview.
+    // render() caps both dimensions; scroll/resize updates remain frame-coalesced.
+    if (!this.disposed) { this.render(notify); }
   }
 
   private schedule(): void {
@@ -76,7 +80,7 @@ export class BrowserGrid {
     }
   }
 
-  private render(): void {
+  private render(notify = true): void {
     const focused = document.activeElement?.getAttribute('data-sort-column');
     this.headerButtons.clear();
     const height = Math.min(560, this.viewport.clientHeight);
@@ -121,7 +125,7 @@ export class BrowserGrid {
     } else { this.root.removeAttribute('aria-activedescendant'); }
     if (focused !== null && focused !== undefined) { this.headerButtons.get(focused)?.focus(); }
     this.renderedRows = rowElements.length; this.renderedColumns = headers.length;
-    this.changed();
+    if (notify) { this.changed(); }
   }
 
   private cell(value: string | null, column: number): HTMLElement {

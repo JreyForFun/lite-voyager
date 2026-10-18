@@ -10,6 +10,60 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ## 1. Three layers of validation
 
+### T-025 opening integration (2026-10-18)
+
+The owner delegates implementation, fixture changes, necessary scoped repairs
+and visual QA, retaining push/CI. Acceptance, changed-file scope, red-first
+repairs, independent review and exact diagnostics are recorded in
+[docs/t025-opening.md](../docs/t025-opening.md).
+
+The first two focused host attempts remain failed: premature custom-editor
+disposal, then fixture closure during webview mounting with two strict runtime
+errors. The strengthened four-case focused run passes both engines/all five
+formats, exact DOM values, hide/show, isolated views/cancellation, default
+associations, dirty-buffer and source safety. Its only approved diagnostic is
+HOST-001 at `20261018T154150/window1/renderer.log:9`, severity `warning`, exact
+message `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+It is not warning-free. Initial standalone verification passes 884 units /89
+files with zero errors/warnings before the later review repairs.
+
+Independent review and follow-up cover bounded header detection under tabular
+suffixes, configuration-edit/shutdown races and unpublished ownership rollback.
+Six new regressions fail before those repairs; repaired focused suites pass
+20 tests and review finds no remaining concrete defects. The next full gate
+passes 890 units but fails with 62 host passes /10 missing-DOM failures. Red-first
+bounded synchronous page rendering removes the animation-frame dependency;
+52 grid/browser/import-view tests and all four focused host cases pass. The
+focused run has one exact HOST-001 warning at
+`20261018T165355/window1/renderer.log:9`, severity warning, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+It is not warning-free. The failed full scan rejects `10 tests failed.` at
+`20261018T160558/window1/renderer.log:248`, severity error, and reports its exact
+HOST-001 warning at line 10. Review finds no remaining concrete grid defect;
+the next full gate passes 892 units and SQLite stress before interruption without
+a final result. Owner's strict continuation resumes an unchanged full gate;
+retain that partial run and its exact HOST-001 warning at
+`20261018T170355/window1/renderer.log:10`, severity warning, same exact message.
+It is not warning-free or complete. The resumed full ends with 68 host passes /
+four failures: native large-cell and fallback NULL clipboard readbacks are empty,
+native T-013 exceeds 60 seconds, and final 5-GB JSONL OS sampling exceeds the
+3,000-ms watchdog. All four T-025 cases and populated SQLite/CSV stress pass.
+The strict scan rejects watcher EPERM in `20261018T230426/window1/fileWatcher.log:1`
+and `renderer.log:83`, plus `4 tests failed.` in renderer.log line 226. It approves
+only HOST-001 at renderer.log line 10, severity warning, same exact message above.
+The resumed full is failed and not warning-free; review finds no established new
+code cause. Isolated generated-output stage/clipboard diagnostics pass all four
+T-018/T-013 cases in 21 seconds, then restore original compiled bytes. Their sole
+approved HOST-001 warning is `20261018T235654/window1/renderer.log:9`, severity
+warning, same exact message above. It is not warning-free and does not clear the
+failed full gate. Final standalone passes 892 units /89 files (375.18 s), strict
+types/lint/build and 34-file /981.57-KB packaging, zero errors and warnings.
+Budgets and assertions stay unchanged; no automatic unchanged full retry.
+T-025 remains unchecked for final evidence and
+owner-pushed actual-candidate CI. Six light/dark Chromium component renders are
+inspected; native binding fails twice, so physical native menu/title/dialog
+appearance remains unobserved. No gate, diagnostic, workload or limit is relaxed.
+
 ### T-024 repaired-candidate CI and closure (2026-10-18)
 
 Owner reports [run 39067782337](https://github.com/JreyForFun/lite-voyager/actions/runs/39067782337)
@@ -4395,6 +4449,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-025 (2026-10-18): Record delegated opening integration, red-first routing/configuration/grid repairs and scoped QA. Retain every failed/interrupted run, the final 68/4 failure, exact diagnostics and unknown causes. Isolated diagnostics cannot clear the failed full gate; native visual and owner-pushed CI limits remain.
 - T-024 completion (2026-10-18): Independently confirm actual repaired 7e8eaef /run 39067782337 /attempt 1 passes locked installs/full verification on all platforms. Close only T-024; preserve prior failures, exact local warning, scoped visuals and remote raw-log limits.
 - T-024 CI repair (2026-10-18): Retain failed run 39059472250 /2139f7c and original assertions; link native-path fix, exact CSV coverage, allocation diagnostic limits and 857-unit/68-host local full pass with one exact HOST-001 warning. No retry exception, fixture or policy change; new-candidate CI required.
 - T-024 (2026-10-17): Link scoped XLSX acceptance and delegated QA/evidence record; retain all historical failures, diagnostics and unchanged gate policies. Candidate full checks/CI remain separate evidence.

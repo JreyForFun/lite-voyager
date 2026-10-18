@@ -16,9 +16,24 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Lite Voyager",
+      "properties": {
+        "liteVoyager.openCsvByDefault": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Open CSV, TSV, JSON, JSONL and XLSX in Lite Voyager by default. Adds only missing global editor associations and preserves explicit editor choices. Turning off removes only unchanged associations created by this setting. Applies to subsequent opens."
+        }
+      }
+    },
+    "menus": {
+      "explorer/context": [{ "command": "lite-voyager.open", "when": "resourceScheme == file && !explorerResourceIsFolder && resourceExtname =~ /\\.(csv|tsv|json|jsonl|xlsx|db|sqlite|sqlite3|db3)$/i", "group": "navigation" }],
+      "editor/title": [{ "command": "lite-voyager.open", "when": "resourceScheme == file && resourceExtname =~ /\\.(csv|tsv|json|jsonl|xlsx|db|sqlite|sqlite3|db3)$/i", "group": "navigation" }]
+    },
     "customEditors": [
       {
         "viewType": "lite-voyager.sqlite",
@@ -40,6 +55,11 @@
       }
     },
     "commands": [
+      {
+        "command": "lite-voyager.open",
+        "title": "Open in Lite Voyager",
+        "icon": "$(table)"
+      },
       {
         "command": "lite-voyager.xlsxImport",
         "title": "Lite Voyager: Import XLSX"

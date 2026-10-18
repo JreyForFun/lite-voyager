@@ -688,6 +688,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-025 (2026-10-18): Owner delegates opening integration, scoped fixes/fixtures and visual QA. Acceptance in docs/t025-opening.md clarifies all-five-format opt-in, conservative explicit-association precedence and reversible owned associations; existing import and source-safety policies remain.
 - T-024 (2026-10-17): Link owner-delegated XLSX acceptance for every sheet, exact cached/scalar values, snapshot-bound memory consent, unsupported-input policy and shared read-only import lifecycle. No T-025 opening integration or existing safety/diagnostic relaxation.
 - T-023 planning (2026-10-16): Link owner-delegated JSON/JSONL acceptance before implementation; specify lossless values, supported shapes, bounded streaming/preview, key handling and unchanged safety policies in docs/t023-json.md.
 - T-022 (2026-10-16): Define exact disk estimates/override, conservative PID ownership, complete atomic SQLite saving, moved/deleted original protection and visible retained-storage cleanup failures under owner-delegated judgment. No dependency or later-task scope change.

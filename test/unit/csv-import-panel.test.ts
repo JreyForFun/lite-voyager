@@ -45,6 +45,17 @@ async function fixture(loader: FileLoader, started?: number, format: 'csv' | 'js
   await session.finished; return { directory, view, db, session };
 }
 
+test('D-5: Given a resolving custom editor whose frame is not mounted, When the first post is undelivered then the webview announces ready, Then preview starts once without disposing the editor', async () => {
+  const view = panel(); view.webview.postMessage.mockResolvedValue(false); const read = vi.fn<FileLoader['preview']>().mockResolvedValue(preview);
+  const session = new CsvImportSession({ fsPath: '/source.csv' } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', '/storage',
+    { extensions: ['csv'], preview: read, import: vi.fn() }, () => {}, undefined, undefined, 'csv', true);
+  try {
+    await Promise.resolve(); await Promise.resolve(); expect(read).not.toHaveBeenCalled();
+    view.receive({ type: 'csvPreviewReady', contextId: session.contextId }); await session.finished;
+    expect(session.state.phase).toBe('ready'); expect(read).toHaveBeenCalledOnce(); expect(await session.initialized).toBe(true);
+  } finally { view.dispose(); await session.closed; }
+});
+
 test('FR-006: Given an XLSX preview/session, When importing sheets, Then the shared browser opens and reports the full workbook instead of only its first sheet', async () => {
   const preview = { columns: ['a'], rows: [['1']], format: 'xlsx' as const, sheetName: 'Data', sheetCount: 2, bytesRead: '9', totalBytes: '9', reachedEnd: true, notice: '', threadId: 1 };
   const read = vi.fn<FileLoader['preview']>().mockResolvedValue(preview);

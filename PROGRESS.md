@@ -1,37 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-024 complete; closure-only standalone verification passes.
+Milestone 2: T-025 opening integration; completion gates remain open.
 Owner delegates implementation/fixtures/repairs/visual QA; retains push/CI.
-Acceptance/file list: docs/t024-xlsx.md; follow-up: docs/t024-ci-repair.md.
+Acceptance, coverage, failures and visual limits: docs/t025-opening.md.
 
 ## Verify status
-Run 39067782337 /attempt 1 succeeds at exact repaired 7e8eaef.
-Public API independently confirms Windows/macOS/Ubuntu install/full steps pass.
-Remote raw counts/diagnostics are not retrieved; no warning-free remote claim.
-Repaired verify:full passes 857 units /86 files and all 68 hosts (32 min).
-Types/lint/build/34-file VSIX pass without errors/warnings; full has HOST-001.
-Exact warning/source: docs/t024-ci-repair.md; full run is not warning-free.
-CSV peaks 312283136/308166656; paging growth 17317888/32956416 bytes pass.
-Closure verify passes 857 units/86 files (361.99s), types/lint/build/34-file VSIX.
-Zero errors/warnings; log out/t024-closure-verify.log; final status edits only.
-Keep every earlier failed gate/unknown timing cause; no unchanged retry-to-green.
+Final standalone PASSES: 892 units/89 files, strict types/lint/build/package.
+34-file 981.57-KB VSIX; zero errors/warnings: out/t025-verify-final.log.
+Repaired full passes 892 units/89 files, types/lint/build/package.
+Host full FAILS: 68 pass /4 fail, exit 1 (41m).
+Two empty clipboard readbacks; native SQL 60s timeout; OS snapshot >3000ms.
+All four T-025 cases and populated SQLite/CSV 1/5-GB checks pass.
+Strict scan rejects watcher EPERM twice and four-tests-failed error.
+Exact HOST-001 warning retained; full run is not warning-free.
+Earlier failed/interrupted runs remain recorded; no automatic full retry.
 
 ## Last session
-Use native sync realpath to match async snapshots; metadata guards unchanged.
-After strict scanning, split quote-free CSV records without per-row Papa graphs.
-Quoted parsing, source checks, fixtures and gate/resource limits retained.
-Parser diagnostic reduces sampled RSS/heap; actual Windows CSV full also passes.
-Independent Bugbot review finds no concrete bug; actual-candidate CI now passes.
-Prior scoped XLSX visuals/host coverage retained; no UI changes in CI repair.
-Native capture failed twice; no physical/native appearance claim.
+Unified optional custom editor reuses CSV/JSON/XLSX sessions and SQLite validation.
+Startup handshake no longer disposes a panel before VS Code mounts it.
+Bounded async header detection retains SQLite under all tabular suffixes.
+Journal rollback preserves explicit user associations during edits/shutdown/failure.
+Read-only independent reviews find no remaining concrete opening/grid bug.
+Isolated stage/clipboard diagnostic passes four cases; original causes unknown.
+Generated test bytes restored; probe does not clear the failed full gate.
+Six refreshed light/dark screenshots inspected; native binding fails twice.
+No native menu/title/dialog appearance or physical-interaction claim.
 
 ## Decisions / limits
-All-sheet import, exact numeric/cached-formula semantics and consent retained.
-Failed 39059472250/2139f7c, CSV timer failure and fallback timeout retained.
+Opt-in setting covers all five formats; default off; explicit choices preserved.
+Source safety/import/consent/cancellation/save behavior and prior history retained.
 Owner README/T-015 edits and unrelated untracked fixtures stay excluded.
 
 ## Next
-Scoped local documentation checkpoint prepared; preserve all owner edits.
-Owner pushes closure records; T-025 starts in a fresh chat using this handoff.
-No T-025, whole-milestone closure, release or tag is claimed.
+T-025-only checkpoint prepared; owner decides next full validation step.
+Concrete repair or explicit owner authorization precedes unchanged full retry.
+Owner pushes and supplies actual-candidate three-platform CI; T-025 unchecked.
+No T-026, whole-milestone closure, release or tag is claimed.

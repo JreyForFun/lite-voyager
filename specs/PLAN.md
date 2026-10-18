@@ -1248,10 +1248,14 @@ both records in VALIDATION and accept no additional host exception.
   and `priority: "option"`, so Reopen Editor With offers it for any saved local
   filename. Contribute `workbench.editorAssociations` defaults for `*.db`,
   `*.sqlite`, `*.sqlite3` and `*.db3`; explicit user associations take precedence.
-- Entries for csv, tsv, json, jsonl, xlsx with `priority: "option"`.
+- The same optional entry dispatches csv, tsv, json, jsonl and xlsx to their
+  existing import sessions, with one Lite Voyager picker entry.
 - Explorer context-menu command "Open in Lite Voyager".
-- Editor-title button when a CSV or JSON text file is active.
+- Editor-title button for all five tabular formats and the four SQLite extensions.
 - Setting `liteVoyager.openCsvByDefault`, default `false`.
+- T-025 owner-approved acceptance and conditional-default ownership rules:
+  [docs/t025-opening.md](../docs/t025-opening.md). Stable API configuration updates
+  add only missing opt-in associations; explicit choices and edits are preserved.
 
 ### Commands and settings (initial list)
 
@@ -1303,6 +1307,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.
 - T-024 planning/implementation (2026-10-17): Record owner-delegated XLSX semantics, consent, exact numeric tokens, validated worker parsing and official vendored Apache-2.0 SheetJS. Preserve existing unrelated edits, earlier failures and all verification guards; owner retains push/CI.

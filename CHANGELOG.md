@@ -6,6 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-025: open CSV, TSV, JSON, JSONL and XLSX through Open With, Explorer's
+  Open in Lite Voyager action or the editor-title button. Keep their normal
+  editors by default; opt in with `liteVoyager.openCsvByDefault`, preserving
+  explicit editor choices. Reuse read-only import previews and retain SQLite
+  header detection, including databases renamed with tabular extensions.
+  Render bounded initial preview/result cells without waiting for an animation
+  frame, while preserving complete browser status updates.
+
 - Avoid reopening and rescanning complete CSV/TSV preview samples for alternative
   delimiters when their raw records establish that the preferred delimiter wins.
   Preserve candidate scoring for ambiguous and partial samples.

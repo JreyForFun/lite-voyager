@@ -8,6 +8,8 @@ import { openEngineCheck } from './engine-panel';
 import { SqliteEditorProvider, SQLITE_EDITOR_VIEW_TYPE } from './editor/sqlite-editor';
 import { CsvPreviewController } from './editor/csv-preview';
 import { CsvImportController } from './editor/csv-import';
+import { TabularEditorProvider } from './editor/tabular-editor';
+import { OpeningDefaults, openInLiteVoyager } from './editor/file-opening';
 
 async function runSqliteSpike(context: vscode.ExtensionContext, output: vscode.OutputChannel, simulateUnavailable: boolean): Promise<void> {
 	const selection = await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFolders: false, filters: { SQLite: ['sqlite', 'sqlite3', 'db'] }, title: 'T-002: Choose a small SQLite fixture' });
@@ -101,8 +103,12 @@ export function activate(context: vscode.ExtensionContext) {
 	const xlsxImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'xlsx');
 	context.subscriptions.push(xlsxImport, vscode.commands.registerCommand('lite-voyager.xlsxImport', (file?: vscode.Uri) => xlsxImport.open(file)));
 	context.subscriptions.push(vscode.commands.registerCommand('lite-voyager.saveAsSqlite', () => (xlsxImport.hasActive ? xlsxImport : jsonImport.hasActive ? jsonImport : csvImport).saveActive()));
-	context.subscriptions.push(sqliteEditor, vscode.window.registerCustomEditorProvider(SQLITE_EDITOR_VIEW_TYPE, sqliteEditor,
-		{ supportsMultipleEditorsPerDocument: true }));
+	const tabularEditor = new TabularEditorProvider(sqliteEditor, { csv: csvImport, json: jsonImport, xlsx: xlsxImport });
+	const openingDefaults = new OpeningDefaults(context.globalState);
+	context.subscriptions.push(sqliteEditor, tabularEditor, openingDefaults,
+		vscode.commands.registerCommand('lite-voyager.open', openInLiteVoyager),
+		vscode.window.registerCustomEditorProvider(SQLITE_EDITOR_VIEW_TYPE, tabularEditor,
+			{ supportsMultipleEditorsPerDocument: true }));
 	const output = vscode.window.createOutputChannel('Lite Voyager T-002');
 	context.subscriptions.push(output,
 		vscode.commands.registerCommand('lite-voyager.engineCheck', (file?: vscode.Uri) => openEngineCheck(context, file)),
@@ -110,7 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('lite-voyager.sqliteSpike', () => runSqliteSpike(context, output, false)),
 		vscode.commands.registerCommand('lite-voyager.sqliteSpikeFallback', () => runSqliteSpike(context, output, true)),
 	);
-	return { sqliteEditor, csvPreview, csvImport, jsonImport, xlsxImport };
+	return { sqliteEditor, tabularEditor, openingDefaults, csvPreview, csvImport, jsonImport, xlsxImport };
 }
 
 // This method is called when your extension is deactivated

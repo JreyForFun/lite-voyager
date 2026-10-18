@@ -203,7 +203,7 @@ export class BrowserView {
     this.columns = []; this.filterColumn.replaceChildren();
     this.table = table; this.select.value = table; this.offset = offset; this.count = null; this.hasMore = false;
     this.schema.selectObject(table);
-    this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0);
+    this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0, false);
     this.total.textContent = 'Total rows: not counted'; this.page(offset);
   }
 
@@ -293,7 +293,7 @@ export class BrowserView {
         if (first !== undefined) { this.choose(restore ? this.saved.table ?? first : first, restore ? this.saved.offset : 0, restore ? this.saved.grid : undefined); return; }
         this.table = null; this.hasMore = false; this.count = null; this.offset = 0;
         this.schema.selectObject(null);
-        this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0);
+        this.grid.setPage({ columns: [], rows: [], hasMore: false }, 0, false);
         this.message('No tables or views in this database.'); this.total.textContent = ''; break;
       }
       case 'browserRows': {
@@ -309,7 +309,7 @@ export class BrowserView {
         this.filterColumn.value = this.columns.includes(selected) ? selected
           : this.gridOptions.filters?.find((filter) => this.columns.includes(filter.column))?.column ?? this.columns[0] ?? '';
         this.loadFilter();
-        this.grid.setPage(message.page, message.offset);
+        this.grid.setPage(message.page, message.offset, false);
         this.message(message.page.rows.length === 0 ? 'No rows on this page.'
           : `Showing rows ${String(message.offset + 1)}–${String(message.offset + message.page.rows.length)}${message.page.hasMore ? ' · more rows available' : ' · end of table'}`);
         break;
@@ -320,7 +320,7 @@ export class BrowserView {
         this.offset = message.offset; this.hasMore = message.page.hasMore;
         this.query.commit(sql, message.offset, message.page, message.ms);
         this.count = this.query.count; this.total.textContent = this.query.summary;
-        this.grid.setPage(message.page, message.offset);
+        this.grid.setPage(message.page, message.offset, false);
         this.message('Query complete. Edit SQL and Run, or page these results.');
         break;
       }
@@ -337,6 +337,7 @@ export class BrowserView {
         this.message('Operation cancelled. The database is ready; use Run to retry SQL, select a table or change page size.'); break;
       case 'browserError': this.schema.failed(message.message); this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
     }
+    // Page replacement renders synchronously; publish only settled controls/status.
     this.controls(); this.report();
   }
 

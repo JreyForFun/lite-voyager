@@ -66,13 +66,51 @@ test('FR-002: Given an empty page and a cell larger than 1 MiB, When switching p
   expect(element('browser-rows').children).toEqual([]);
 });
 
-test('FR-002: Given a rendered page, When a replacement arrives before its frame, Then old DOM cells cannot be reported under the new page', () => {
+test('FR-002: Given a rendered page and a queued scroll frame, When a replacement arrives, Then only its new DOM is reported without a stale duplicate', () => {
+  grid.dispose();
+  const changed = vi.fn();
+  grid = new BrowserGrid(root as unknown as HTMLElement, changed);
   grid.setPage({ columns: ['value'], rows: [['old']], hasMore: true }, 0); flush();
+  element('browser-viewport').dispatchEvent(new Event('scroll'));
+  changed.mockClear();
   grid.setPage({ columns: ['value'], rows: [['new']], hasMore: false }, 100);
-  expect(grid.metrics().renderedRows).toBe(0);
-  expect(grid.firstRow()).toEqual([]);
+  expect(grid.metrics().renderedRows).toBe(1);
+  expect(grid.firstRow()[0]?.text).toBe('new');
+  expect(changed).toHaveBeenCalledTimes(1);
   flush();
   expect(grid.firstRow()[0]?.text).toBe('new');
+  expect(changed).toHaveBeenCalledTimes(1);
+});
+
+test('D-5: Given animation frames never run, When a wide page arrives, Then exact literal cells and bounded DOM are immediately reportable', () => {
+  grid.dispose();
+  const observed: string[] = [];
+  grid = new BrowserGrid(root as unknown as HTMLElement, () => { observed.push(grid.firstRow()[0]?.text ?? 'missing'); });
+  element('browser-viewport').clientWidth = 100000;
+  element('browser-viewport').clientHeight = 100000;
+  const columns = Array.from({ length: 1000 }, (_, i) => `c${String(i)}`);
+  const values = ['9007199254740993', '<script>literal</script>', ...columns.slice(2)];
+  grid.setPage({ columns, rows: Array.from({ length: 100 }, () => values), hasMore: true }, 0);
+  expect(observed).toEqual(['9007199254740993']);
+  expect(grid.firstRow()[1]?.text).toBe('<script>literal</script>');
+  expect(element('browser-rows').children[0]?.children[1]?.children).toEqual([]);
+  expect(grid.metrics()).toMatchObject({ cachedRows: 100 });
+  expect(grid.metrics().renderedRows).toBeGreaterThan(0);
+  expect(grid.metrics().renderedRows).toBeLessThan(30);
+  expect(grid.metrics().renderedColumns).toBeLessThan(26);
+});
+
+test('D-5: Given a queued scroll frame, When the grid is disposed, Then even a late callback cannot restore DOM or report another page', () => {
+  grid.dispose();
+  const changed = vi.fn();
+  grid = new BrowserGrid(root as unknown as HTMLElement, changed);
+  grid.setPage({ columns: ['a'], rows: [['exact']], hasMore: false }, 0); flush();
+  element('browser-viewport').dispatchEvent(new Event('scroll'));
+  const queued = frames.slice();
+  changed.mockClear(); grid.dispose();
+  for (const callback of queued) { callback(0); }
+  expect(changed).not.toHaveBeenCalled();
+  expect(element('browser-rows').children).toEqual([]);
 });
 
 test('FR-018: Given a wide paged grid, When selecting and extending offscreen cells, Then copying uses the page values and replacement clears selection', () => {

@@ -51,7 +51,7 @@ export class CsvImportSession {
   constructor(readonly uri: vscode.Uri, readonly panel: vscode.WebviewPanel, private readonly directory: string, private readonly storageRoot: string,
     private readonly loader: FileLoader, private readonly remove: () => void,
     private readonly createEngine: (fallback: boolean) => Engine = (fallback) => new EngineClient({ directory, forceFallback: fallback, ...(this.storage === undefined ? {} : { ownerDirectory: this.storage }) }), started?: number,
-    private readonly format: 'csv' | 'json' | 'xlsx' = 'csv') {
+    private readonly format: 'csv' | 'json' | 'xlsx' = 'csv', waitForReady = false) {
     this.started = started ?? this.started;
     this.closed = new Promise((accept) => { this.closeComplete = accept; });
     panel.webview.html = csvImportHtml(basename(uri.fsPath), this.contextId, this.assets('csv-import'), format);
@@ -63,7 +63,7 @@ export class CsvImportSession {
         this.previewTimings.transportMs = performance.now() - this.started; accept(ready);
       };
       const timer = setTimeout(() => { finish(false); }, 10000); this.finishTransport = finish;
-      void panel.webview.postMessage(this.state).then(finish, () => { finish(false); });
+      void panel.webview.postMessage(this.state).then((delivered) => { if (delivered || !waitForReady) { finish(delivered); } }, () => { finish(false); });
     });
     const initialized = this.initialized;
     this.work = (async () => {
@@ -186,7 +186,7 @@ export class CsvImportSession {
       else if (value.type === 'csvImportRefresh') { void this.refresh(value.options); }
       else { void this.cancel(); }
     } else if (isCsvPreviewRequest(value) && value.contextId === this.contextId) {
-      if (value.type === 'csvPreviewReady') { this.previewTimings.webviewReadyMs ??= performance.now() - this.started; this.sendState(); }
+      if (value.type === 'csvPreviewReady') { this.finishTransport(true); this.previewTimings.webviewReadyMs ??= performance.now() - this.started; this.sendState(); }
       else { void this.cancel(); }
     } else if (isCsvPreviewStatus(value) && value.contextId === this.contextId && this.state.preview !== undefined) {
       this.previewStatus(value);
@@ -288,12 +288,25 @@ export class CsvImportController implements vscode.Disposable {
     try {
       panel = vscode.window.createWebviewPanel(xlsx ? 'lite-voyager.xlsxImport' : json ? 'lite-voyager.jsonImport' : 'lite-voyager.csvImport', `${xlsx ? 'XLSX' : json ? 'JSON' : 'CSV'} import: ${basename(uri.fsPath)}`, vscode.ViewColumn.Active,
         { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.file(directory)] });
-      const session = new CsvImportSession(uri, panel, directory, this.storageRoot, xlsx ? new XlsxLoader(directory, approveXlsxMemory) : json ? new JsonLoader(directory) : new CsvLoader(directory), () => { this.active.delete(session); }, undefined, started, this.format);
+      return await this.attach(uri, panel, started, false);
+    } catch {
+      panel?.dispose(); void vscode.window.showErrorMessage(`Unable to open the ${label} import tab. Rebuild and reopen a local file.`); return undefined;
+    }
+  }
+  async attach(uri: vscode.Uri, panel: vscode.WebviewPanel, started = performance.now(), waitForReady = true): Promise<CsvImportSession | undefined> {
+    if (this.disposed || uri.scheme !== 'file') { panel.dispose(); return undefined; }
+    const directory = join(this.extensionPath, 'dist');
+    panel.webview.options = { enableScripts: true, localResourceRoots: [vscode.Uri.file(directory)] };
+    try {
+      const session = new CsvImportSession(uri, panel, directory, this.storageRoot, this.format === 'xlsx' ? new XlsxLoader(directory, approveXlsxMemory) : this.format === 'json' ? new JsonLoader(directory) : new CsvLoader(directory), () => { this.active.delete(session); }, undefined, started, this.format, waitForReady);
       this.active.add(session);
+      // VS Code mounts a custom editor only after resolveCustomEditor returns.
+      // Its readiness handshake, preview and errors continue in session.finished.
+      if (waitForReady) { return session; }
       if (!await session.initialized || this.disposed) { panel.dispose(); await session.closed; return undefined; }
       return session;
     } catch {
-      panel?.dispose(); void vscode.window.showErrorMessage(`Unable to open the ${label} import tab. Rebuild and reopen a local file.`); return undefined;
+      panel.dispose(); void vscode.window.showErrorMessage('Unable to open the import tab. Rebuild and reopen a saved local file.'); return undefined;
     }
   }
   async saveActive(): Promise<void> {
