@@ -2,7 +2,8 @@
 
 Scope: repair the owner-reported candidate failure without changing any test,
 fixture, timing/memory threshold or diagnostic policy. Owner retains push and CI.
-T-024 remains unchecked until actual-candidate three-platform evidence passes.
+T-024's repaired candidate now passes actual-candidate three-platform CI; see
+the closure evidence below. Only T-024 is complete, with earlier limits retained.
 The earlier failures and limits in [the XLSX record](t024-xlsx.md) remain intact.
 
 ## Failed candidate
@@ -125,9 +126,35 @@ Packaging uses the owner's local README; its unrelated edits remain excluded.
 Earlier local/remote failures remain failed;
 no unchanged retry-to-green is used. There are no UI changes; previous scoped
 visual observations and native capture limits remain as recorded in t024-xlsx.md.
-Local implementation/regression/review/full-gate coverage now passes. Fresh
-owner-pushed actual-candidate three-platform CI is still required, especially
-macOS CSV memory growth. Keep T-024 unchecked; no milestone closure/release/tag.
+Local implementation/regression/review/full-gate coverage passes. Actual-candidate
+three-platform CI is independently confirmed below; no milestone closure/release/tag.
+
+## Repaired-candidate CI and T-024 closure (2026-10-18)
+
+Owner reports [run 39067782337](https://github.com/JreyForFun/lite-voyager/actions/runs/39067782337)
+PASS. Public read-only GitHub API metadata independently confirms completed success,
+attempt 1, exact repaired commit `7e8eaef0ec4a699f67a02b6f596d302b3e8de941`.
+Each job succeeds at locked installation and its applicable full-verification step:
+
+- Windows: job 117498918122.
+- Ubuntu: job 117498918257 (session bus and virtual display full invocation).
+- macOS: job 117498918356.
+
+This covers the actual native-path/CSV repair on all supported platforms, including
+the macOS full gate that previously failed. Remote raw logs, test/diagnostic counts
+and individual memory samples have not been retrieved; no remote warning-free or
+specific remote memory-number claim. Metadata: `out/t024-ci-39067782337.json`.
+All earlier failed candidates, unknown timing causes, exact local HOST-001 warning,
+sampled-memory limits and native visual-capture failure remain recorded.
+
+Together with both-engine acceptance, scoped delegated visual QA, independent
+review and local full verification, this clears T-024 only. Check its TASKS entry.
+The closure edits change documentation only. Final local `npm run verify`
+passes 857 units /86 files (361.99 s), strict types/lint/build and the 34-file
+/979.26-KB VSIX with zero errors and zero warnings; exit 0, log
+`out/t024-closure-verify.log`. Only final evidence/status updates follow.
+Owner retains pushing closure records. Start T-025 in a fresh chat; no
+whole-milestone completion, release or tag is claimed.
 
 Changed files for this repair: `src/loaders/xlsx-book.ts`,
 `src/loaders/xlsx-consent.ts`, `src/loaders/csv-records.ts`,

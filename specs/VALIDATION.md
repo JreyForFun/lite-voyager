@@ -10,6 +10,24 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ## 1. Three layers of validation
 
+### T-024 repaired-candidate CI and closure (2026-10-18)
+
+Owner reports [run 39067782337](https://github.com/JreyForFun/lite-voyager/actions/runs/39067782337)
+PASS. Public GitHub API metadata independently confirms attempt 1 /completed
+success /exact repaired `7e8eaef0ec4a699f67a02b6f596d302b3e8de941`. Windows job
+117498918122, Ubuntu job 117498918257 and macOS job 117498918356 all succeed
+at locked installation and applicable full verification. Remote raw logs/counts/
+diagnostics are not retrieved; no remote warning-free or numerical memory claim.
+[CI record](../docs/t024-ci-repair.md) preserves failed 39059472250 /2139f7c,
+all earlier failures/unknown causes, source/performance guards and visual limits.
+Together with both-engine acceptance, delegated scoped QA, independent review
+and 857-unit/68-host local full verification, this closes only T-024. The local
+full is not warning-free: its exact approved warning/source/severity/HOST-001
+record is retained there. Closure-only `npm run verify` passes 857 units /86
+files (361.99 s), strict types/lint/build and 34-file /979.26-KB packaging with
+zero errors and zero warnings. Only final evidence/status updates follow.
+Owner pushes closure records; T-025 starts in a fresh chat. No milestone/tag.
+
 ### T-023 repaired actual-candidate CI and closure (2026-10-17)
 
 Owner reports [run 39002490041](https://github.com/JreyForFun/lite-voyager/actions/runs/39002490041)
@@ -4300,8 +4318,9 @@ T-024 XLSX scoped acceptance/evidence: [XLSX import](../docs/t024-xlsx.md).
 T-024 candidate run 39059472250 /2139f7c: Windows source-identity and macOS CSV growth
 fail; Ubuntu succeeds. [CI repair/evidence](../docs/t024-ci-repair.md) preserves
 both failures, red-first Windows reproduction, quoted/plain CSV fidelity,
-allocation diagnostic limits and all original guards. New candidate CI remains
-required; no unchanged retry or task closure is authorized by these records.
+allocation diagnostic limits and all original guards. Repaired run 39067782337
+/attempt 1/exact 7e8eaef now passes all three platforms; T-024 closure is above.
+No unchanged retry or diagnostic/memory-policy change is authorized.
 Repaired local full passes 857 units /68 hosts; its single exact approved HOST-001
 warning is recorded in that link. The full run is not warning-free. Populated CSV
 combined peaks 312283136 /308166656 and paging growth 17317888 /32956416 bytes
@@ -4376,6 +4395,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-024 completion (2026-10-18): Independently confirm actual repaired 7e8eaef /run 39067782337 /attempt 1 passes locked installs/full verification on all platforms. Close only T-024; preserve prior failures, exact local warning, scoped visuals and remote raw-log limits.
 - T-024 CI repair (2026-10-18): Retain failed run 39059472250 /2139f7c and original assertions; link native-path fix, exact CSV coverage, allocation diagnostic limits and 857-unit/68-host local full pass with one exact HOST-001 warning. No retry exception, fixture or policy change; new-candidate CI required.
 - T-024 (2026-10-17): Link scoped XLSX acceptance and delegated QA/evidence record; retain all historical failures, diagnostics and unchanged gate policies. Candidate full checks/CI remain separate evidence.
 - T-023 completion (2026-10-17): Independently confirm run 39002490041 /attempt 1/exact db28c92 passes locked installs/applicable full verification on Windows/macOS/Ubuntu. Close only T-023; preserve earlier failures, unknown causes, local warning records and remote raw-log limits. No guard change or unchanged retry-to-green.

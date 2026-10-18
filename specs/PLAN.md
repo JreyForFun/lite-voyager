@@ -1189,6 +1189,13 @@ Use native realpath consistently for XLSX snapshots, preserving component casing
 and metadata guards. After strict complete-record validation, split quote-free
 CSV fields directly to avoid per-row Papa streamer allocation; quoted records
 retain Papa. No fixture, nursery, old-generation limit or gate is changed.
+T-024 closure: run 39067782337 /attempt 1/exact repaired 7e8eaef passes locked
+installs and applicable full verification on Windows/macOS/Ubuntu, independently
+confirmed through public API metadata. Prior acceptance/review/scoped visual QA
+and 857-unit/68-host local full pass remain recorded with all failures and exact
+HOST-001 reporting. Remote raw counts/diagnostics are not claimed. Only T-024
+is complete. Closure-only standalone verify also passes 857 units with zero
+errors/warnings; owner pushes closure records, T-025 starts in a fresh chat.
 
 ```ts
 interface PreviewLoader<Result extends PreviewResult = PreviewResult> {
@@ -1296,6 +1303,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.
 - T-024 planning/implementation (2026-10-17): Record owner-delegated XLSX semantics, consent, exact numeric tokens, validated worker parsing and official vendored Apache-2.0 SheetJS. Preserve existing unrelated edits, earlier failures and all verification guards; owner retains push/CI.
 - T-023 planning (2026-10-16): Link dependency-free streaming JSON design and shared import lifecycle; preserve existing unrelated edits and all prior safety/diagnostic guards.

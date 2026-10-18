@@ -78,16 +78,18 @@ retain existing CSV/JSON behavior and all timing/memory/diagnostic guards.
 
 ## Evidence
 
-Candidate run 39059472250 at 2139f7c fails Windows source-identity checks and
-macOS CSV cross-file memory growth; Ubuntu succeeds. Follow-up reproduced path
-repair, bounded CSV allocation change and unchanged-gate evidence are retained
-in [the CI repair record](t024-ci-repair.md). T-024 remains unchecked.
-The repaired local full passes 857 units /68 hosts, including both populated CSV
-sizes and source hashes, with one exact approved HOST-001 warning recorded there.
-It is not warning-free. Fresh repaired-candidate three-platform CI remains required.
-
-T-024 remains unchecked until final acceptance and actual-candidate three-platform
-CI. The owner retains pushing. No release, tag or whole-milestone closure.
+T-024 acceptance, independent review, delegated scoped visual QA and repaired
+local full verification pass: 857 units /68 hosts, including populated CSV sizes
+and hashes, with the exact approved HOST-001 warning in [the CI record](t024-ci-repair.md).
+That local full run is not warning-free.
+[Run 39067782337](https://github.com/JreyForFun/lite-voyager/actions/runs/39067782337),
+attempt 1, independently confirms exact repaired `7e8eaef0ec4a699f67a02b6f596d302b3e8de941`
+passes locked installs and applicable full verification on Windows/macOS/Ubuntu.
+Remote raw counts/diagnostics are not retrieved; no remote warning-free claim.
+Only T-024 is complete. Preserve failed 39059472250 /2139f7c, every earlier
+failure/unknown timing cause and native visual-capture limits. Earlier pending
+statuses below describe their original checkpoints. Owner pushes closure records;
+T-025 starts in a fresh chat. No release, tag or whole-milestone closure.
 
 ### Coverage and commands
 
@@ -313,7 +315,7 @@ to the audit question. Subsequent npm 12.2.0 /Node 26.5.0 registry.npmjs.org aud
 exits 0, empty stderr, zero reported vulnerabilities. Registry auditing of a local
 tarball has limits; the dated official advisory review supplements it.
 
-### Final gates / handoff status
+### Initial checkpoint gates / handoff (before CI repair)
 
 Historical standalone verify passes 829 units /83 files (369.95 s for units),
 types/lint/build and a 34-file /978.25-KB VSIX with zero errors/warnings before the
