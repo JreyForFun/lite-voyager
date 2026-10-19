@@ -50,6 +50,21 @@ test('FR-001: Given failed webview delivery, When the host test attempts normal 
   expect(mocks.executeCommand).not.toHaveBeenCalled();
 });
 
+test('FR-001: Given a pending close operation, When transport command and helper exit settle, Then diagnostics identify each awaited stage in order', async () => {
+  let ready!: (value: boolean) => void;
+  const delivery = new Promise<boolean>((accept) => { ready = accept; });
+  let exit!: () => void;
+  const closed = new Promise<void>((accept) => { exit = accept; });
+  const events: string[] = [];
+  const closing = closeEditor(fixture(() => delivery, closed), (event) => { events.push(event); });
+  expect(events).toEqual(['transport:start']);
+  ready(true);
+  await new Promise<void>((accept) => { setImmediate(accept); });
+  expect(events).toEqual(['transport:start', 'transport:complete', 'close-command:start', 'close-command:complete', 'helper-exit:start']);
+  exit(); await closing;
+  expect(events.at(-1)).toBe('helper-exit:complete');
+});
+
 test('FR-001: Given a missing SQLite panel, When the host test attempts normal closure, Then the panel assertion fails without claiming readiness', async () => {
   const document = fixture(() => Promise.resolve(true));
   document.panel = undefined;

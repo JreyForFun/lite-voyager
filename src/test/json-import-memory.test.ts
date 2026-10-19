@@ -80,8 +80,21 @@ suite('T-023 populated JSON memory', () => {
             assert.equal(session.state.phase, 'ready'); session.configureImportSpace(() => Promise.resolve(true));
             let helper = 0; let ticks = 0; let last = performance.now(); let hostGap = 0;
             const current = session; const remove = session.onStatus(() => { helper = current.state.progress?.processId ?? helper; });
-            const timer = setInterval(() => { const now = performance.now(); hostGap = Math.max(hostGap, now - last); last = now; ticks++; }, 10);
-            try { await session.startImport(); } finally { clearInterval(timer); remove(); }
+            const timerStarted = last;
+            const phase = (): string => `${current.state.phase}/${current.state.progress?.phase ?? 'none'}`;
+            let previousPhase = phase();
+            let largestInterval = { fromPhase: previousPhase, toPhase: previousPhase, atMs: 0 };
+            const timer = setInterval(() => {
+              const now = performance.now(); const observedPhase = phase();
+              if (now - last > hostGap) { largestInterval = { fromPhase: previousPhase, toPhase: observedPhase, atMs: now - timerStarted }; }
+              hostGap = Math.max(hostGap, now - last);
+              last = now; previousPhase = observedPhase; ticks++;
+            }, 10);
+            try { await session.startImport(); } finally {
+              clearInterval(timer); remove();
+              console.log(`T-025 JSON host interval evidence: ${JSON.stringify({ format, minimum, ticks, maxGapMs: hostGap, ...largestInterval, endPhase: phase(),
+                scope: 'observed phases around the largest original timer interval; no cause attribution, discarded samples or adjusted clock' })}`);
+            }
             assert.equal(session.state.phase, 'opened'); assert.equal(session.state.progress?.engine, 'node:sqlite'); assert.equal(session.state.progress.rows, String(recipe.rows));
             assert.equal(session.state.progress.bytes, String(before.bytes)); assert.ok(ticks > 5); assert.ok(hostGap <= 100, `JSON host timer gap ${String(hostGap)}ms`);
             const wait = (predicate: () => boolean): Promise<void> => {

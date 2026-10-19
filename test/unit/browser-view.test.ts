@@ -119,6 +119,30 @@ test('FR-018: Given changing selection and page replacement, When stale details 
   expect(root.elements.get('cell-value')?.textContent).toBe('');
 });
 
+test('FR-018: Given completed details and withheld frames, When selecting an offscreen cell, Then every new-action report carries its DOM and current pending details together', () => {
+  const columns = Array.from({ length: 1000 }, (_, index) => `c${String(index)}`);
+  const rows = Array.from({ length: 100 }, (_, row) => columns.map((_, column) => `${String(row)}:${String(column)}`));
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns, rows, hasMore: false } });
+  view.exercise({ type: 'browserExercise', action: 'cell', value: '0,0', exerciseId: 80 });
+  const old = sent.slice().reverse().find((message) => message.type === 'cellDetails');
+  if (old?.type !== 'cellDetails') { throw new Error('Missing previous details request'); }
+  view.receiveCell({ type: 'cellDetailsResult', id: old.id, contextId: old.contextId, detail: { text: '0:0', kind: 'Stored text', notice: '' } });
+  expect(sent.at(-1)).toMatchObject({ cell: { busy: false, preview: '0:0' } });
+  sent.length = 0;
+  view.exercise({ type: 'browserExercise', action: 'lastCell', exerciseId: 81 });
+  const reports = sent.filter(isBrowserStatus);
+  expect(reports.length).toBeGreaterThan(0);
+  for (const report of reports) {
+    expect(report.exerciseId).toBe(81);
+    expect(report.cell).toMatchObject({ row: 99, column: 999, busy: true, preview: '99:999' });
+    expect(report.firstRow.some((cell) => cell.column === 999)).toBe(true);
+    expect(report.renderedRows).toBeGreaterThan(0);
+    expect(report.renderedRows).toBeLessThan(30);
+    expect(report.renderedColumns).toBeLessThan(26);
+  }
+});
+
 test('FR-018: Given cancelled preparation followed by a new selection, When late cancellation arrives, Then the newer details status survives', () => {
   view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
   view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['a'], rows: [['old'], ['new']], hasMore: false } }); flush();

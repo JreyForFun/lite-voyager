@@ -526,16 +526,18 @@ if (typeof acquireVsCodeApi === 'function') {
       const runButton = document.getElementById('sql-run');
       const nonce = document.querySelector<HTMLMetaElement>('meta[name="style-nonce"]')?.content;
       if (editorRoot === null || !(runButton instanceof HTMLButtonElement) || nonce === undefined) { throw new Error('Missing SQL editor assets'); }
-      const editor = new SqlEditor(editorRoot, runButton, nonce, readSavedState(api.getState()).sqlText ?? '-- Run a read-only statement, or select SQL to run.\nSELECT 1 AS value;',
-        (sql) => { browser.runSql(sql); }, () => { browser.editorChanged(); }, () => { browser.editorFailed(); });
-      browser.attachEditor(editor);
       window.addEventListener('message', (event: MessageEvent<unknown>) => {
         if (isBrowserResponse(event.data)) { browser.receive(event.data); }
         else if (isCellResponse(event.data)) { browser.receiveCell(event.data); }
         else if (isBrowserExercise(event.data)) { browser.exercise(event.data); }
       }, { signal: events.signal });
       window.addEventListener('pagehide', () => { events.abort(); browser.dispose(); }, { once: true });
+      // Start worker IO before synchronous CodeMirror construction so opening
+      // does not serialize these independent parts of the first populated DOM.
       browser.start();
+      const editor = new SqlEditor(editorRoot, runButton, nonce, readSavedState(api.getState()).sqlText ?? '-- Run a read-only statement, or select SQL to run.\nSELECT 1 AS value;',
+        (sql) => { browser.runSql(sql); }, () => { browser.editorChanged(); }, () => { browser.editorFailed(); });
+      browser.attachEditor(editor);
     } catch {
       events.abort(); view?.dispose();
       const status = document.getElementById('browser-status');

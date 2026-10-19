@@ -7,6 +7,7 @@ import { sqliteEditorHtml } from './sqlite-editor-ui';
 import { SqliteSession } from './sqlite-session';
 import { isBrowserRequest, isBrowserStatus, isCellRequest, type BrowserStatus } from '../protocol';
 import { CellService } from './cell-service';
+import { writeClipboard } from './clipboard';
 
 export const SQLITE_EDITOR_VIEW_TYPE = 'lite-voyager.sqlite';
 
@@ -118,7 +119,7 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
       if (destination.scheme !== 'file') { throw new Error('Choose a local file destination for streamed export.'); }
       return destination.fsPath;
     });
-    const cells = new CellService(join(this.extensionPath, 'dist'), (text) => vscode.env.clipboard.writeText(text),
+    const cells = new CellService(join(this.extensionPath, 'dist'), (text) => writeClipboard(vscode.env.clipboard, text),
       (reply) => { if (!disposed) { void panel.webview.postMessage(reply); } });
     const removeCellCleanup = document.onDispose(() => { cells.dispose(); });
     let browserRendered = false;

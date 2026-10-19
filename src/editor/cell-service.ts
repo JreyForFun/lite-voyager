@@ -69,7 +69,7 @@ export class CellService {
         await this.clipboard(value.text);
         if (!this.disposed && lane.current === request) { this.send({ type: 'cellCopyResult', contextId: request.contextId, id: request.id, message: 'Copied as TSV.' }); }
       } catch {
-        if (!this.disposed && lane.current === request) { this.failed(request, 'The system clipboard could not be written. Retry copying, or select fewer cells.'); }
+        if (!this.disposed && lane.current === request) { this.failed(request, 'Clipboard copy could not be verified. Retry copying, or select fewer cells.'); }
       }
     } else { this.send(value); }
     if (!this.disposed && lane.current === request) {

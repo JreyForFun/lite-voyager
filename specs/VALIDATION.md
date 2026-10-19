@@ -59,10 +59,214 @@ warning, same exact message above. It is not warning-free and does not clear the
 failed full gate. Final standalone passes 892 units /89 files (375.18 s), strict
 types/lint/build and 34-file /981.57-KB packaging, zero errors and warnings.
 Budgets and assertions stay unchanged; no automatic unchanged full retry.
-T-025 remains unchecked for final evidence and
-owner-pushed actual-candidate CI. Six light/dark Chromium component renders are
-inspected; native binding fails twice, so physical native menu/title/dialog
-appearance remains unobserved. No gate, diagnostic, workload or limit is relaxed.
+On 2026-10-19 the owner explicitly replies OK to one unchanged full rerun at
+candidate `798d236`. That attempt fails in units: 891 pass /one failure across
+89 files (88 pass /one fail), 468.02 seconds, exit 1. The T-051 real-repository
+trace CLI test (`test/unit/spec-tools.test.ts:219`) exceeds its existing 5000-ms
+deadline. Types/lint pass; build/package/integration/host are not reached. This
+timeout has no established phase or T-025 root cause. Retain the prior standalone
+pass and every earlier failure separately; the single authorization is consumed.
+No second unchanged full retry, deadline change or unrelated tooling refactor.
+The owner then requests all outstanding validation repairs before push/CI.
+The trace fixture now runs its two independent scans concurrently, preserving
+exact stdout/stderr checks and its 5000-ms deadline. Phase probes identify
+avoidable serialization (4562.8456 ms serial versus 2505.9561 ms concurrent),
+without establishing the earlier full run's exact scheduling cause. Observer
+and SQL/closure stage diagnostics retain all original clocks and assertions;
+two new regressions fail first, then all 14 relevant tests pass. Read-only review
+finds no concrete issue in the six-file repair diff. Standalone verification
+passes 894 units /89 files (469.53 seconds), strict types/lint/build and
+34-file /981.57-KB packaging with zero errors and warnings. This does not clear
+the failed full gate or identify the original host failure causes. Exact logs
+and the read-only inspection are in the linked T-025 record.
+The large-SQLite-prefixed diagnostic passes seven hosts in eight minutes before
+the production clipboard repair, including direct short/large clipboard
+controls and both T-018/T-013 engines. It restores generated test/bundle bytes
+exactly. Its only approved HOST-001 warning is
+`20261019T014424/window1/renderer.log:9`, severity warning, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+It is not warning-free and does not explain the original host failures.
+Eight new clipboard regressions fail against write-only behavior, then the
+repaired four suites pass all 40 tests. Both editor adapters now await one
+native write plus one exact readback before success; mismatch/API failure is
+reported as unverified, without retries, rollback or content logging. Existing
+stale guards remain. Independent read-only review finds no concrete issue.
+The first repaired full fails lint on two new require-await mock errors after
+strict types pass. Explicit-promise mocks repair those errors without disabling
+a rule; a new canonical full runs in `out/t025-repaired-full-2.log`. No diagnostic
+instrumentation is active. This guard does not establish a native clipboard
+root cause; all earlier failures are retained. Full2 passes 902 units /90 files,
+types/lint/build/package/host compilation, then logs a 5-GB SQLite first-DOM
+failure at 2019.3015 ms against the unchanged 2000-ms target. Both clipboard and
+both SQL cases pass. The host run stops overnight after schema tests without
+final totals or exit status; no matching process survives at 11:17 Manila time.
+Retain it as interrupted with a failure, never a full pass. Its partial strict
+scan approves only HOST-001 at `20261019T021355/window1/renderer.log:10`, severity
+warning, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+It is not warning-free. Red-first startup overlap now dispatches initial worker
+reads before synchronous CodeMirror construction; handlers precede dispatch.
+Three bootstrap cases fail first, then 56 focused tests and strict types pass;
+an additional saved-SQL test is green immediately under the existing fallback.
+One new test mock's unused placeholder fails lint, then explicit callback typing
+passes scoped lint without disabling rules. Review finds no concrete defect.
+This removes avoidable serialization, not a proven sole cause for the 19-ms
+overrun. Full3 now runs in `out/t025-repaired-full-3.log` with all guards intact.
+The visual harness's missing theme nonce is corrected; eight refreshed component
+renders are inspected with actual light/dark styling and a fully visible copy
+failure. Preserve earlier fallback-styled/cutoff captures as limited evidence.
+Native menu/dialog and other-platform appearance remain unobserved.
+Full3 then fails before host: 900 units /90 files pass (506.59 seconds), but the
+export-service fork never acknowledges startup and its six tests do not run.
+Types/lint pass; later gates are not reached. The six tests pass in a narrow
+diagnostic. Local Vitest code places the failure before test dispatch; the stall
+cause is unknown. The runner switches to fresh isolated threads, keeping
+`isolate: true`, `maxWorkers: 1`, all existing tests/deadlines/diagnostics and
+real database/export helper processes. A black-box unavailable-fork/cross-file
+global/module/mock/environment fixture fails against forks after a retained
+Windows preload-URL correction. Repaired focused suites pass 127 tests /six files.
+This removes the failing bootstrap mechanism without claiming its cause or
+guaranteed future startup. Strict types/global lint pass; review's LOW nested
+stdout-observability finding is repaired by forwarding successful output to the
+outer strict scan. Runner/diagnostic suites pass 29 tests /two files, and review
+confirms no further concrete issue. Canonical full4 now runs in
+`out/t025-repaired-full-4.log` with unchanged guards and frozen source/spec files.
+All earlier failures/interruption records remain; no completion or CI pass yet.
+Full4 ends failed: 907 units /92 files pass, then 65 hosts pass /seven fail
+(33 minutes). All four T-025 cases and both CSV sizes pass. Five failures expose
+frame-dependent spike readiness or offscreen navigation; six regressions are
+written before implementation. The other failures are 5-GB SQLite first DOM
+3900.7543 ms against 2000 ms, and JSON host interval 207.6439 ms against 100 ms.
+Neither performance cause is established; the JSON failure is not a snapshot
+watchdog timeout. The strict scan rejects `7 tests failed.` at
+`20261019T120044/window1/renderer.log:753`, severity error; its sole approved
+record is HOST-001 at renderer.log line 10, severity warning, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+It is not warning-free. Source/spec files stayed frozen until this run ended;
+subsequent rendering regressions and ignored phase diagnostics are a new
+candidate, preserving every earlier failure and all unchanged budgets.
+The six frame regressions fail first (50 older cases pass); the repaired five
+suites pass 75 tests, strict types/lint/build/host compilation pass, and actual
+six-file independent review finds no concrete issue. Twelve focused hosts pass,
+including all five previously failed frame paths and all four T-025 cases.
+Their sole approved HOST-001 warning is at
+`20261019T124102/window1/renderer.log:9`, severity warning, same exact message
+above; the run is not warning-free. Two additional light/dark component captures
+show exact offscreen navigation with frames withheld; ten corrected-nonce
+captures have now been inspected. Native/other-platform appearance stays open.
+The startup diagnostic fails during fixture generation before measurements;
+retain its runtime error `1 test failed.` at
+`20261019T123414/window1/renderer.log:27`, severity error, and sole approved
+HOST-001 warning at line 9, same exact message above. It is not warning-free.
+Prepared-fixture phase investigation keeps the original diagnostic outer clock,
+population checks and two-second opening assertion. JSON host-path audit finds
+no proven blocking defect. Both performance failures and the final full gate
+remain open; focused passes cannot clear them.
+The JSON fixture adds one bounded largest-interval phase record after timing
+stops, retaining the original anchor, every-tick maximum, 10-ms cadence, 100-ms
+assertion and cleanup. Read-only review finds no concrete issue; these labels
+provide attribution evidence only, without changing the production import path.
+Its host compilation/global lint pass. Both startup diagnostics remain failed
+during fixture setup, without opening measurements; the prepared attempt reaches
+the canonical 300000-ms generator cap before launching its host case. The owner
+offers to pause heavy jobs and requests continuation. With the substantive
+rendering repair and reviewed JSON phase labels, a new canonical full5 starts
+in `out/t025-repaired-full-5.log`; source/spec files stay frozen until it ends.
+Every earlier failure and unchanged guard remains; final standalone and
+actual-candidate owner-pushed CI are pending.
+Full5 fails before host: 912 units pass /one export-memory test exceeds its
+existing 60000-ms deadline (92 files, 405.61 seconds). Types/lint pass; later
+gates are not reached. No setup/child/serialization phase or new host outcome
+is established. Preserve full4's 15205.5307-ms serializer observation separately.
+Read-only review confirms a test-owned child cancellation/cleanup gap. Two
+behavioral regressions fail first, then a test-only helper wires the installed
+Vitest timeout signal to the child and awaits closure before cleanup. Registered
+finished hooks cover timeout paths; setup/build/child phase labels retain all
+original workloads, precision/memory/chunk assertions and the 60000-ms limit.
+No production serializer change or sampler optimization is claimed. Final
+verification and the earlier performance failures remain open.
+Cancellation/cleanup suites pass three cases, then the shared normal-finally/
+fallback hook and serializer suites pass ten. The first lint run rejects two
+non-Error rejection paths; Error normalization repairs them without suppressing
+rules. Actual review's LOW dropped-stream finding gains a failing real-child
+regression, then error stdout/stderr are preserved and all 11 cases pass across
+three suites (16.45 seconds). The unchanged million-row body takes 14077.1257 ms.
+Sampler profiling retains all 2167 samples and exact 141888926 output bytes;
+47.3912 ms of full-accounting work in a 14640.7876-ms serializer run does not
+explain the earlier 60000-ms timeout. No sampler/production export change is made.
+Final strict types/global lint pass; independent follow-up closes the LOW
+diagnostics finding and finds no remaining concrete fixture issue. Full6 now
+validates the cancellation/cleanup repair in `out/t025-repaired-full-6.log` with
+source/spec files frozen. Every earlier failure and unchanged guard remains;
+there is no unchanged full retry or established performance root cause.
+Full6 ends with exit 1: 916 units /93 files, types/lint/build/package and host
+compilation pass; 71 hosts pass /one fails (38 minutes). All four T-025 cases,
+all five repaired frame paths and populated SQLite/CSV/JSON/JSONL 1/5-GB checks
+pass with unchanged guards; complete measurements are in the linked record.
+Native T-018's first two-character NULL copy visibly reports unverified copying,
+then its success-only predicate reaches the original 15000-ms DOM deadline.
+This proves failure reporting, not write rejection versus read rejection or
+mismatch. The strict scan rejects severity error `1 test failed.` at
+`20261019T191725/window1/renderer.log:747`. Its only approved record is HOST-001
+at renderer.log line 10, severity warning, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The full is failed and not warning-free. A narrow generated-bundle API-stage
+diagnostic passes both T-018 engines in 12 seconds with every write fulfilled
+and exact readback, recording lengths/equality without contents or retries.
+Generated bytes are restored exactly. Its only approved HOST-001 warning is
+`20261019T195724/window1/renderer.log:9`, same exact message above; this is not
+warning-free and cannot clear or explain the failed full. Independent read-only
+inspection of installed VS Code RPC/native forwarding and our adapters finds
+no evidenced production defect or premature acknowledgement. No unchanged full
+retry or speculative clipboard repair follows. Final literal `npm run verify`
+passes with exit 0: 916 units /93 files (362.16 seconds), strict types/lint/build
+and 34-file /981.8-KB packaging, zero errors and zero warnings. Its log is
+`out/t025-final-standalone.log`; only evidence/status edits follow. Failed full
+and owner-pushed actual-candidate CI remain open. Ten corrected-nonce light/dark Chromium
+component renders are inspected; native binding fails twice, so physical native
+menu/title/dialog and other-platform appearance remain unobserved. T-025 stays
+unchecked; no gate, diagnostic, workload or limit is relaxed.
+On 2026-10-20 a SQLite-prefixed native clipboard metadata diagnostic passes
+four hosts in four minutes: all 26 writes fulfill and exact readbacks match.
+Generated bytes restore exactly; no tracked executable changes. Its sole
+approved HOST-001 warning is `20261020T013446/window1/renderer.log:9`, severity
+warning, same exact message above; it is not warning-free. Passive documented
+Windows metadata polling records Free Download Manager (`fdm.exe`, PID 7492)
+with an open-clipboard sample timestamp 13 ms after one successful readback;
+that timestamp follows separate API/process lookups, not the opening instant. This establishes
+a competing accessor during the test, not historical failure causation. Polling
+can miss brief or unassociated access. Raw data, helper limitations and exact
+timestamps are in the linked record. No app/setting is changed; the controlled
+next check requires FDM clipboard monitoring to be inactive. The owner explicitly
+answers `FDM is closed; run once`, authorizing one full check. Preflight still
+finds background FDM PID 7492, so the approval is unused and launch waits for
+tray-process exit or confirmation that clipboard monitoring is off. The prepared
+run uses `out/t025-controlled-full-1.log` and the existing literal full command;
+source/spec files remain frozen during execution. No automatic extra full
+retry, production retry, weaker assertion or full-gate clearance follows.
+After the owner confirms `FDM has now exited`, 2026-10-20 01:47:35 Manila
+preflight finds no FDM process. The one controlled full starts in
+`out/t025-controlled-full-1.log`, consuming that explicit approval. No diagnostic
+instrumentation or passive monitor competes with the canonical run. Source/spec
+files stay frozen; all prior failures/limits remain. A pass cannot alone prove
+historical clipboard causation. Final full result and owner-pushed CI are pending.
+The controlled full then passes with exit 0 (01:48:12–02:32:03 Manila,
+43m51s): 916 units /93 files (349.37 seconds), strict types/lint/build/package,
+host compilation and all 72 real-host cases (35 minutes). Both clipboard
+engines, all T-025 and repaired frame paths, all ten-million-row and populated
+1/5-GB SQLite/JSON/JSONL/CSV checks pass with original assertions. Exact
+measurements, source hashes and logs are in the linked record. The canonical
+scan accepts only HOST-001 at `20261020T015703/window1/renderer.log:10`, severity
+warning, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other diagnostic is accepted; the full is not warning-free. FDM is absent at
+preflight, after native clipboard success and after completion; historical
+causation remains unproven. Freeze comparison finds all 316 captured paths
+unchanged. Only evidence/status edits follow. The prior literal standalone's
+916-unit zero-error/zero-warning result remains separate evidence for unchanged
+executable code. The one controlled-run approval is consumed, every prior
+failure remains, and T-025 stays unchecked for owner-pushed actual-candidate
+three-platform CI. Local candidate preparation can proceed; no milestone/tag.
 
 ### T-024 repaired-candidate CI and closure (2026-10-18)
 
@@ -4449,6 +4653,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.
+- T-025 validation repairs (2026-10-19): Record trace-fixture concurrency, red-first stage diagnostics, exact clipboard postcondition and worker/editor startup overlap under unchanged guards, independent reviews and corrected-nonce scoped visual evidence. Preserve 894-unit standalone, seven-host diagnostic with exact HOST-001/restored generated bytes and interrupted 902-unit full with retained 2019.3015-ms first-DOM failure. New full, unknown original causes and owner-pushed CI remain open.
+- T-025 authorized rerun (2026-10-19): Record the explicit one-run approval and its 891-pass/one-timeout unit failure at unchanged 798d236. Types/lint pass; host is not reached. Preserve the earlier 892-unit standalone pass, every failed/interrupted full, exact diagnostics and unknown causes. Authorization is consumed; all guards and completion limits remain.
 - T-025 (2026-10-18): Record delegated opening integration, red-first routing/configuration/grid repairs and scoped QA. Retain every failed/interrupted run, the final 68/4 failure, exact diagnostics and unknown causes. Isolated diagnostics cannot clear the failed full gate; native visual and owner-pushed CI limits remain.
 - T-024 completion (2026-10-18): Independently confirm actual repaired 7e8eaef /run 39067782337 /attempt 1 passes locked installs/full verification on all platforms. Close only T-024; preserve prior failures, exact local warning, scoped visuals and remote raw-log limits.
 - T-024 CI repair (2026-10-18): Retain failed run 39059472250 /2139f7c and original assertions; link native-path fix, exact CSV coverage, allocation diagnostic limits and 857-unit/68-host local full pass with one exact HOST-001 warning. No retry exception, fixture or policy change; new-candidate CI required.

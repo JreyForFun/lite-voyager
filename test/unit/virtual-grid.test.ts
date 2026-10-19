@@ -71,6 +71,58 @@ beforeEach(() => {
 });
 afterEach(() => { grid.dispose(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
+test('T-008: Given animation frames never run, When initialization and its page complete, Then exact bounded rows become ready without a frame', () => {
+  expect(requests).toHaveLength(1);
+  const request = requests.shift();
+  if (request === undefined) { throw new Error('Missing immediate initial request'); }
+  grid.receive(createSpikePage(request));
+  expect(element('rows').children[0]?.children[1]?.textContent).toBe('9007199254740993');
+  expect(element('rows').children[0]?.children[4]?.textContent).toBe('<script>alert("demo")</script>');
+  expect(element('rows').children[0]?.children[4]?.children).toEqual([]);
+  expect(element('grid').attributes.get('aria-busy')).toBe('false');
+  expect(statuses.at(-1)).toMatchObject({ editorReady: true, firstRow: 0 });
+  expect(statuses.at(-1)?.cachedRows).toBeGreaterThan(0);
+  expect(statuses.every((status) => status.cachedRows <= 512 && status.renderedRows < 128)).toBe(true);
+  expect(frames.size).toBe(0);
+});
+
+test('T-008: Given an old request and no animation frames, When its page arrives after a jump, Then the latest viewport requests and displays exact rows', () => {
+  const old = requests.shift();
+  if (old === undefined) { throw new Error('Missing immediate initial request'); }
+  grid.jump(8_000_000);
+  grid.receive(createSpikePage(old));
+  expect(statuses.at(-1)?.firstRow).toBe(7_999_999);
+  const next = requests.shift();
+  if (next === undefined) { throw new Error('Missing latest viewport request'); }
+  grid.receive(createSpikePage(next));
+  // This viewport crosses a page boundary; deliver the remaining bounded pages
+  // without running the frame callbacks that the regression withholds.
+  for (let step = 0; step < 4; step++) {
+    const request = requests.shift();
+    if (request === undefined) { break; }
+    grid.receive(createSpikePage(request));
+  }
+  expect(requests).toHaveLength(0);
+  expect(element('rows').children[6]?.children[0]?.textContent).toBe('8000000');
+  expect(element('grid').attributes.get('aria-busy')).toBe('false');
+  expect(statuses.every((status) => status.cachedRows <= 512 && status.renderedRows < 128)).toBe(true);
+  expect(frames.size).toBe(0);
+});
+
+test.each(['error', 'dispose'] as const)('T-008: Given a queued navigation frame, When %s happens first, Then a late callback cannot overwrite failure or resurrect disposed rows', (stop) => {
+  flush();
+  grid.jump(20);
+  const pending = [...frames.values()];
+  expect(pending.length).toBeGreaterThan(0);
+  if (stop === 'error') { grid.error('Actionable page failure'); }
+  else { grid.dispose(); }
+  const reports = statuses.length;
+  for (const callback of pending) { callback(0); }
+  expect(statuses).toHaveLength(reports);
+  if (stop === 'error') { expect(element('status').textContent).toBe('Actionable page failure'); }
+  else { expect(element('rows').children).toHaveLength(0); }
+});
+
 test('T-008: Given real grid rendering code, When pages arrive, Then row indices and literal text match and the DOM stays bounded', () => {
   settle();
   const first = element('rows').children[0];

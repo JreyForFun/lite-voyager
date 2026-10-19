@@ -21,7 +21,9 @@ function waitStatus(document: SqliteDocument, predicate: (status: BrowserStatus)
   });
 }
 let nextExerciseId = 0;
+const actionStages = new WeakMap<SqliteDocument, (stage: string) => void>();
 async function action(document: SqliteDocument, message: BrowserExercise, predicate: (status: BrowserStatus) => boolean): Promise<BrowserStatus> {
+  const stage = actionStages.get(document); stage?.(`action:${message.action}:start`);
   assert.ok(document.panel);
   const revision = document.browserStatus?.revision ?? 0;
   const exerciseId = ++nextExerciseId;
@@ -33,7 +35,7 @@ async function action(document: SqliteDocument, message: BrowserExercise, predic
     // status may still belong to an old context during re-creation.
     waitStatus(document, (status) => status.contextId !== undefined && status.exerciseId === exerciseId && predicate(status), revision),
   ]);
-  return status;
+  stage?.(`action:${message.action}:complete`); return status;
 }
 const settled = (status: BrowserStatus): boolean => !status.busy;
 const rowsPainted = (status: BrowserStatus): boolean => !status.busy && status.renderedRows > 0 && status.firstRow.length > 0;
@@ -266,20 +268,31 @@ suite('T-013 production SQL editor DOM', () => {
   for (const fallback of [false, true]) {
     test(`FR-010: Given CodeMirror and fallback=${String(fallback)}, When running selection, shortcuts and paged SQL, Then errors preserve results, restoration works and sources remain unchanged`, async function () {
       this.timeout(60000);
+      const stage = (value: string): void => { console.log(`T-013 stage: fallback=${String(fallback)} ${value}`); };
+      stage('activation:start');
       const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>('jreyinnovarev.lite-voyager');
       assert.ok(extension); const api = await extension.activate();
+      stage('activation:complete');
       const directory = await mkdtemp(join(extension.extensionPath, 'out', 't013-host-'));
+      stage('fixture:start');
       const generated = await promisify(execFile)(process.execPath, [join(extension.extensionPath, 'scripts/browser-fixture.mts'), directory], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
       assert.equal(generated.stderr, '');
+      stage('fixture:complete');
       const path = join(directory, 'browser.sqlite'); await chmod(path, 0o444);
+      stage('source-hash:start');
       const before = await digest(path);
+      stage('source-hash:complete');
       const previous = process.env['LITE_VOYAGER_FORCE_FALLBACK']; process.env['LITE_VOYAGER_FORCE_FALLBACK'] = fallback ? '1' : '0';
       let document: SqliteDocument | undefined;
       try {
         const uri = vscode.Uri.file(path);
+        stage('open:start');
         await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
         document = api.sqliteEditor.getDocument(uri); assert.ok(document);
+        stage('open:complete'); actionStages.set(document, stage);
+        stage('initial-dom:start');
         await waitStatus(document, (status) => rowsPainted(status) && status.editorReady === true);
+        stage('initial-dom:complete');
         const current = document;
         const edit = async (sql: string): Promise<BrowserStatus> => {
           const edited = await action(current, { type: 'browserExercise', action: 'sql', value: sql }, (status) => status.sqlLength === sql.length);
@@ -317,11 +330,16 @@ suite('T-013 production SQL editor DOM', () => {
         await action(current, { type: 'browserExercise', action: 'previous' }, (status) => rowsPainted(status) && status.offset === 100);
         const revision = current.browserStatus?.revision ?? 0;
         const previousContext = current.browserStatus?.contextId; assert.ok(previousContext);
+        stage('restore-text:start');
         const text = await vscode.workspace.openTextDocument({ content: 'T-013 SQL hide/show restoration' });
         await vscode.window.showTextDocument(text, { preview: false });
+        stage('restore-text:complete');
         assert.equal(current.panel?.visible, false);
+        stage('restore-open:start');
         await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+        stage('restore-open:complete'); stage('restore-dom:start');
         const restored = await waitStatus(current, (status) => status.contextId !== undefined && status.contextId !== previousContext && rowsPainted(status) && status.query === true && status.offset === 100, revision);
+        stage('restore-dom:complete');
         assert.equal(restored.firstRow[0]?.text, '101'); assert.equal(restored.sqlLength, 'SELECT FROM'.length);
         const fidelity = await run('SELECT nullable, empty, literal, maximum, minimum, bytes FROM "a values"');
         assert.deepEqual(fidelity.firstRow.map((cell) => [cell.text, cell.label]), [
@@ -350,13 +368,20 @@ suite('T-013 production SQL editor DOM', () => {
         assert.equal(wide.columns, 1000); assert.ok(wide.renderedColumns < 40);
         const end = await action(current, { type: 'browserExercise', action: 'lastCell' }, (status) => rowsPainted(status) && status.firstRow.some((cell) => cell.text === '999'));
         assert.ok(end.renderedColumns < 40);
-        await closeEditor(current); assert.equal(await digest(path), before);
+        stage('close-editor:start'); await closeEditor(current); stage('close-editor:complete');
+        assert.equal(await digest(path), before);
         console.log(`T-013 SQL evidence: ${JSON.stringify({ vscode: vscode.version, engine: fallback ? 'sql.js' : 'node:sqlite', selectionShortcut: true, highlighted: first.highlighted, paging: true, retainedErrors: true, restoredEditorAndQuery: true, sourceUnchanged: true })}`);
       } finally {
-        document?.dispose(); await document?.session.closed;
+        stage('dispose:start'); document?.dispose(); stage('dispose:complete');
+        stage('finally-helper:start'); await document?.session.closed; stage('finally-helper:complete');
+        if (document !== undefined) { actionStages.delete(document); }
+        stage('close-all:start');
         await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+        stage('close-all:complete');
         if (previous === undefined) { delete process.env['LITE_VOYAGER_FORCE_FALLBACK']; } else { process.env['LITE_VOYAGER_FORCE_FALLBACK'] = previous; }
+        stage('fixture-cleanup:start');
         await chmod(path, 0o600); await rm(directory, { recursive: true, force: true });
+        stage('fixture-cleanup:complete');
       }
     });
   }

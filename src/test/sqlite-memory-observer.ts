@@ -11,11 +11,12 @@ export function observeProcessLines(command: string, args: string[], onLine: (li
     const lines = createInterface({ input: child.stdout });
     let failure: Error | undefined;
     let timer: ReturnType<typeof setTimeout>;
+    let stage = 'waiting for first snapshot'; let snapshots = 0;
     const stop = (): void => { child.kill('SIGKILL'); };
     const fail = (error: Error): void => { failure ??= error; stop(); };
     const arm = (phase: string, milliseconds: number): void => {
       clearTimeout(timer);
-      timer = setTimeout(() => { fail(new Error(`OS observer ${phase} exceeded ${String(milliseconds)} ms.`)); }, milliseconds);
+      timer = setTimeout(() => { fail(new Error(`OS observer ${phase} exceeded ${String(milliseconds)} ms; stage=${stage}; snapshots=${String(snapshots)}.`)); }, milliseconds);
     };
     arm('startup', startupMs);
     signal.addEventListener('abort', stop, { once: true });
@@ -25,8 +26,12 @@ export function observeProcessLines(command: string, args: string[], onLine: (li
       if (failure !== undefined || signal.aborted) { return; }
       try {
         if (Buffer.byteLength(line) > 4 * 1024 * 1024) { throw new Error('OS observer snapshot exceeds 4 MiB.'); }
+        const snapshot = ++snapshots; stage = 'processing snapshot';
         arm('snapshot', snapshotMs);
         void Promise.resolve(onLine(line)).then(() => {
+          // Diagnostics must not re-arm the watchdog: processing and the next
+          // native read still share the original strict snapshot deadline.
+          if (snapshot === snapshots) { stage = 'waiting for next snapshot'; }
           if (acknowledge && failure === undefined && !signal.aborted) { child.stdin?.write('\n'); }
         }, (error: unknown) => { fail(error instanceof Error ? error : new Error('OS observer snapshot failed.')); });
       } catch (error: unknown) { fail(error instanceof Error ? error : new Error('OS observer snapshot failed.')); }

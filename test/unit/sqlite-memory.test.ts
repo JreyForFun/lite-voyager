@@ -43,6 +43,14 @@ test('NFR-003: Given acknowledged native snapshots and asynchronous metadata dis
   await expect(observeProcessLines(process.execPath, ['-e', code], () => new Promise<void>(() => {}), new AbortController().signal, 3000, 100, true)).rejects.toThrow(/snapshot.*100 ms/);
 }, 10000);
 
+test('NFR-003: Given an observer deadline, When processing or the next native snapshot stalls, Then its failure identifies the pending stage without resetting the watchdog', async () => {
+  const firstOnly = 'console.log("first");setInterval(()=>{},1000)';
+  await expect(observeProcessLines(process.execPath, ['-e', firstOnly], () => new Promise<void>(() => {}),
+    new AbortController().signal, 3000, 100, true)).rejects.toThrow(/snapshot exceeded 100 ms.*stage=processing snapshot/);
+  await expect(observeProcessLines(process.execPath, ['-e', firstOnly], () => {},
+    new AbortController().signal, 3000, 100, true)).rejects.toThrow(/snapshot exceeded 100 ms.*stage=waiting for next snapshot/);
+});
+
 test('NFR-003: Given a many-chunk source hash, When reading outside the measured workload, Then one fixed buffer is reused instead of retaining size-dependent chunk allocations in the extension host', async () => {
   const buffers = new Set<Buffer>(); const expected = createHash('sha256'); let remaining = 12 * 1024 * 1024 + 7;
   const result = await digestChunks((buffer) => {

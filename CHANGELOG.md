@@ -12,7 +12,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   explicit editor choices. Reuse read-only import previews and retain SQLite
   header detection, including databases renamed with tabular extensions.
   Render bounded initial preview/result cells without waiting for an animation
-  frame, while preserving complete browser status updates.
+  frame, while preserving complete browser status updates. Verify exact native
+  clipboard readback before confirming copied TSV; report unverified writes
+  without retrying or replacing the clipboard again. Start initial worker reads
+  before CodeMirror construction so the two can overlap during opening.
+  Complete spike readiness and explicit offscreen grid navigation without an
+  animation frame, preserving current cell details and bounded rendering.
 
 - Avoid reopening and rescanning complete CSV/TSV preview samples for alternative
   delimiters when their raw records establish that the preferred delimiter wins.

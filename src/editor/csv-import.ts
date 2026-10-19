@@ -11,6 +11,7 @@ import { importOptions, type FileLoader, type LoadOptions } from '../loaders/fil
 import { isBrowserRequest, isBrowserStatus, isCellRequest, isCsvImportRequest, isCsvPreviewRequest, isImportPreviewResult, isCsvPreviewResult, isCsvPreviewStatus,
   type BrowserStatus, type CsvImportState, type CsvPreviewStatus, type HostToWebviewMessage } from '../protocol';
 import { CellService } from './cell-service';
+import { writeClipboard } from './clipboard';
 import { csvImportHtml } from './csv-import-ui';
 import { SqliteSession } from './sqlite-session';
 import { sqliteEditorHtml, type SqliteEditorAssets } from './sqlite-editor-ui';
@@ -162,7 +163,7 @@ export class CsvImportSession {
       await database.start(() => Promise.resolve(false));
       if (this.disposed || this.cancellation.signal.aborted) { return; }
       if (database.state.phase !== 'opened') { throw new Error(database.state.message); }
-      this.cells = new CellService(this.directory, (text) => vscode.env.clipboard.writeText(text), (reply) => { this.send(reply); });
+      this.cells = new CellService(this.directory, (text) => writeClipboard(vscode.env.clipboard, text), (reply) => { this.send(reply); });
       const table = tables[0];
       this.update({ phase: 'opened', message: this.format === 'xlsx' ? `Imported ${String(tables.length)} sheets as tables; ${String(tables.reduce((total, item) => total + BigInt(item.rowCount), 0n))} rows total. ${table?.notice ?? ''} Source file was not modified.` : table === undefined ? 'The file is empty; no table was created. Source file was not modified.'
         : `Imported ${table.rowCount} rows into ${table.name}. ${table.notice ?? 'Source file was not modified.'}` });

@@ -71,13 +71,14 @@ export class VirtualGrid {
     this.count = count;
     this.track.style.height = `${trackHeight(count)}px`;
     this.move(0);
+    this.renderImmediately();
   }
   jump(row: number): void { this.move((row - 1) * ROW_HEIGHT); this.root.focus(); }
   receive(page: SpikePage): void {
     if (this.disposed || this.failed || !this.pages.accept(page)) { return; }
     clearTimeout(this.timeout);
     this.timeout = undefined;
-    this.schedule();
+    this.renderImmediately();
   }
   error(message: string): void {
     this.failed = true;
@@ -98,8 +99,13 @@ export class VirtualGrid {
       this.render();
     });
   }
+  private renderImmediately(): void {
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
+    this.render();
+  }
   private render(): void {
-    if (this.count === 0 || this.viewport.clientHeight === 0) { return; }
+    if (this.disposed || this.failed || this.count === 0 || this.viewport.clientHeight === 0) { return; }
     const range = gridWindow(this.count, this.offset, this.viewport.clientHeight);
     const fragment = document.createDocumentFragment();
     let loading = false;

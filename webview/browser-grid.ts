@@ -152,7 +152,13 @@ export class BrowserGrid {
     const top = row * ROW_HEIGHT; const left = column * COLUMN_WIDTH;
     const scrollRow = top < this.viewport.scrollTop ? top : top + ROW_HEIGHT > this.viewport.scrollTop + this.viewport.clientHeight ? top + ROW_HEIGHT - this.viewport.clientHeight : this.viewport.scrollTop;
     const scrollColumn = left < this.viewport.scrollLeft ? left : left + COLUMN_WIDTH > this.viewport.scrollLeft + this.viewport.clientWidth ? left + COLUMN_WIDTH - this.viewport.clientWidth : this.viewport.scrollLeft;
-    this.move(scrollRow, scrollColumn); this.selected(this.selection());
+    this.move(scrollRow, scrollColumn);
+    cancelAnimationFrame(this.frame); this.frame = 0;
+    // Commit viewport DOM before selection details can publish the new state.
+    // Scroll/resize still coalesce; explicit navigation must work without frames.
+    this.render(false);
+    this.selected(this.selection());
+    if (!this.disposed) { this.changed(); }
   }
 
   private includes(row: number, column: number): boolean {

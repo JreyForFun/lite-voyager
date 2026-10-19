@@ -217,9 +217,13 @@ test('T-051: Given the real repository, When ctx runs from another directory, Th
 });
 
 test('T-051: Given real requirement definitions, When trace runs, Then it reports precisely the uncovered IDs without claiming passing tests', async () => {
-  const { stdout, stderr } = await execute(process.execPath, [join(root, 'scripts/trace.mts')], { cwd: tmpdir() });
-  const actualSpec = await readFile(join(root, 'specs/SPEC.md'), 'utf8');
-  const gaps = findUntestedRequirements(actualSpec, await readTestSources(root));
+  // Both paths still independently scan/parse every source. Their work is
+  // independent, so do not spend the same five-second budget serializing it.
+  const [{ stdout, stderr }, gaps] = await Promise.all([
+    execute(process.execPath, [join(root, 'scripts/trace.mts')], { cwd: tmpdir() }),
+    Promise.all([readFile(join(root, 'specs/SPEC.md'), 'utf8'), readTestSources(root)])
+      .then(([actualSpec, sources]) => findUntestedRequirements(actualSpec, sources)),
+  ]);
   expect(stdout).toBe('Requirements without a matching named test:\n' + gaps.join('\n') + '\n');
   expect(stderr).toBe('');
 });

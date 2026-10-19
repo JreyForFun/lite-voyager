@@ -26,6 +26,21 @@ beforeEach(() => {
 });
 afterEach(() => { grid.dispose(); vi.unstubAllGlobals(); });
 
+test('FR-002: Given withheld animation frames and a wide page, When selecting and keyboard-navigating offscreen cells, Then exact bounded DOM and accessibility state update immediately', () => {
+  const columns = Array.from({ length: 1000 }, (_, index) => `c${String(index)}`);
+  const rows = Array.from({ length: 100 }, (_, row) => columns.map((_, column) => row === 99 && column === 999 ? '9223372036854775807' : `${String(row)}:${String(column)}`));
+  grid.setPage({ columns, rows, hasMore: false }, 0);
+  grid.lastCell();
+  expect(element('browser-rows').children.at(-1)?.children.at(-1)?.textContent).toBe('9223372036854775807');
+  expect(root.attributes.get('aria-activedescendant')).toBe('browser-cell-99-999');
+  root.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: 'Home', ctrlKey: true }));
+  expect(element('browser-rows').children[0]?.children[0]?.textContent).toBe('0:0');
+  expect(root.attributes.get('aria-activedescendant')).toBe('browser-cell-0-0');
+  expect(grid.metrics().renderedRows).toBeLessThan(30);
+  expect(grid.metrics().renderedColumns).toBeLessThan(26);
+  expect(frames).toEqual([]);
+});
+
 test('FR-002: Given fidelity edge cells, When rendered, Then NULL/empty/text are distinct and exact values and script text survive safely', () => {
   const values = [null, '', 'NULL', '9223372036854775807', '-9223372036854775808', '[BLOB 24 bytes]', '<img onerror=alert(1)>', '1e-200', '2026-10-10T12:00:00+08:00'];
   element('browser-viewport').clientWidth = 2200;
