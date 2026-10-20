@@ -1,13 +1,14 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-025 CI fixture repair; owner retains push/actual-candidate CI.
+Milestone 2: T-025 complete; T-026 starts in a fresh chat.
 Current evidence: docs/t025-ci-repair.md; earlier history: docs/t025-opening.md.
 
 ## Verify status
-Run 39304280687 /attempt 1/exact 3c836def34a65eaec26e627908df18014c017485 FAILS.
-Ubuntu rejects a main-process blocked webview request after 916 units/72 hosts.
-Windows/macOS install/full succeed; remote raw logs remain unread.
+Run 39369888255 /attempt 1/exact d6cdaf90602153c4a7f2b3a92703dc40087ecd94 PASS.
+Public API confirms locked installs and applicable full checks on all three OSes.
+Remote raw logs/counts remain unread; no remote warning-free claim.
+Failed 39304280687/3c836de and all earlier failures/interruption remain separate.
 Repaired final standalone PASS: 920 units/93 files, zero errors/warnings.
 Repaired full-2 PASS: 920 units/72 hosts, 49m22s; ci-full-2.log/status.json.
 All 317 source/spec/record hashes match across full; FDM absent at preflight.
@@ -17,15 +18,13 @@ HOST-001 line 11: [CloudSandboxApi] No 'github' session with scopes [read:user, 
 Both severity warning; full is not warning-free. No other diagnostic accepted.
 
 ## Last session
-Renamed SQLite fixtures now await transport, exact-URI close and helper exit.
-Two regressions fail first; seven lifecycle units/four focused hosts pass.
-Focused sole HOST-001 is 20261020T102059/window1/renderer.log:9, warning.
+Renamed SQLite fixtures await transport, exact-URI close and helper exit.
+Read-only fixtures prepare before first open without redundant startup.
+Four regressions fail first; focused checks and independent reviews pass.
 Historical blocked-request UUID is unmapped; exact causation remains unproven.
-First full fails: 917 units pass; fallback FR-016 exceeds unchanged 5000ms.
-Read-only preparation moves before first engine open, removing unused startup.
-Two regressions fail first; 30 metadata cases and independent review pass.
-Final full passes all four T-025 cases, large-file guards and source safety.
-Standalone caption/lint failures and review-driven interruption remain recorded.
+Owner reports PASS; independently confirmed exact repaired SHA clears final CI.
+T-025 checked; only five closure/evidence documents change afterward.
+Closure-only npm run verify PASS: 920 units, zero diagnostics; closure-verify.log.
 
 ## Decisions / limits
 No production/dependency/protocol/timeout/sample/diagnostic-policy change.
@@ -34,6 +33,6 @@ Prior ten component renders stand; native/other-platform visuals unobserved.
 Owner README/PLAN/T-015 edits and unrelated fixtures stay excluded.
 
 ## Next
-Owner pushes scoped repair commit and supplies fresh three-platform CI.
-T-025 stays unchecked until actual-candidate CI passes; no other task may close.
-No milestone, release or tag. Earlier failed/interrupted runs stay separate.
+Owner pushes the scoped closure records commit; no executable changes follow CI.
+Start T-026 in a fresh chat, reading AGENTS/CONSTITUTION/PROGRESS first.
+No milestone, release or tag; whole-milestone QA/review remain open.

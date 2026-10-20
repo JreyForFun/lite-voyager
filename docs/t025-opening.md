@@ -1,5 +1,10 @@
 # T-025 opening integration
 
+T-025 is complete after repaired d6cdaf9 passes Windows/macOS/Ubuntu CI run
+39369888255. Exact confirmation and retained limits are in
+[t025-ci-repair.md](t025-ci-repair.md#repaired-candidate-ci-confirmation-2026-10-20).
+T-026 starts in a fresh chat; no milestone closure or release/tag follows.
+
 Post-push run 39304280687 fails the Ubuntu runtime-log gate despite all tests
 passing. The scoped fixture-lifecycle repair and fresh evidence are recorded
 in [t025-ci-repair.md](t025-ci-repair.md); this file preserves earlier history.

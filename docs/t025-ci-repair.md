@@ -1,5 +1,9 @@
 # T-025 CI fixture lifecycle repair
 
+T-025 is complete after independently confirmed repaired-candidate CI run
+39369888255 at exact d6cdaf9. The confirmation below preserves all failed-run,
+diagnostic, causal and visual limits recorded here.
+
 ## Failed candidate (2026-10-20)
 
 The owner reports [run 39304280687](https://github.com/JreyForFun/lite-voyager/actions/runs/39304280687)
@@ -176,3 +180,35 @@ Windows/macOS/Ubuntu CI. Historical UUID causation remains unproven; the local
 pass cannot clear the failed Ubuntu run. T-025 stays unchecked until that CI
 passes; no other task, milestone, release or tag may be marked complete.
 Preserve the owner's unrelated README/PLAN/T-015 edits and untracked fixtures.
+
+## Repaired-candidate CI confirmation (2026-10-20)
+
+The owner reports [run 39369888255](https://github.com/JreyForFun/lite-voyager/actions/runs/39369888255)
+PASS. Public GitHub API metadata independently confirms attempt 1, event push,
+branch main, completed success, at exact
+`d6cdaf90602153c4a7f2b3a92703dc40087ecd94`. This equals local HEAD before the
+closure-only records and contains both independently reviewed fixture repairs.
+The saved metadata is `out/t025-ci-39369888255-{run,jobs}.json`.
+
+- macOS job 118455148391: locked dependency installation and full verification succeed.
+- Windows job 118455148485: locked dependency installation and full verification succeed.
+- Ubuntu job 118455148534: locked dependency installation and session-bus/virtual-display full verification succeed.
+
+Only inapplicable alternative-platform steps are skipped. Remote raw logs,
+test counts, timings and warning counts are not independently retrieved;
+do not describe remote runs as warning-free. The earlier failed run 39304280687
+at 3c836de stays failed, and historical UUID causation remains unproven.
+
+This clears the final actual-candidate CI item. Existing passing local 920-unit
+standalone, 920-unit/72-host full, scoped component visual QA and independent
+review remain valid. Preserve the full's exact HOST-002/HOST-001 warnings and
+native/other-platform physical-appearance limits above. Only T-025 may be
+checked; T-026 starts in a fresh chat. Whole-milestone QA/review and release/tag
+remain open. No executable, dependency, workload, deadline or diagnostic-policy
+change accompanies these closure records. Fresh closure-only literal
+`npm run verify` passes with exit 0 in `out/t025-closure-verify.log`: 920 units
+/93 files (290.18 seconds), strict types/lint, production build and 34-file
+/981.8-KB VSIX packaging, zero errors and zero warnings. No unchanged full rerun
+is made; the independently confirmed repaired-candidate CI remains the full
+gate. The owner pushes the closure-only records commit, then starts T-026 in
+a fresh chat with the updated root `PROGRESS.md`.
