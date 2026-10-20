@@ -75,3 +75,33 @@ test('FR-001: Given a missing SQLite panel, When the host test attempts normal c
 test('FR-001: Given the script-free editor transport probe, When checked against the typed host protocol, Then its message is accepted', () => {
   expect(isHostMessage({ type: 'sqliteEditorProbe' })).toBe(true);
 });
+
+test('D-5: Given an opened renamed SQLite database with pending webview readiness, When closing its URI, Then transport precedes exact-tab closure and confirmed helper exit', async () => {
+  let ready!: (value: boolean) => void;
+  const delivery = new Promise<boolean>((accept) => { ready = accept; });
+  let exit!: () => void;
+  const closed = new Promise<void>((accept) => { exit = accept; });
+  const closeUri = vi.fn(() => Promise.resolve());
+  let complete = false;
+  const closing = closeEditor(fixture(() => delivery, closed), undefined, closeUri).then(() => { complete = true; });
+  try {
+    expect(closeUri).not.toHaveBeenCalled(); expect(mocks.executeCommand).not.toHaveBeenCalled();
+    ready(true);
+    await new Promise<void>((accept) => { setImmediate(accept); });
+    expect(closeUri).toHaveBeenCalledExactlyOnceWith();
+    expect(mocks.executeCommand).not.toHaveBeenCalled();
+    expect(complete).toBe(false);
+  } finally { ready(true); exit(); await closing; }
+  expect(complete).toBe(true);
+});
+
+test('D-5: Given a ready renamed SQLite panel whose exact-tab close fails, When closing normally, Then the closure error propagates without closing a different active editor', async () => {
+  const failure = new Error('The intended tab could not close.');
+  const closeUri = vi.fn(() => Promise.reject(failure));
+  // Assert expected failure stages rather than emitting the test's diagnostic-like caption.
+  const stages: string[] = [];
+  await expect(closeEditor(fixture(() => Promise.resolve(true)), (event) => { stages.push(event); }, closeUri)).rejects.toBe(failure);
+  expect(closeUri).toHaveBeenCalledExactlyOnceWith();
+  expect(mocks.executeCommand).not.toHaveBeenCalled();
+  expect(stages).toEqual(['transport:start', 'transport:complete', 'close-command:start', 'close-command:failed']);
+});

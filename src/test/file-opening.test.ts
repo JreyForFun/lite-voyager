@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import type { activate } from '../extension';
 import type { CsvImportSession } from '../editor/csv-import';
 import { xlsxFixture, xlsxCell } from './xlsx-fixture';
+import { closeEditor } from './sqlite-editor-lifecycle';
 
 async function api() {
   const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>('jreyinnovarev.lite-voyager'); assert.ok(extension); return extension.activate();
@@ -64,7 +65,7 @@ suite('T-025 production file opening', () => {
           await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
           const document = application.sqliteEditor.getDocument(uri); assert.ok(document); assert.equal(document.session.state.phase, 'opened');
           assert.equal(document.session.state.opened?.engine, fallback ? 'sql.js' : 'node:sqlite');
-          await close(uri); await document.session.closed; assert.deepEqual(await readFile(uri.fsPath), before);
+          await closeEditor(document, undefined, () => close(uri)); assert.deepEqual(await readFile(uri.fsPath), before);
         }
       } finally {
         await vscode.commands.executeCommand('workbench.action.closeAllEditors');

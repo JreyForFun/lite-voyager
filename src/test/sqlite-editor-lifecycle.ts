@@ -4,7 +4,8 @@ import type { SqliteDocument } from '../editor/sqlite-editor';
 import type { HostToWebviewMessage } from '../protocol';
 
 export async function closeEditor(document: SqliteDocument,
-  report: (event: string) => void = (event) => { console.log(`SQLite close stage: ${event}`); }): Promise<void> {
+  report: (event: string) => void = (event) => { console.log(`SQLite close stage: ${event}`); },
+  close: () => PromiseLike<unknown> = () => vscode.commands.executeCommand('workbench.action.closeActiveEditor')): Promise<void> {
   const panel = document.panel;
   assert.ok(panel, 'SQLite editor panel is missing');
   assert.equal(panel.webview.options.enableScripts, true);
@@ -18,6 +19,6 @@ export async function closeEditor(document: SqliteDocument,
     catch (error: unknown) { report(`${stage}:failed`); throw error; }
   };
   assert.equal(await step('transport', () => panel.webview.postMessage(probe)), true, 'SQLite webview transport did not become ready');
-  await step('close-command', () => vscode.commands.executeCommand('workbench.action.closeActiveEditor'));
+  await step('close-command', close);
   await step('helper-exit', () => document.session.closed);
 }

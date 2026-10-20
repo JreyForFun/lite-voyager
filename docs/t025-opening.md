@@ -1,5 +1,9 @@
 # T-025 opening integration
 
+Post-push run 39304280687 fails the Ubuntu runtime-log gate despite all tests
+passing. The scoped fixture-lifecycle repair and fresh evidence are recorded
+in [t025-ci-repair.md](t025-ci-repair.md); this file preserves earlier history.
+
 ## Owner-approved acceptance (2026-10-18)
 
 The owner authorizes implementation, fixtures, necessary scoped repairs and

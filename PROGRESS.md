@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-025; owner retains push and actual-candidate three-platform CI.
-Acceptance, files, red-first repairs and full history: docs/t025-opening.md.
+Milestone 2: T-025 CI fixture repair; owner retains push/actual-candidate CI.
+Current evidence: docs/t025-ci-repair.md; earlier history: docs/t025-opening.md.
 
 ## Verify status
-Authorized controlled full PASS: 916 units /93 files; all 72 hosts (35m).
-Types/lint/build/package/host compilation pass; overall 43m51s, exit 0.
-Log/status: out/t025-controlled-full-1.log and matching -status.json.
-Both clipboard engines, all T-025/frame paths and every 1/5-GB stress check pass.
-Sole HOST-001: 20261020T015703/window1/renderer.log:10, warning; not warning-free.
-Exact message and all measurements are in docs/t025-opening.md.
-All 316 frozen tracked/new-source paths match after the run.
-Prior literal standalone PASS: 916 units /93 files; zero errors/warnings.
-Log: out/t025-final-standalone.log; 362.16s units, VSIX 34 files /981.8 KB.
-Executable code unchanged since standalone; evidence/status edits only now.
+Run 39304280687 /attempt 1/exact 3c836def34a65eaec26e627908df18014c017485 FAILS.
+Ubuntu rejects a main-process blocked webview request after 916 units/72 hosts.
+Windows/macOS install/full succeed; remote raw logs remain unread.
+Repaired final standalone PASS: 920 units/93 files, zero errors/warnings.
+Repaired full-2 PASS: 920 units/72 hosts, 49m22s; ci-full-2.log/status.json.
+All 317 source/spec/record hashes match across full; FDM absent at preflight.
+Exactly two approved warnings in 20261020T112015/window1/renderer.log:
+HOST-002 line 2: Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 32ms.
+HOST-001 line 11: [CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
+Both severity warning; full is not warning-free. No other diagnostic accepted.
 
 ## Last session
-Unified optional editor preserves headers, associations, dirty buffers and sources.
-Red-first startup/frame repairs retain bounded pages and original clocks.
-Clipboard verifies one write/read; no retries, rollback or content logging.
-Export cleanup/diagnostics, runner isolation and trace concurrency reviewed.
-Ten corrected-theme component renders inspected; native/other-OS visuals open.
-Metadata diagnostic: four hosts pass, all 26 copies exact; bundle bytes restored.
-FDM sampled with clipboard open; historical failure cause remains unproven.
-Owner exits FDM and approves one controlled full; absence checked before/after.
-That run passes without diagnostic instrumentation or competing monitors.
-Every prior failure/interruption remains in the evidence record.
+Renamed SQLite fixtures now await transport, exact-URI close and helper exit.
+Two regressions fail first; seven lifecycle units/four focused hosts pass.
+Focused sole HOST-001 is 20261020T102059/window1/renderer.log:9, warning.
+Historical blocked-request UUID is unmapped; exact causation remains unproven.
+First full fails: 917 units pass; fallback FR-016 exceeds unchanged 5000ms.
+Read-only preparation moves before first engine open, removing unused startup.
+Two regressions fail first; 30 metadata cases and independent review pass.
+Final full passes all four T-025 cases, large-file guards and source safety.
+Standalone caption/lint failures and review-driven interruption remain recorded.
 
 ## Decisions / limits
-Owner README/T-015 edits and unrelated untracked fixtures remain excluded.
-The controlled-run approval is consumed; no automatic extra retry.
-No assertion, workload, sample, deadline or warning/error policy is weakened.
+No production/dependency/protocol/timeout/sample/diagnostic-policy change.
+No skipped test, weaker safety assertion or unchanged full retry.
+Prior ten component renders stand; native/other-platform visuals unobserved.
+Owner README/PLAN/T-015 edits and unrelated fixtures stay excluded.
 
 ## Next
-Owner pushes the scoped reviewed local repair commit and supplies candidate CI.
-T-025 remains unchecked pending actual-candidate Windows/macOS/Ubuntu CI.
-No milestone, release or tag; unknown historical causes remain explicit.
+Owner pushes scoped repair commit and supplies fresh three-platform CI.
+T-025 stays unchecked until actual-candidate CI passes; no other task may close.
+No milestone, release or tag. Earlier failed/interrupted runs stay separate.

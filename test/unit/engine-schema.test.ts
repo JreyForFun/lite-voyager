@@ -1,11 +1,11 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmod, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { promisify } from 'node:util';
-import { beforeAll, describe, expect, test } from 'vitest';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { EngineClient } from '../../src/engine/engine-client';
 import { MAX_PAGE_BYTES, type EnginePage } from '../../src/engine/engine';
 
@@ -19,13 +19,16 @@ beforeAll(async () => {
   expect(result.stderr).toBe('');
 }, 30000);
 
-async function withDatabase(fallback: boolean, sql: string, run: (engine: EngineClient, path: string) => Promise<void>): Promise<void> {
+async function withDatabase(
+  fallback: boolean, sql: string, run: (engine: EngineClient, path: string) => Promise<void>,
+  prepare?: (path: string) => Promise<void>,
+): Promise<void> {
   const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-t011-'));
   const path = join(directory, 'schema.sqlite');
   const writer = new DatabaseSync(path);
   try { writer.exec(sql); } finally { writer.close(); }
   const engine = new EngineClient({ directory: resolve('dist'), forceFallback: fallback });
-  try { await engine.open(path); await run(engine, path); }
+  try { await prepare?.(path); await engine.open(path); await run(engine, path); }
   finally { await engine.close(); await chmod(path, 0o600); await rm(directory, { recursive: true, force: true }); }
 }
 
@@ -56,6 +59,24 @@ const definition = `
 `;
 
 describe.each([false, true])('T-011 worker metadata, fallback=%s', (fallback) => {
+  test('FR-016: Given a read-only database fixture, When starting its first engine, Then preparation precedes opening and the source is already read-only', async () => {
+    const observed = vi.spyOn(EngineClient.prototype, 'open');
+    const prepare = vi.fn(async (path: string) => {
+      expect(observed).not.toHaveBeenCalled();
+      await chmod(path, 0o444);
+      expect((await stat(path)).mode & 0o222).toBe(0);
+      expect(observed).not.toHaveBeenCalled();
+    });
+    try {
+      await withDatabase(fallback, 'CREATE TABLE target(value);', async (engine, path) => {
+        expect(prepare).toHaveBeenCalledTimes(1);
+        expect(observed).toHaveBeenCalledExactlyOnceWith(path);
+        expect((await stat(path)).mode & 0o222).toBe(0);
+        expect((await engine.columns('target')).rows).toHaveLength(1);
+      }, prepare);
+    } finally { observed.mockRestore(); }
+  });
+
   test('FR-003: Given legal empty table, column and index names, When browsing and inspecting on either backend, Then literal empty identifiers remain accessible and source bytes stay unchanged', async () => {
     await withDatabase(fallback, 'CREATE TABLE ""("" TEXT NOT NULL DEFAULT \'literal\'); INSERT INTO "" VALUES(\'blank\'); CREATE INDEX blank_index ON ""("");', async (engine, path) => {
       const before = await hash(path);
@@ -174,11 +195,9 @@ describe.each([false, true])('T-011 worker metadata, fallback=%s', (fallback) =>
   });
 
   test('FR-016: Given a read-only source, When inspecting metadata, rejecting writes and cancelling, Then source bytes and sidecars remain unchanged and reopening works', async () => {
+    let before: string | undefined;
     await withDatabase(fallback, definition, async (engine, path) => {
-      const before = await hash(path);
-      await engine.close();
-      await chmod(path, 0o444);
-      await engine.open(path);
+      expect(before).toBeDefined();
       await engine.columns(table); await engine.indexes(table); await engine.indexColumns(table, 'unique 😀');
       await expect(engine.query('DELETE FROM sentinel')).rejects.toThrow('read-only');
       await engine.cancel();
@@ -189,6 +208,9 @@ describe.each([false, true])('T-011 worker metadata, fallback=%s', (fallback) =>
       await expect(engine.columns(table)).rejects.toThrow('First open');
       await engine.open(path);
       expect((await engine.indexes(table)).rows).toHaveLength(3);
+    }, async (path) => {
+      before = await hash(path);
+      await chmod(path, 0o444);
     });
   });
 
