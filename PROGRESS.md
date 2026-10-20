@@ -1,7 +1,7 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-025 complete; T-026 starts in a fresh chat.
+Milestone 2: T-025 complete; cleanup verified; T-026 starts in a fresh chat.
 Current evidence: docs/t025-ci-repair.md; earlier history: docs/t025-opening.md.
 
 ## Verify status
@@ -23,8 +23,9 @@ Read-only fixtures prepare before first open without redundant startup.
 Four regressions fail first; focused checks and independent reviews pass.
 Historical blocked-request UUID is unmapped; exact causation remains unproven.
 Owner reports PASS; independently confirmed exact repaired SHA clears final CI.
-T-025 checked; only five closure/evidence documents change afterward.
-Closure-only npm run verify PASS: 920 units, zero diagnostics; closure-verify.log.
+T-025 checked; closure commit 496561b changes five evidence documents only.
+Cleanup: 2,907 files /4.71 GB; 8,550 hashes match; out/cleanup-20261020-{plan,result}.json.
+Cleanup npm run verify PASS: 920 units/93 files, zero errors/warnings; cleanup-20261020-verify.log.
 
 ## Decisions / limits
 No production/dependency/protocol/timeout/sample/diagnostic-policy change.
@@ -33,6 +34,6 @@ Prior ten component renders stand; native/other-platform visuals unobserved.
 Owner README/PLAN/T-015 edits and unrelated fixtures stay excluded.
 
 ## Next
-Owner pushes the scoped closure records commit; no executable changes follow CI.
+Owner pushes scoped cleanup/closure commits; no additional task checkbox changes.
 Start T-026 in a fresh chat, reading AGENTS/CONSTITUTION/PROGRESS first.
 No milestone, release or tag; whole-milestone QA/review remain open.
