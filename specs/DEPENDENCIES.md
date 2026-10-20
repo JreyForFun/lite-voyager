@@ -199,3 +199,13 @@ for 577 dependencies on Node 26.5.0; stderr is empty. Raw results are retained i
 `out/t024-dependency-audit.json`. Registry auditing of a local vendored tarball
 has limits; the dated official advisory review above supplements it. Earlier
 T-050 results retain their original historical scope.
+
+## T-026 direct autocomplete declaration (2026-10-20)
+
+Declare the already-locked MIT @codemirror/autocomplete 6.20.3 directly for the
+completion UI. Update only the inventory lock fingerprint and this package's
+direct flag. All 577 non-root paths, versions, integrities, license evidence and
+bundled notices remain unchanged. The existing assessment/audit dates stay
+historical; no new registry vulnerability audit is claimed. The stale inventory
+assertion fails before this scoped metadata update, with all other 935 units
+passing. Exact gate history is in ../docs/t026-autocomplete.md.

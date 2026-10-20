@@ -397,6 +397,34 @@ file loading remain later tasks.
 
 **FR-012 (P1) Autocomplete** for table names, column names, and keywords from the loaded schema.
 
+#### T-026 acceptance (owner-delegated, 2026-10-20)
+
+- Typing SQL or Ctrl-Space offers SQLite keywords and the current database's
+  table/view and column names, including imported tabular schemas on both engines.
+  FROM/JOIN table positions, ordinary aliases and qualified columns are supported.
+  Unqualified columns use referenced tables, or the selected browse table when
+  there is no reference. Strings/comments do not trigger schema completion.
+- Accept inserts a double-quoted, escaped identifier without changing surrounding
+  SQL. Spaces, quotes, Unicode, reserved words and prototype-like names survive.
+  Arrow keys/Enter/Escape work; Run, Mod-Enter, selection and undo remain intact.
+- Prefix filtering happens in the worker through parameterized metadata SELECTs;
+  names beyond the first catalog/column page remain discoverable. No user-table
+  data is scanned. At most 100 matching suggestions and 64 Ki UTF-16 units of
+  suggestion text are returned; additional matches are explained, never silently
+  omitted. Type a longer prefix to narrow the search.
+- Context analysis is bounded to a SQL document of 64 Ki UTF-16 units and
+  at most 16 referenced tables. Larger/complex contexts receive an explanation;
+  CTE/subquery semantic resolution is not promised. Keywords remain available
+  during other database work; metadata completion never changes successful query,
+  export, browse results or saved SQL context.
+- Requests are view-local and bounded. Superseded/aborted requests, cancellation,
+  failure, hide/recreation and disposal cannot install stale suggestions. Existing
+  worker cancellation/recovery and source-file safety remain unchanged.
+- Tests precede implementation, including real-worker checks on both engines and
+  editor keyboard/quoted-name/lifecycle coverage. Record visual evidence for light
+  and dark themes separately from automated checks. npm run verify must pass with
+  zero warnings/errors; preserve full-gate diagnostics and actual-candidate CI.
+
 **FR-013 (P2) Query history,** last 50 per file.
 
 **FR-014 (P1) Export results** to CSV or JSON, streamed so large results do not exhaust memory.
@@ -688,6 +716,7 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-026 (2026-10-20): Define owner-delegated schema/keyword completion before implementation, bounded prefix lookup/context, exact quoted insertion and distinct host/component-render evidence. Preserve existing safety and diagnostic rules.
 - T-025 (2026-10-18): Owner delegates opening integration, scoped fixes/fixtures and visual QA. Acceptance in docs/t025-opening.md clarifies all-five-format opt-in, conservative explicit-association precedence and reversible owned associations; existing import and source-safety policies remain.
 - T-024 (2026-10-17): Link owner-delegated XLSX acceptance for every sheet, exact cached/scalar values, snapshot-bound memory consent, unsupported-input policy and shared read-only import lifecycle. No T-025 opening integration or existing safety/diagnostic relaxation.
 - T-023 planning (2026-10-16): Link owner-delegated JSON/JSONL acceptance before implementation; specify lossless values, supported shapes, bounded streaming/preview, key handling and unchanged safety policies in docs/t023-json.md.

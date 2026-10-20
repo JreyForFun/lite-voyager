@@ -9,6 +9,60 @@ let sent: (BrowserRequest | BrowserStatus | CellRequest)[];
 let frames: FrameRequestCallback[];
 const flush = (): void => { const queued = frames; frames = []; for (const callback of queued) { callback(0); } };
 const requests = () => sent.filter((message): message is BrowserRequest => message.type.startsWith('browser') && message.type !== 'browserStatus');
+
+test('FR-012: Given successful SQL, When metadata completes or is superseded, Then result/export state survives and stale suggestions settle empty', async () => {
+  view.runSql('SELECT 42');
+  view.receive({ type: 'browserQueryRows', requestId: 2, offset: 0, limit: 100, ms: 1, page: { columns: ['v'], rows: [['42']], hasMore: false } });
+  const first = view.complete({ prefix: 'r', tables: [], includeTables: true });
+  const second = view.complete({ prefix: 're', tables: [], includeTables: true });
+  expect(await first).toBeUndefined();
+  view.receive({ type: 'browserCompletions', requestId: 3, items: [{ name: 'stale', kind: 'table', table: '' }], hasMore: false });
+  view.receive({ type: 'browserCompletions', requestId: 4, items: [{ name: 'records', kind: 'table', table: '' }], hasMore: false });
+  expect(await second).toEqual({ items: [{ name: 'records', kind: 'table', table: '' }], hasMore: false });
+  expect(view.savedState().querySql).toBe('SELECT 42');
+  expect(root.elements.get('browser-export-csv')?.disabled).toBe(false);
+  const pending = view.complete({ prefix: '', tables: [], includeTables: true });
+  view.dispose(); expect(await pending).toBeUndefined();
+});
+
+test('FR-012: Given active database work, When completion is requested, Then it does not supersede work; Run supersedes metadata safely', async () => {
+  expect(await view.complete({ prefix: '', tables: [], includeTables: true })).toBeUndefined();
+  expect(requests()).toHaveLength(1);
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [], hasMore: false });
+  const pending = view.complete({ prefix: 'x', tables: [], includeTables: true });
+  view.runSql('SELECT 1'); expect(await pending).toBeUndefined();
+  expect(requests().at(-1)?.type).toBe('browserQuery');
+});
+
+test('FR-012: Given a pending slow-sort confirmation, When autocomplete is requested, Then the warning and staged sort are retained', () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['v'], rows: [['old']], hasMore: true } });
+  view.exercise({ type: 'browserExercise', action: 'sort', value: 'v' });
+  view.receive({ type: 'browserSortWarning', requestId: 3, table: 'data', message: 'Slow sort requires confirmation.' });
+  const count = requests().length;
+  void view.complete({ prefix: 'v', tables: ['data'], includeTables: false });
+  expect(requests()).toHaveLength(count);
+  expect(root.elements.get('browser-sort-continue')?.hidden).toBe(false);
+});
+
+test('FR-012: Given a running SQL request, When an unsolicited completion reply arrives, Then SQL remains pending', () => {
+  view.runSql('SELECT 1');
+  view.receive({ type: 'browserCompletions', requestId: 2, items: [], hasMore: false });
+  expect(root.attributes.get('aria-busy')).toBe('true');
+  view.receive({ type: 'browserQueryRows', requestId: 2, offset: 0, limit: 100, ms: 1, page: { columns: ['v'], rows: [['1']], hasMore: false } });
+  expect(view.savedState().querySql).toBe('SELECT 1');
+});
+
+test('FR-012: Given a selected table, When completing a FROM name versus an unqualified column, Then only column context uses the selected schema', async () => {
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [{ name: 'data', kind: 'table' }], hasMore: false });
+  view.receive({ type: 'browserRows', requestId: 2, table: 'data', offset: 0, limit: 100, page: { columns: ['v'], rows: [['old']], hasMore: false } });
+  const table = view.complete({ prefix: '', tables: [], includeTables: true, useSelectedTable: false });
+  expect(requests().at(-1)).toMatchObject({ tables: [] });
+  view.receive({ type: 'browserCompletions', requestId: 3, items: [], hasMore: false }); await table;
+  const column = view.complete({ prefix: '', tables: [], includeTables: true, useSelectedTable: true });
+  expect(requests().at(-1)).toMatchObject({ tables: ['data'] });
+  view.receive({ type: 'browserCompletions', requestId: 4, items: [], hasMore: false }); await column;
+});
 test('NFR-005: Given a local QA exercise, When appearance is sampled, Then only bounded computed theme colors are reported', () => {
   vi.stubGlobal('getComputedStyle', () => ({ color: 'rgb(0, 0, 0)', backgroundColor: 'rgb(255, 255, 255)' }));
   vi.stubGlobal('document', { createElement: () => new BrowserElement(), body: { className: 'vscode-light' } });

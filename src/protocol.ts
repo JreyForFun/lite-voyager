@@ -254,7 +254,27 @@ export function isGridOptions(value: unknown): value is GridOptions {
   });
 }
 export interface BrowserObject { name: string; kind: 'table' | 'view'; }
+export const MAX_COMPLETION_TEXT = 65536;
+export interface CompletionSearch { prefix: string; tables: string[]; includeTables: boolean; useSelectedTable?: boolean; }
+export interface SchemaSuggestion { name: string; kind: 'table' | 'view' | 'column'; table: string; }
+export interface SchemaSuggestions { items: SchemaSuggestion[]; hasMore: boolean; }
+export function isCompletionSearch(value: unknown): value is CompletionSearch {
+  if (!isRecord(value) || typeof value['includeTables'] !== 'boolean' || !Array.isArray(value['tables']) || value['tables'].length > 16) { return false; }
+  let size = 0;
+  const name = (text: unknown): boolean => { if (typeof text !== 'string' || text.includes('\0')) { return false; } size += text.length; return size <= MAX_COMPLETION_TEXT; };
+  return (value['useSelectedTable'] === undefined || typeof value['useSelectedTable'] === 'boolean') && name(value['prefix']) && Array.from(value['tables']).every(name);
+}
+function isSchemaSuggestions(value: Record<string, unknown>): boolean {
+  if (typeof value['hasMore'] !== 'boolean' || !Array.isArray(value['items']) || value['items'].length > 100) { return false; }
+  let size = 0;
+  return Array.from(value['items']).every((item: unknown) => {
+    if (!isRecord(item) || !identifier(item['name']) || !identifier(item['table']) || !['table', 'view', 'column'].includes(String(item['kind']))) { return false; }
+    size += item['name'].length + item['table'].length;
+    return size <= MAX_COMPLETION_TEXT;
+  });
+}
 export type BrowserRequest =
+  | ({ type: 'browserComplete'; requestId: number } & CompletionSearch)
   | { type: 'browserExport'; requestId: number; format: import('./engine/engine').ExportFormat }
   | { type: 'browserQuery'; requestId: number; sql: string; offset: number; limit: number }
   | { type: 'browserList'; requestId: number; offset: number }
@@ -263,6 +283,7 @@ export type BrowserRequest =
   | { type: 'browserSchema'; requestId: number; table: string; kind: 'columns' | 'indexes' | 'indexColumns'; index?: string; offset: number; limit: number }
   | { type: 'browserCancel'; requestId: number };
 export type BrowserResponse =
+  | ({ type: 'browserCompletions'; requestId: number } & SchemaSuggestions)
   | ({ type: 'browserExportProgress'; requestId: number } & import('./engine/engine').ExportProgress)
   | { type: 'browserExportDone'; requestId: number; report?: import('./engine/engine').ExportReport }
   | { type: 'browserQueryStarted'; requestId: number }
@@ -288,12 +309,13 @@ export interface BrowserStatus {
   cell?: { row: number | null; column: number | null; length: number; preview: string | null; kind: string; busy: boolean; message: string };
   schema?: { table: string | null; kind: 'columns' | 'indexes' | 'indexColumns'; offset: number; rows: number; hasMore: boolean; preview: string; message: string };
   appearance?: { theme: string; foreground: string; background: string };
+  completion?: { open: boolean; labels: string[]; selected: string | null; notice: string };
 }
 /** Local host integration drives the same editor/controls as a user; no file access. */
 export interface BrowserExercise {
   type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse' | 'sort' | 'filter' | 'removeFilter' | 'clearGrid' | 'continueSort' | 'dismissSort'
     | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'
-    | 'exportCsv' | 'exportJson'
+    | 'exportCsv' | 'exportJson' | 'completionKey'
     | 'schema' | 'schemaKind' | 'schemaNext' | 'schemaPrevious' | 'schemaSize' | 'schemaIndex' | 'appearance' | 'gridKey'
     | 'startResponsiveness' | 'stopResponsiveness' | 'pulseResponsiveness'; value?: string; exerciseId?: number;
 }
@@ -303,6 +325,7 @@ function identifier(value: unknown): value is string {
 export function isBrowserRequest(value: unknown): value is BrowserRequest {
   if (!isRecord(value) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   switch (value['type']) {
+    case 'browserComplete': return isCompletionSearch(value);
     case 'browserExport': return value['format'] === 'csv' || value['format'] === 'json';
     case 'browserQuery': return identifier(value['sql']) && value['sql'].length > 0 && integer(value['limit'], 1, BROWSER_PAGE_SIZE)
       && integer(value['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE);
@@ -321,6 +344,7 @@ export function isBrowserRequest(value: unknown): value is BrowserRequest {
 export function isBrowserResponse(value: unknown): value is BrowserResponse {
   if (!isRecord(value) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   switch (value['type']) {
+    case 'browserCompletions': return isSchemaSuggestions(value);
     case 'browserExportProgress': return (value['phase'] === 'writing' || value['phase'] === 'saving') && exportReport(value);
     case 'browserExportDone': return value['report'] === undefined || exportReport(value['report']);
     case 'browserQueryStarted':
@@ -378,6 +402,11 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && (value['selectionLength'] === undefined || integer(value['selectionLength'], 0, Number.MAX_SAFE_INTEGER))
     && (value['cell'] === undefined || isCellSummary(value['cell']))
     && (value['appearance'] === undefined || isAppearanceSummary(value['appearance']))
+    && (value['completion'] === undefined || isRecord(value['completion']) && typeof value['completion']['open'] === 'boolean'
+      && (value['completion']['selected'] === null || typeof value['completion']['selected'] === 'string' && value['completion']['selected'].length <= 128)
+      && typeof value['completion']['notice'] === 'string' && value['completion']['notice'].length <= 2048
+      && Array.isArray(value['completion']['labels']) && value['completion']['labels'].length <= 12
+      && Array.from(value['completion']['labels']).every((label: unknown) => typeof label === 'string' && label.length <= 128))
     && (value['schema'] === undefined || isRecord(value['schema'])
       && (value['schema']['table'] === null || identifier(value['schema']['table']))
       && ['columns', 'indexes', 'indexColumns'].includes(String(value['schema']['kind']))
@@ -402,7 +431,7 @@ function isCellSummary(value: unknown): boolean {
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
-    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'schema', 'schemaKind', 'schemaNext', 'schemaPrevious', 'schemaSize', 'schemaIndex', 'appearance', 'gridKey', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
+    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'completionKey', 'schema', 'schemaKind', 'schemaNext', 'schemaPrevious', 'schemaSize', 'schemaIndex', 'appearance', 'gridKey', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 

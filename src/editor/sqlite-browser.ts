@@ -2,6 +2,7 @@ import type { Engine } from '../engine/engine';
 import { quoteIdentifier } from '../engine/read-engine';
 import { BROWSER_PAGE_SIZE, isBrowserRequest, type BrowserObject, type BrowserRequest, type BrowserResponse } from '../protocol';
 import type { ExportRunner } from './export-service';
+import { findCompletions } from './sql-completion';
 
 interface Pending { request: BrowserRequest; send: (message: BrowserResponse) => void; resolve: () => void; }
 
@@ -76,6 +77,7 @@ export class SqliteBrowser {
   private async execute(request: BrowserRequest, send: (message: BrowserResponse) => void): Promise<BrowserResponse> {
     const requestId = request.requestId;
     switch (request.type) {
+      case 'browserComplete': return { type: 'browserCompletions', requestId, ...await findCompletions(this.engine, request) };
       case 'browserSchema': {
         const address = { offset: request.offset, limit: request.limit };
         const page = request.kind === 'columns' ? await this.engine.columns(request.table, address)

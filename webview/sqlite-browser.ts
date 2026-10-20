@@ -6,9 +6,10 @@ import { CellDetails } from './cell-details';
 import { SchemaView } from './schema-view';
 import './sqlite-browser.css';
 import { installSqliteSave } from './sqlite-save';
+import { isCompletionSearch, type CompletionSearch, type SchemaSuggestions } from '../src/protocol';
 
 type Post = (message: BrowserRequest | BrowserStatus | CellRequest) => void;
-type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'>;
+type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'> & Partial<Pick<SqlEditor, 'completionKey'>>;
 export interface BrowserSavedState { requestId: number; table: string | null; offset: number; listOffset: number; limit: number; sqlText?: string; querySql?: string; grid?: GridOptions; }
 const INITIAL_STATE: BrowserSavedState = { requestId: 0, table: null, offset: 0, listOffset: 0, limit: BROWSER_PAGE_SIZE };
 
@@ -82,6 +83,7 @@ export class BrowserView {
   private restoring = true;
   private readonly query = new QueryView();
   private pendingSql: string | null = null;
+  private completionResolve: ((result: SchemaSuggestions | undefined) => void) | undefined;
   private editor: BrowserSqlEditor | undefined;
   private readonly contextId = crypto.randomUUID();
   private exerciseId = 0;
@@ -145,6 +147,17 @@ export class BrowserView {
   }
   editorFailed(): void { this.message('The SQL editor could not initialize. Close and reopen the file.', true); this.report(); }
 
+  complete(search: CompletionSearch): Promise<SchemaSuggestions | undefined> {
+    if (this.disposed || this.warningPage !== undefined || this.pending !== null && this.pending !== 'browserComplete') { return Promise.resolve(undefined); }
+    const tables = search.tables.length === 0 && search.useSelectedTable === true && this.table !== null ? [this.table] : search.tables;
+    if (!isCompletionSearch({ ...search, tables })) { this.message('Autocomplete context exceeds 64 Ki characters or 16 tables. Nothing was truncated.'); return Promise.resolve(undefined); }
+    this.completionResolve?.(undefined);
+    return new Promise((resolve) => {
+      this.completionResolve = resolve;
+      this.request({ type: 'browserComplete', requestId: ++this.requestId, ...search, tables });
+    });
+  }
+
   runSql(sql: string): void {
     if (this.disposed || this.pending === 'browserCancel' || this.pending === 'browserExport') { return; }
     if (sql.trim().length === 0) { this.message('Enter SQL or select a statement, then Run.', true); this.report(); return; }
@@ -173,6 +186,7 @@ export class BrowserView {
 
   private request(message: BrowserRequest): void {
     if (this.disposed) { return; }
+    if (message.type !== 'browserComplete') { this.completionResolve?.(undefined); this.completionResolve = undefined; }
     this.pending = message.type;
     this.exportSaving = false;
     this.warningPage = undefined;
@@ -182,6 +196,7 @@ export class BrowserView {
       : message.type === 'browserExport' ? 'Choose a destination. Export reruns the complete successful query; you can cancel.'
       : message.type === 'browserCancel' ? 'Cancelling and reopening the database…'
       : message.type === 'browserList' ? 'Loading tables and views…' : message.type === 'browserQuery' ? 'Running SQL in the worker…'
+        : message.type === 'browserComplete' ? 'Loading autocomplete metadata in the worker. You can cancel.'
         : message.type === 'browserSchema' ? 'Loading schema metadata in the worker…' : 'Loading rows…';
     this.message(label); this.controls(); this.post(message); this.report();
   }
@@ -244,6 +259,7 @@ export class BrowserView {
 
   receive(message: BrowserResponse): void {
     if (this.disposed || message.requestId !== this.requestId || this.pending === null || !isBrowserResponse(message)) { return; }
+    if (message.type === 'browserCompletions' && this.pending !== 'browserComplete') { return; }
     if (message.type === 'browserExportProgress') {
       if (this.pending === 'browserExport') {
         this.exportSaving = message.phase === 'saving';
@@ -267,7 +283,10 @@ export class BrowserView {
     this.exportSaving = false;
     this.pendingSql = null;
     this.pendingPage = undefined;
+    const resolveCompletion = this.completionResolve; this.completionResolve = undefined;
+    resolveCompletion?.(message.type === 'browserCompletions' ? { items: message.items, hasMore: message.hasMore } : undefined);
     switch (message.type) {
+      case 'browserCompletions': this.message('Autocomplete metadata complete. Data results retained.'); break;
       case 'browserSchemaRows': this.schema.receive(message); this.message('Schema metadata complete. Data results retained.'); break;
       case 'browserExportDone':
         this.message(message.report === undefined ? 'Export dismissed. Existing output was not changed.'
@@ -361,7 +380,7 @@ export class BrowserView {
     this.exportCsv.disabled = busy || this.query.sql === null;
     this.exportJson.disabled = busy || this.query.sql === null;
     this.browseButton.disabled = busy || !this.objects.includes(this.select.value);
-    this.editor?.setDisabled(busy);
+    this.editor?.setDisabled(busy && this.pending !== 'browserComplete');
     const enabled = this.gridEnabled() && this.warningPage === undefined;
     this.grid.setSort(this.gridOptions.sort, enabled);
     this.filterColumn.disabled = !enabled; this.filterOperator.disabled = !enabled;
@@ -437,6 +456,7 @@ export class BrowserView {
         break;
       }
       case 'run': this.editor?.clickRun(); break;
+      case 'completionKey': if (message.value !== undefined) { this.editor?.completionKey?.(message.value); } break;
       case 'shortcut': this.editor?.shortcut(); break;
       case 'sort': if (message.value !== undefined) { this.grid.clickHeader(message.value); } break;
       case 'filter': {
@@ -501,7 +521,7 @@ export class BrowserView {
     this.probeKey = undefined;
   }
 
-  dispose(): void { this.disposed = true; this.stopProbe(); this.events.abort(); this.schema.dispose(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
+  dispose(): void { this.disposed = true; this.completionResolve?.(undefined); this.completionResolve = undefined; this.stopProbe(); this.events.abort(); this.schema.dispose(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
 }
 
 declare function acquireVsCodeApi(): {
@@ -536,7 +556,7 @@ if (typeof acquireVsCodeApi === 'function') {
       // does not serialize these independent parts of the first populated DOM.
       browser.start();
       const editor = new SqlEditor(editorRoot, runButton, nonce, readSavedState(api.getState()).sqlText ?? '-- Run a read-only statement, or select SQL to run.\nSELECT 1 AS value;',
-        (sql) => { browser.runSql(sql); }, () => { browser.editorChanged(); }, () => { browser.editorFailed(); });
+        (sql) => { browser.runSql(sql); }, () => { browser.editorChanged(); }, () => { browser.editorFailed(); }, (search) => browser.complete(search));
       browser.attachEditor(editor);
     } catch {
       events.abort(); view?.dispose();

@@ -1,7 +1,7 @@
 {
   "task": "T-050",
   "assessedOn": "2026-10-09",
-  "lockfileSha256": "3abe0c4a2aab3daa1c36dd180bfd4523d35e017c56b59a6c0a2299e5657e8367",
+  "lockfileSha256": "897660373fc96441cdf2acc9b958fdc163391a33451203f02ecb55b028f084eb",
   "hashMethod": "SHA-256 of UTF-8 JSON.stringify(JSON.parse(package-lock.json)); insensitive to whitespace and line endings",
   "scope": "All non-root lockfile package paths, including peer and platform-optional development packages",
   "packageCount": 577,
@@ -296,7 +296,7 @@
       "dev": true,
       "optional": false,
       "peer": false,
-      "direct": false
+      "direct": true
     },
     {
       "path": "node_modules/@codemirror/commands",

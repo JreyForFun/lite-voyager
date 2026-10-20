@@ -1294,6 +1294,24 @@ litevoyager/
 └── tsconfig.json
 ```
 
+### T-026 schema autocomplete (2026-10-20)
+
+Owner delegates implementation, decisions, scoped fixtures/repairs and visual QA;
+owner retains push/CI. See SPEC FR-012 and
+[docs/t026-autocomplete.md](../docs/t026-autocomplete.md). Declare already-locked
+MIT @codemirror/autocomplete 6.20.3 directly; license bundling already includes it.
+No transitive dependency, Engine interface or worker transport change is needed.
+
+Bounded lexical context supports ordinary FROM/JOIN aliases and main qualification.
+Typed browser requests filter table/view/column prefixes in parameterized worker
+metadata SELECTs through Engine.query. Return at most 100 matches/64 Ki name
+characters, with a visible narrowing notice; no whole-schema cache/data-table scan.
+SQL documents above 64 Ki characters, over 16 tables and CTE/subquery scopes are
+explained. Preserve query/export/grid context, cancellation/recovery and source
+safety. Aborted/superseded replies cannot install suggestions. Double-quoted
+insertion preserves identifiers. Component visuals and real-host checks are
+separate; canonical gates and owner-pushed candidate CI remain pending.
+
 ## 9. Risks
 
 | ID | Risk | Mitigation |
@@ -1307,6 +1325,7 @@ litevoyager/
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-026 (2026-10-20): Record bounded metadata completion, direct declaration of existing MIT autocomplete, quote/alias handling and semantic limits. Preserve safety/performance/diagnostic guards and owner push/CI.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

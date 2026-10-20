@@ -10,6 +10,39 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ## 1. Three layers of validation
 
+### T-026 schema autocomplete (2026-10-20)
+
+Owner-delegated scope, red-first tests, both-engine workers, real CodeMirror
+keyboard checks and retained failures are in
+[docs/t026-autocomplete.md](../docs/t026-autocomplete.md). Focused units pass 55;
+initial passing host checks cover both engines with the exact reported HOST-001
+warning and are not warning-free. Expanded four-case host acceptance passes all
+five imported formats on both engines; its exact HOST-001 warning is in the linked
+record. Two additional red-first isolation fixes preserve sort confirmation and
+running SQL; 50 context/browser tests pass. Verify 1 fails strict optional-property
+types; verify 2 passes types/lint and 935/936 units, failing stale license inventory.
+The fingerprint/direct flag is updated without changing package versions/licenses.
+Command-key helper and alias-main regressions fail first, then 17 focused tests
+pass. Repaired literal verify passes 938 units/95 files, types/lint/build and
+34-file/996.33-KB VSIX packaging with zero errors/warnings; all 272 captured hashes
+match across the 435.353-second run. First canonical full FAILS: 938 units/75 hosts
+pass, one existing CSV OS-observer snapshot exceeds the unchanged 3000-ms watchdog
+after 52 snapshots. All four T-026 cases pass; all 272 captured hashes match.
+The strict follow-up scan rejects renderer.log:827 `1 test failed.` and reports
+the exact HOST-001 warning at 20261020T194207/window1/renderer.log:10, as linked.
+It is not warning-free. The unchanged CSV-only diagnostic passes both sizes/all
+80 pages per size, with exact data/hashes, 313749504 /322875392-byte sampled peaks
+and 29921280 /22020096-byte paging growth. Its exact approved HOST-001 warning is
+20261020T201631/window1/renderer.log:9 (linked record); it is not warning-free and
+cannot clear the failed full. Explicit one-rerun authorization is pending; no full
+retry or established cause. Owner then explicitly answers `Authorize one full
+rerun; retain the failure` on 2026-10-20. Permit exactly one unchanged canonical
+full attempt after the scoped candidate commit. No additional unchanged retry,
+deadline/diagnostic relaxation or historical cause claim. Preserve all failures.
+Six inspected component renders use shipped webview/CSP; notice overlap
+fails geometry before repair. Native screenshot selection fails twice; no native
+paint claim. Preserve all failures/guards; owner supplies actual-candidate CI.
+
 ### T-025 opening integration (2026-10-18)
 
 **Completion (2026-10-20):** Owner-reported
@@ -4693,6 +4726,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-026 (2026-10-20): Link autocomplete acceptance, red-first worker/host/lifecycle repairs, exact diagnostics and component visual evidence. Canonical gates/owner candidate CI pending; no weakened guard or unchanged retry-to-green.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.
