@@ -1310,7 +1310,11 @@ SQL documents above 64 Ki characters, over 16 tables and CTE/subquery scopes are
 explained. Preserve query/export/grid context, cancellation/recovery and source
 safety. Aborted/superseded replies cannot install suggestions. Double-quoted
 insertion preserves identifiers. Component visuals and real-host checks are
-separate; canonical gates and owner-pushed candidate CI remain pending.
+separate. Standalone verification and all four T-026 host cases pass. Both full
+attempts remain failed in existing CSV-observer/JSON-fixture cases; separate
+passing diagnostics do not explain or clear them. The single owner-authorized
+unchanged full rerun is consumed. Preserve failures/guards; full acceptance and
+owner-pushed candidate CI remain open.
 
 ## 9. Risks
 
@@ -1325,7 +1329,7 @@ separate; canonical gates and owner-pushed candidate CI remain pending.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Record bounded metadata completion, direct declaration of existing MIT autocomplete, quote/alias handling and semantic limits. Preserve safety/performance/diagnostic guards and owner push/CI.
+- T-026 (2026-10-20): Record bounded metadata completion, direct declaration of existing MIT autocomplete, quote/alias handling and semantic limits. Both-engine/all-format acceptance and clean standalone pass; retain both failed full attempts and separate passing diagnostics. Single authorized unchanged rerun consumed; preserve all guards, owner push/CI and open task status.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

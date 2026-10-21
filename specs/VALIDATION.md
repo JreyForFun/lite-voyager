@@ -39,6 +39,22 @@ retry or established cause. Owner then explicitly answers `Authorize one full
 rerun; retain the failure` on 2026-10-20. Permit exactly one unchanged canonical
 full attempt after the scoped candidate commit. No additional unchanged retry,
 deadline/diagnostic relaxation or historical cause claim. Preserve all failures.
+The authorized full after `35f23ca` also FAILS: 938 units/75 hosts pass, one existing
+populated JSON memory case fails at its first 1-GB fixture-generation command.
+All four T-026 cases and complete 1/5-GB CSV data/hashes/all 80 pages per size pass;
+all 272 captured hashes match over 2072.494 seconds. The command has its unchanged
+180000-ms cap, but retained output lacks exit-code/signal/killed details; no
+timeout/cause is inferred. Strict scan rejects `1 test failed.` at
+20261020T203829/window1/renderer.log:827; its sole approved VSCODE-HOST-001 warning
+is at line 10, exact message:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This failed full is not warning-free. On 2026-10-21, isolated unchanged 1-GB JSON
+fixture generation passes in 8734.8942 ms under the original deadline with complete
+1,000,016,431-byte hash equality and empty stderr. It is not an import/memory/full
+pass and cannot explain/clear the failure. Logs, hashes and CSV measurements are
+in the linked record. No concrete defect is identified; no speculative fixture
+edit or third full attempt. The single authorization is consumed; preserve both
+failed fulls and keep T-026 unchecked pending full acceptance/candidate CI.
 Six inspected component renders use shipped webview/CSP; notice overlap
 fails geometry before repair. Native screenshot selection fails twice; no native
 paint claim. Preserve all failures/guards; owner supplies actual-candidate CI.
@@ -4726,7 +4742,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Link autocomplete acceptance, red-first worker/host/lifecycle repairs, exact diagnostics and component visual evidence. Canonical gates/owner candidate CI pending; no weakened guard or unchanged retry-to-green.
+- T-026 (2026-10-20): Record autocomplete acceptance, red-first worker/host/lifecycle repairs, component visuals and 938-unit clean standalone. Preserve first failed full (CSV observer), passing CSV diagnostic and owner-authorized failed full (JSON fixture generation), each full's exact diagnostics/unknown cause and the 2026-10-21 passing fixture-only diagnostic. Single rerun consumed; no third unchanged attempt, weakened guard, warning-free full claim or task closure.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

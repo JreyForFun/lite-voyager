@@ -146,12 +146,51 @@ These are component observations; real-host keyboard behavior is separate.
   canonical full attempt with all prior failures/unknown cause retained and all
   existing checks intact. No second unchanged attempt is authorized. Commit the
   scoped candidate first; record the new full result separately.
+- The one authorized unchanged literal `npm run verify:full` runs after local
+  candidate commit `35f23ca`: FAIL, 938 units/95 files PASS, 75 hosts PASS and one
+  host failure. Started 2026-10-20 12:26:58.889 UTC, finished 13:01:31.383 UTC
+  (2072.494 seconds); all 272 captured hashes match. All four T-026 cases pass.
+  This time the existing populated JSON memory case fails while generating its
+  first 1-GB JSON fixture: `Command failed: ...Code.exe ...scripts/json-memory-fixture.mts
+  ...out/t023-memory-mMC9SO/source.json 1000000000 json`. The command is capped at
+  the unchanged 180000-ms generation deadline, but retained Mocha output contains
+  no exit-code/signal/killed details; it does not establish the failure's cause.
+  No populated 1/5-GB JSON/JSONL memory result is claimed for this attempt. Both
+  ten-million-row JSON/JSONL full-data/hash cases pass. Evidence:
+  out/t026-full-authorized-1.log and -status.json; no third full run is started.
+- The authorized full does pass complete 1/5-GB CSV import/data/source checks and
+  all 60 Browse/20 SQL pages per size, without changing any workload or guard.
+  Sampled host-plus-helper peaks are 314,331,136 /308,731,904 bytes; paging growth
+  is 32,948,224 /27,992,064 bytes; maximum observation gaps are
+  1096.1203 /1157.8703 ms. Renderer residency is separate. This passing CSV result
+  does not establish why the first full's OS snapshot stalled.
+- Because the authorized full stops before automatic log scanning, a separate
+  unchanged strict scan rejects `20261020T203829/window1/renderer.log:827`,
+  severity error, `1 test failed.` Its only approved record is VSCODE-HOST-001
+  at that renderer.log:10, severity warning, exact message:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  It is failed and not warning-free. Evidence:
+  out/t026-full-authorized-1-diagnostics.log.
+- On 2026-10-21, an isolated diagnostic runs only the unchanged first 1-GB JSON
+  fixture command with the exact Electron Node runtime and original 180000-ms
+  deadline. Generation PASSes in 8734.8942 ms; elapsed time through complete file
+  hashing is 12812.1914 ms. The isolated fixture is then removed. All
+  1,000,016,431 bytes match the generated recipe's
+  243,313 rows and SHA-256
+  `41eacc598a3e38c50ac6f7b7deffb88ea3786126d1da2e954c7c3b9bf9205454`;
+  stderr is empty. Evidence: out/t026-json-fixture-diagnostic-result.json.
+  This is fixture generation only, not an import, memory case or full-gate pass.
+  It neither reproduces nor explains/clears the authorized full's failure.
+  No concrete source/fixture defect is identified, so no speculative code edit,
+  assertion weakening, deadline increase or additional unchanged full is made.
 
 Current acceptance: schema/keyword/quoted insertion, aliases, bounds/notices,
 stale/disposed/busy/error paths, both engines, all imported formats, source safety
-and scoped component visuals have passing evidence. The canonical full gate
-remains failed; native physical-paint QA and actual-candidate three-platform CI
-are unobserved. T-026 cannot be checked on this evidence.
+and scoped component visuals have passing evidence. Both canonical full attempts
+remain failed for the distinct reasons above. Native physical-paint QA and
+actual-candidate three-platform CI are unobserved. The single authorized rerun
+is consumed; further unchanged full attempts need a new owner decision under
+VALIDATION section 1. T-026 cannot be checked on this evidence.
 - Owner-pushed actual-candidate three-platform CI: pending.
 - T-026 remains unchecked. Whole Milestone 2 QA/review and release/tag stay open.
 
