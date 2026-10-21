@@ -108,6 +108,12 @@ then pass calibration, complete 1/5-GB data/source hashes and all 80 pages per s
 The exact HOST-001 warning at 20261022T002359/window1/renderer.log:9 and measurements
 are retained in docs/t026-csv-observer-repair.md; it is not warning-free and does
 not clear the failed full. Fresh changed-candidate canonical gates remain pending.
+Observer candidate 9d85f46 standalone fails at the first new fixture's unchanged
+5000-ms default (cold PowerShell); 966/967 pass, 280 hashes unchanged, no full run.
+Retain failure; share cold initialization for all eleven independent scenarios
+with their assertions/default deadlines and original 10000-ms native-command cap.
+Eighteen focused cases pass; read-only review confirms state isolation/cleanup
+and no assertion weakening. Fixture-refactor failures are in the linked record.
 Six inspected component renders use shipped webview/CSP; notice overlap
 fails geometry before repair. Native screenshot selection fails twice; no native
 paint claim. Preserve all failures/guards; owner supplies actual-candidate CI.
@@ -4795,7 +4801,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Retain prior full failures, standby diagnosis/repair and scoped actual-host QA. Candidate c55ec7f passes 956-unit standalone but full fails at separate CSV counter/CIM metadata discovery, without standby. Reproduce the process-exit race; metadata-before-RSS sampling, strict error preservation and eleven new lifecycle tests repair it. Eighteen focused cases, native churn and independent follow-up pass; current repaired gates/owner CI remain open. No weakened guard, unchanged retry loop or task closure.
+- T-026 (2026-10-20): Preserve prior failed fulls, exact diagnostics, standby repair and CSV counter/CIM race repair. Eighteen focused cases, actual churn, complete existing CSV hosts and independent review pass. Observer candidate standalone retains cold-fixture timeout (966/967 pass); batch identical scenario setup with unchanged assertions/default deadlines/native cap. Repaired fixture and independent follow-up pass; fresh gates/owner CI remain open, with no unchanged retry or task closure.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

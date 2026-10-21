@@ -90,7 +90,25 @@ warning, exact message:
 `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
 This scoped host run is not warning-free and does not clear the failed full.
 
-New canonical standalone/full results are pending. Keep T-026 unchecked for full
+Candidate `9d85f46` standalone FAILS before build/hosts: 966 units pass and the
+first new Windows fixture case exceeds Vitest's unchanged 5000-ms default while
+starting cold PowerShell. UTC 2026-10-21 16:32:46.843 through 16:41:48.294
+(541.451 seconds), exit 1, signal null, all 280 frozen hashes unchanged. Evidence:
+out/t026-csv-repair-verify-1.log and -status.json. No full attempt follows it.
+
+Retain every scenario/assertion and share one cold PowerShell initialization in
+beforeAll; recreate fake processes/cache/events for each case. The original
+10000-ms native-command deadline bounds all eleven scenarios; per-test defaults
+remain unchanged. A name-shadowing error and then Windows ENAMETOOLONG expose
+fixture-refactor mistakes before passing: rename the loop variable and use one
+owned temporary ps1 instead of an oversized encoded command line. Process-only
+PowerShell flags match the existing native awake helper; no machine policy is
+changed. Remove only that file and its now-empty directory, without recursive
+deletion. Focused checks PASS all eighteen cases/three files, with fixture setup
+4982.9124 ms. Independent read-only review confirms unchanged assertions/state
+isolation/cleanup and finds no concrete defect. Production sampling is unchanged.
+
+Fresh changed-fixture canonical standalone/full results are pending. Keep T-026 unchecked for full
 acceptance and owner-supplied
 actual-candidate Windows/macOS/Ubuntu CI. Scoped visual QA remains recorded in
 [t026-native-qa.md](t026-native-qa.md); this repair changes no UI.
