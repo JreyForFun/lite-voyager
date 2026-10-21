@@ -1,61 +1,53 @@
-﻿# Progress
+# Progress
 
 ## Current phase / task
-Milestone 2: T-026 implemented; review repairs pass focused tests, gates/CI open.
+Milestone 2: T-026 implemented; scoped QA/review pass, repaired gates/CI open.
 T-025 remains complete. Evidence: docs/t026-autocomplete.md.
 
 ## Verify status
-Repaired verify PASS: 949 units/96 files, types/lint/build/34-file VSIX; no diagnostics.
-582.270 seconds/276 frozen hashes match; no standby events. Prior failures retained.
-Full 1 FAIL: 938 units PASS, 75 hosts PASS, one CSV memory observer failure.
-OS snapshot exceeds unchanged 3000 ms; waiting for next snapshot; snapshots=52.
-All four T-026 hosts pass; all 272 captured hashes unchanged over 38m19s.
-Strict scan rejects 20261020T194207/window1/renderer.log:827: error, 1 test failed.
-Approved HOST-001 warning there at line 10; full is failed/not warning-free.
-CSV-only diagnostic PASS: 1/5 GB, complete data/hashes, all 80 pages per size.
-Peaks 313749504 /322875392; paging growth 29921280 /22020096 bytes.
-Its only warning is HOST-001 at 20261020T201631/window1/renderer.log:9.
-All exact HOST-001 warning messages:
-[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
-Authorized full FAIL after 35f23ca: 938 units/75 hosts pass, one JSON fixture fail.
-First 1-GB JSON generation command fails; exit-code/signal details are absent.
-Its 180000-ms cap is unchanged; no timeout/cause is inferred.
-All four T-026 cases and complete 1/5-GB CSV workloads pass this attempt.
-All 272 hashes match across 2072.494 seconds; no third full run started.
-Strict scan rejects 20261020T203829/window1/renderer.log:827: error, 1 test failed.
-Sole approved HOST-001 warning at line 10; failed full is not warning-free.
-2026-10-21 fixture-only diagnostic PASS: same Electron runtime/180000-ms cap.
-1,000,016,431 bytes/hash match; generation 8734.8942 ms; stderr empty.
-Original diagnostics alone do not explain or clear either failed full.
+Candidate c55ec7f standalone PASS: 956 units/96 files, types/lint/build/VSIX.
+Zero errors/warnings; 609.903 seconds, all 277 frozen hashes unchanged.
+Earlier full failures retained: CSV 3000-ms snapshot watchdog, then JSON generation.
+Windows idle standby spans both earlier failures; historical child signal unknown.
+Awake repair 3f3f6f0 passes 11 focused/native lifecycle tests and 949-unit verify.
+Guarded unchanged 1-GB JSON generation/data/hash passes in 7951.8724 ms.
+Owner later reauthorizes repaired-candidate full validation and necessary fixes.
+Full c55ec7f FAIL: 956 units/75 hosts pass, one CSV missing-metadata failure.
+All four T-026 hosts and every populated 1/5-GB JSON/JSONL size pass.
+All 277 hashes match over 2466.235 seconds; checked query finds no standby events.
+Strict scan rejects 20261021T233850/window1/renderer.log:826, error: 1 test failed.
+Sole approved HOST-001 warning there at line 10; failed full is not warning-free.
+Exact message: [CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
 
 ## Last session
 Owner delegates implementation, decisions, repairs/fixtures and visual QA.
 Schema/keyword completion, quoted names/aliases and lifecycle tests pass both engines.
 All five imported formats pass actual-host completion/SQL/source-safety checks.
-Six final component renders inspected; notice obstruction fixed red-first.
-Native screenshot helper fails twice; no physical-paint claim.
-Owner requests failure analysis/underlying repair while prohibiting full reruns.
-Windows Kernel-Power confirms idle standby spanning both failing steps.
-JSON: enter 20:50:34/resume 20:55:20/fail 20:55:21 on 2026-10-20.
-CSV: enter 20:11:28/resume 20:13:11/fail 20:13:15.778.
-Verification previously held no awake request; historical child signal is unknown.
-Scoped native awake lease now covers canonical checks, with owner-exit cleanup.
-Eleven focused tests pass; red failures/native checks in docs/t026-standby-repair.md.
-Unchanged guarded 1-GB fixture passes in 7951.8724 ms with complete hash equality.
+Light/dark actual-workbench renderer captures and scoped keymap/SQL checks pass.
+Native screenshot helper fails twice; no physical-paint/jank claim.
+Visual-launch diagnostics remain separate; see docs/t026-native-qa.md.
+Fresh independent review finds Unicode/quoted-keyword/quoted-dot alias defects.
+Red-first repairs pass 19 context/worker cases and actual-host Unicode/SQL checks.
+Full then exposes separate-counter/CIM process-exit race in existing CSV observer.
+Owned churn reproduces missing metadata for a successfully sampled identity.
+Native collector now pins identity/obtains metadata before refreshing/reading RSS.
+Every read counter retains metadata; no invented counters or relaxed guards.
+Null RSS is rejected; malformed/CIM/access-denied failures survive concurrent exit.
+Eleven new Windows cases plus seven unchanged cache/metadata cases pass (18).
+Independent follow-up is clear; real churn passes 23 snapshots/max gap 868.3015 ms.
+Both CSV hosts pass calibration/1/5-GB/all-80-page/data/hash checks (419.838 s).
+Sole approved HOST-001: 20261022T002359/window1/renderer.log:9, warning; not warning-free.
+Evidence and retained failures: docs/t026-csv-observer-repair.md.
 
 ## Decisions / limits
 Existing MIT autocomplete 6.20.3 declared directly; 577 locked versions unchanged.
 100 suggestions/64 Ki reply text; 64 Ki SQL document/16 referenced tables.
 Ordinary FROM/JOIN aliases; CTE/subquery context explained.
 No source writes, network, telemetry, engine API, guard or deadline changes.
-Standby explains the full/isolated environmental difference; retain failed fulls.
-Repair verification only; no fixture/extension/workload/clock/deadline changes.
+Awake lease and OS sampling repairs affect verification only; no extension changes.
 Preserve owner edits/unrelated fixtures; owner pushes and supplies exact-candidate CI.
 
 ## Next
-Owner now reauthorizes repaired-candidate full validation, repairs and delegated QA.
-Feature 35f23ca/awake repair 3f3f6f0 retained; scoped review repair follows.
-Actual-host light/dark renderer QA passes; capture limits/warnings in t026-native-qa.md.
-Review repairs Unicode/quoted aliases; 19 focused cases/final inspection pass.
-Run current-candidate standalone then one full under awake guard; owner supplies CI.
-Keep T-026 unchecked; preserve failures/guards; no new task/release/tag or retry loop.
+Commit reviewed CSV repair, then run standalone and one changed-candidate full.
+Keep T-026 unchecked until full acceptance and actual-candidate three-platform CI.
+No new task/release/tag, diagnostic allowance or unchanged retry-to-green loop.

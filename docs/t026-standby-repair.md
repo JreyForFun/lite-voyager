@@ -90,7 +90,11 @@ fixes, while retaining push/CI. This supersedes the earlier no-full instruction.
 Run one canonical full on the repaired candidate with all original guards and
 prior failures retained; do not infer permission for unchanged retry-to-green.
 Actual-host renderer visual evidence and exact tooling diagnostics are in
-[t026-native-qa.md](t026-native-qa.md). The new full result is pending.
+[t026-native-qa.md](t026-native-qa.md). The authorized full on c55ec7f completes
+without standby and passes every populated JSON/JSONL fixture/import/data/hash
+case, but fails a distinct CSV process-metadata race. It remains failed; detailed
+reproduction, repair and exact diagnostics are in
+[t026-csv-observer-repair.md](t026-csv-observer-repair.md).
 
 Commands for focused and standalone checks:
 

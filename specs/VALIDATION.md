@@ -85,7 +85,29 @@ ASCII-only folding and token-kind-aware keyword/punctuation matching repair them
 Nineteen context/real-worker cases pass on both engines, with exact accepted SQL
 and source hashes. Independent follow-up finds no remaining concrete defect;
 post-repair actual-host Unicode completion also passes scoped visual/SQL checks.
-Current-candidate standalone/full results remain pending.
+Current-candidate standalone passes 956 units/96 files with zero errors/warnings.
+The repaired-candidate full fails after 956 units/75 hosts pass: CSV observation
+rejects `Missing or invalid process metadata.` All four FR-012 hosts and every
+populated JSON/JSONL size pass; all 277 frozen hashes match and no standby events
+occur. Preserve this failure and its strict runtime-log follow-up.
+**CSV observer repair acceptance (2026-10-22):** A controlled process-churn
+diagnostic reproduces counters for an identity whose later CIM lookup returns
+no rows. Acquire the original process handle, resolve immutable metadata, then
+refresh/read its RSS in the same persistent native collector. A process which
+exits before its counter can be read produces no counter observation; every
+successfully read counter must keep its matching metadata even if it then exits.
+Missing metadata for a live process, invalid/duplicate/reused identities and OS
+errors still fail. Keep all existing cache checks, snapshot/gap deadlines,
+sample/phase coverage, source hashes and 1/5-GB/80-page workloads. Test ordering,
+exit boundaries, live missing metadata, PID reuse and actual process churn before
+accepting the repaired observer. No unchanged full retry or diagnostic allowance.
+Eleven new Windows lifecycle cases and seven unchanged cache/metadata cases pass;
+independent follow-up is clear after three red-first concurrent-exit guard fixes.
+Actual churn passes 23 snapshots/max gap 868.3015 ms. Both unchanged CSV hosts
+then pass calibration, complete 1/5-GB data/source hashes and all 80 pages per size.
+The exact HOST-001 warning at 20261022T002359/window1/renderer.log:9 and measurements
+are retained in docs/t026-csv-observer-repair.md; it is not warning-free and does
+not clear the failed full. Fresh changed-candidate canonical gates remain pending.
 Six inspected component renders use shipped webview/CSP; notice overlap
 fails geometry before repair. Native screenshot selection fails twice; no native
 paint claim. Preserve all failures/guards; owner supplies actual-candidate CI.
@@ -4773,7 +4795,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Preserve autocomplete acceptance, failed fulls/exact diagnostics and standby repair. Later owner direction authorizes repaired-candidate gates and delegated QA. Fresh-context review repairs Unicode/quoted-token defects with failing regressions first; nineteen context/worker cases, exact execution/hashes and current-bundle actual-host light/dark checks pass. Record visual-console diagnostics separately; no weakened guard/deadline, unchanged retry loop or task closure.
+- T-026 (2026-10-20): Retain prior full failures, standby diagnosis/repair and scoped actual-host QA. Candidate c55ec7f passes 956-unit standalone but full fails at separate CSV counter/CIM metadata discovery, without standby. Reproduce the process-exit race; metadata-before-RSS sampling, strict error preservation and eleven new lifecycle tests repair it. Eighteen focused cases, native churn and independent follow-up pass; current repaired gates/owner CI remain open. No weakened guard, unchanged retry loop or task closure.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

@@ -1338,6 +1338,16 @@ quoted-keyword and quoted-dot cases pass both engines/exact execution/source
 hashes; nineteen focused cases pass and independent follow-up is clear. A rebuilt
 actual host rechecks Ä/ä aliases and light/dark appearance before canonical gates.
 
+Candidate c55ec7f passes 956-test standalone verify without diagnostics, but its
+full fails with 75 host passes at CSV missing process metadata; no standby occurs
+and all populated JSON/JSONL sizes pass. Reproduce the separate counter/CIM exit
+race and resolve identity metadata before reading fresh RSS in one persistent
+native collector. Preserve every successfully read counter, all existing strict
+cache/identity and memory/coverage/deadline guards. Eleven new lifecycle cases and
+seven existing cache/metadata cases pass; independent follow-up and actual churn
+checks pass. Retain the failed full and exact diagnostics. Detailed evidence and
+current fresh-validation status: docs/t026-csv-observer-repair.md.
+
 ## 9. Risks
 
 | ID | Risk | Mitigation |
@@ -1351,7 +1361,7 @@ actual host rechecks Ä/ä aliases and light/dark appearance before canonical ga
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Record bounded metadata completion and retained failed fulls/standby repair. Later owner authorization permits repaired-candidate gates/QA; independent review repairs Unicode and quoted-token matching red-first. Nineteen focused cases and current-bundle actual-host visual/SQL checks pass, with capture/tooling-diagnostic limits retained. Preserve all guards, owner push/CI and open task status.
+- T-026 (2026-10-20): Retain prior full failures, standby diagnosis/repair and scoped actual-host QA. Candidate c55ec7f passes 956-unit standalone but full fails at separate CSV counter/CIM metadata discovery, without standby. Reproduce the process-exit race; metadata-before-RSS sampling, strict error preservation and eleven new lifecycle tests repair it. Eighteen focused cases, native churn and independent follow-up pass; current repaired gates/owner CI remain open. No weakened guard, unchanged retry loop or task closure.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

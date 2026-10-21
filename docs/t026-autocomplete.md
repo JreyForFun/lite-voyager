@@ -184,7 +184,7 @@ These are component observations; real-host keyboard behavior is separate.
   No concrete source/fixture defect is identified, so no speculative code edit,
   assertion weakening, deadline increase or additional unchanged full is made.
 
-Current acceptance: schema/keyword/quoted insertion, aliases, bounds/notices,
+Historical acceptance before the later repairs: schema/keyword/quoted insertion, aliases, bounds/notices,
 stale/disposed/busy/error paths, both engines, all imported formats, source safety
 and scoped component visuals have passing evidence. Both canonical full attempts
 remain failed for the distinct reasons above. Native physical-paint QA and
@@ -229,6 +229,16 @@ inspection reports no remaining concrete material defect in these repairs.
 No guards, budgets, fixture sizes, existing assertions or dependencies change.
 Actual-host post-repair Unicode completion and light/dark renderer observations
 are in t026-native-qa.md. Canonical standalone/full validation follows this repair.
+
+Candidate c55ec7f then passes literal standalone verification with 956 units/96
+files and zero errors/warnings, all 277 hashes unchanged. The authorized full
+passes 956 units/75 hosts and all four FR-012 cases, but fails the existing CSV
+observer's separate counter/metadata discovery. Every populated JSON/JSONL size
+passes; no standby event occurs. Preserve this third failed full and its exact
+strict runtime diagnostics. The reproduced process-exit race, red-first repair,
+independent review, original guards and fresh validation status are recorded in
+[t026-csv-observer-repair.md](t026-csv-observer-repair.md). No unchanged retry or
+task/whole-milestone closure is claimed.
 
 New production modules: src/editor/sql-completion.ts, webview/sql-completion.ts.
 Changed production: src/editor/sqlite-browser.ts, src/protocol.ts,
