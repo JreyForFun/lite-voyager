@@ -198,6 +198,15 @@ VALIDATION section 1. T-026 cannot be checked on this evidence.
 - Owner-pushed actual-candidate three-platform CI: pending.
 - T-026 remains unchecked. Whole Milestone 2 QA/review and release/tag stay open.
 
+**Later owner-requested investigation (2026-10-21):** Windows Kernel-Power records
+confirm idle Modern Standby spanning both failing steps. The fixture interval
+includes 20:50:34 entering standby through 20:55:20 resume, followed by failure at
+20:55:21. Verification lacked an awake request; isolated execution did not exercise
+that interruption. The tooling-only repair and tests are in
+[t026-standby-repair.md](t026-standby-repair.md). This adds evidence to the earlier
+unknown-cause record, without inventing historical exit/signal details or clearing
+either failed full. The owner prohibition on further full runs remains in force.
+
 New production modules: src/editor/sql-completion.ts, webview/sql-completion.ts.
 Changed production: src/editor/sqlite-browser.ts, src/protocol.ts,
 webview/sql-editor.ts, webview/sqlite-browser.ts, package.json, package-lock.json.

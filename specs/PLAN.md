@@ -1316,6 +1316,17 @@ passing diagnostics do not explain or clear them. The single owner-authorized
 unchanged full rerun is consumed. Preserve failures/guards; full acceptance and
 owner-pushed candidate CI remain open.
 
+Owner-requested failure investigation on 2026-10-21 confirms Windows idle Modern
+Standby spanning both failed steps. Add a verification-only native system-awake
+lease around all canonical checks, with acknowledged startup, bounded fail-closed
+cleanup and owner-exit release; do not change fixture bytes or any gate/deadline.
+No Windows helper on other platforms; no shipped extension/power-plan/display
+change. See docs/t026-standby-repair.md. Validate focused/native lifecycle checks
+and standalone verify only; retain the owner's no-further-full-rerun decision.
+Repair passes eleven focused tests, actual native owner-exit/release checks,
+unchanged guarded 1-GB generation/hash and 949-test zero-diagnostic standalone.
+No standby event occurs during that run; both old full failures remain retained.
+
 ## 9. Risks
 
 | ID | Risk | Mitigation |
@@ -1329,7 +1340,7 @@ owner-pushed candidate CI remain open.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Record bounded metadata completion, direct declaration of existing MIT autocomplete, quote/alias handling and semantic limits. Both-engine/all-format acceptance and clean standalone pass; retain both failed full attempts and separate passing diagnostics. Single authorized unchanged rerun consumed; preserve all guards, owner push/CI and open task status.
+- T-026 (2026-10-20): Record bounded metadata completion, existing direct MIT autocomplete and semantic limits. Retain both failed fulls/diagnostics. Owner-requested standby investigation adds tooling-only native awake protection with focused/native/unchanged-fixture evidence and 949-test clean standalone. Preserve all guards, no-further-full-rerun decision, owner push/CI and open task status.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

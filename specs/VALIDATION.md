@@ -55,6 +55,24 @@ pass and cannot explain/clear the failure. Logs, hashes and CSV measurements are
 in the linked record. No concrete defect is identified; no speculative fixture
 edit or third full attempt. The single authorization is consumed; preserve both
 failed fulls and keep T-026 unchecked pending full acceptance/candidate CI.
+**Repair acceptance (2026-10-21, owner-requested failure investigation):** Windows
+Kernel-Power events confirm idle Modern Standby spanning the JSON generation
+step (506 at 20:50:34, 507 at 20:55:20; test failure at 20:55:21 on 2026-10-20).
+Verification must acquire a temporary, acknowledged Windows system-awake request
+before checks start and release it after success/failure or owner-process exit.
+Acquisition failure or premature helper exit must fail verification. Other
+platforms start no Windows helper. Test these lifecycle paths first, then validate
+the real native request and unchanged fixture bytes/hash. This is tooling only:
+do not keep the extension/display awake, alter power plans, retry commands,
+subtract suspended time, or relax workloads/deadlines/diagnostics. The owner's
+no-further-full-rerun decision remains in force; use focused checks and standalone
+verify, preserving both failed fulls and historical exit-detail limitations.
+Repaired standalone verify PASSes 949 tests/96 files, types/lint/build and unchanged
+34-file/996.33-KB VSIX, zero errors/warnings. Native acquisition/release and all
+276 frozen hashes pass across 582.270 seconds; no standby events occur in that
+window. Eleven focused regressions and guarded unchanged 1-GB generation/hash pass.
+See docs/t026-standby-repair.md for original power events, retained red failures,
+native cleanup/owner-exit coverage and exact scope. No further full run is made.
 Six inspected component renders use shipped webview/CSP; notice overlap
 fails geometry before repair. Native screenshot selection fails twice; no native
 paint claim. Preserve all failures/guards; owner supplies actual-candidate CI.
@@ -4742,7 +4760,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Record autocomplete acceptance, red-first worker/host/lifecycle repairs, component visuals and 938-unit clean standalone. Preserve first failed full (CSV observer), passing CSV diagnostic and owner-authorized failed full (JSON fixture generation), each full's exact diagnostics/unknown cause and the 2026-10-21 passing fixture-only diagnostic. Single rerun consumed; no third unchanged attempt, weakened guard, warning-free full claim or task closure.
+- T-026 (2026-10-20): Record autocomplete acceptance, red-first repairs and component visuals. Preserve both failed fulls/exact diagnostics and separate diagnostics. Owner-requested 2026-10-21 investigation confirms idle standby spanning both failing steps; tooling-only native awake-lease repair passes eleven focused tests, unchanged 1-GB generation/hash and 949-test clean standalone. No standby events during repaired verify; no weakened gate/deadline or further full rerun. Keep task open for full/candidate CI.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.
