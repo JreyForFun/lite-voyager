@@ -5,7 +5,11 @@ import { MAX_COMPLETION_TEXT, type CompletionSearch, type SchemaSuggestions } fr
 interface Token { value: string; from: number; to: number; kind: 'name' | 'quoted' | 'string' | 'comment' | 'symbol'; }
 interface Context extends CompletionSearch { from: number; to: number; notice?: string; }
 export type SearchSchema = (search: CompletionSearch) => Promise<SchemaSuggestions | undefined>;
-const keywords = new Set((SQLite.spec.keywords ?? '').toUpperCase().split(/\s+/u));
+// SQLite folds only ASCII identifier case; Unicode case pairs remain distinct.
+const nameKey = (name: string): string => name.replace(/[A-Z]/gu, (letter) => letter.toLowerCase());
+const keywords = new Set(nameKey(SQLite.spec.keywords ?? '').split(/\s+/u));
+const isKeyword = (token: Token | undefined, ...words: readonly string[]): boolean => token?.kind === 'name' && words.includes(nameKey(token.value));
+const isSymbol = (token: Token | undefined, value: string): boolean => token?.kind === 'symbol' && token.value === value;
 const quote = (name: string): string => `"${name.replaceAll('"', '""')}"`;
 
 /** A bounded lexical pass; no execution or claim to resolve CTE/subquery scopes. */
@@ -43,7 +47,7 @@ export function completionContext(context: CompletionContext): Context | null {
   const current = all.find((token) => token.from < context.pos && token.to >= context.pos);
   if (current?.kind === 'comment' || current?.kind === 'string') { return null; }
   const token = current?.kind === 'name' || current?.kind === 'quoted' ? current : undefined;
-  if (token === undefined && !context.explicit && current?.value !== '.') { return null; }
+  if (token === undefined && !context.explicit && !isSymbol(current, '.')) { return null; }
   const from = token?.from ?? context.pos; const to = token?.to ?? context.pos;
   const raw = context.state.sliceDoc(from, context.pos);
   const prefix = token?.kind === 'quoted' ? tokens(raw)[0]?.value ?? '' : raw;
@@ -53,33 +57,33 @@ export function completionContext(context: CompletionContext): Context | null {
   const before = statement.filter((item) => item.to <= from);
   if (before.length === 0) { return null; }
   const result = { from, to, prefix, tables: [] as string[], includeTables: true, useSelectedTable: true };
-  if (statement.some((item) => item.kind === 'name' && item.value.toUpperCase() === 'WITH') || statement.some((item, i) => item.value === '(' && statement[i + 1]?.value.toUpperCase() === 'SELECT')) {
+  if (statement.some((item) => isKeyword(item, 'with')) || statement.some((item, i) => isSymbol(item, '(') && isKeyword(statement[i + 1], 'select'))) {
     return { ...result, notice: 'Schema autocomplete cannot resolve CTEs or subqueries. Use a simple statement or browse its schema; keywords remain available.' };
   }
   const aliases = new Map<string, string>();
   for (let i = 0; i < statement.length; i++) {
-    if (statement[i]?.kind !== 'name' || !['FROM', 'JOIN'].includes(statement[i]?.value.toUpperCase() ?? '')) { continue; }
+    if (!isKeyword(statement[i], 'from', 'join')) { continue; }
     let table = statement[++i];
     if (table?.kind !== 'name' && table?.kind !== 'quoted') { continue; }
-    if (statement[i + 1]?.value === '.') {
-      if (table.value.toLowerCase() !== 'main') { return { ...result, notice: 'Only the main database schema is available for autocomplete.' }; }
+    if (isSymbol(statement[i + 1], '.')) {
+      if (nameKey(table.value) !== 'main') { return { ...result, notice: 'Only the main database schema is available for autocomplete.' }; }
       table = statement[i += 2];
     }
     if (table === undefined || table.from === from) { continue; }
-    result.tables.push(table.value); aliases.set(table.value.toLowerCase(), table.value);
-    if (statement[i + 1]?.value.toUpperCase() === 'AS') { i++; }
+    result.tables.push(table.value); aliases.set(nameKey(table.value), table.value);
+    if (isKeyword(statement[i + 1], 'as')) { i++; }
     const alias = statement[i + 1];
-    if (alias?.kind === 'quoted' || alias?.kind === 'name' && !keywords.has(alias.value.toUpperCase())) { aliases.set(alias.value.toLowerCase(), table.value); }
+    if (alias?.kind === 'quoted' || alias?.kind === 'name' && !keywords.has(nameKey(alias.value))) { aliases.set(nameKey(alias.value), table.value); }
   }
   result.tables = [...new Set(result.tables)];
   if (result.tables.length > 16) { return { ...result, notice: 'Schema autocomplete supports at most 16 referenced tables. Simplify the statement.' }; }
   const previous = before.at(-1);
-  if (previous?.value === '.') {
+  if (isSymbol(previous, '.')) {
     result.useSelectedTable = false;
     const qualifier = before.at(-2)?.value ?? '';
-    if (qualifier.toLowerCase() === 'main' && !aliases.has('main')) { result.tables = []; result.includeTables = true; }
-    else { result.tables = [aliases.get(qualifier.toLowerCase()) ?? qualifier]; result.includeTables = false; }
-  } else if (previous?.kind === 'name' && ['FROM', 'JOIN'].includes(previous.value.toUpperCase())) { result.tables = []; result.useSelectedTable = false; }
+    if (nameKey(qualifier) === 'main' && !aliases.has('main')) { result.tables = []; result.includeTables = true; }
+    else { result.tables = [aliases.get(nameKey(qualifier)) ?? qualifier]; result.includeTables = false; }
+  } else if (isKeyword(previous, 'from', 'join')) { result.tables = []; result.useSelectedTable = false; }
   return result;
 }
 

@@ -207,6 +207,29 @@ that interruption. The tooling-only repair and tests are in
 unknown-cause record, without inventing historical exit/signal details or clearing
 either failed full. The owner prohibition on further full runs remains in force.
 
+**Subsequent authorization (2026-10-21):** Owner directs full local validation,
+repairs/fixtures and delegated visual QA on the repaired candidate, superseding
+the earlier no-full instruction. Preserve original failures and unchanged guards;
+owner retains push/remote CI. Actual-host renderer observations and separate
+visual-launch diagnostics are recorded in [t026-native-qa.md](t026-native-qa.md).
+The repaired-candidate full result is pending. Fresh-context independent review
+reads the actual task diff and finds a MEDIUM alias defect: Unicode toLowerCase
+merges SQLite-distinct Ä/ä aliases. Red-first context and both-worker tests return
+lower_table.first_lower instead of upper_table.first_upper. A related ſelect
+alias also fails because Unicode uppercasing mistakes it for SELECT. Two more
+red cases cover quoted AS aliases and SELECT identifiers inside parentheses.
+Use ASCII-only name folding and require name tokens for SQL keywords.
+
+Independent follow-up finds one further MEDIUM case: a quoted dot alias is
+mistaken for structural punctuation. Its lexical and both-worker regressions
+fail before isSymbol requires symbol tokens for dots/parentheses. All 19 focused
+context/worker cases then pass, including accepted identifiers executing against
+both actual engines and exact unchanged source hashes. Final read-only independent
+inspection reports no remaining concrete material defect in these repairs.
+No guards, budgets, fixture sizes, existing assertions or dependencies change.
+Actual-host post-repair Unicode completion and light/dark renderer observations
+are in t026-native-qa.md. Canonical standalone/full validation follows this repair.
+
 New production modules: src/editor/sql-completion.ts, webview/sql-completion.ts.
 Changed production: src/editor/sqlite-browser.ts, src/protocol.ts,
 webview/sql-editor.ts, webview/sqlite-browser.ts, package.json, package-lock.json.

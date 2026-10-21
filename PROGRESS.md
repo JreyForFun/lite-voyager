@@ -1,7 +1,7 @@
 ﻿# Progress
 
 ## Current phase / task
-Milestone 2: T-026 implemented; standby repair passes standalone, full/CI open.
+Milestone 2: T-026 implemented; review repairs pass focused tests, gates/CI open.
 T-025 remains complete. Evidence: docs/t026-autocomplete.md.
 
 ## Verify status
@@ -53,8 +53,9 @@ Repair verification only; no fixture/extension/workload/clock/deadline changes.
 Preserve owner edits/unrelated fixtures; owner pushes and supplies exact-candidate CI.
 
 ## Next
-Owner explicitly decides: Retain the failed gates; no further full rerun (2026-10-21).
-Feature commit 35f23ca; native awake repair passes focused/standalone checks.
-Full acceptance/candidate CI and native physical-paint observations remain open.
-Standalone verified under native awake guard; do not rerun the full gate.
-Keep T-026 unchecked; no new task, closure/release/tag or automatic retry-to-green.
+Owner now reauthorizes repaired-candidate full validation, repairs and delegated QA.
+Feature 35f23ca/awake repair 3f3f6f0 retained; scoped review repair follows.
+Actual-host light/dark renderer QA passes; capture limits/warnings in t026-native-qa.md.
+Review repairs Unicode/quoted aliases; 19 focused cases/final inspection pass.
+Run current-candidate standalone then one full under awake guard; owner supplies CI.
+Keep T-026 unchecked; preserve failures/guards; no new task/release/tag or retry loop.

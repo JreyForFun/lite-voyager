@@ -12,6 +12,28 @@ function context(text: string): CompletionContext {
   return new CompletionContext(EditorState.create({ doc, extensions: [sql({ dialect: SQLite })] }), pos, true);
 }
 
+test('FR-012: Given SQLite-distinct Unicode aliases, When qualifying columns, Then ASCII folding preserves each alias and ordinary case-insensitive lookup', () => {
+  expect(completionContext(context('SELECT "Ä".fi| FROM upper_table AS "Ä" JOIN lower_table AS "ä" ON 1'))).toMatchObject({ tables: ['upper_table'], includeTables: false });
+  expect(completionContext(context('SELECT "ä".fi| FROM upper_table AS "Ä" JOIN lower_table AS "ä" ON 1'))).toMatchObject({ tables: ['lower_table'], includeTables: false });
+  expect(completionContext(context('SELECT mixed.fi| FROM upper_table AS MiXeD'))).toMatchObject({ tables: ['upper_table'], includeTables: false });
+});
+
+test('FR-012: Given a Unicode alias resembling an ASCII keyword, When qualifying its column, Then the identifier remains an alias', () => {
+  expect(completionContext(context('SELECT ſelect.fi| FROM upper_table AS ſelect'))).toMatchObject({ tables: ['upper_table'], includeTables: false });
+});
+
+test.each(['SELECT "AS".fi| FROM users "AS"', 'SELECT max("SELECT"), fi| FROM users'])('FR-012: Given quoted keyword identifiers, When analyzing %s, Then only unquoted tokens are SQL keywords', (text) => {
+  const result = completionContext(context(text));
+  expect(result).toMatchObject({ tables: ['users'] });
+  expect(result?.notice).toBeUndefined();
+});
+
+test('FR-012: Given a quoted punctuation alias, When qualifying a column, Then the literal alias is not parsed as a schema separator', () => {
+  const result = completionContext(context('SELECT ".".fi| FROM users "."'));
+  expect(result).toMatchObject({ tables: ['users'], includeTables: false });
+  expect(result?.notice).toBeUndefined();
+});
+
 test('FR-012: Given a legal table alias named main, When qualifying a column, Then the alias takes precedence over a schema-name guess', () => {
   expect(completionContext(context('SELECT main.na| FROM users AS main'))).toMatchObject({ tables: ['users'], includeTables: false });
 });

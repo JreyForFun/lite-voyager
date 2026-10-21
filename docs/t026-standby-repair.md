@@ -84,6 +84,14 @@ No full rerun is started; both original full failures and exact diagnostics rema
 [t026-autocomplete.md](t026-autocomplete.md). T-026 remains unchecked for full
 acceptance and owner-supplied actual-candidate three-platform CI.
 
+**Later owner authorization (2026-10-21):** After the repair, the owner explicitly
+directs completion of local full verification, native visual QA and any necessary
+fixes, while retaining push/CI. This supersedes the earlier no-full instruction.
+Run one canonical full on the repaired candidate with all original guards and
+prior failures retained; do not infer permission for unchanged retry-to-green.
+Actual-host renderer visual evidence and exact tooling diagnostics are in
+[t026-native-qa.md](t026-native-qa.md). The new full result is pending.
+
 Commands for focused and standalone checks:
 
 ```
