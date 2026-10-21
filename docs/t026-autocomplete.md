@@ -191,6 +191,10 @@ remain failed for the distinct reasons above. Native physical-paint QA and
 actual-candidate three-platform CI are unobserved. The single authorized rerun
 is consumed; further unchanged full attempts need a new owner decision under
 VALIDATION section 1. T-026 cannot be checked on this evidence.
+- On 2026-10-21 the owner explicitly answers: `Retain the failed gates; no further
+  full rerun`. Keep both failed fulls and separate diagnostics for investigation;
+  do not start another full attempt. This decision does not clear either failure
+  or change any acceptance criterion, guard or task checkbox.
 - Owner-pushed actual-candidate three-platform CI: pending.
 - T-026 remains unchecked. Whole Milestone 2 QA/review and release/tag stay open.
 

@@ -45,8 +45,8 @@ No concrete source/fixture defect identified; no speculative repair or guard cha
 Preserve owner edits/unrelated fixtures; owner pushes and supplies exact-candidate CI.
 
 ## Next
-Owner's single unchanged full rerun authorization is consumed; no further one authorized.
+Owner explicitly decides: Retain the failed gates; no further full rerun (2026-10-21).
 Code committed at 35f23ca; preserve owner edits and unrelated fixtures.
 Full acceptance/candidate CI and native physical-paint observations remain open.
-Further unchanged full needs a new owner decision under VALIDATION section 1.
+Retain both failures/diagnostics for investigation; do not rerun the full gate.
 Keep T-026 unchecked; no new task, closure/release/tag or automatic retry-to-green.
