@@ -4,6 +4,12 @@ Owner delegates implementation, uncertainty resolution, scoped fixes/fixtures an
 visual QA; owner retains push and actual-candidate CI. SPEC FR-012 acceptance
 precedes tests/code. No whole-milestone closure, release or tag is implied.
 
+Latest local status (2026-10-22 Asia/Manila): candidate e64859c passes standalone
+verify (967 units, zero errors/warnings) and full verification (967 units/76 hosts,
+one exact approved HOST-001 warning; not warning-free). Review and scoped
+light/dark actual-host renderer QA pass. Preserve all earlier failures. Owner-pushed
+actual-candidate three-platform CI remains pending; T-026 stays unchecked.
+
 ## Design and limits
 
 The existing SQLite language supplies keywords. Declare already-installed/locked
@@ -240,6 +246,13 @@ independent review, original guards and fresh validation status are recorded in
 [t026-csv-observer-repair.md](t026-csv-observer-repair.md). No unchanged retry or
 task/whole-milestone closure is claimed.
 
+The final reviewed fixture candidate e64859c749d1fd5cca50f5c1b19eef56337b3ea6
+passes literal standalone and full gates with all 280 captured hashes unchanged.
+All four FR-012 hosts and every original populated SQLite/JSON/JSONL/CSV workload
+pass. Exact timestamps, measurements, retained power events and approved renderer
+warning are in t026-csv-observer-repair.md. No executable changes follow these
+passes; final record changes do not tick the task or claim remote CI.
+
 New production modules: src/editor/sql-completion.ts, webview/sql-completion.ts.
 Changed production: src/editor/sqlite-browser.ts, src/protocol.ts,
 webview/sql-editor.ts, webview/sqlite-browser.ts, package.json, package-lock.json.
@@ -250,6 +263,44 @@ Records: this file, specs/SPEC.md, specs/PLAN.md, specs/VALIDATION.md,
 specs/TASKS.md, specs/DEPENDENCIES.md, specs/dependency-licenses.json, PROGRESS.md.
 Preserve existing owner edits; README, unrelated
 fixtures/debug files and ignored out/t026-* evidence are excluded from the task.
+
+## Complete changed-file inventory
+
+All 31 task files relative to baseline 3d41443; owner edits are excluded:
+
+```
+PROGRESS.md
+docs/t026-autocomplete.md
+docs/t026-csv-observer-repair.md
+docs/t026-native-qa.md
+docs/t026-standby-repair.md
+package-lock.json
+package.json
+scripts/csv-memory.mts
+scripts/keep-awake.mts
+scripts/verify.mts
+scripts/windows-awake.ps1
+specs/DEPENDENCIES.md
+specs/PLAN.md
+specs/SPEC.md
+specs/TASKS.md
+specs/VALIDATION.md
+specs/dependency-licenses.json
+src/editor/sql-completion.ts
+src/editor/sqlite-browser.ts
+src/protocol.ts
+src/test/csv-memory-windows.ts
+src/test/sql-completion.test.ts
+test/unit/browser-view.test.ts
+test/unit/csv-memory-windows.test.ts
+test/unit/keep-awake.test.ts
+test/unit/sql-completion-engine.test.ts
+test/unit/sql-completion.test.ts
+test/unit/sql-editor.test.ts
+webview/sql-completion.ts
+webview/sql-editor.ts
+webview/sqlite-browser.ts
+```
 
 ```
 npm test -- test/unit/sql-completion.test.ts test/unit/sql-completion-engine.test.ts test/unit/browser-view.test.ts test/unit/browser-startup.test.ts test/unit/sql-editor.test.ts

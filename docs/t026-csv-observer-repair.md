@@ -3,6 +3,8 @@
 The owner authorizes necessary repairs and complete local validation, retaining
 push/CI. This repair affects verification only; autocomplete and extension runtime
 behavior do not change. Earlier failed gates remain failed and retained.
+Latest local acceptance is PASS on e64859c (967 units/76 hosts); actual-candidate
+three-platform CI remains pending. The full has one exact approved renderer warning.
 
 ## Retained repaired-candidate gate
 
@@ -108,10 +110,53 @@ deletion. Focused checks PASS all eighteen cases/three files, with fixture setup
 4982.9124 ms. Independent read-only review confirms unchanged assertions/state
 isolation/cleanup and finds no concrete defect. Production sampling is unchanged.
 
-Fresh changed-fixture canonical standalone/full results are pending. Keep T-026 unchecked for full
-acceptance and owner-supplied
-actual-candidate Windows/macOS/Ubuntu CI. Scoped visual QA remains recorded in
-[t026-native-qa.md](t026-native-qa.md); this repair changes no UI.
+## Final local gates (2026-10-22 Asia/Manila)
+
+Reviewed candidate `e64859c749d1fd5cca50f5c1b19eef56337b3ea6`:
+
+- Literal `npm run verify` PASS: 967 units/97 files, all strict types/lint, builds
+  and 34-file/996.36-KB VSIX, zero errors/warnings. Local 00:46:44.099 through
+  00:56:38.552 (UTC 2026-10-21 16:46:44.099 through 16:56:38.552), 594.453 seconds.
+  All 280 captured hashes match; Windows fixture 5548.0793 ms for all eleven cases
+  under the original native-command deadline. Evidence:
+  out/t026-csv-repair-verify-2.log and -status.json.
+- Literal `npm run verify:full` PASS: 967 units/97 files and all 76 host cases,
+  including every FR-012/both-engine/all-format case and all original multi-GB
+  SQLite, ten-million-row JSON/JSONL, populated JSON/JSONL and CSV workloads.
+  Local 00:57:00.122 through 01:41:18.770 (UTC 2026-10-21 16:57:00.122 through
+  17:41:18.770), 2658.648 seconds; exit 0/signal null. All 280 hashes match.
+  Evidence: out/t026-csv-repair-full-1.log and -status.json.
+- The full's only approved runtime diagnostic is VSCODE-HOST-001, source
+  `20261022T010708/window1/renderer.log:10`, severity warning, exact message:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+  No other warning/error is accepted. This full is not warning-free.
+- Final populated CSV 1/5-GB sampled host-plus-helper peaks are
+  318492672 /313462784 bytes; paging growth 22425600 /31137792 bytes; maximum
+  observation gaps 965.9866 /905.8858 ms; host timer gaps 40.2347 /38.1083 ms.
+  All 60 Browse/20 SQL pages per size, imported data and full source hashes pass.
+- SQLite 1.285/5.874-GB sampled peaks are 284688384 /289665024 bytes. JSON 1/5-GB
+  peaks are 295784448 /295895040; JSONL peaks 297705472 /300396544 bytes. Their
+  complete-data/source-hash checks pass. Renderer residency remains separate;
+  these are sampled observations, not unsampled peak or physical-paint claims.
+
+Power queries are retained, not summarized as no events: standalone has two
+506/507 records (completed record 132469: SleepEntered=false, SleepDurationInUs=0,
+DripsResidencyInUs=0). Full has five records; completed 132473 has SleepEntered=false,
+sleep/DRIPS zero; 132478 near the end has SleepEntered=true, SleepDurationInUs=1097601,
+DripsResidencyInUs=0. Its screen-off duration is 1270435661 microseconds. No phase
+or release cause is inferred from these fields. Native acquire/release checks and
+every original workload/deadline pass; no sleep time is subtracted. Compare original
+failed JSON record 132021 (SleepDurationInUs=278406364, DripsResidencyInUs=265758405)
+and CSV record 132006 (100136047 /88144913 respectively). An event 506/507 interval
+alone does not prove the CPU was asleep for its entire duration. Raw checked power
+queries and extracted fields: out/t026-csv-repair-verify-2-power-events-checked.json,
+out/t026-csv-repair-full-1-power-events-checked.json, out/t026-final-evidence-summary.json.
+
+No executable edits or further unchanged full run follow these passes. Scoped
+light/dark actual-host renderer QA remains in [t026-native-qa.md](t026-native-qa.md).
+Owner pushes and supplies the final SHA/Actions URL and successful locked-install/
+applicable full-verification results on Windows/macOS/Ubuntu. Keep T-026 unchecked
+until that evidence passes; no milestone/release/tag closure.
 
 ```
 npm test -- test/unit/csv-memory-windows.test.ts test/unit/csv-import-memory.test.ts test/unit/csv-memory-metadata.test.ts

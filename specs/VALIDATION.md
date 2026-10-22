@@ -102,7 +102,7 @@ sample/phase coverage, source hashes and 1/5-GB/80-page workloads. Test ordering
 exit boundaries, live missing metadata, PID reuse and actual process churn before
 accepting the repaired observer. No unchanged full retry or diagnostic allowance.
 Eleven new Windows lifecycle cases and seven unchanged cache/metadata cases pass;
-independent follow-up is clear after three red-first concurrent-exit guard fixes.
+independent follow-up is clear after three red-first concurrent-exit regressions.
 Actual churn passes 23 snapshots/max gap 868.3015 ms. Both unchanged CSV hosts
 then pass calibration, complete 1/5-GB data/source hashes and all 80 pages per size.
 The exact HOST-001 warning at 20261022T002359/window1/renderer.log:9 and measurements
@@ -114,6 +114,19 @@ Retain failure; share cold initialization for all eleven independent scenarios
 with their assertions/default deadlines and original 10000-ms native-command cap.
 Eighteen focused cases pass; read-only review confirms state isolation/cleanup
 and no assertion weakening. Fixture-refactor failures are in the linked record.
+Final reviewed e64859c passes literal standalone (967 units/97 files, strict
+types/lint/build/34-file VSIX, zero warnings/errors; 594.453 seconds) and full
+(967 units/76 hosts; 2658.648 seconds). All 280 captured hashes match in each run.
+Every original populated SQLite/JSON/JSONL/CSV workload/data/hash/80-page check
+passes. The full's sole approved VSCODE-HOST-001 record is
+20261022T010708/window1/renderer.log:10, severity warning, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+It is not warning-free. Latest power events are retained with exact fields, not
+called absent; completed final records have zero DRIPS residency and the near-end
+full record reports 1097601 microseconds sleep. No clock adjustment or exception
+is introduced. Logs, raw power records/limits and complete measurements are in
+docs/t026-csv-observer-repair.md. No executable change follows; task closure still
+requires owner-pushed actual-candidate Windows/macOS/Ubuntu CI.
 Six inspected component renders use shipped webview/CSP; notice overlap
 fails geometry before repair. Native screenshot selection fails twice; no native
 paint claim. Preserve all failures/guards; owner supplies actual-candidate CI.
@@ -4801,7 +4814,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Preserve prior failed fulls, exact diagnostics, standby repair and CSV counter/CIM race repair. Eighteen focused cases, actual churn, complete existing CSV hosts and independent review pass. Observer candidate standalone retains cold-fixture timeout (966/967 pass); batch identical scenario setup with unchanged assertions/default deadlines/native cap. Repaired fixture and independent follow-up pass; fresh gates/owner CI remain open, with no unchanged retry or task closure.
+- T-026 (2026-10-20): Record final reviewed e64859c local gates: 967-test zero-diagnostic standalone and 967-unit/76-host full with exact HOST-001 warning, not warning-free; all 280 hashes unchanged and original multi-GB data/hash/paging workloads pass. Preserve every failed run, standby/event-field limits, CSV lifetime/fixture repairs and scoped visual QA. No executable edits follow; owner-pushed actual-candidate three-platform CI remains open and T-026 stays unchecked.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

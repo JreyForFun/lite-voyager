@@ -96,6 +96,18 @@ case, but fails a distinct CSV process-metadata race. It remains failed; detaile
 reproduction, repair and exact diagnostics are in
 [t026-csv-observer-repair.md](t026-csv-observer-repair.md).
 
+Final reviewed candidate e64859c passes standalone (967 units, zero errors/warnings)
+and full (967 units/76 hosts, exact HOST-001 reported in the linked record; not
+warning-free). Every original fixture/data/hash/clock/memory workload passes.
+Latest power queries retain screen-off/Modern Standby events; do not claim no
+events or treat their entire duration as CPU suspension. Completed final records
+have zero DRIPS residency; the near-end full record reports 1097601 microseconds
+of SleepDurationInUs. Original failed JSON/CSV records report 278406364 /100136047
+microseconds of sleep and 265758405 /88144913 of DRIPS respectively. Raw events,
+scope limits and original unknown child signal are preserved. The native guard
+requests system availability, not a display lock or blanket hardware guarantee.
+No further executable change/full rerun; owner supplies actual-candidate CI.
+
 Commands for focused and standalone checks:
 
 ```

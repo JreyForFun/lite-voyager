@@ -1351,6 +1351,12 @@ The first observer-repair standalone retains one cold-PowerShell fixture timeout
 (966/967 units pass); no full follows. Share cold fixture initialization while
 retaining all eleven scenarios/assertions/default deadlines and the original
 native-command cap. Eighteen focused cases and independent fixture review pass.
+Final reviewed e64859c passes canonical standalone (967 units, zero diagnostics)
+and full (967 units/76 hosts, exact HOST-001 warning in the linked record; not
+warning-free). All 280 hashes match in each run; every original multi-GB workload
+passes. Power-event fields/limits, failed gates and source hashes are retained in
+docs/t026-csv-observer-repair.md. No executable edits follow; owner-pushed exact-
+candidate three-platform CI remains required, and T-026 stays unchecked.
 
 ## 9. Risks
 
@@ -1365,7 +1371,7 @@ native-command cap. Eighteen focused cases and independent fixture review pass.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Preserve prior failed fulls, exact diagnostics, standby repair and CSV counter/CIM race repair. Eighteen focused cases, actual churn, complete existing CSV hosts and independent review pass. Observer candidate standalone retains cold-fixture timeout (966/967 pass); batch identical scenario setup with unchanged assertions/default deadlines/native cap. Repaired fixture and independent follow-up pass; fresh gates/owner CI remain open, with no unchanged retry or task closure.
+- T-026 (2026-10-20): Record final reviewed e64859c local gates: 967-test zero-diagnostic standalone and 967-unit/76-host full with exact HOST-001 warning, not warning-free; all 280 hashes unchanged and original multi-GB data/hash/paging workloads pass. Preserve every failed run, standby/event-field limits, CSV lifetime/fixture repairs and scoped visual QA. No executable edits follow; owner-pushed actual-candidate three-platform CI remains open and T-026 stays unchecked.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.
