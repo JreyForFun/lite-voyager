@@ -41,7 +41,48 @@ so mutation detection does not depend on filesystem timestamp precision.
 All 51 focused cases/three files PASS (27.36 seconds), including four boundary
 cases, the unchanged reader cases and fallback-race/cap refusal. Independent
 read-only follow-up finds no concrete defect or source-safety weakening.
-Canonical repaired-candidate local gates/fresh three-platform CI remain pending.
+Reviewed executable candidate `1c53c72` passes literal `npm run verify`: all
+972 units/98 files, typechecks, lint, build and unchanged 34-file/996.36-KB VSIX,
+zero warnings/errors. UTC window: 2026-10-22T15:18:35.662Z through
+15:32:13.824Z (818.162 seconds). Log/status: out/t026-json-mutation-verify-1.log
+and -status.json.
+
+One literal `npm run verify:full` for this changed candidate also PASSes:
+972 units/76 host tests, including all four FR-012 cases and every original
+SQLite/JSON/JSONL/CSV workload, exact data/source hashes and all 80 CSV pages per
+size. UTC window: 2026-10-22T15:32:43.753Z through 16:25:53.499Z
+(3189.746 seconds). Log/status: out/t026-json-mutation-full-1.log and -status.json.
+All 282 captured hashes match before/after both gates. Final evidence updates
+are documentation only; no tracked file changes occur during either gate.
+
+The full run is **not warning-free**. Its three exact approved diagnostics all
+have severity `warning` and source `20261022T234624/window1/renderer.log`:
+
+- Line 2, `VSCODE-HOST-002`:
+  `Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 22ms.`
+- Line 3, `VSCODE-HOST-004`:
+  `Creation of workbench contribution 'workbench.contrib.chatPetContext' took 21ms.`
+- Line 12, `VSCODE-HOST-001`:
+  `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+No other warning/error is accepted. CSV 1/5-GB sampled host/helper peaks are
+246624256 /250613760 bytes; paging growth is 29257728 /31547392 bytes;
+maximum observer gaps are 1227.4508 /1301.8573 ms under the unchanged 3000-ms
+guard. All 60 Browse/20 SQL pages per size and complete source hashes pass.
+SQLite peaks are 248082432 /253964288 bytes; JSON 1/5-GB peaks are
+238419968 /240119808 bytes; JSONL peaks are 231731200 /230002688 bytes.
+Renderer residency remains separate; these are sampled metrics, not physical
+paint/jank observations. Successful bounded-window Kernel-Power 506/507 queries
+return zero events for each gate. Raw checked power, metrics and exact diagnostic
+records are retained in out/t026-json-mutation-evidence-summary.json and beside
+the logs. Prior scoped renderer QA remains applicable because no UI changes.
+
+Retain the macOS failure and Windows/Ubuntu success at fdf5ad2. Fresh owner-pushed
+actual-candidate Windows/macOS/Ubuntu CI remains required; T-026 stays unchecked.
+
+Changed files for this follow-up: test/unit/json-import.test.ts, PROGRESS.md,
+docs/t026-autocomplete.md, this file, specs/PLAN.md, specs/TASKS.md and
+specs/VALIDATION.md. All unrelated owner edits remain excluded.
 
 [Run 39771461612](https://github.com/JreyForFun/lite-voyager/actions/runs/39771461612),
 attempt 1, exact `63dadc9dacd9c32b5ffb1a9ac10f7f83a572cc3b`, fails on Ubuntu,
@@ -128,7 +169,7 @@ exact diagnostics and delegated renderer QA remain in
 scoped light/dark renderer QA remains applicable, with physical-screen paint/jank
 unobserved. The owner retains pushing and remote CI.
 
-Changed files for this repair: test/unit/sql-completion-engine.test.ts,
+Changed files for the original clean-checkout repair: test/unit/sql-completion-engine.test.ts,
 test/unit/sql-completion-clean-checkout.test.ts, this file, docs/t026-autocomplete.md,
 PROGRESS.md, specs/PLAN.md, specs/TASKS.md and specs/VALIDATION.md. Preserve unrelated
 owner edits. The owner retains pushing and remote CI.

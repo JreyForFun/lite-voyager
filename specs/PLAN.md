@@ -1305,7 +1305,12 @@ real snapshot check. Both engines must reject source change, retain exact mutate
 bytes and clean all partial output. Keep ordinary-loader fallback-cap refusal and
 all existing deadlines/guards; no product/workflow/dependency change or sleep.
 Four uninstrumented cases fail first; 51 focused cases and independent review pass.
-Current local gates/fresh three-platform CI remain open: docs/t026-ci-repair.md.
+Reviewed executable 1c53c72 passes literal standalone (972 units/98 files, zero
+warnings/errors) and one full gate (972 units/76 hosts, 282 matching hashes).
+Full has three exact approved HOST-002/004/001 warning records at
+20261022T234624/window1/renderer.log:2/3/12 and is not warning-free. Exact messages,
+timings and raw evidence: docs/t026-ci-repair.md. Fresh owner-pushed actual-candidate
+Windows/macOS/Ubuntu CI remains open; preserve failed CI and leave T-026 unchecked.
 
 Run 39771461612/attempt 1/exact 63dadc9 fails all three platforms during units:
 the worker tests assume ignored out already exists. Reproduce in an isolated
@@ -1394,7 +1399,7 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Retain run39796846457/attempt1/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit failure. Controlled deferred-write trace confirms unordered async parent-progress fixture mutation. Four engine/boundary cases fail first; disposable real-worker synchronous mutation preserves production guards/relay/client/cleanup and ordinary fallback-cap refusal. All 51 focused cases/three files and independent review pass. New local gates/fresh actual-candidate three-platform CI remain open; no guard/deadline/workflow change. Keep T-026 unchecked; retain every earlier CI/local failure and exact diagnostics in docs/t026-ci-repair.md.
+- T-026 (2026-10-20): Retain run39796846457/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit fixture failure. Controlled trace establishes unordered async mutation; four cases fail first, then synchronous disposable real-worker mutation preserves product guards/relay/cleanup. All 51 focused cases and independent review pass. Executable1c53c72 passes 972-unit/98-file standalone (zero errors/warnings) and one 972-unit/76-host full (282 matching hashes; three exact approved HOST-002/004/001 warnings at 20261022T234624/window1/renderer.log:2/3/12, not warning-free). Exact messages/logs/metrics: docs/t026-ci-repair.md. Fresh owner-pushed actual-candidate three-platform CI remains open; retain every earlier failure and keep T-026 unchecked.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

@@ -26,9 +26,20 @@ Native/fallback must reject specifically changed source, retain exact mutated
 bytes and remove all partial files. Keep fallback-cap refusal on the ordinary
 loader, all original assertions/deadlines and strict warning rules; no sleep,
 retry, production/workflow/dependency change. Four uninstrumented cases fail
-first; 51 focused cases/three files and independent follow-up pass. Current
-canonical local gates and fresh owner-pushed three-platform CI remain pending.
-Exact logs/metadata/acceptance: docs/t026-ci-repair.md. Keep T-026 unchecked.
+first; 51 focused cases/three files and independent follow-up pass. Reviewed
+executable 1c53c72 passes literal standalone (972 units/98 files, zero
+warnings/errors) and one changed-candidate full (972 units/76 hosts, every original
+large-file workload/data/source hash). All 282 captured hashes match in each run.
+The full is not warning-free: three exact approved records, severity warning,
+source 20261022T234624/window1/renderer.log:
+
+- Line 2, VSCODE-HOST-002: `Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 22ms.`
+- Line 3, VSCODE-HOST-004: `Creation of workbench contribution 'workbench.contrib.chatPetContext' took 21ms.`
+- Line 12, VSCODE-HOST-001: `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+No other warning/error is accepted. Fresh owner-pushed actual-candidate three-
+platform CI remains pending. Exact logs/metadata/timings/metrics/acceptance:
+docs/t026-ci-repair.md. Preserve failed CI and keep T-026 unchecked.
 
 **CI repair acceptance (2026-10-22):** Run 39771461612/attempt 1 at exact
 63dadc9dacd9c32b5ffb1a9ac10f7f83a572cc3b fails all three platforms during units.
@@ -4856,7 +4867,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Retain run39796846457/attempt1/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit failure. Controlled deferred-write trace confirms unordered async parent-progress fixture mutation. Four engine/boundary cases fail first; disposable real-worker synchronous mutation preserves production guards/relay/client/cleanup and ordinary fallback-cap refusal. All 51 focused cases/three files and independent review pass. New local gates/fresh actual-candidate three-platform CI remain open; no guard/deadline/workflow change. Keep T-026 unchecked; retain every earlier CI/local failure and exact diagnostics in docs/t026-ci-repair.md.
+- T-026 (2026-10-20): Retain run39796846457/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit fixture failure. Controlled trace establishes unordered async mutation; four cases fail first, then synchronous disposable real-worker mutation preserves product guards/relay/cleanup. All 51 focused cases and independent review pass. Executable1c53c72 passes 972-unit/98-file standalone (zero errors/warnings) and one 972-unit/76-host full (282 matching hashes; three exact approved HOST-002/004/001 warnings at 20261022T234624/window1/renderer.log:2/3/12, not warning-free). Exact messages/logs/metrics: docs/t026-ci-repair.md. Fresh owner-pushed actual-candidate three-platform CI remains open; retain every earlier failure and keep T-026 unchecked.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

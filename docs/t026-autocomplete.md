@@ -30,8 +30,13 @@ ordered before worker finalization. The clean-root regression passes. Retained
 failure, controlled causal trace and deterministic real-worker fixture repair are
 in [t026-ci-repair.md](t026-ci-repair.md). Four engine/boundary cases fail first
 without injection, then all 51 focused cases and independent review pass. No
-production code/UI/workflow/dependency/guard change. New local gates and fresh
-actual-candidate three-platform CI remain open; T-026 stays unchecked.
+production code/UI/workflow/dependency/guard change. Reviewed executable 1c53c72
+passes literal standalone (972 units/98 files, zero warnings/errors) and one full
+gate (972 units/76 hosts, all 282 captured hashes unchanged). Full has three exact
+approved warning records, HOST-002/004/001 at
+20261022T234624/window1/renderer.log:2/3/12; it is not warning-free. Exact messages,
+timings and raw evidence are in the linked repair record. Fresh owner-pushed
+actual-candidate three-platform CI remains open; T-026 stays unchecked.
 
 ## Design and limits
 
