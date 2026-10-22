@@ -1,5 +1,48 @@
 # T-026: clean-checkout fixture repair (2026-10-22)
 
+## Follow-up macOS fixture ordering repair
+
+Owner run [39796846457](https://github.com/JreyForFun/lite-voyager/actions/runs/39796846457),
+attempt 1 at exact fdf5ad20dcfccbdd6e7e256bb164066dead74e00, passes Windows and
+Ubuntu locked installs/applicable full verification (GitHub REST confirmed).
+macOS locked install/types/lint pass, then units fail one existing JSON mutation
+case: 954 pass/1 fail/13 platform skips. The clean-root regression and all four
+child cases pass. Build/package/host integration are not reached on macOS.
+The attached macOS log is retained byte-for-byte as
+out/t026-ci-39796846457-macos.log, SHA-256
+789d54dd1a9183d4b8e397ad7f62f5278f488a4ec24c1d6a4b15f6522ab09c96;
+confirmed run/job metadata is out/t026-ci-39796846457-metadata.json.
+
+The nine-byte JSON fixture starts an asynchronous source write from parent IPC
+progress, then expects import rejection before awaiting that write. Worker reads,
+snapshot checks and completion do not await progress delivery or the write.
+A controlled deferred-write diagnostic confirms import can resolve with the
+original source unchanged; only releasing the write changes it afterward.
+This establishes an invalid fixture ordering assumption, not a source-guard bug.
+Diagnostic trace: out/t026-json-mutation-diagnostic.log. Independent read-only
+source review confirms the ordering and proposed worker-local fixture barrier.
+
+Acceptance: retain real production import, worker, relay, client and cleanup.
+Inject exactly one synchronous size-changing fixture write inside an owned
+disposable real-worker build, at complete reading progress (before the reader's
+final snapshot) and publishing progress (before import's final snapshot).
+Both engines must reject specifically for changed source, preserve the exact
+externally changed bytes and leave only the source in its fixture directory.
+Keep fallback-cap refusal on the ordinary loader; no sleeps, retries, deadline
+increase, production/workflow/dependency change or diagnostic allowance.
+The four expanded boundary cases first FAIL against uninstrumented real workers
+(out/t026-json-mutation-red.log): the original valid source imports successfully.
+The fixture then builds the actual production JSON worker with a test-only banner
+which binds/forwards its original postMessage and writes once at the chosen
+boundary. The unchanged real process/relay/client handle rejection and cleanup.
+Generated worker/assets stay in a separate owned OS temporary directory; dist
+and production sources are not modified. The changed bytes have a different size,
+so mutation detection does not depend on filesystem timestamp precision.
+All 51 focused cases/three files PASS (27.36 seconds), including four boundary
+cases, the unchanged reader cases and fallback-race/cap refusal. Independent
+read-only follow-up finds no concrete defect or source-safety weakening.
+Canonical repaired-candidate local gates/fresh three-platform CI remain pending.
+
 [Run 39771461612](https://github.com/JreyForFun/lite-voyager/actions/runs/39771461612),
 attempt 1, exact `63dadc9dacd9c32b5ffb1a9ac10f7f83a572cc3b`, fails on Ubuntu,
 Windows and macOS. GitHub REST run/job metadata independently confirms each failed

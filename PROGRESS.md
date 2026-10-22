@@ -1,38 +1,39 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-026 CI fixture repair/local gates PASS; fresh owner CI open.
+Milestone 2: T-026 macOS JSON fixture ordering repair; local gates/owner CI open.
 T-025 remains complete. Evidence/file inventory: docs/t026-autocomplete.md.
 
 ## Verify status
-Run39771461612/attempt1/exact63dadc9 fails all three platforms during units.
-Windows: 963 pass/4 fail; Ubuntu/macOS: 950 pass/4 fail/13 platform skips.
-Four fixtures require missing out; types/lint pass, build/host checks not reached.
-Original logs/SHA-256/API confirmation: docs/t026-ci-repair.md and out evidence.
-Reviewed executable cfa7bee passes literal npm run verify: 968 units/98 files,
-types/lint/build/34-file VSIX; zero warnings/errors; 563.077 seconds.
-One npm run verify:full PASS: 968 units/76 hosts, 2660.882 seconds.
-UTC full: 2026-10-22T12:50:55.122Z through 13:35:16.004Z.
-All four FR-012 hosts/large-file data/source hashes/80 CSV pages per size pass.
-Both gates preserve all 282 hashes; bounded Kernel-Power queries return zero events.
-Sole approved VSCODE-HOST-001, warning, 20261022T210019/window1/renderer.log:10:
-[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
-Full is not warning-free; no other diagnostic is accepted. Raw metrics/logs retained.
+Run39796846457/attempt1/fdf5ad2: Windows/Ubuntu locked installs/full checks PASS.
+macOS install/types/lint pass; units: 954 pass/1 fail/13 platform skips.
+Its older JSON mutation test resolves instead of rejecting; build/host not reached.
+Clean-root regression/four child worker cases PASS on macOS.
+Retained log SHA-256/confirmed REST metadata: docs/t026-ci-repair.md and out evidence.
+Prior cfa7bee local standalone: 968 units/98 files, zero warnings/errors.
+Prior full: 968 units/76 hosts; sole approved VSCODE-HOST-001 warning at
+20261022T210019/window1/renderer.log:10 (exact text in repair record); not warning-free.
+Preserve all earlier failed CI/local gates and approved diagnostic records.
 
 ## Last session
-Clean-root regression first reproduces all four exact ENOENT worker failures.
-Owned OS temp fixtures repair setup; all original assertions/30s setup/15s cases stay.
-Twenty focused cases/three files and all four child worker cases PASS (12.75 s).
-Independent code/evidence review is clear; no app/worker/workflow/dependency/UI change.
-Earlier failures/power/CSV diagnosis remain retained; no unchanged retry-to-green.
-Scoped actual-host light/dark QA: docs/t026-native-qa.md; physical paint unobserved.
+Tiny JSON worker can finalize before async source write from parent IPC progress.
+Controlled deferred write confirms import resolves with original source unchanged.
+No product source-guard failure is established; do not change product spec/logic.
+Four engine/boundary regressions fail first without fixture mutation injection.
+Disposable actual-worker builds now inject synchronous one-shot fixture writes
+before reader final snapshot or import final snapshot; real relay/client unchanged.
+Exact changed-source errors, [] bytes and source-only cleanup pass on both engines.
+Ordinary-loader fallback-cap refusal stays; all original deadlines/guards remain.
+All 51 focused cases/three files PASS (27.36 s); independent follow-up clear.
+No product/UI/workflow/dependency change. Scoped prior renderer QA remains applicable;
+physical-screen paint/jank stays unobserved: docs/t026-native-qa.md.
 
 ## Decisions / limits
-Exactly T-026. No guard/deadline/workload relaxation or global out pre-creation.
-Owner README/shared-spec edits and unrelated fixtures/debug files remain untouched.
-Owner retains push/remote CI. Final evidence updates are documentation only.
+Exactly T-026. No sleeps, retry-to-green, guard relaxation or global fixture setup.
+Owner README/shared-spec edits and unrelated fixtures/debug files stay untouched.
+Owner retains push/remote CI; no release/tag/milestone closure.
 
 ## Next
-Owner pushes final reviewed commit and runs fresh Windows/macOS/Ubuntu CI.
-Require successful locked installs/applicable full verification on the actual candidate.
-Keep T-026 unchecked until then; no new task, milestone closure/release/tag.
+Commit reviewed fixture repair, then standalone verify and one changed-candidate full.
+Retain every failure; update records and give owner final commit SHA to push.
+Keep T-026 unchecked until fresh actual-candidate Windows/macOS/Ubuntu CI passes.

@@ -1296,6 +1296,17 @@ litevoyager/
 
 ### T-026 schema autocomplete (2026-10-20)
 
+Follow-up run39796846457/attempt1/fdf5ad2 passes Windows/Ubuntu full verification;
+macOS fails one older JSON unit fixture before build/host integration. Parent IPC
+progress does not order its asynchronous write before worker source checks.
+Use an owned disposable build of the real worker with synchronous one-shot
+fixture mutation at complete-reading or publishing progress, before the respective
+real snapshot check. Both engines must reject source change, retain exact mutated
+bytes and clean all partial output. Keep ordinary-loader fallback-cap refusal and
+all existing deadlines/guards; no product/workflow/dependency change or sleep.
+Four uninstrumented cases fail first; 51 focused cases and independent review pass.
+Current local gates/fresh three-platform CI remain open: docs/t026-ci-repair.md.
+
 Run 39771461612/attempt 1/exact 63dadc9 fails all three platforms during units:
 the worker tests assume ignored out already exists. Reproduce in an isolated
 clean root, then use owned OS temporary fixture directories. Preserve all four
@@ -1383,7 +1394,7 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Retain failed run39771461612/attempt1/exact63dadc9 and its four missing-out fixture failures on all three platforms. Red-first clean-root regression and owned OS temp fixtures preserve original worker assertions/deadlines. Reviewed cfa7bee passes 968-unit/98-file standalone (zero errors/warnings) and one 968-unit/76-host full (282 matching hashes, sole exact approved HOST-001 at 20261022T210019/window1/renderer.log:10; not warning-free). Evidence: docs/t026-ci-repair.md. Preserve all earlier failures/diagnostics; keep T-026 unchecked pending fresh owner-pushed actual-candidate three-platform CI.
+- T-026 (2026-10-20): Retain run39796846457/attempt1/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit failure. Controlled deferred-write trace confirms unordered async parent-progress fixture mutation. Four engine/boundary cases fail first; disposable real-worker synchronous mutation preserves production guards/relay/client/cleanup and ordinary fallback-cap refusal. All 51 focused cases/three files and independent review pass. New local gates/fresh actual-candidate three-platform CI remain open; no guard/deadline/workflow change. Keep T-026 unchecked; retain every earlier CI/local failure and exact diagnostics in docs/t026-ci-repair.md.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

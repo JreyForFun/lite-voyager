@@ -12,6 +12,24 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ### T-026 schema autocomplete (2026-10-20)
 
+**macOS fixture-ordering repair (2026-10-22):** Run39796846457/attempt1/exact
+fdf5ad20dcfccbdd6e7e256bb164066dead74e00 passes Windows/Ubuntu locked installs
+and applicable full verification. macOS install/types/lint pass, then one JSON
+unit fixture fails (954 pass/1 fail/13 platform skips); build/host checks are not
+reached. Its async write from delayed parent IPC progress is not ordered before
+the worker's synchronous read/final snapshot. A controlled deferred write confirms
+successful import with unchanged source before the external write; no product
+source-guard failure is established. Retain that CI and diagnostic trace.
+Test mutation synchronously inside an owned disposable actual-worker build at
+complete-reading progress and publishing, before the two real snapshot guards.
+Native/fallback must reject specifically changed source, retain exact mutated
+bytes and remove all partial files. Keep fallback-cap refusal on the ordinary
+loader, all original assertions/deadlines and strict warning rules; no sleep,
+retry, production/workflow/dependency change. Four uninstrumented cases fail
+first; 51 focused cases/three files and independent follow-up pass. Current
+canonical local gates and fresh owner-pushed three-platform CI remain pending.
+Exact logs/metadata/acceptance: docs/t026-ci-repair.md. Keep T-026 unchecked.
+
 **CI repair acceptance (2026-10-22):** Run 39771461612/attempt 1 at exact
 63dadc9dacd9c32b5ffb1a9ac10f7f83a572cc3b fails all three platforms during units.
 All four real-worker completion cases attempt mkdtemp under an absent out parent;
@@ -4838,7 +4856,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Retain failed run39771461612/attempt1/exact63dadc9 and its four missing-out fixture failures on all three platforms. Red-first clean-root regression and owned OS temp fixtures preserve original worker assertions/deadlines. Reviewed cfa7bee passes 968-unit/98-file standalone (zero errors/warnings) and one 968-unit/76-host full (282 matching hashes, sole exact approved HOST-001 at 20261022T210019/window1/renderer.log:10; not warning-free). Evidence: docs/t026-ci-repair.md. Preserve all earlier failures/diagnostics; keep T-026 unchecked pending fresh owner-pushed actual-candidate three-platform CI.
+- T-026 (2026-10-20): Retain run39796846457/attempt1/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit failure. Controlled deferred-write trace confirms unordered async parent-progress fixture mutation. Four engine/boundary cases fail first; disposable real-worker synchronous mutation preserves production guards/relay/client/cleanup and ordinary fallback-cap refusal. All 51 focused cases/three files and independent review pass. New local gates/fresh actual-candidate three-platform CI remain open; no guard/deadline/workflow change. Keep T-026 unchecked; retain every earlier CI/local failure and exact diagnostics in docs/t026-ci-repair.md.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

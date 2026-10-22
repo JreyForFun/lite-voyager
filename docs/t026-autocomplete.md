@@ -24,6 +24,15 @@ windows, metrics and retained logs are in the CI repair record. Independent revi
 and the clean-root regression pass. Fresh owner-pushed actual-candidate
 Windows/macOS/Ubuntu CI remains open; T-026 stays unchecked.
 
+Follow-up run39796846457 at fdf5ad2 passes Windows/Ubuntu but macOS units fail one
+older JSON fixture: asynchronous source mutation from parent IPC progress is not
+ordered before worker finalization. The clean-root regression passes. Retained
+failure, controlled causal trace and deterministic real-worker fixture repair are
+in [t026-ci-repair.md](t026-ci-repair.md). Four engine/boundary cases fail first
+without injection, then all 51 focused cases and independent review pass. No
+production code/UI/workflow/dependency/guard change. New local gates and fresh
+actual-candidate three-platform CI remain open; T-026 stays unchecked.
+
 ## Design and limits
 
 The existing SQLite language supplies keywords. Declare already-installed/locked
@@ -280,7 +289,7 @@ fixtures/debug files and ignored out/t026-* evidence are excluded from the task.
 
 ## Complete changed-file inventory
 
-All 33 task files relative to baseline 3d41443; owner edits are excluded:
+All 34 task files relative to baseline 3d41443; owner edits are excluded:
 
 ```
 PROGRESS.md
@@ -309,6 +318,7 @@ src/test/sql-completion.test.ts
 test/unit/browser-view.test.ts
 test/unit/csv-memory-windows.test.ts
 test/unit/keep-awake.test.ts
+test/unit/json-import.test.ts
 test/unit/sql-completion-clean-checkout.test.ts
 test/unit/sql-completion-engine.test.ts
 test/unit/sql-completion.test.ts

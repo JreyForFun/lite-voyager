@@ -1,8 +1,9 @@
 import { execFile } from 'node:child_process';
-import { chmod, mkdtemp, readFile, readdir, rm, truncate, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdtemp, readFile, readdir, rm, truncate, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
+import { build } from 'esbuild';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 import { EngineClient } from '../../src/engine/engine-client';
 import type { EngineName } from '../../src/engine/engine';
@@ -22,6 +23,31 @@ async function imported(input: string, engine: EngineName, format = 'json') {
   const tables = await loader.import(f.source, { path: f.target, engine }, {}, () => {}, new AbortController().signal);
   const client = new EngineClient({ directory: resolve('dist'), forceFallback: engine === 'sql.js' }); await client.open(f.target);
   return { ...f, tables, client };
+}
+async function mutationLoader(phase: 'reading' | 'publishing'): Promise<JsonLoader> {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-json-mutation-worker-')); directories.push(directory);
+  for (const name of ['csv-import-process.js', 'sql-wasm.cjs', 'sql-wasm.wasm']) { await copyFile(resolve('dist', name), join(directory, name)); }
+  const built = await build({ entryPoints: [resolve('src/worker/json-import-worker.ts')], outfile: join(directory, 'json-import-worker.js'),
+    bundle: true, platform: 'node', format: 'cjs', target: 'es2022', external: ['node:sqlite'], logLevel: 'silent', banner: { js: `
+// Inject an external fixture write in this worker before its real snapshot check.
+// Parent IPC progress is observational and cannot order an asynchronous write.
+const mutationWorker = require('node:worker_threads');
+const mutationPort = mutationWorker.parentPort;
+const mutationSend = mutationPort.postMessage.bind(mutationPort);
+const mutationPhase = ${JSON.stringify(phase)};
+let mutationWritten = false;
+mutationPort.postMessage = (...args) => {
+  const message = args[0];
+  if (!mutationWritten && message.type === 'progress' && message.value.phase === mutationPhase
+      && (mutationPhase !== 'reading' || message.value.bytes === message.value.totalBytes)) {
+    require('node:fs').writeFileSync(mutationWorker.workerData.source, '[]');
+    mutationWritten = true;
+  }
+  return mutationSend(...args);
+};
+` } });
+  expect(built.warnings).toEqual([]);
+  return new JsonLoader(directory);
 }
 
 test.each(['node:sqlite', 'sql.js'] as const)('FR-005: Given %s and exact JSON types, When importing, Then int64, nested SQL, NULL and original number spellings survive', async (engine) => {
@@ -78,10 +104,17 @@ test('FR-005: Given cancellation, callback failure or an existing target, When i
   await rm(f.target); expect((await loader.import(f.source, { path: f.target, engine: 'node:sqlite' }, {}, () => {}, new AbortController().signal))[0]?.rowCount).toBe('30000');
 }, 30000);
 
-test('FR-005: Given source replacement during progress or fallback cap refusal, When importing, Then publication fails and partial storage is removed', async () => {
-  const f = await fixture('[{"a":1}]'); const loader = new JsonLoader(resolve('dist')); let mutation: Promise<void> | undefined;
-  await expect(loader.import(f.source, { path: f.target, engine: 'node:sqlite' }, {}, () => { mutation ??= writeFile(f.source, '[]'); }, new AbortController().signal)).rejects.toThrow(/chang|JSON/);
-  await mutation; await truncate(f.source, 20_000_001);
+test.each([
+  ['node:sqlite', 'reading'], ['node:sqlite', 'publishing'], ['sql.js', 'reading'], ['sql.js', 'publishing'],
+] as const)('FR-005: Given %s and source replacement at the worker %s boundary, When importing, Then changed-source rejection preserves the mutation and removes partial storage', async (engine, phase) => {
+  const f = await fixture('[{"a":1}]'); const loader = await mutationLoader(phase);
+  await expect(loader.import(f.source, { path: f.target, engine }, {}, () => {}, new AbortController().signal)).rejects.toThrow(/JSON source changed/);
+  expect(await readFile(f.source, 'utf8')).toBe('[]');
+  expect(await readdir(f.directory)).toEqual(['input.json']);
+});
+
+test('FR-005: Given fallback cap refusal, When importing, Then publication fails and partial storage is removed', async () => {
+  const f = await fixture('[{"a":1}]'); const loader = new JsonLoader(resolve('dist')); await truncate(f.source, 20_000_001);
   await expect(loader.import(f.source, { path: f.target, engine: 'sql.js' }, {}, () => {}, new AbortController().signal)).rejects.toThrow(/Memory-limited.*20,000,000/);
   expect(await readdir(f.directory)).toEqual(['input.json']);
 });
