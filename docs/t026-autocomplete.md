@@ -16,6 +16,14 @@ red-first isolated-root reproduction, fixture-only repair, preserved guards and
 current validation status are in [t026-ci-repair.md](t026-ci-repair.md). Earlier
 local passes remain valid historical evidence, not a current CI success claim.
 
+Repaired executable candidate `cfa7bee` now passes literal standalone verification
+(968 units/98 files, zero warnings/errors) and one full gate (968 units/76 hosts,
+all 282 frozen hashes unchanged). The full has one exact approved HOST-001 warning
+at 20261022T210019/window1/renderer.log:10 and is not warning-free; its exact text,
+windows, metrics and retained logs are in the CI repair record. Independent review
+and the clean-root regression pass. Fresh owner-pushed actual-candidate
+Windows/macOS/Ubuntu CI remains open; T-026 stays unchecked.
+
 ## Design and limits
 
 The existing SQLite language supplies keywords. Declare already-installed/locked

@@ -25,8 +25,16 @@ in the workflow or global runner to hide this fixture dependency. Keep the faile
 CI and require current-candidate local verification and fresh three-platform CI.
 The new isolated-root regression first reproduces all four exact ENOENT failures.
 OS-temp fixtures then pass those four child cases and all 20 focused cases/three
-files; independent read-only review is clear. Current repaired canonical gates
-remain pending. Details and preserved original logs: docs/t026-ci-repair.md.
+files; independent read-only review is clear. Repaired executable cfa7bee passes
+literal standalone verify (968 units/98 files, zero warnings/errors) and one full
+gate (968 units/76 hosts, including all four FR-012 cases and every large-file
+workload/source hash). All 282 frozen hashes match in each run. The full's sole
+approved VSCODE-HOST-001 has severity warning, source
+20261022T210019/window1/renderer.log:10, exact message:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+It is not warning-free; no other warning/error is accepted. Retain failed CI and
+require fresh owner-pushed actual-candidate Windows/macOS/Ubuntu CI before ticking
+T-026. Timings, metrics and preserved original logs: docs/t026-ci-repair.md.
 
 Owner-delegated scope, red-first tests, both-engine workers, real CodeMirror
 keyboard checks and retained failures are in
@@ -4830,7 +4838,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Retain run 39771461612/attempt1/exact63dadc9 failure on all three platforms: four worker fixtures assume missing out exists. Reproduce clean-root failure first; use owned OS temp fixtures without changing original assertions/budgets or workflow. Twenty focused cases/all four child worker cases and independent review pass. New canonical local gates/owner-pushed three-platform CI remain open; preserve earlier local passes/failures/diagnostics and keep T-026 unchecked.
+- T-026 (2026-10-20): Retain failed run39771461612/attempt1/exact63dadc9 and its four missing-out fixture failures on all three platforms. Red-first clean-root regression and owned OS temp fixtures preserve original worker assertions/deadlines. Reviewed cfa7bee passes 968-unit/98-file standalone (zero errors/warnings) and one 968-unit/76-host full (282 matching hashes, sole exact approved HOST-001 at 20261022T210019/window1/renderer.log:10; not warning-free). Evidence: docs/t026-ci-repair.md. Preserve all earlier failures/diagnostics; keep T-026 unchecked pending fresh owner-pushed actual-candidate three-platform CI.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.
