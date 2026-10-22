@@ -1,7 +1,8 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { promisify } from 'node:util';
 import { beforeAll, expect, test } from 'vitest';
@@ -19,7 +20,7 @@ beforeAll(async () => {
 }, 30000);
 
 test.each([false, true])('FR-012: Given Unicode aliases in a real worker fallback=%s, When accepting qualified column suggestions, Then every offered identifier executes against its exact table without changing the source', async (fallback) => {
-  const directory = await mkdtemp(join(resolve('out'), 't026-unicode-')); const path = join(directory, 'schema.sqlite');
+  const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-t026-unicode-')); const path = join(directory, 'schema.sqlite');
   const writer = new DatabaseSync(path);
   try { writer.exec("BEGIN; CREATE TABLE upper_table(first_upper); INSERT INTO upper_table VALUES('upper'); CREATE TABLE lower_table(first_lower); INSERT INTO lower_table VALUES('lower'); COMMIT;"); }
   finally { writer.close(); }
@@ -45,11 +46,11 @@ test.each([false, true])('FR-012: Given Unicode aliases in a real worker fallbac
       expect(page.rows).toEqual([[scenario.value]]);
     }
     await engine.close(); expect(await digest()).toBe(before);
-  } finally { await engine.close(); await rm(directory, { recursive: true, force: true }); }
+  } finally { await engine.close(); expect(dirname(directory)).toBe(resolve(tmpdir())); await rm(directory, { recursive: true, force: true }); }
 }, 15000);
 
 test.each([false, true])('FR-012: Given a real worker fallback=%s and wide schema, When completing filtered names and recovering, Then distant names, exact quoting and source safety survive', async (fallback) => {
-  const directory = await mkdtemp(join(resolve('out'), 't026-unit-'));
+  const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-t026-unit-'));
   const path = join(directory, 'schema.sqlite'); const writer = new DatabaseSync(path);
   try {
     writer.exec('BEGIN');
@@ -82,5 +83,5 @@ test.each([false, true])('FR-012: Given a real worker fallback=%s and wide schem
     browser.dispose(); await engine.cancel();
     expect((await findCompletions(engine, { prefix: 'missing', tables: [], includeTables: true })).items).toEqual([]);
     await engine.close(); expect(await digest()).toBe(before);
-  } finally { await engine.close(); await rm(directory, { recursive: true, force: true }); }
+  } finally { await engine.close(); expect(dirname(directory)).toBe(resolve(tmpdir())); await rm(directory, { recursive: true, force: true }); }
 }, 15000);

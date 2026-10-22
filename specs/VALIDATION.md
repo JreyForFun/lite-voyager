@@ -12,6 +12,22 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ### T-026 schema autocomplete (2026-10-20)
 
+**CI repair acceptance (2026-10-22):** Run 39771461612/attempt 1 at exact
+63dadc9dacd9c32b5ffb1a9ac10f7f83a572cc3b fails all three platforms during units.
+All four real-worker completion cases attempt mkdtemp under an absent out parent;
+build/packaging/host integration are not reached. Fixture setup must work from a
+clean checkout with no out directory, independently of other suite order or local
+artifacts. Add a fresh isolated-root regression that runs all four unchanged
+Unicode/wide-schema cases and real native/fallback workers, accepted SQL, full
+schema coverage and source hashes. Preserve existing assertions, 30000-ms build
+setup/15000-ms case budgets and every warning/deadline rule. Do not pre-create out
+in the workflow or global runner to hide this fixture dependency. Keep the failed
+CI and require current-candidate local verification and fresh three-platform CI.
+The new isolated-root regression first reproduces all four exact ENOENT failures.
+OS-temp fixtures then pass those four child cases and all 20 focused cases/three
+files; independent read-only review is clear. Current repaired canonical gates
+remain pending. Details and preserved original logs: docs/t026-ci-repair.md.
+
 Owner-delegated scope, red-first tests, both-engine workers, real CodeMirror
 keyboard checks and retained failures are in
 [docs/t026-autocomplete.md](../docs/t026-autocomplete.md). Focused units pass 55;
@@ -4814,7 +4830,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Record final reviewed e64859c local gates: 967-test zero-diagnostic standalone and 967-unit/76-host full with exact HOST-001 warning, not warning-free; all 280 hashes unchanged and original multi-GB data/hash/paging workloads pass. Preserve every failed run, standby/event-field limits, CSV lifetime/fixture repairs and scoped visual QA. No executable edits follow; owner-pushed actual-candidate three-platform CI remains open and T-026 stays unchecked.
+- T-026 (2026-10-20): Retain run 39771461612/attempt1/exact63dadc9 failure on all three platforms: four worker fixtures assume missing out exists. Reproduce clean-root failure first; use owned OS temp fixtures without changing original assertions/budgets or workflow. Twenty focused cases/all four child worker cases and independent review pass. New canonical local gates/owner-pushed three-platform CI remain open; preserve earlier local passes/failures/diagnostics and keep T-026 unchecked.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

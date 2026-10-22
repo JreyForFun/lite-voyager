@@ -1296,6 +1296,14 @@ litevoyager/
 
 ### T-026 schema autocomplete (2026-10-20)
 
+Run 39771461612/attempt 1/exact 63dadc9 fails all three platforms during units:
+the worker tests assume ignored out already exists. Reproduce in an isolated
+clean root, then use owned OS temporary fixture directories. Preserve all four
+real native/fallback cases, original schema/SQL/source-hash assertions and clocks;
+change no workflow/global setup to hide order dependence. Twenty focused cases
+and independent review pass. New local gates/fresh owner CI remain open; retain
+the failed run in docs/t026-ci-repair.md and leave T-026 unchecked.
+
 Owner delegates implementation, decisions, scoped fixtures/repairs and visual QA;
 owner retains push/CI. See SPEC FR-012 and
 [docs/t026-autocomplete.md](../docs/t026-autocomplete.md). Declare already-locked
@@ -1371,7 +1379,7 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Record final reviewed e64859c local gates: 967-test zero-diagnostic standalone and 967-unit/76-host full with exact HOST-001 warning, not warning-free; all 280 hashes unchanged and original multi-GB data/hash/paging workloads pass. Preserve every failed run, standby/event-field limits, CSV lifetime/fixture repairs and scoped visual QA. No executable edits follow; owner-pushed actual-candidate three-platform CI remains open and T-026 stays unchecked.
+- T-026 (2026-10-20): Retain run 39771461612/attempt1/exact63dadc9 failure on all three platforms: four worker fixtures assume missing out exists. Reproduce clean-root failure first; use owned OS temp fixtures without changing original assertions/budgets or workflow. Twenty focused cases/all four child worker cases and independent review pass. New canonical local gates/owner-pushed three-platform CI remain open; preserve earlier local passes/failures/diagnostics and keep T-026 unchecked.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

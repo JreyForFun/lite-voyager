@@ -4,11 +4,17 @@ Owner delegates implementation, uncertainty resolution, scoped fixes/fixtures an
 visual QA; owner retains push and actual-candidate CI. SPEC FR-012 acceptance
 precedes tests/code. No whole-milestone closure, release or tag is implied.
 
-Latest local status (2026-10-22 Asia/Manila): candidate e64859c passes standalone
+Earlier local status (2026-10-22 Asia/Manila): candidate e64859c passes standalone
 verify (967 units, zero errors/warnings) and full verification (967 units/76 hosts,
 one exact approved HOST-001 warning; not warning-free). Review and scoped
 light/dark actual-host renderer QA pass. Preserve all earlier failures. Owner-pushed
 actual-candidate three-platform CI remains pending; T-026 stays unchecked.
+
+Owner-supplied run 39771461612/attempt 1/exact 63dadc9 fails all three platforms
+at the same four worker fixture cases: out is absent in a clean checkout. The
+red-first isolated-root reproduction, fixture-only repair, preserved guards and
+current validation status are in [t026-ci-repair.md](t026-ci-repair.md). Earlier
+local passes remain valid historical evidence, not a current CI success claim.
 
 ## Design and limits
 
@@ -266,11 +272,12 @@ fixtures/debug files and ignored out/t026-* evidence are excluded from the task.
 
 ## Complete changed-file inventory
 
-All 31 task files relative to baseline 3d41443; owner edits are excluded:
+All 33 task files relative to baseline 3d41443; owner edits are excluded:
 
 ```
 PROGRESS.md
 docs/t026-autocomplete.md
+docs/t026-ci-repair.md
 docs/t026-csv-observer-repair.md
 docs/t026-native-qa.md
 docs/t026-standby-repair.md
@@ -294,6 +301,7 @@ src/test/sql-completion.test.ts
 test/unit/browser-view.test.ts
 test/unit/csv-memory-windows.test.ts
 test/unit/keep-awake.test.ts
+test/unit/sql-completion-clean-checkout.test.ts
 test/unit/sql-completion-engine.test.ts
 test/unit/sql-completion.test.ts
 test/unit/sql-editor.test.ts
