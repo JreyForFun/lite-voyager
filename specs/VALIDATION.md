@@ -12,6 +12,32 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ### T-026 schema autocomplete (2026-10-20)
 
+Run39815054580/attempt1/exact25c95c7 confirms Ubuntu success and Windows/macOS
+failures: Windows passes all units/hosts then rejects a shutdown error; macOS
+5-GB JSONL has a raw101.417375ms interval against the unchanged100ms limit.
+All four FR-012 hosts pass on both. Causes remain unknown. Opt-in external
+Windows creation identities and bounded JSON CPU/callback/GC traces preserve
+literal gate commands, failure status, raw samples and every workload/guard.
+Instrumentation can affect timing; no overlap establishes historical cause.
+Seventy-nine focused tests/five files, tooling/integration types and the installed
+Node24.21.0 headless recorder probe pass; independent diagnostic review is clear.
+Current standalone verification and owner-pushed diagnostic CI remain pending;
+no new full attempt or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
+
+**Run39815054580 diagnostic acceptance (2026-10-23):** At exact25c95c7, Ubuntu
+passes; Windows passes 972 units/76 hosts but rejects an unapproved main-process
+forced-kill error after host exit; macOS passes 959 units/13 skips and75 hosts,
+then the 5-GB JSONL timer interval101.417375ms fails the unchanged100ms limit.
+All four FR-012 hosts pass on both failed platforms. Causes remain unestablished;
+do not infer PID reuse or host blocking from phase labels. Preserve failures.
+Prepare opt-in Windows creation-identity and bounded host CPU/callback/GC traces.
+The CI diagnostic wrapper must run literal npm run verify:full, retain its exact
+failure status, and fail on collector failure. No target pin/kill, clock change,
+sample discard, workload/deadline/diagnostic relaxation or retry. Test trace
+boundaries/lifecycle/forwarding first. Diagnostic success cannot clear prior CI;
+require causal evidence and a reviewed repair before claiming acceptance.
+Details/exact errors and approved Windows HOST-001 record: docs/t026-ci-repair.md.
+
 **macOS fixture-ordering repair (2026-10-22):** Run39796846457/attempt1/exact
 fdf5ad20dcfccbdd6e7e256bb164066dead74e00 passes Windows/Ubuntu locked installs
 and applicable full verification. macOS install/types/lint pass, then one JSON
@@ -4867,7 +4893,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Retain run39796846457/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit fixture failure. Controlled trace establishes unordered async mutation; four cases fail first, then synchronous disposable real-worker mutation preserves product guards/relay/cleanup. All 51 focused cases and independent review pass. Executable1c53c72 passes 972-unit/98-file standalone (zero errors/warnings) and one 972-unit/76-host full (282 matching hashes; three exact approved HOST-002/004/001 warnings at 20261022T234624/window1/renderer.log:2/3/12, not warning-free). Exact messages/logs/metrics: docs/t026-ci-repair.md. Fresh owner-pushed actual-candidate three-platform CI remains open; retain every earlier failure and keep T-026 unchecked.
+- T-026 (2026-10-20): Run39815054580/attempt1/exact25c95c7 passes Ubuntu full and all locked installs. Windows passes 972 units/76 hosts but rejects the unapproved main-process forced-kill error; macOS passes 959 units/13 skips and 75 hosts, failing the unchanged100ms JSONL timer bound at101.417375ms. All four FR-012 hosts pass on both. Causes remain unestablished. Opt-in external Windows creation identities and bounded JSON CPU/callback/GC diagnostics preserve original commands, failure status, samples, workloads, clocks and rejection rules. All79 focused cases/five files, tooling/integration types and the installed Node24.21.0 headless recorder probe pass; independent review finds no concrete diagnostic defect. Current standalone and fresh owner-pushed diagnostic CI remain pending; no new full gate or repair claim. Preserve every failure, the exact Windows HOST-001 warning and all historical gates in docs/t026-ci-repair.md; T-026 remains unchecked.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

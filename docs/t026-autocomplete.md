@@ -38,6 +38,18 @@ approved warning records, HOST-002/004/001 at
 timings and raw evidence are in the linked repair record. Fresh owner-pushed
 actual-candidate three-platform CI remains open; T-026 stays unchecked.
 
+Run39815054580/attempt1/exact25c95c7 confirms Ubuntu success and Windows/macOS
+failures: Windows passes all units/hosts then rejects a shutdown error; macOS
+5-GB JSONL has a raw101.417375ms interval against the unchanged100ms limit.
+All four FR-012 hosts pass on both. Causes remain unknown. Opt-in external
+Windows creation identities and bounded JSON CPU/callback/GC traces preserve
+literal gate commands, failure status, raw samples and every workload/guard.
+Instrumentation can affect timing; no overlap establishes historical cause.
+Seventy-nine focused tests/five files, tooling/integration types and the installed
+Node24.21.0 headless recorder probe pass; independent diagnostic review is clear.
+Current standalone verification and owner-pushed diagnostic CI remain pending;
+no new full attempt or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
+
 ## Design and limits
 
 The existing SQLite language supplies keywords. Declare already-installed/locked
@@ -294,9 +306,10 @@ fixtures/debug files and ignored out/t026-* evidence are excluded from the task.
 
 ## Complete changed-file inventory
 
-All 34 task files relative to baseline 3d41443; owner edits are excluded:
+All 41 task files relative to baseline 3d41443; owner edits are excluded:
 
 ```
+.github/workflows/ci.yml
 PROGRESS.md
 docs/t026-autocomplete.md
 docs/t026-ci-repair.md
@@ -305,10 +318,12 @@ docs/t026-native-qa.md
 docs/t026-standby-repair.md
 package-lock.json
 package.json
+scripts/ci-diagnostics.mts
 scripts/csv-memory.mts
 scripts/keep-awake.mts
 scripts/verify.mts
 scripts/windows-awake.ps1
+scripts/windows-exit-diagnostics.ps1
 specs/DEPENDENCIES.md
 specs/PLAN.md
 specs/SPEC.md
@@ -319,9 +334,13 @@ src/editor/sql-completion.ts
 src/editor/sqlite-browser.ts
 src/protocol.ts
 src/test/csv-memory-windows.ts
+src/test/host-interval-diagnostics.ts
+src/test/json-import-memory.test.ts
 src/test/sql-completion.test.ts
 test/unit/browser-view.test.ts
+test/unit/ci-diagnostics.test.ts
 test/unit/csv-memory-windows.test.ts
+test/unit/host-interval-diagnostics.test.ts
 test/unit/keep-awake.test.ts
 test/unit/json-import.test.ts
 test/unit/sql-completion-clean-checkout.test.ts

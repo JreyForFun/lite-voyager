@@ -1,5 +1,97 @@
 # T-026: clean-checkout fixture repair (2026-10-22)
 
+## Run 39815054580: diagnostics pending (2026-10-23 Asia/Manila)
+
+GitHub REST confirms attempt 1 at exact 25c95c7a0412a124d44458f0b4dbd7a8041fb816:
+Ubuntu succeeds; Windows/macOS fail their applicable verification step; all locked
+installs succeed. Both initial attachments are identical Windows logs, retained
+as out/t026-ci-39815054580-windows-attachment-0.log and -1.log, SHA-256
+b28df074f39f9bf1a57b3f77698242c2721223bae8777f9387f13f3326b7fe4f.
+Run/job metadata: out/t026-ci-39815054580-metadata.json. The owner subsequently
+supplies the macOS log inline; retained excerpts are labelled as excerpts.
+
+Windows passes 972 units and all 76 host tests, then strict runtime-log scanning
+rejects 20261022T163646/main.log:9, severity error, exact message:
+`Extension host with pid 636 still exists, forcefully killing it...`.
+The host reports exit code 0 at 16:44:33.519Z; the rejected probe is at
+16:44:35.421Z. Installed VS Code 1.140 mainImpl.js confirms a delayed numeric-PID
+probe after Electron's exit event without a creation-identity check. PID reuse
+or a lifecycle anomaly is possible; neither is established by the log. An owned
+native experiment holds a confirmed-exited process handle (HasExited=true,
+ExitCode=0): Node kill(pid,0) correctly returns ESRCH before and after disposal.
+That rules out only a simple retained-dead-handle explanation; it is not a fix.
+The Windows full is not warning-free: sole approved VSCODE-HOST-001, warning,
+20261022T163646/window1/renderer.log:15, exact message:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+
+macOS passes 959 units/13 platform skips and 75 host tests; one populated JSON
+memory host case fails its unchanged 100-ms timer bound. The 5-GB JSONL interval
+is 101.4173750000773 ms at 47418.126958000066 ms, bracketed by importing/reading.
+All four FR-012 hosts pass. No 5-GB JSONL completed-memory/source-hash assertion
+is claimed after that failure. The earlier JSON/JSONL sizes and both CSV sizes
+pass. Independent read-only review finds no concrete product/source/timer bug.
+Surrounding phase names do not identify the callback, GC or OS scheduling cause.
+
+Diagnostic acceptance: keep original timers, every sample, full workloads,
+100-ms/3000-ms bounds and all diagnostic rejection unchanged. An explicitly
+enabled diagnostic wrapper must still run literal npm run verify:full and retain
+its failure status. Observe Windows creation identities around shutdown without
+pinning the original PID or killing any target. Record bounded process CPU,
+async-callback durations and GC entries alongside the original JSON intervals;
+report any trace truncation. No clock subtraction, retry, diagnostic allowance,
+production mutation or speculative repair. Tests must first cover split console
+records, original failure forwarding, identity-collector failures, unchanged raw
+intervals, overlapping GC/callback evidence, bounded traces and disabled mode.
+The implementation keeps the workflow's direct commands and 60-minute matrix
+budget. CI sets LITE_VOYAGER_CI_DIAGNOSTICS=1; verify launches exactly one marked
+diagnostic child running literal npm run verify:full. Its ordinary checks still
+acquire/release the native awake lease. The child marker prevents recursion.
+LITE_VOYAGER_INTERVAL_DIAGNOSTICS enables only the JSON test trace; ordinary local
+verification stays unchanged. Windows lifecycle lines trigger an external CIM
+collector: original creation UTC, then 20 snapshots spaced by 100 ms after exit.
+Query times are printed; no target handle is retained and no target receives a
+signal. Collector startup/failure/cleanup are bounded and fail closed.
+
+The JSON trace retains raw intervals and process-wide CPU deltas, overlapping GC
+and async callbacks of at least 1 ms. Each history is capped at 128 entries;
+async resource maps are capped at 4096. Dropped/untracked entries and truncation
+are explicit. Instrumentation itself can affect timing. Overlap is diagnostic
+evidence, not attribution or permission to adjust the unchanged assertion.
+
+New modules fail first when absent; the Unicode partial-line bound also fails
+before its repair. Final focused command passes 79 cases across five files:
+
+```
+npm test -- test/unit/host-interval-diagnostics.test.ts test/unit/ci-diagnostics.test.ts test/unit/ci-workflow.test.ts test/unit/integration-logs.test.ts test/unit/keep-awake.test.ts
+```
+
+This includes unchanged workflow, strict log rejection and awake-lease cases,
+byte-for-byte stdout/stderr forwarding, failure/collector status preservation,
+bounded parser/trace behavior, disabled mode and actual Windows owned-process
+identity/exit observation. Both tooling and integration typechecks pass. A
+separate headless probe of the installed VS Code 1.140 Node24.21.0 runtime records
+an owned Immediate callback, preserves the raw interval and stops idempotently,
+with exit0/empty stderr (out/t026-native-interval-trace*). It is not an editor,
+host responsiveness or full-gate pass. Independent read-only review finds no
+concrete defect in the diagnostic implementation; historical causes remain unknown.
+Retained tests: out/t026-diagnostics-{red,unicode-red,workflow-red,focused-1,
+focused-2,focused-3}.log. Current standalone gate remains pending. No new full
+gate is attempted. This is a diagnostic candidate, not a repaired CI/task claim.
+
+Owner handoff: push the reviewed candidate, then run the normal three-platform
+workflow once on that exact commit. Return complete Windows/macOS verify logs,
+including T026 shutdown identity evidence and T-026 JSON interval diagnostic
+records, with the original failed guard/output if failure recurs. A diagnostic
+pass does not clear or explain historical failures. Preserve the 100-ms timer
+and every error rejection until causal evidence supports a reviewed repair.
+
+Current-turn files (14): .github/workflows/ci.yml; scripts/ci-diagnostics.mts;
+scripts/windows-exit-diagnostics.ps1; scripts/verify.mts;
+src/test/host-interval-diagnostics.ts; src/test/json-import-memory.test.ts;
+test/unit/ci-diagnostics.test.ts; test/unit/host-interval-diagnostics.test.ts;
+PROGRESS.md; docs/t026-autocomplete.md; docs/t026-ci-repair.md; specs/PLAN.md;
+specs/TASKS.md; specs/VALIDATION.md. No shipped product/UI/dependency change.
+
 ## Follow-up macOS fixture ordering repair
 
 Owner run [39796846457](https://github.com/JreyForFun/lite-voyager/actions/runs/39796846457),

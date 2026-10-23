@@ -10,6 +10,7 @@ import { sourceDigest } from './sqlite-exercise';
 import { TestBudget } from './sqlite-budget';
 import { csvFixtureCheckSql } from './csv-import-data-check';
 import { populatedJsonBrowseReady } from './json-import-readiness';
+import { startHostIntervalDiagnostics } from './host-interval-diagnostics';
 
 suite('T-023 populated JSON memory', () => {
   test('FR-005: Given ten million JSON/JSONL objects, When streaming and querying the entire imported table, Then exact row counts, values and source hashes survive', async function () {
@@ -84,14 +85,19 @@ suite('T-023 populated JSON memory', () => {
             const phase = (): string => `${current.state.phase}/${current.state.progress?.phase ?? 'none'}`;
             let previousPhase = phase();
             let largestInterval = { fromPhase: previousPhase, toPhase: previousPhase, atMs: 0 };
+            const diagnostics = startHostIntervalDiagnostics(process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1');
             const timer = setInterval(() => {
               const now = performance.now(); const observedPhase = phase();
+              diagnostics?.sample(last, now, previousPhase, observedPhase);
               if (now - last > hostGap) { largestInterval = { fromPhase: previousPhase, toPhase: observedPhase, atMs: now - timerStarted }; }
               hostGap = Math.max(hostGap, now - last);
               last = now; previousPhase = observedPhase; ticks++;
             }, 10);
             try { await session.startImport(); } finally {
               clearInterval(timer); remove();
+              if (diagnostics !== undefined) {
+                console.log(`T-026 JSON interval diagnostic: ${JSON.stringify({ format, minimum, evidence: diagnostics.stop() })}`);
+              }
               console.log(`T-025 JSON host interval evidence: ${JSON.stringify({ format, minimum, ticks, maxGapMs: hostGap, ...largestInterval, endPhase: phase(),
                 scope: 'observed phases around the largest original timer interval; no cause attribution, discarded samples or adjusted clock' })}`);
             }

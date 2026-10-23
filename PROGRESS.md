@@ -1,39 +1,40 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-026 macOS fixture repair/review/local gates PASS; fresh owner CI open.
-T-025 remains complete. Evidence/file inventory: docs/t026-autocomplete.md.
+Milestone 2: T-026 CI failure investigation; diagnostic candidate, causes unresolved.
+T-025 remains complete. Evidence/files: docs/t026-autocomplete.md and t026-ci-repair.md.
 
 ## Verify status
-Run39796846457/attempt1/fdf5ad2 passes Windows/Ubuntu installs/full verification.
-macOS: install/types/lint pass; units 954 pass/1 fail/13 skips; build/hosts not reached.
-Old JSON fixture's async progress mutation is unordered; clean-root regression passes.
-Original log/SHA-256/API metadata: docs/t026-ci-repair.md and retained out evidence.
-Reviewed executable 1c53c72 passes npm run verify: 972 units/98 files,
-types/lint/build/34-file VSIX, zero warnings/errors; 818.162 seconds.
-One npm run verify:full PASS: 972 units/76 hosts; 3189.746 seconds.
-UTC full: 2026-10-22T15:32:43.753Z through 16:25:53.499Z; both gates match 282 hashes.
-All four FR-012 hosts/large-file data/source hashes/80 CSV pages per size pass.
-Full is not warning-free: three approved warnings, 20261022T234624/window1/renderer.log:
-Line 2, HOST-002: Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 22ms.
-Line 3, HOST-004: Creation of workbench contribution 'workbench.contrib.chatPetContext' took 21ms.
-Line 12, HOST-001: [CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
-No other diagnostic accepted; bounded Kernel-Power queries return zero events in both gates.
-Raw logs/status/metrics/power: out/t026-json-mutation-*; every earlier failure retained.
+Run39815054580/attempt1/exact25c95c7: locked installs pass; Ubuntu full succeeds.
+Windows passes 972 units/76 hosts, then strict logs reject main.log:9:
+Extension host with pid 636 still exists, forcefully killing it...
+Sole approved warning HOST-001, 20261022T163646/window1/renderer.log:15:
+[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
+That failed full is not warning-free. Duplicate attachments/hash are retained.
+Owner-supplied macOS log: 959 units/13 platform skips, 75 hosts pass/1 fails.
+5-GB JSONL raw host timer gap 101.4173750000773 ms exceeds unchanged 100 ms.
+All four FR-012 hosts pass on both platforms; no completed final JSONL hash claim.
+Current diagnostics: 79 focused tests/five files and both tooling/host-test types pass.
+Installed VS Code Node24.21.0 headless recorder probe passes, empty stderr.
+Current literal standalone verification pending; no new full gate attempted.
 
 ## Last session
-Controlled deferred-write trace confirms safe import can finish before async fixture write.
-Four engine/boundary cases fail first without injection; disposable real-worker builds
-then mutate synchronously before reader/import final snapshots, forwarding real messages.
-Exact changed-source rejection, [] bytes and source-only cleanup pass on both engines.
-Ordinary-loader cap refusal/default deadlines stay. All 51 focused cases pass; review clear.
-No product/UI/workflow/dependency change; prior scoped QA applies, physical paint unobserved: docs/t026-native-qa.md.
+External Windows CIM traces record creation identity around host exit without
+target handles/signals. Bounded JSON CPU/callback/GC traces retain raw intervals.
+Original CI commands remain; explicit CI flag starts one diagnostic child gate.
+Nonzero status, warning/error rejection, awake lease and all workloads/bounds stay.
+New tests fail first; parser Unicode bound is repaired; independent review is clear.
+Instrumentation can affect timing; these traces cannot establish historical cause.
+Retained-dead-handle probe returns ESRCH; PID reuse/host blocking remain unproven.
+No product/UI/dependency change; earlier scoped visual QA remains separately recorded.
 
 ## Decisions / limits
-Exactly T-026. No sleeps/retry-to-green/guard relaxation; final record updates are docs only.
-Owner README/shared-spec edits and unrelated fixtures/debug files remain untouched.
+Exactly T-026; no retry-to-green, sample discard, relaxed guard or speculative fix.
+All earlier failures and historical passing gates retained in linked records.
+Owner README/shared-spec edits, unrelated fixtures/debug files remain untouched.
 
 ## Next
-Owner pushes final reviewed commit and runs fresh actual-candidate Windows/macOS/Ubuntu CI.
-Keep T-026 unchecked until successful locked installs/applicable full checks on all three.
-No new task, milestone closure/release/tag.
+Owner pushes diagnostic candidate and runs fresh Windows/macOS/Ubuntu CI.
+Return complete verify logs including shutdown identity/JSON interval evidence.
+Use causal evidence to repair; keep T-026 unchecked until actual-candidate CI passes.
+No new task, milestone closure, release or tag.

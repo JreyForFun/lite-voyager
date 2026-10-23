@@ -10,6 +10,8 @@ jobs:
     name: Full verification (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    env:
+      LITE_VOYAGER_CI_DIAGNOSTICS: '1'
     strategy:
       fail-fast: false
       matrix:

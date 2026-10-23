@@ -1296,6 +1296,18 @@ litevoyager/
 
 ### T-026 schema autocomplete (2026-10-20)
 
+Run39815054580/attempt1/exact25c95c7 confirms Ubuntu success and Windows/macOS
+failures: Windows passes all units/hosts then rejects a shutdown error; macOS
+5-GB JSONL has a raw101.417375ms interval against the unchanged100ms limit.
+All four FR-012 hosts pass on both. Causes remain unknown. Opt-in external
+Windows creation identities and bounded JSON CPU/callback/GC traces preserve
+literal gate commands, failure status, raw samples and every workload/guard.
+Instrumentation can affect timing; no overlap establishes historical cause.
+Seventy-nine focused tests/five files, tooling/integration types and the installed
+Node24.21.0 headless recorder probe pass; independent diagnostic review is clear.
+Current standalone verification and owner-pushed diagnostic CI remain pending;
+no new full attempt or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
+
 Follow-up run39796846457/attempt1/fdf5ad2 passes Windows/Ubuntu full verification;
 macOS fails one older JSON unit fixture before build/host integration. Parent IPC
 progress does not order its asynchronous write before worker source checks.
@@ -1399,7 +1411,7 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Retain run39796846457/fdf5ad2 Windows/Ubuntu full success and macOS JSON unit fixture failure. Controlled trace establishes unordered async mutation; four cases fail first, then synchronous disposable real-worker mutation preserves product guards/relay/cleanup. All 51 focused cases and independent review pass. Executable1c53c72 passes 972-unit/98-file standalone (zero errors/warnings) and one 972-unit/76-host full (282 matching hashes; three exact approved HOST-002/004/001 warnings at 20261022T234624/window1/renderer.log:2/3/12, not warning-free). Exact messages/logs/metrics: docs/t026-ci-repair.md. Fresh owner-pushed actual-candidate three-platform CI remains open; retain every earlier failure and keep T-026 unchecked.
+- T-026 (2026-10-20): Run39815054580/attempt1/exact25c95c7 passes Ubuntu full and all locked installs. Windows passes 972 units/76 hosts but rejects the unapproved main-process forced-kill error; macOS passes 959 units/13 skips and 75 hosts, failing the unchanged100ms JSONL timer bound at101.417375ms. All four FR-012 hosts pass on both. Causes remain unestablished. Opt-in external Windows creation identities and bounded JSON CPU/callback/GC diagnostics preserve original commands, failure status, samples, workloads, clocks and rejection rules. All79 focused cases/five files, tooling/integration types and the installed Node24.21.0 headless recorder probe pass; independent review finds no concrete diagnostic defect. Current standalone and fresh owner-pushed diagnostic CI remain pending; no new full gate or repair claim. Preserve every failure, the exact Windows HOST-001 warning and all historical gates in docs/t026-ci-repair.md; T-026 remains unchecked.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

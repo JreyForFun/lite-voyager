@@ -2,6 +2,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runChecks, type Check } from './checks.mts';
 import { withSystemAwake } from './keep-awake.mts';
+import { runCiDiagnostics } from './ci-diagnostics.mts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const nodeCheck = (name: string, args: readonly string[]): Check => ({ name, command: process.execPath, args });
@@ -23,8 +24,12 @@ if (process.argv.includes('--full')) {
 }
 
 try {
-  await withSystemAwake(() => runChecks(checks, { cwd: root }));
-  process.stdout.write('\nAll verification checks passed.\n');
+  if (process.argv.includes('--full') && process.env['LITE_VOYAGER_CI_DIAGNOSTICS'] === '1' && process.env['LITE_VOYAGER_DIAGNOSTIC_CHILD'] !== '1') {
+    await runCiDiagnostics();
+  } else {
+    await withSystemAwake(() => runChecks(checks, { cwd: root }));
+    process.stdout.write('\nAll verification checks passed.\n');
+  }
 } catch (error: unknown) {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
