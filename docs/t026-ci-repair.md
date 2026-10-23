@@ -1,6 +1,6 @@
-# T-026: clean-checkout fixture repair (2026-10-22)
+# T-026: CI repairs and failure investigation
 
-## Run 39815054580: diagnostics pending (2026-10-23 Asia/Manila)
+## Run 39815054580: diagnostics ready, platform evidence pending (2026-10-23 Asia/Manila)
 
 GitHub REST confirms attempt 1 at exact 25c95c7a0412a124d44458f0b4dbd7a8041fb816:
 Ubuntu succeeds; Windows/macOS fail their applicable verification step; all locked
@@ -59,7 +59,7 @@ are explicit. Instrumentation itself can affect timing. Overlap is diagnostic
 evidence, not attribution or permission to adjust the unchanged assertion.
 
 New modules fail first when absent; the Unicode partial-line bound also fails
-before its repair. Final focused command passes 79 cases across five files:
+before its repair. Initial focused command passes 79 cases across five files:
 
 ```
 npm test -- test/unit/host-interval-diagnostics.test.ts test/unit/ci-diagnostics.test.ts test/unit/ci-workflow.test.ts test/unit/integration-logs.test.ts test/unit/keep-awake.test.ts
@@ -75,8 +75,8 @@ with exit0/empty stderr (out/t026-native-interval-trace*). It is not an editor,
 host responsiveness or full-gate pass. Independent read-only review finds no
 concrete defect in the diagnostic implementation; historical causes remain unknown.
 Retained tests: out/t026-diagnostics-{red,unicode-red,workflow-red,focused-1,
-focused-2,focused-3}.log. First standard gate failure and repair follow below. No new full
-gate is attempted. This is a diagnostic candidate, not a repaired CI/task claim.
+focused-2,focused-3}.log. First standard gate failure and repair follow below.
+No new full gate is attempted. This is a diagnostic candidate, not a repaired CI/task claim.
 
 The first literal standalone gate on executable c021e88 fails before checks at
 Node's import of ci-diagnostics.mts: constructor parameter properties require
@@ -86,21 +86,37 @@ out/t026-ci-diagnostics-verify-1.log and -status.json (code1, 2.028 seconds,
 293 unchanged hashes); it is not a passing gate. A plain-Node import regression
 first reproduces the exact unsupported-syntax failure in
 out/t026-diagnostics-native-loader-red.log. Use an explicit readonly field and
-ordinary constructor assignment instead. All80 focused cases/five files pass in
+ordinary constructor assignment instead. All 80 focused cases/five files pass in
 18.22 seconds (out/t026-diagnostics-focused-4.log), including native import with
 zero module output. No diagnostic behavior or guard changes. Independent follow-up
 finds no remaining concrete loader defect in the actual direct-import chain.
-Changed-candidate standalone verification remains pending; no full gate attempted.
+The revised candidate proceeds to standard verification below; no full run.
 
-The second standard gate on5778965 passes all three strict typechecks, then lint
+The second standard gate on 5778965 passes all three strict typechecks, then lint
 rejects three require-await fixture methods and one unsafe event destructuring
 in the new diagnostic test. Retain out/t026-ci-diagnostics-verify-2.log and
 -status.json: code1, 84.389 seconds, 293 unchanged hashes; units/build not reached.
 Return explicit resolved/rejected Promises and receive the event value as unknown;
 keep every assertion/child command/lifecycle behavior. No lint disable or type
-weakening. Focused lint passes with empty output; all80 focused tests/five files
-pass again in18.60 seconds (out/t026-diagnostics-lint.log and -focused-5.log).
+weakening. Focused lint passes with empty output; all 80 focused tests/five files
+pass again in 18.60 seconds (out/t026-diagnostics-lint.log and -focused-5.log).
 A fresh changed-candidate standard gate follows; no unchanged retry or full run.
+
+Reviewed executable 649eb631ab2cf5d22b20b8880fc0abed690b2997 passes the changed-candidate literal standalone
+gate: 986 units/100 files, strict host/webview/tooling types, lint,
+production bundles and temporary VSIX packaging (34 files, 996.36 KB). Zero errors and zero
+warnings. UTC 2026-10-23T02:54:48.191Z through 2026-10-23T03:04:31.065Z
+(582.874 seconds); all 293 captured hashes match, including the workflow,
+source/tests/tooling/specs/records and compiler/Vitest configurations. No tracked
+file changes during the gate. Raw evidence: out/t026-ci-diagnostics-verify-3.log,
+-before.json, -status.json and out/t026-ci-diagnostics-evidence-summary.json.
+The earlier two failed standard gates remain failed and retained. Only record
+updates follow this passing executable; no full attempt occurs. Windows/macOS
+root causes remain unestablished; diagnostic acceptance is separate from repair
+and T-026 remains unchecked pending causal evidence and actual-candidate CI.
+Independent read-only final audit confirms these counts, timings, hashes and
+package details match the retained evidence, with no concrete overclaim or
+remaining material diagnostic defect. It does not establish either historical cause.
 
 Owner handoff: push the reviewed candidate, then run the normal three-platform
 workflow once on that exact commit. Return complete Windows/macOS verify logs,

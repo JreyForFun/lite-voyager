@@ -21,8 +21,10 @@ literal gate commands, failure status, raw samples and every workload/guard.
 Instrumentation can affect timing; no overlap establishes historical cause.
 Eighty focused tests/five files, tooling/integration types and the installed
 Node24.21.0 headless recorder probe pass; independent diagnostic review is clear.
-Current standalone verification and owner-pushed diagnostic CI remain pending;
-no new full attempt or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
+Executable 649eb63 passes literal npm run verify: 986 units/100 files, strict
+types/lint/build/VSIX, zero errors/warnings; 582.874 seconds, all 293 captured
+hashes unchanged. Owner-pushed diagnostic CI remains pending; no new full gate
+or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
 
 **Run39815054580 diagnostic acceptance (2026-10-23):** At exact25c95c7, Ubuntu
 passes; Windows passes 972 units/76 hosts but rejects an unapproved main-process
@@ -4893,7 +4895,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Run39815054580/attempt1/exact25c95c7 passes Ubuntu full and all locked installs. Windows passes 972 units/76 hosts but rejects the unapproved main-process forced-kill error; macOS passes 959 units/13 skips and 75 hosts, failing the unchanged100ms JSONL timer bound at101.417375ms. All four FR-012 hosts pass on both. Causes remain unestablished. Opt-in external Windows creation identities and bounded JSON CPU/callback/GC diagnostics preserve original commands, failure status, samples, workloads, clocks and rejection rules. All80 focused cases/five files, tooling/integration types and the installed Node24.21.0 headless recorder probe pass; independent review finds no concrete diagnostic defect. Current standalone and fresh owner-pushed diagnostic CI remain pending; no new full gate or repair claim. Preserve every failure, the exact Windows HOST-001 warning and all historical gates in docs/t026-ci-repair.md; T-026 remains unchecked.
+- T-026 (2026-10-20): Run39815054580/attempt1/exact25c95c7 passes Ubuntu full and all locked installs. Windows passes 972 units/76 hosts but rejects the unapproved main-process forced-kill error; macOS passes 959 units/13 skips and 75 hosts, failing the unchanged100ms JSONL timer bound at101.417375ms. All four FR-012 hosts pass on both. Causes remain unestablished. Opt-in external Windows creation identities and bounded JSON CPU/callback/GC diagnostics preserve original commands, failure status, samples, workloads, clocks and rejection rules. All80 focused cases/five files, tooling/integration types and the installed Node24.21.0 headless recorder probe pass; independent review finds no concrete diagnostic defect. Executable 649eb63 passes literal npm run verify: 986 units/100 files, strict types/lint/build/VSIX, zero errors/warnings; 582.874 seconds, all 293 captured hashes unchanged. Owner-pushed diagnostic CI remains pending; no new full gate or repaired-CI claim. Preserve every failure, the exact Windows HOST-001 warning and all historical gates in docs/t026-ci-repair.md; T-026 remains unchecked.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

@@ -47,8 +47,10 @@ literal gate commands, failure status, raw samples and every workload/guard.
 Instrumentation can affect timing; no overlap establishes historical cause.
 Eighty focused tests/five files, tooling/integration types and the installed
 Node24.21.0 headless recorder probe pass; independent diagnostic review is clear.
-Current standalone verification and owner-pushed diagnostic CI remain pending;
-no new full attempt or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
+Executable 649eb63 passes literal npm run verify: 986 units/100 files, strict
+types/lint/build/VSIX, zero errors/warnings; 582.874 seconds, all 293 captured
+hashes unchanged. Owner-pushed diagnostic CI remains pending; no new full gate
+or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
 
 ## Design and limits
 
