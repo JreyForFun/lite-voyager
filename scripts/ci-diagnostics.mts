@@ -14,7 +14,8 @@ export class HostExitLines {
   private partial = '';
   private discarding = false;
   droppedLines = 0;
-  constructor(private readonly maximum = 65536) {}
+  private readonly maximum: number;
+  constructor(maximum = 65536) { this.maximum = maximum; }
   feed(text: string): ShutdownSignal[] {
     const signals: ShutdownSignal[] = [];
     for (const character of text) {

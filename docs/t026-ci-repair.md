@@ -75,8 +75,22 @@ with exit0/empty stderr (out/t026-native-interval-trace*). It is not an editor,
 host responsiveness or full-gate pass. Independent read-only review finds no
 concrete defect in the diagnostic implementation; historical causes remain unknown.
 Retained tests: out/t026-diagnostics-{red,unicode-red,workflow-red,focused-1,
-focused-2,focused-3}.log. Current standalone gate remains pending. No new full
+focused-2,focused-3}.log. First standard gate failure and repair follow below. No new full
 gate is attempted. This is a diagnostic candidate, not a repaired CI/task claim.
+
+The first literal standalone gate on executable c021e88 fails before checks at
+Node's import of ci-diagnostics.mts: constructor parameter properties require
+transformation and are unsupported by native strip-only execution. This was a
+diagnostic-helper defect missed by transformed Vitest imports. Retain
+out/t026-ci-diagnostics-verify-1.log and -status.json (code1, 2.028 seconds,
+293 unchanged hashes); it is not a passing gate. A plain-Node import regression
+first reproduces the exact unsupported-syntax failure in
+out/t026-diagnostics-native-loader-red.log. Use an explicit readonly field and
+ordinary constructor assignment instead. All80 focused cases/five files pass in
+18.22 seconds (out/t026-diagnostics-focused-4.log), including native import with
+zero module output. No diagnostic behavior or guard changes. Independent follow-up
+finds no remaining concrete loader defect in the actual direct-import chain.
+Changed-candidate standalone verification remains pending; no full gate attempted.
 
 Owner handoff: push the reviewed candidate, then run the normal three-platform
 workflow once on that exact commit. Return complete Windows/macOS verify logs,

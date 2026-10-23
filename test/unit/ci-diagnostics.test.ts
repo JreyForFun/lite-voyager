@@ -1,8 +1,18 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createInterface } from 'node:readline';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
 import { expect, test } from 'vitest';
 import { HostExitLines, runDiagnosticCommand, startWindowsIdentityCollector, type ShutdownSignal } from '../../scripts/ci-diagnostics.mts';
+
+test('NFR-005: Given the ordinary native Node tooling loader, When importing the diagnostic module without enabling it, Then strip-only execution succeeds with no diagnostic output', async () => {
+  const output: Buffer[] = [];
+  const url = pathToFileURL(resolve('scripts/ci-diagnostics.mts')).href;
+  const result = await runDiagnosticCommand(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify(url)});`],
+    undefined, (chunk) => { output.push(Buffer.from(chunk)); });
+  expect(Buffer.concat(output).toString()).toBe(''); expect(result.code).toBe(0);
+});
 
 test('NFR-005: Given split formatted host lifecycle records, When diagnostics read the console, Then only valid original host PID events are emitted', () => {
   const lines = new HostExitLines();

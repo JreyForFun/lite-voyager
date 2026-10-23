@@ -14,16 +14,17 @@ That failed full is not warning-free. Duplicate attachments/hash are retained.
 Owner-supplied macOS log: 959 units/13 platform skips, 75 hosts pass/1 fails.
 5-GB JSONL raw host timer gap 101.4173750000773 ms exceeds unchanged 100 ms.
 All four FR-012 hosts pass on both platforms; no completed final JSONL hash claim.
-Current diagnostics: 79 focused tests/five files and both tooling/host-test types pass.
+Current diagnostics: 80 focused tests/five files and both tooling/host-test types pass.
 Installed VS Code Node24.21.0 headless recorder probe passes, empty stderr.
-Current literal standalone verification pending; no new full gate attempted.
+First standard gate fails native tooling import; red-first syntax repair passes 80 focused.
+Changed-candidate standalone pending; no new full gate attempted.
 
 ## Last session
 External Windows CIM traces record creation identity around host exit without
 target handles/signals. Bounded JSON CPU/callback/GC traces retain raw intervals.
 Original CI commands remain; explicit CI flag starts one diagnostic child gate.
 Nonzero status, warning/error rejection, awake lease and all workloads/bounds stay.
-New tests fail first; parser Unicode bound is repaired; independent review is clear.
+New tests fail first; Unicode/native-loader repairs pass independent follow-up.
 Instrumentation can affect timing; these traces cannot establish historical cause.
 Retained-dead-handle probe returns ESRCH; PID reuse/host blocking remain unproven.
 No product/UI/dependency change; earlier scoped visual QA remains separately recorded.
