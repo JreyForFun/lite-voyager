@@ -1,5 +1,21 @@
 # T-026: schema autocomplete (2026-10-20)
 
+T-026 is complete (2026-10-23). Owner reports PASS; GitHub REST independently
+confirms run39904711322/attempt1 at exact
+b46a14eda4ba3ad2594e3a8688345da26569d4c0 succeeds for locked installs and applicable
+full verification on Windows, macOS and Ubuntu. This clears actual-candidate CI.
+Prior unchanged executable59a236f passes literal npm run verify:989 units/100
+files, strict types/lint/build/VSIX, zero errors/warnings,585.006s and295 matching
+hashes. Scoped FR-012 acceptance, independent reviews and delegated light/dark
+renderer QA are retained; historical failures and observation limits stay.
+Remote raw counts/approved-warning records are not retrieved; no warning-free
+remote claim. The validated macOS default-renderer configuration does not prove
+the historical GPU, timer or shutdown cause, or which backend was selected.
+Only T-026 closes; milestone-wide QA/review, release/tag and publishing remain
+separate. Owner pushes closure records; no executable change or new task.
+Details and metadata: docs/t026-ci-repair.md. Earlier pending/unchecked entries
+below are chronological snapshots, superseded only for current task status.
+
 Owner delegates implementation, uncertainty resolution, scoped fixes/fixtures and
 visual QA; owner retains push and actual-candidate CI. SPEC FR-012 acceptance
 precedes tests/code. No whole-milestone closure, release or tag is implied.

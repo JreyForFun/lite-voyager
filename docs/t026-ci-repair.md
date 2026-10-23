@@ -1,5 +1,54 @@
 # T-026: CI repairs and failure investigation
 
+## T-026 completion: run39904711322 (2026-10-23 Asia/Manila)
+
+Owner reports PASS. GitHub REST independently confirms run39904711322,
+attempt1, completed successfully at exact candidate
+b46a14eda4ba3ad2594e3a8688345da26569d4c0. All three locked installs and applicable
+full-verification steps succeed:
+
+- Ubuntu job120253881017: completed2026-10-23T05:26:08Z.
+- macOS job120253881287: completed2026-10-23T05:29:48Z.
+- Windows job120253881296: completed2026-10-23T05:33:46Z.
+
+The matrix starts at05:15:07Z. The last completion is13:33:46 Asia/Manila on
+2026-10-23. Raw API evidence: out/t026-ci-39904711322-metadata.json. Remote raw
+logs, per-platform test totals and approved-warning records are not retrieved;
+no warning-free remote claim. No new CI execution or unchanged retry occurs.
+
+This passes the reviewed macOS default-renderer candidate under the unchanged
+strict gate. It does not establish the historical mailbox/timer/shutdown cause
+or actual graphics backend. Every failed gate and exact retained diagnostic
+below remains historical evidence; prior pending statements are dated snapshots.
+
+SPEC FR-012 acceptance is covered by the documented keyword/schema/alias/quoted
+insertion tests, bounded parameterized metadata tests, view-local abort/disposal
+and retained-results tests, real-worker native/fallback execution/source hashes,
+four real CodeMirror/imported-schema host cases and scoped light/dark renderer QA.
+Existing independent reviews are clear. Physical paint/OS-level scrolling and
+other-platform appearance limits remain exactly as recorded in t026-native-qa.md;
+no new manual or rendering observation is invented.
+
+The unchanged executable 59a236f has literal npm run verify evidence: 989 units/
+100 files, strict types/lint/build/34-file 996.36-KB VSIX, zero warnings/errors;
+585.006 seconds and all 295 captured hashes unchanged. Its log/status/summary are
+out/t026-renderer-probe-verify-1* and out/t026-renderer-probe-evidence-summary.json.
+b46a14e changes only records after that passing executable. This closure changes
+only the same six evidence/spec records; prior executable checks remain applicable.
+No additional full gate or new test is run for these status-only edits.
+Independent read-only closure audit confirms the actual metadata, unchanged
+executable, FR-012 acceptance and separate milestone limits, with no concrete
+closure or overclaim issue. Owner's unrelated four-file edits remain unstaged.
+
+Check only T-026. The whole-milestone universal/manual QA/review gate, release/tag,
+publishing and any Milestone3 work remain separate. Owner pushes closure records.
+Reproduction commands remain npm run verify and npm run verify:full; Linux full
+uses dbus-run-session -- xvfb-run -a npm run verify:full. No product, dependency,
+workflow, workload, deadline or diagnostic-policy change follows the successful CI.
+
+Current-turn files (6): PROGRESS.md; docs/t026-autocomplete.md;
+docs/t026-ci-repair.md; specs/PLAN.md; specs/TASKS.md; specs/VALIDATION.md.
+
 ## Run39894215400: controlled macOS renderer probe (2026-10-23 Asia/Manila)
 
 GitHub REST confirms attempt1 at exact7f0a74e159981eea2b85a3819cdac37dfd4a1769.

@@ -12,6 +12,22 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ### T-026 schema autocomplete (2026-10-20)
 
+T-026 is complete (2026-10-23). Owner reports PASS; GitHub REST independently
+confirms run39904711322/attempt1 at exact
+b46a14eda4ba3ad2594e3a8688345da26569d4c0 succeeds for locked installs and applicable
+full verification on Windows, macOS and Ubuntu. This clears actual-candidate CI.
+Prior unchanged executable59a236f passes literal npm run verify:989 units/100
+files, strict types/lint/build/VSIX, zero errors/warnings,585.006s and295 matching
+hashes. Scoped FR-012 acceptance, independent reviews and delegated light/dark
+renderer QA are retained; historical failures and observation limits stay.
+Remote raw counts/approved-warning records are not retrieved; no warning-free
+remote claim. The validated macOS default-renderer configuration does not prove
+the historical GPU, timer or shutdown cause, or which backend was selected.
+Only T-026 closes; milestone-wide QA/review, release/tag and publishing remain
+separate. Owner pushes closure records; no executable change or new task.
+Details and metadata: docs/t026-ci-repair.md. Earlier pending/unchecked entries
+below are chronological snapshots, superseded only for current task status.
+
 Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu locked installs/full
 checks. macOS passes972 units/14 platform skips and all76 hosts, including all
 four FR-012 and every original populated data/hash/memory/timing workload, then
@@ -4914,7 +4930,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu full checks; macOS972units/14skips and all76hosts pass, then strict console rejects two Chromium ProduceMemory mailbox errors. JSON/JSONL timing passes18-20ms; historical timing/exit causes remain unknown. Independent lifecycle review finds no concrete product defect. Controlled macOS-only probe omits --disable-gpu, permitting default rendering without claiming a selected backend or established repair. Preserve exact Windows/Linux arguments, isolation, workloads, clocks and every diagnostic rejection. Three platform-argument regressions fail first for macOS baseline, then63focused cases/three files, scopedlint and independent review pass. Executable59a236f passes literal standalone: 989units/100files, zero errors/warnings, 585.006s/295unchanged hashes. Owner-pushed controlled platformCI pending; preserve every failure, no new full or task closure. Evidence: docs/t026-ci-repair.md.
+- T-026 (2026-10-20): Complete T-026 after independently confirmed run39904711322/attempt1 at exactb46a14eda4ba3ad2594e3a8688345da26569d4c0 passes locked installs and applicable full checks on Windows/macOS/Ubuntu (2026-10-23). FR-012 implementation, bounded both-engine metadata/keyboard/lifecycle/source-safety tests, scoped delegated renderer QA and independent reviews pass. Unchanged executable59a236f has989-unit/100-file zero-error/zero-warning standalone evidence (585.006s/295matching hashes). Preserve all failed runs, exact historical diagnostics, unestablished GPU/timing/exit causes and remote raw-log limits; no warning-free remote claim. Only T-026 closes; milestone-wide QA/review/release/tag remain separate. Owner pushes records. Evidence: docs/t026-ci-repair.md.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.
