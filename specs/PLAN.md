@@ -1309,7 +1309,9 @@ versions, test sequence/workloads, clocks and error/warning rejection remain.
 No sleeps, forced redraws, diagnostic allowances, new switches or dependencies.
 Exact-argument regressions fail first for macOS against baseline behavior, then
 63 focused cases/three files and scoped lint pass; independent review is clear.
-Current-candidate standalone and owner-pushed platform CI remain pending.
+Reviewed executable59a236f passes literal npm run verify: 989 units/100 files,
+strict types/lint/build/VSIX, zero warnings/errors; 585.006s and all295
+captured hashes unchanged. Owner-pushed controlled platform CI remains pending.
 This is a controlled environment probe, not a proven graphics repair. Keep
 T-026 unchecked. Exact errors, metadata/hash and limits: docs/t026-ci-repair.md.
 
@@ -1430,7 +1432,7 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu full checks; macOS972units/14skips and all76hosts pass, then strict console rejects two Chromium ProduceMemory mailbox errors. JSON/JSONL timing passes18-20ms; historical timing/exit causes remain unknown. Independent lifecycle review finds no concrete product defect. Controlled macOS-only probe omits --disable-gpu, permitting default rendering without claiming a selected backend or established repair. Preserve exact Windows/Linux arguments, isolation, workloads, clocks and every diagnostic rejection. Three platform-argument regressions fail first for macOS baseline, then63focused cases/three files, scopedlint and independent review pass. Current standalone/platformCI pending; preserve every failure, no new full or task closure. Evidence: docs/t026-ci-repair.md.
+- T-026 (2026-10-20): Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu full checks; macOS972units/14skips and all76hosts pass, then strict console rejects two Chromium ProduceMemory mailbox errors. JSON/JSONL timing passes18-20ms; historical timing/exit causes remain unknown. Independent lifecycle review finds no concrete product defect. Controlled macOS-only probe omits --disable-gpu, permitting default rendering without claiming a selected backend or established repair. Preserve exact Windows/Linux arguments, isolation, workloads, clocks and every diagnostic rejection. Three platform-argument regressions fail first for macOS baseline, then63focused cases/three files, scopedlint and independent review pass. Executable59a236f passes literal standalone: 989units/100files, zero errors/warnings, 585.006s/295unchanged hashes. Owner-pushed controlled platformCI pending; preserve every failure, no new full or task closure. Evidence: docs/t026-ci-repair.md.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

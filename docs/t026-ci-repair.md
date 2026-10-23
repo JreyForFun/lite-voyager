@@ -10,23 +10,24 @@ Metadata: out/t026-ci-39894215400-metadata.json. Supplied macOS attachment is
 retained byte-for-byte as out/t026-ci-39894215400-macos.log, SHA-256
 45f0c9c8d1181b51ca49407a6ed34a6f1334594577b8668c8827215072409aea.
 
-macOS passes972 units/14 applicable platform skips (986total),99 files/1 skipped,
-strict types/lint/build/package and all76 host tests. All four FR-012 hosts and
+macOS passes 972 units/14 applicable platform skips (986 total), 99 files/1 skipped,
+strict types/lint/build/package and all 76 host tests. All four FR-012 hosts and
 the unchanged SQLite/JSON/JSONL/CSV large-file/data/source-hash checks pass.
-The four raw JSON/JSONL interval maxima are18.00241700001061,
-19.11662499999511,18.116333999991184 and19.40487500000745ms. The diagnostic
+The four raw JSON/JSONL interval maxima are 18.00241700001061,
+19.11662499999511, 18.116333999991184 and 19.40487500000745 ms. The diagnostic
 trace reports untracked resources/truncation; empty callback/GC lists cannot
 prove absence of work. These successes do not establish either historical cause.
 
 Strict assembled-console checking correctly rejects two native Chromium errors
-at attached-log lines1005/1006, GPU process4462:
+at attached-log lines1005/1006, native producer PID4462 (its role is not established):
 
-- 2026-10-23 03:24:46.440759 UTC:
+- Native timestamp1023/032446.440759:
   [4462:1023/032446.440759:ERROR:gpu/command_buffer/service/shared_image/shared_image_manager.cc:395] SharedImageManager::ProduceMemory: Trying to Produce a Memory representation from a non-existent mailbox.
-- 2026-10-23 03:24:46.459144 UTC:
+- Native timestamp1023/032446.459144:
   [4462:1023/032446.459144:ERROR:gpu/command_buffer/service/shared_image/shared_image_manager.cc:395] SharedImageManager::ProduceMemory: Trying to Produce a Memory representation from a non-existent mailbox.
 
-Both bracket the D-5 split-view case's completion. The case waits for real
+Both appear after the second all-formats case's completion line and before the
+D-5 split-view case's completion line. The case waits for real
 preview DOM, cancellation/import settlement, exact-tab closure/session cleanup,
 independent second import/browser DOM and source equality. Independent read-only
 review finds no concrete product lifecycle defect. Session closure proves owned
@@ -56,15 +57,35 @@ baseline-preserving helper retaining --disable-gpu fails exactly the darwin
 argument assertion while Windows/Linux pass. The new launcher helper omits only
 that macOS argument. A real native configuration import must exactly match its
 arguments; all prior empty-profile/extension/authentication assertions stay.
-Retain out/t026-renderer-config-red.log and -behavior-red.log. All63 focused
-configuration/strict-diagnostic/workflow cases across three files pass in8.81s;
+Retain out/t026-renderer-config-red.log and -behavior-red.log. All 63 focused
+configuration/strict-diagnostic/workflow cases across three files pass in 8.81 s;
 scoped lint has empty output. Independent actual-diff review finds no concrete
 defect. Evidence: out/t026-renderer-config-focused.log and -lint.log.
-Current-candidate standard verification remains pending; no new full is started.
+Reviewed executable 59a236f3d1adec203584c5a1b5279c51e8b7f3ac passes literal npm run verify:
+989 units/100 files, strict host/webview/tooling types, lint, production
+bundles and temporary VSIX packaging (34 files, 996.36 KB). Zero errors and zero warnings.
+UTC 2026-10-23T05:00:40.920Z through 2026-10-23T05:10:25.926Z,
+585.006 seconds. All 295 captured hashes match, including .vscode-test.mjs,
+workflow, source/tests/tooling/specs/records and compiler/Vitest configurations.
+Evidence: out/t026-renderer-probe-verify-1.log, -before.json, -status.json and
+out/t026-renderer-probe-evidence-summary.json. Only record updates follow.
+No new full gate or macOS host run occurs locally. Current Windows native config
+import is exercised; pure argument tests cover all three platforms. Owner pushes
+the final reviewed probe and runs fresh platform CI once. Full macOS results,
+actual renderer/backend and native visual paint remain unobserved locally.
+This passing standalone cannot clear the failed CI or establish its GPU cause.
+Independent read-only final audit confirms counts, timing, hashes, package size
+and focused results match retained evidence, with no concrete overclaim/status
+defect. PID role, native timestamp timezone, selected backend and GPU cause stay
+unestablished; owner platform CI remains pending.
+
+Commands: npm run verify; npm run verify:full (owner's normal platform CI).
+Focused tests: npm test -- test/unit/integration-config.test.ts test/unit/integration-logs.test.ts test/unit/ci-workflow.test.ts.
 
 Primary sources:
-- https://code.visualstudio.com/docs/configure/command-line documents --disable-gpu.
-- https://chromium.googlesource.com/chromium/src/gpu/+/f2ce5726738369eaf8f7dadb75667225a2353a41/command_buffer/service/shared_image/shared_image_manager.cc describes the missing-backing branch; this reference is not claimed to be the exact packaged Chromium revision.
+
+- [VS Code CLI documentation](https://code.visualstudio.com/docs/configure/command-line) documents --disable-gpu.
+- [Chromium source](https://chromium.googlesource.com/chromium/src/gpu/+/f2ce5726738369eaf8f7dadb75667225a2353a41/command_buffer/service/shared_image/shared_image_manager.cc) describes the missing-backing branch; this reference is not claimed to be the exact packaged Chromium revision.
 
 Current-turn files (9): .vscode-test.mjs; scripts/integration-launch.mts;
 test/unit/integration-config.test.ts; PROGRESS.md; docs/t026-autocomplete.md;

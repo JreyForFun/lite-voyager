@@ -65,7 +65,9 @@ versions, test sequence/workloads, clocks and error/warning rejection remain.
 No sleeps, forced redraws, diagnostic allowances, new switches or dependencies.
 Exact-argument regressions fail first for macOS against baseline behavior, then
 63 focused cases/three files and scoped lint pass; independent review is clear.
-Current-candidate standalone and owner-pushed platform CI remain pending.
+Reviewed executable59a236f passes literal npm run verify: 989 units/100 files,
+strict types/lint/build/VSIX, zero warnings/errors; 585.006s and all295
+captured hashes unchanged. Owner-pushed controlled platform CI remains pending.
 This is a controlled environment probe, not a proven graphics repair. Keep
 T-026 unchecked. Exact errors, metadata/hash and limits: docs/t026-ci-repair.md.
 
