@@ -1,5 +1,76 @@
 # T-026: CI repairs and failure investigation
 
+## Run39894215400: controlled macOS renderer probe (2026-10-23 Asia/Manila)
+
+GitHub REST confirms attempt1 at exact7f0a74e159981eea2b85a3819cdac37dfd4a1769.
+Windows/Ubuntu locked installs and applicable full verification succeed; macOS
+locked installation succeeds but its full step fails after all tests pass.
+Confirmed jobs: Ubuntu120220752091; Windows120220752116; macOS120220752234.
+Metadata: out/t026-ci-39894215400-metadata.json. Supplied macOS attachment is
+retained byte-for-byte as out/t026-ci-39894215400-macos.log, SHA-256
+45f0c9c8d1181b51ca49407a6ed34a6f1334594577b8668c8827215072409aea.
+
+macOS passes972 units/14 applicable platform skips (986total),99 files/1 skipped,
+strict types/lint/build/package and all76 host tests. All four FR-012 hosts and
+the unchanged SQLite/JSON/JSONL/CSV large-file/data/source-hash checks pass.
+The four raw JSON/JSONL interval maxima are18.00241700001061,
+19.11662499999511,18.116333999991184 and19.40487500000745ms. The diagnostic
+trace reports untracked resources/truncation; empty callback/GC lists cannot
+prove absence of work. These successes do not establish either historical cause.
+
+Strict assembled-console checking correctly rejects two native Chromium errors
+at attached-log lines1005/1006, GPU process4462:
+
+- 2026-10-23 03:24:46.440759 UTC:
+  [4462:1023/032446.440759:ERROR:gpu/command_buffer/service/shared_image/shared_image_manager.cc:395] SharedImageManager::ProduceMemory: Trying to Produce a Memory representation from a non-existent mailbox.
+- 2026-10-23 03:24:46.459144 UTC:
+  [4462:1023/032446.459144:ERROR:gpu/command_buffer/service/shared_image/shared_image_manager.cc:395] SharedImageManager::ProduceMemory: Trying to Produce a Memory representation from a non-existent mailbox.
+
+Both bracket the D-5 split-view case's completion. The case waits for real
+preview DOM, cancellation/import settlement, exact-tab closure/session cleanup,
+independent second import/browser DOM and source equality. Independent read-only
+review finds no concrete product lifecycle defect. Session closure proves owned
+helper/storage cleanup, not compositor quiescence; timestamps do not attribute
+the native error to a particular view/action. Chromium's primary source logs
+this message when its mailbox has no registered backing; it does not identify
+who removed/missed it. The same error family occurred on Ubuntu during T-020
+with --disable-gpu already present; previous graphics probes established no fix.
+
+The host runner exits0, but the strict console guard exits1. Structured runtime
+log scanning is not reached after that rejection, so no structured warning count
+or warning-free full claim is made. Windows/Ubuntu remote raw warning records
+are not retrieved; their metadata success does not prove the old shutdown cause.
+
+Controlled acceptance: remove only macOS's forced --disable-gpu argument and
+exercise normal VS Code default rendering with the full unchanged workload.
+This permits acceleration; actual backend selection and the historical cause
+remain unestablished. Preserve every Windows/Linux argument, isolation path,
+signed-out fixture, exact version, sequence, budget, timer/sample, source check
+and error/warning rejection. No sleeps, forced redraw, unsupported/new switches,
+vendor edits, new dependency, diagnostic allowance or unchanged full retry.
+Owner retains push and the actual macOS experiment. A pass validates this
+candidate/configuration; it cannot alone prove a graphics repair or causal fix.
+
+Tests precede the implementation. Missing-helper import fails first; then a
+baseline-preserving helper retaining --disable-gpu fails exactly the darwin
+argument assertion while Windows/Linux pass. The new launcher helper omits only
+that macOS argument. A real native configuration import must exactly match its
+arguments; all prior empty-profile/extension/authentication assertions stay.
+Retain out/t026-renderer-config-red.log and -behavior-red.log. All63 focused
+configuration/strict-diagnostic/workflow cases across three files pass in8.81s;
+scoped lint has empty output. Independent actual-diff review finds no concrete
+defect. Evidence: out/t026-renderer-config-focused.log and -lint.log.
+Current-candidate standard verification remains pending; no new full is started.
+
+Primary sources:
+- https://code.visualstudio.com/docs/configure/command-line documents --disable-gpu.
+- https://chromium.googlesource.com/chromium/src/gpu/+/f2ce5726738369eaf8f7dadb75667225a2353a41/command_buffer/service/shared_image/shared_image_manager.cc describes the missing-backing branch; this reference is not claimed to be the exact packaged Chromium revision.
+
+Current-turn files (9): .vscode-test.mjs; scripts/integration-launch.mts;
+test/unit/integration-config.test.ts; PROGRESS.md; docs/t026-autocomplete.md;
+docs/t026-ci-repair.md; specs/PLAN.md; specs/TASKS.md; specs/VALIDATION.md.
+No product, dependency or diagnostic-policy change. Keep T-026 unchecked.
+
 ## Run 39815054580: diagnostics ready, platform evidence pending (2026-10-23 Asia/Manila)
 
 GitHub REST confirms attempt 1 at exact 25c95c7a0412a124d44458f0b4dbd7a8041fb816:

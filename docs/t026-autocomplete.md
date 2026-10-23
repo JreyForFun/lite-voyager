@@ -52,6 +52,23 @@ types/lint/build/VSIX, zero errors/warnings; 582.874 seconds, all 293 captured
 hashes unchanged. Owner-pushed diagnostic CI remains pending; no new full gate
 or repaired-CI claim. Exact evidence: docs/t026-ci-repair.md.
 
+Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu locked installs/full
+checks. macOS passes972 units/14 platform skips and all76 hosts, including all
+four FR-012 and every original populated data/hash/memory/timing workload, then
+strict console validation rejects two Chromium ProduceMemory mailbox errors.
+All four JSON/JSONL interval maxima are18-20ms; no old timing/exit cause is proved.
+Independent lifecycle review finds no concrete product defect. Preserve the log.
+Prepare a controlled macOS-only configuration probe: omit the existing
+--disable-gpu switch, permitting ordinary VS Code rendering. Actual backend and
+historical cause remain unknown. Windows/Linux arguments, isolated profiles,
+versions, test sequence/workloads, clocks and error/warning rejection remain.
+No sleeps, forced redraws, diagnostic allowances, new switches or dependencies.
+Exact-argument regressions fail first for macOS against baseline behavior, then
+63 focused cases/three files and scoped lint pass; independent review is clear.
+Current-candidate standalone and owner-pushed platform CI remain pending.
+This is a controlled environment probe, not a proven graphics repair. Keep
+T-026 unchecked. Exact errors, metadata/hash and limits: docs/t026-ci-repair.md.
+
 ## Design and limits
 
 The existing SQLite language supplies keywords. Declare already-installed/locked
@@ -308,10 +325,11 @@ fixtures/debug files and ignored out/t026-* evidence are excluded from the task.
 
 ## Complete changed-file inventory
 
-All 41 task files relative to baseline 3d41443; owner edits are excluded:
+All 44 task files relative to baseline 3d41443; owner edits are excluded:
 
 ```
 .github/workflows/ci.yml
+.vscode-test.mjs
 PROGRESS.md
 docs/t026-autocomplete.md
 docs/t026-ci-repair.md
@@ -322,6 +340,7 @@ package-lock.json
 package.json
 scripts/ci-diagnostics.mts
 scripts/csv-memory.mts
+scripts/integration-launch.mts
 scripts/keep-awake.mts
 scripts/verify.mts
 scripts/windows-awake.ps1
@@ -343,6 +362,7 @@ test/unit/browser-view.test.ts
 test/unit/ci-diagnostics.test.ts
 test/unit/csv-memory-windows.test.ts
 test/unit/host-interval-diagnostics.test.ts
+test/unit/integration-config.test.ts
 test/unit/keep-awake.test.ts
 test/unit/json-import.test.ts
 test/unit/sql-completion-clean-checkout.test.ts

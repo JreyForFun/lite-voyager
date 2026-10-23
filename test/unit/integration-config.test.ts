@@ -3,8 +3,21 @@ import { mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
+import { integrationLaunchArgs } from '../../scripts/integration-launch.mts';
 
 const execute = promisify(execFile);
+
+test.each(['darwin', 'win32', 'linux'] as const)('NFR-005: Given the controlled renderer probe on %s, When integration launch arguments are built, Then only macOS permits the default renderer and every isolation argument is retained', (platform) => {
+  const profile = resolve('out/integration-profile-renderer-probe');
+  expect(integrationLaunchArgs(profile, platform)).toEqual([
+    `--user-data-dir=${profile}`,
+    `--extensions-dir=${join(profile, 'extensions')}`,
+    `--builtin-extensions-dir=${join(profile, 'builtin-extensions')}`,
+    '--disable-extensions',
+    ...(platform === 'darwin' ? [] : ['--disable-gpu']),
+    '--skip-welcome', '--skip-release-notes', '--disable-workspace-trust',
+  ]);
+});
 
 test('NFR-005: Given the strict diagnostic gate, When the isolated host launches, Then unsupported Chromium switches are absent', async () => {
   const { stdout, stderr } = await execute(process.execPath, ['--input-type=module', '-e',
@@ -44,6 +57,7 @@ test('T-006: Given an integration run, When its configuration loads, Then instal
       'const { default: config } = await import("./.vscode-test.mjs"); console.log(JSON.stringify(config.launchArgs));',
     ], { cwd: resolve('.'), env: { ...process.env, LITE_VOYAGER_TEST_PROFILE: profile } });
     const args: unknown = JSON.parse(stdout);
+    expect(args).toEqual(integrationLaunchArgs(profile));
     expect(args).toEqual(expect.arrayContaining([
       `--extensions-dir=${join(profile, 'extensions')}`,
       `--builtin-extensions-dir=${join(profile, 'builtin-extensions')}`,

@@ -12,6 +12,23 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 ### T-026 schema autocomplete (2026-10-20)
 
+Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu locked installs/full
+checks. macOS passes972 units/14 platform skips and all76 hosts, including all
+four FR-012 and every original populated data/hash/memory/timing workload, then
+strict console validation rejects two Chromium ProduceMemory mailbox errors.
+All four JSON/JSONL interval maxima are18-20ms; no old timing/exit cause is proved.
+Independent lifecycle review finds no concrete product defect. Preserve the log.
+Prepare a controlled macOS-only configuration probe: omit the existing
+--disable-gpu switch, permitting ordinary VS Code rendering. Actual backend and
+historical cause remain unknown. Windows/Linux arguments, isolated profiles,
+versions, test sequence/workloads, clocks and error/warning rejection remain.
+No sleeps, forced redraws, diagnostic allowances, new switches or dependencies.
+Exact-argument regressions fail first for macOS against baseline behavior, then
+63 focused cases/three files and scoped lint pass; independent review is clear.
+Current-candidate standalone and owner-pushed platform CI remain pending.
+This is a controlled environment probe, not a proven graphics repair. Keep
+T-026 unchecked. Exact errors, metadata/hash and limits: docs/t026-ci-repair.md.
+
 Run39815054580/attempt1/exact25c95c7 confirms Ubuntu success and Windows/macOS
 failures: Windows passes all units/hosts then rejects a shutdown error; macOS
 5-GB JSONL has a raw101.417375ms interval against the unchanged100ms limit.
@@ -4895,7 +4912,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
-- T-026 (2026-10-20): Run39815054580/attempt1/exact25c95c7 passes Ubuntu full and all locked installs. Windows passes 972 units/76 hosts but rejects the unapproved main-process forced-kill error; macOS passes 959 units/13 skips and 75 hosts, failing the unchanged100ms JSONL timer bound at101.417375ms. All four FR-012 hosts pass on both. Causes remain unestablished. Opt-in external Windows creation identities and bounded JSON CPU/callback/GC diagnostics preserve original commands, failure status, samples, workloads, clocks and rejection rules. All80 focused cases/five files, tooling/integration types and the installed Node24.21.0 headless recorder probe pass; independent review finds no concrete diagnostic defect. Executable 649eb63 passes literal npm run verify: 986 units/100 files, strict types/lint/build/VSIX, zero errors/warnings; 582.874 seconds, all 293 captured hashes unchanged. Owner-pushed diagnostic CI remains pending; no new full gate or repaired-CI claim. Preserve every failure, the exact Windows HOST-001 warning and all historical gates in docs/t026-ci-repair.md; T-026 remains unchecked.
+- T-026 (2026-10-20): Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu full checks; macOS972units/14skips and all76hosts pass, then strict console rejects two Chromium ProduceMemory mailbox errors. JSON/JSONL timing passes18-20ms; historical timing/exit causes remain unknown. Independent lifecycle review finds no concrete product defect. Controlled macOS-only probe omits --disable-gpu, permitting default rendering without claiming a selected backend or established repair. Preserve exact Windows/Linux arguments, isolation, workloads, clocks and every diagnostic rejection. Three platform-argument regressions fail first for macOS baseline, then63focused cases/three files, scopedlint and independent review pass. Current standalone/platformCI pending; preserve every failure, no new full or task closure. Evidence: docs/t026-ci-repair.md.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.
 - T-025 controlled full (2026-10-20): Record explicit FDM-exit/one-run approval, 916-unit/72-host passing full, exact HOST-001 warning, frozen-source parity and prior clean standalone. Preserve every failure, unknown clipboard causation, unchanged guards, scoped visual limits and owner-pushed candidate CI.

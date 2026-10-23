@@ -1296,6 +1296,23 @@ litevoyager/
 
 ### T-026 schema autocomplete (2026-10-20)
 
+Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu locked installs/full
+checks. macOS passes972 units/14 platform skips and all76 hosts, including all
+four FR-012 and every original populated data/hash/memory/timing workload, then
+strict console validation rejects two Chromium ProduceMemory mailbox errors.
+All four JSON/JSONL interval maxima are18-20ms; no old timing/exit cause is proved.
+Independent lifecycle review finds no concrete product defect. Preserve the log.
+Prepare a controlled macOS-only configuration probe: omit the existing
+--disable-gpu switch, permitting ordinary VS Code rendering. Actual backend and
+historical cause remain unknown. Windows/Linux arguments, isolated profiles,
+versions, test sequence/workloads, clocks and error/warning rejection remain.
+No sleeps, forced redraws, diagnostic allowances, new switches or dependencies.
+Exact-argument regressions fail first for macOS against baseline behavior, then
+63 focused cases/three files and scoped lint pass; independent review is clear.
+Current-candidate standalone and owner-pushed platform CI remain pending.
+This is a controlled environment probe, not a proven graphics repair. Keep
+T-026 unchecked. Exact errors, metadata/hash and limits: docs/t026-ci-repair.md.
+
 Run39815054580/attempt1/exact25c95c7 confirms Ubuntu success and Windows/macOS
 failures: Windows passes all units/hosts then rejects a shutdown error; macOS
 5-GB JSONL has a raw101.417375ms interval against the unchanged100ms limit.
@@ -1413,7 +1430,7 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
-- T-026 (2026-10-20): Run39815054580/attempt1/exact25c95c7 passes Ubuntu full and all locked installs. Windows passes 972 units/76 hosts but rejects the unapproved main-process forced-kill error; macOS passes 959 units/13 skips and 75 hosts, failing the unchanged100ms JSONL timer bound at101.417375ms. All four FR-012 hosts pass on both. Causes remain unestablished. Opt-in external Windows creation identities and bounded JSON CPU/callback/GC diagnostics preserve original commands, failure status, samples, workloads, clocks and rejection rules. All80 focused cases/five files, tooling/integration types and the installed Node24.21.0 headless recorder probe pass; independent review finds no concrete diagnostic defect. Executable 649eb63 passes literal npm run verify: 986 units/100 files, strict types/lint/build/VSIX, zero errors/warnings; 582.874 seconds, all 293 captured hashes unchanged. Owner-pushed diagnostic CI remains pending; no new full gate or repaired-CI claim. Preserve every failure, the exact Windows HOST-001 warning and all historical gates in docs/t026-ci-repair.md; T-026 remains unchecked.
+- T-026 (2026-10-20): Run39894215400/attempt1/exact7f0a74e passes Windows/Ubuntu full checks; macOS972units/14skips and all76hosts pass, then strict console rejects two Chromium ProduceMemory mailbox errors. JSON/JSONL timing passes18-20ms; historical timing/exit causes remain unknown. Independent lifecycle review finds no concrete product defect. Controlled macOS-only probe omits --disable-gpu, permitting default rendering without claiming a selected backend or established repair. Preserve exact Windows/Linux arguments, isolation, workloads, clocks and every diagnostic rejection. Three platform-argument regressions fail first for macOS baseline, then63focused cases/three files, scopedlint and independent review pass. Current standalone/platformCI pending; preserve every failure, no new full or task closure. Evidence: docs/t026-ci-repair.md.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
 - T-024 CI repair (2026-10-18): Retain run 39059472250 /2139f7c Windows identity and macOS CSV growth failures. Match native snapshot resolvers and avoid per-plain-record parser allocation after unchanged strict scanning. No fixture/resource/gate relaxation; owner retains candidate CI.

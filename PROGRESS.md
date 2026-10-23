@@ -1,39 +1,37 @@
 # Progress
 
 ## Current phase / task
-Milestone 2: T-026 platform CI investigation; diagnostics ready, causes unresolved.
-T-025 remains complete. Evidence/files: docs/t026-autocomplete.md and t026-ci-repair.md.
+Milestone2: T-026 controlled macOS renderer probe; GPU cause unestablished.
+T-025 remains complete. Evidence/files: docs/t026-ci-repair.md/t026-autocomplete.md.
 
 ## Verify status
-Run39815054580/attempt1/exact25c95c7: installs pass; Ubuntu full succeeds.
-Windows passes 972 units/76 hosts, then rejects main.log:9 severity error:
-Extension host with pid 636 still exists, forcefully killing it...
-Sole approved HOST-001 warning, 20261022T163646/window1/renderer.log:15:
-[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
-That failed full is not warning-free. Exact attachments/hash/metadata retained.
-Owner macOS log: 959 units/13 platform skips and 75 hosts pass/1 fails.
-5-GB JSONL raw host timer gap 101.4173750000773 ms exceeds unchanged 100 ms.
-All four FR-012 hosts pass on both; final JSONL completed-hash claim withheld.
-Reviewed executable 649eb63: literal npm run verify PASS, 986 units/100 files,
-types/lint/build/VSIX, zero errors/warnings; 582.874s/293 unchanged hashes.
-Eighty focused cases/five files and native Node24.21.0 headless probe pass.
-Two earlier standard failures (native import, fixture lint) retained; no full run.
+Run39894215400/attempt1/exact7f0a74e: Windows/Ubuntu installs/full checks PASS.
+macOS passes972 units/14 platform skips and all76 host tests, including FR-012.
+All original large-file/data/hash/memory/timing checks pass; JSON maxima18-20ms.
+Strict console rejects two Chromium ProduceMemory mailbox errors, lines1005/1006,
+at03:24:46.440759/.459144 UTC, during D-5 split-view test completion.
+Host exits0; console gate exits1. Structured runtime scan not reached.
+No warning-free remote claim. Exact attachment/hash/API metadata retained.
+Historical 101.417ms JSONL and Windows shutdown causes remain unestablished.
+Previous executable649eb63 standalone PASS:986units/100files, zero warnings/errors.
+Current probe:63 focused tests/three files and scopedlint PASS; review clear.
+Current-candidate standard gate pending; no new full attempted.
 
 ## Last session
-External Windows CIM traces original creation identity and post-exit snapshots;
-bounded JSON CPU/callback/GC traces keep raw intervals and disclose truncation.
-Explicit CI flag runs one marked child gate; direct workflow commands stay.
-Original failure status, awake lease, workloads, clocks and rejection rules stay.
-Unicode/native-loader bugs fail first then pass repairs; independent review clear.
-Instrumentation can affect timing; PID reuse/host blocking remain unproven.
-No product/UI/dependency change; earlier scoped visual QA stays separately recorded.
+Independent lifecycle audit finds no concrete product defect behind GPU errors.
+macOS-only probe removes forced --disable-gpu to permit default rendering.
+This does not establish the selected backend or prove a graphics repair.
+Exact launch argument regressions fail first; native config wiring/isolation pass.
+Windows/Linux flags, versions, workloads, clocks and error rejection unchanged.
+No product/UI/dependency changes, sleeps, redraws, new flags or allowances.
+Prior visual QA remains separately recorded; no new physical paint claim.
 
 ## Decisions / limits
-Exactly T-026; no retry-to-green, sample discard, relaxed guard or speculative fix.
-Owner README/shared-spec edits and unrelated fixtures/debug files remain untouched.
+Exactly T-026; retain every failure; no retry-to-green or speculative product fix.
+Owner README/shared-spec edits and unrelated fixtures/debug files untouched.
 
 ## Next
-Owner pushes diagnostic candidate and runs fresh Windows/macOS/Ubuntu CI once.
-Return full verify logs including shutdown identity/JSON interval evidence.
-Use causal evidence to repair; keep T-026 unchecked until actual-candidate CI passes.
-No new task, milestone closure, release or tag.
+Finish standard verification, then owner pushes probe and runs fresh platform CI.
+Return complete macOS verify logs; a pass validates only this configuration.
+Keep T-026 unchecked until acceptance and actual-candidate three-platform CI pass.
+No milestone closure, release or tag.

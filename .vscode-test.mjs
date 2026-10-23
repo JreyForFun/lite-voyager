@@ -3,6 +3,7 @@ import { build } from 'esbuild';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { integrationLaunchArgs } from './scripts/integration-launch.mts';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const outputDirectory = join(root, 'out');
@@ -83,15 +84,5 @@ export default defineConfig({
 	version,
 	extensionDevelopmentPath: [root, authenticationFixture],
 	files: 'out/integration/test/**/*.test.js',
-	launchArgs: [
-		`--user-data-dir=${profileDirectory}`,
-		// Test Lite Voyager without unrelated installed or built-in extensions.
-		`--extensions-dir=${extensionsDirectory}`,
-		`--builtin-extensions-dir=${builtinExtensionsDirectory}`,
-		'--disable-extensions',
-		'--disable-gpu',
-		'--skip-welcome',
-		'--skip-release-notes',
-		'--disable-workspace-trust',
-	],
+	launchArgs: integrationLaunchArgs(profileDirectory),
 });
