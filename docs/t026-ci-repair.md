@@ -92,6 +92,16 @@ zero module output. No diagnostic behavior or guard changes. Independent follow-
 finds no remaining concrete loader defect in the actual direct-import chain.
 Changed-candidate standalone verification remains pending; no full gate attempted.
 
+The second standard gate on5778965 passes all three strict typechecks, then lint
+rejects three require-await fixture methods and one unsafe event destructuring
+in the new diagnostic test. Retain out/t026-ci-diagnostics-verify-2.log and
+-status.json: code1, 84.389 seconds, 293 unchanged hashes; units/build not reached.
+Return explicit resolved/rejected Promises and receive the event value as unknown;
+keep every assertion/child command/lifecycle behavior. No lint disable or type
+weakening. Focused lint passes with empty output; all80 focused tests/five files
+pass again in18.60 seconds (out/t026-diagnostics-lint.log and -focused-5.log).
+A fresh changed-candidate standard gate follows; no unchanged retry or full run.
+
 Owner handoff: push the reviewed candidate, then run the normal three-platform
 workflow once on that exact commit. Return complete Windows/macOS verify logs,
 including T026 shutdown identity evidence and T-026 JSON interval diagnostic

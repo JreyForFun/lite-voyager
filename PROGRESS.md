@@ -16,8 +16,8 @@ Owner-supplied macOS log: 959 units/13 platform skips, 75 hosts pass/1 fails.
 All four FR-012 hosts pass on both platforms; no completed final JSONL hash claim.
 Current diagnostics: 80 focused tests/five files and both tooling/host-test types pass.
 Installed VS Code Node24.21.0 headless recorder probe passes, empty stderr.
-First standard gate fails native tooling import; red-first syntax repair passes 80 focused.
-Changed-candidate standalone pending; no new full gate attempted.
+Two standard gates fail native import then fixture lint; both failures retained.
+Loader regression/80 focused pass; changed-candidate standalone pending; no new full.
 
 ## Last session
 External Windows CIM traces record creation identity around host exit without
