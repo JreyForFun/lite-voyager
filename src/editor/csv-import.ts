@@ -18,6 +18,7 @@ import { sqliteEditorHtml, type SqliteEditorAssets } from './sqlite-editor-ui';
 import { checkImportSpace, TempStorage, type SpaceApproval } from '../storage/temp-storage';
 import { captureOriginalSource, SqliteSaveService, type OriginalSourceSnapshot } from './sqlite-save';
 import { isSqliteSaveDom, isSqliteSaveRequest, type SqliteSaveDom, type SqliteSaveState } from '../protocol';
+import { logLifecycle, type DiagnosticOutput } from '../diagnostics';
 
 export class CsvImportSession {
   readonly contextId = randomBytes(16).toString('hex');
@@ -159,7 +160,7 @@ export class CsvImportSession {
           defaultUri: vscode.Uri.file(join(dirname(this.uri.fsPath), `results.${format}`)), filters: format === 'csv' ? { CSV: ['csv'] } : { JSON: ['json'] }, saveLabel: 'Export' });
         if (destination === undefined || this.disposed) { return undefined; }
         if (destination.scheme !== 'file') { throw new Error('Choose a local export destination.'); } return destination.fsPath;
-      });
+      }, { path: this.uri.fsPath, snapshot: original });
       await database.start(() => Promise.resolve(false));
       if (this.disposed || this.cancellation.signal.aborted) { return; }
       if (database.state.phase !== 'opened') { throw new Error(database.state.message); }
@@ -271,7 +272,7 @@ export class CsvImportController implements vscode.Disposable {
   private readonly active = new Set<CsvImportSession>();
   private disposed = false;
   readonly ready: Promise<void>;
-  constructor(private readonly extensionPath: string, private readonly storageRoot: string, private readonly format: 'csv' | 'json' | 'xlsx' = 'csv') {
+  constructor(private readonly extensionPath: string, private readonly storageRoot: string, private readonly format: 'csv' | 'json' | 'xlsx' = 'csv', private readonly output?: DiagnosticOutput) {
     this.ready = new TempStorage(storageRoot).cleanupOrphans().catch((error: unknown) => {
       void vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Import storage cleanup failed. Check extension storage permissions and reload VS Code.');
     });
@@ -301,6 +302,7 @@ export class CsvImportController implements vscode.Disposable {
     try {
       const session = new CsvImportSession(uri, panel, directory, this.storageRoot, this.format === 'xlsx' ? new XlsxLoader(directory, approveXlsxMemory) : this.format === 'json' ? new JsonLoader(directory) : new CsvLoader(directory), () => { this.active.delete(session); }, undefined, started, this.format, waitForReady);
       this.active.add(session);
+      logLifecycle(this.output, this.format, { get state() { return session.state; }, closed: session.closed, subscribe: (listener) => session.onStatus(listener) });
       // VS Code mounts a custom editor only after resolveCustomEditor returns.
       // Its readiness handshake, preview and errors continue in session.finished.
       if (waitForReady) { return session; }

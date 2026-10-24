@@ -14,6 +14,9 @@ function entities(text: string): string {
 }
 /** Small strict XML event reader for relationships and raw cell tokens, never HTML. */
 export function* xlsxXml(xml: string): Generator<XmlEvent> {
+  // Validate before parsing, including comments/CDATA/declarations. Excel's
+  // _xNNNN_ string escapes are ordinary XML text and are decoded later.
+  for (const character of xml) { if (!xmlCodepoint(character.codePointAt(0) ?? -1)) { malformed(); } }
   const stack: string[] = []; let index = 0; let roots = 0;
   while (index < xml.length) {
     if (xml[index] !== '<') {

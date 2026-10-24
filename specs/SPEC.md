@@ -692,6 +692,32 @@ Targets marked "start" are starting points to validate in the benchmark task, th
   evidence, not proof of physical paint on every host. Milestone 2 is not built
   here. Preview publication/feedback remains the existing external phase step.
 
+### T-027 Milestone 2 QA/review acceptance (owner-delegated, 2026-10-24)
+
+- Reconcile FR-004, FR-005, FR-006, FR-007 and FR-012, section 4.1 fidelity,
+  applicable NFRs and VALIDATION section 5 with executing tests, not naming alone.
+- Exercise all eight Milestone 2 manual QA items in VALIDATION section 4, both
+  engines where supported, and light/dark keyboard controls. Use disposable
+  copies and an isolated VS Code profile. Record observed pixels/DOM, physical
+  paint and unobserved platform behavior separately; retain all numeric targets.
+- Independently review the actual cumulative milestone diff from v0.1.0.
+  Reproduce confirmed findings with failing regressions before repair. Preserve
+  source safety, bounded worker/paging behavior, full workloads, deadlines and
+  the exact five-family renderer-only diagnostic policy; no retry-to-green.
+- Record requirement coverage, source hashes, performance comparisons, exact
+  diagnostics, failures and remaining limits. Local verify must have zero errors
+  and warnings; local full and owner-pushed actual-candidate three-platform CI
+  must meet the unchanged gate before T-027 is checked. Historical task-specific
+  evidence may support reconciliation but cannot stand in for missing checks.
+- Gate repairs retain original import snapshots for query-export protection,
+  reject nonregular header-sniff handles and malformed literal XLSX XML, enforce
+  the existing strict decimal 10-MB package ceiling, and route fixed lifecycle
+  labels to the Lite Voyager Output channel. Diagnostics never log source paths,
+  SQL, schema, cell values or raw error text; disposed channels cannot block cleanup.
+- The owner delegates fixtures, repairs, independent review and local visual QA
+  to the assistant and retains push/CI. Release/tag/publishing and later features
+  are separate; completing this task does not itself close Milestone 2.
+
 ## 5.5 Screens and states
 
 Every screen must handle each of these, with a test or a manual checklist item:
@@ -716,6 +742,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-027 (2026-10-24): Define owner-delegated Milestone 2 QA/review acceptance,
+  retained gates and separate owner CI/release scope.
 - T-026 (2026-10-20): Define owner-delegated schema/keyword completion before implementation, bounded prefix lookup/context, exact quoted insertion and distinct host/component-render evidence. Preserve existing safety and diagnostic rules.
 - T-025 (2026-10-18): Owner delegates opening integration, scoped fixes/fixtures and visual QA. Acceptance in docs/t025-opening.md clarifies all-five-format opt-in, conservative explicit-association precedence and reversible owned associations; existing import and source-safety policies remain.
 - T-024 (2026-10-17): Link owner-delegated XLSX acceptance for every sheet, exact cached/scalar values, snapshot-bound memory consent, unsupported-input policy and shared read-only import lifecycle. No T-025 opening integration or existing safety/diagnostic relaxation.

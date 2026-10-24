@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { link, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type * as vscode from 'vscode';
@@ -13,6 +13,7 @@ import type { JsonPreviewResult } from '../../src/protocol';
 
 const notifyError = vi.hoisted(() => vi.fn());
 const disk = vi.hoisted(() => ({ low: false }));
+const exportDialog = vi.hoisted(() => vi.fn());
 vi.mock('node:fs/promises', async (original) => {
   const fs = await original<typeof import('node:fs/promises')>();
   return { ...fs, statfs: async (...args: Parameters<typeof fs.statfs>) => {
@@ -20,7 +21,7 @@ vi.mock('node:fs/promises', async (original) => {
   } };
 });
 vi.mock('vscode', () => ({ Uri: { file: (path: string) => ({ fsPath: path, toString: () => path }) },
-  env: { clipboard: { writeText: vi.fn() } }, window: { showSaveDialog: vi.fn(), showErrorMessage: notifyError } }));
+  env: { clipboard: { writeText: vi.fn() } }, window: { showSaveDialog: exportDialog, showErrorMessage: notifyError } }));
 function panel() {
   const receive = new Set<(message: unknown) => void>(); const closes = new Set<() => void>();
   return { webview: { html: '', cspSource: 'local:', asWebviewUri: (uri: vscode.Uri) => uri, postMessage: vi.fn().mockResolvedValue(true),
@@ -110,6 +111,31 @@ test('FR-007: Given an opened import, When rendering SQL, Then Save as SQLite be
     await run.session.startImport(); expect(run.view.webview.html).toContain('id="sqlite-save"');
     expect(run.view.webview.html).toContain(`data-save-context="${run.session.contextId}"`);
   } finally { run.view.dispose(); await run.session.closed; }
+});
+
+test.each(['csv', 'json', 'xlsx'] as const)('NFR-001: Given an imported %s source, When exporting to its original or renamed hard-link alias, Then query export refuses before writing and preserves source bytes', async (format) => {
+  const result = format === 'csv' ? preview : { columns: ['a'], rows: [['1']], format, bytesRead: '4', totalBytes: '4', reachedEnd: true, notice: '', threadId: 1,
+    ...(format === 'xlsx' ? { sheetName: 'Data', sheetCount: 1 } : {}) };
+  const run = await fixture({ extensions: [format], preview: () => Promise.resolve(result), import: async (_source, target) => { await writeFile(target.path, 'owned'); return []; } }, undefined, format);
+  const source = run.session.uri.fsPath; const moved = source + '.moved'; const alias = source + '.alias';
+  run.db.exportResults.mockImplementation(async (_sql: string, _format: string, target: string) => {
+    await writeFile(target, 'filtered export'); return { rows: '1', bytes: '15', blobs: '0' };
+  });
+  try {
+    await run.session.startImport(); expect(run.session.state.phase).toBe('opened');
+    let requestId = 27000;
+    run.view.receive({ type: 'browserQuery', requestId: ++requestId, sql: 'SELECT 1', offset: 0, limit: 100 });
+    await vi.waitFor(() => { expect(run.db.query).toHaveBeenCalled(); });
+    await vi.waitFor(() => { expect(run.view.webview.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'browserQueryRows', requestId })); });
+    for (const destination of [source, moved, alias]) {
+      if (destination === moved) { await rename(source, moved); await link(moved, alias); }
+      exportDialog.mockResolvedValueOnce({ scheme: 'file', fsPath: destination });
+      run.view.receive({ type: 'browserExport', requestId: ++requestId, format: 'csv' });
+      await vi.waitFor(() => { expect(run.view.webview.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'browserError', requestId })); });
+      expect(run.db.exportResults).not.toHaveBeenCalled();
+      expect(await readFile(destination, 'utf8')).toBe('a\n1\n');
+    }
+  } finally { exportDialog.mockReset(); run.view.dispose(); await run.session.closed; }
 });
 
 test('FR-007: Given a SQLite save still settling after closure, When publication or cleanup fails, Then shutdown waits and notifies the exact actionable error once', async () => {

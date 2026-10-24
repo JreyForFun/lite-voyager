@@ -1807,14 +1807,43 @@ its scoped warm-input and sampled-process limits.
 - [x] Force the fallback engine and repeat the basics; the banner appears.
 
 ### Milestone 2 manual QA (other formats)
-- [ ] CSV files with a BOM, CRLF line endings, quoted commas, quoted line breaks, and ragged rows all load correctly.
-- [ ] A generated 1 GB CSV: preview appears quickly, import shows progress, cancel works, and the temp file is removed afterward.
-- [ ] Kill VS Code in the middle of an import, restart, and confirm the orphaned temp file is cleaned up.
-- [ ] Low disk space (simulated) gives the pre-check message instead of a crash.
-- [ ] JSONL streams; a JSON array of objects loads; nested JSON can be queried with `json_extract()`; a bad shape gives a clear message.
-- [ ] XLSX with several sheets loads as several tables; the large-file warning appears.
-- [ ] "Open With", the Explorer menu entry, the editor-title button, and the `openCsvByDefault` setting all behave as specified.
-- [ ] Autocomplete suggests real table and column names.
+T-027 (2026-10-24) reconciles this checklist and the universal gate specifically
+for Milestone 2. Foundation checkmarks above are historical foundation evidence,
+not automatic Milestone 2 passes. Owner delegates local visual QA, fixtures,
+independent review and necessary repairs; retains push/actual-candidate CI.
+Evidence: [T-027 QA record](../docs/t027-milestone2-qa.md). Release/tag/publishing
+remain separate. All original workloads, targets and diagnostic guards apply.
+
+- [x] CSV files with a BOM, CRLF line endings, quoted commas, quoted line breaks, and ragged rows all load correctly.
+- [x] A generated 1 GB CSV: preview appears quickly, import shows progress, cancel works, and the temp file is removed afterward.
+- [x] Kill VS Code in the middle of an import, restart, and confirm the orphaned temp file is cleaned up.
+- [x] Low disk space (simulated) gives the pre-check message instead of a crash.
+- [x] JSONL streams; a JSON array of objects loads; nested JSON can be queried with `json_extract()`; a bad shape gives a clear message.
+- [x] XLSX with several sheets loads as several tables; the large-file warning appears.
+- [x] "Open With", the Explorer menu entry, the editor-title button, and the `openCsvByDefault` setting all behave as specified.
+- [x] Autocomplete suggests real table and column names.
+
+#### T-027 Milestone 2 universal gate (2026-10-24)
+
+- [x] Local verify/full pass: 1,032 units / 106 files and 76 real-host tests; unchanged 304-file hashes in each run. Standalone has zero errors/warnings; full has exactly one approved HOST-001 warning, explicitly reported below.
+- [ ] Actual-candidate Windows/macOS/Ubuntu CI; owner pushes and supplies run URL, tested SHA and conclusions. Earlier task CI does not cover these repairs.
+- [x] NFR-001 full source hashes, exact data, atomic save and imported-source export protection pass both engines; delegated crash/cancel cleanup passes.
+- [x] FR-004, FR-005, FR-006, FR-007, FR-012, fidelity and applicable NFR tests reconciled with actual assertions; trace leaves only future FR-013/020/021/022/030/040.
+- [x] PLAN records measured open/memory/timer comparisons against unchanged targets; raw source sizes/hashes/sample counts and observation limits are in the QA record.
+- [x] All eight manual checks above pass within the explicitly scoped renderer/DOM/fixture observations; physical paint and unobserved platforms are not inferred.
+- [x] Fresh cumulative independent review and follow-up clear three test-first fixes plus diagnostics/size/policy checks; no remaining concrete inspected finding.
+- [x] No TODO/FIXME markers in src, webview, scripts, test or .github (2026-10-24 search).
+- [x] Specs/changelogs and PROGRESS are updated for local handoff; task-owned changes are prepared for a T-027 commit with owner work preserved.
+- [ ] Milestone release/tag closure is separate and is not authorized or claimed by this task.
+
+Full gate: 2026-10-24T01:43:50.513Z through 2026-10-24T02:30:50.719Z, exit 0, 2820.206 s.
+Severity warning, VSCODE-HOST-001, source 20261024T095412/window1/renderer.log:10:
+
+> [CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
+
+No other warning or error is accepted. This full run is not warning-free.
+
+Evidence and every retained failure: [T-027 QA record](../docs/t027-milestone2-qa.md).
 
 #### T-021 streaming CSV / TSV import (2026-10-15)
 
@@ -4930,6 +4959,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-027 (2026-10-24): Complete eight delegated manual checks, reconcile actual
+  acceptance tests and independently clear repairs. Record passing local gates
+  and the exact approved full warning; retain owner-pushed CI and separate release.
 - T-026 (2026-10-20): Complete T-026 after independently confirmed run39904711322/attempt1 at exactb46a14eda4ba3ad2594e3a8688345da26569d4c0 passes locked installs and applicable full checks on Windows/macOS/Ubuntu (2026-10-23). FR-012 implementation, bounded both-engine metadata/keyboard/lifecycle/source-safety tests, scoped delegated renderer QA and independent reviews pass. Unchanged executable59a236f has989-unit/100-file zero-error/zero-warning standalone evidence (585.006s/295matching hashes). Preserve all failed runs, exact historical diagnostics, unestablished GPU/timing/exit causes and remote raw-log limits; no warning-free remote claim. Only T-026 closes; milestone-wide QA/review/release/tag remain separate. Owner pushes records. Evidence: docs/t026-ci-repair.md.
 - T-025 completion (2026-10-20): Independently confirm 39369888255 /attempt 1/exact repaired d6cdaf9 and all three locked-install/full jobs. Close only T-025, preserving every failure, exact local warning, remote raw-log and scoped visual limits. Closure-only standalone passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.
 - T-025 CI repair (2026-10-20): Preserve failed 39304280687 at 3c836de, exact rejected main-process error and approved renderer warning. Record red-first transport/URI fixture closure and read-only preparation repairs, focused passes, independent review and all failed/passing local gates. No weakened guard or unchanged full retry; owner-pushed candidate CI remains open.

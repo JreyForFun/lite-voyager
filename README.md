@@ -438,7 +438,7 @@ For the required manual QA:
    click **Cancel** in the progress notification.
 3. Repeat with **Lite Voyager: T-002 SQLite Fallback Spike**, accepting its
    memory-limited notice. This experiment refuses inputs over 8 MiB.
-4. Paste both **T-002 manual result** lines from the **Lite Voyager T-002**
+4. Paste both **T-002 manual result** lines from the **Lite Voyager**
    Output channel and say whether typing stayed responsive. Expect `cancelled`
    and `recovered` to be true, `cancelMs` below 1000, and heartbeat ticks above zero.
 

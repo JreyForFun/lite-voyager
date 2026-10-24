@@ -9,3 +9,14 @@ test('FR-006: Given worksheet XML with comments, prefixes and entities, When rea
     expect(() => [...xlsxXml(invalid)]).toThrow(/XLSX/);
   }
 });
+
+test.each(['\u0000', '\u0001', '\u000b', '\ufffe', '\uffff', '\ud800', '\udfff'])('FR-006: Given a forbidden literal XML character %j, When reading text, attributes, CDATA, comments or declarations, Then corrupt XLSX XML is refused', (character) => {
+  for (const xml of [`<x>${character}</x>`, `<x a="${character}"/>`, `<x><![CDATA[${character}]]></x>`, `<x><!--${character}--></x>`, `<?xml ${character}?><x/>`]) {
+    expect(() => [...xlsxXml(xml)]).toThrow(/Malformed XLSX XML/);
+  }
+});
+
+test('FR-006: Given valid XML characters and Excel string escape spellings, When reading tokens, Then tabs, newlines, Unicode and escaped controls are retained for workbook decoding', () => {
+  const text = '\t\n\r🙂\ue000_x0000__x0001_';
+  expect([...xlsxXml(`<x>${text}</x>`)].find((event) => event.name === '#text')?.text).toBe(text);
+});

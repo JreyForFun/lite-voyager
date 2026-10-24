@@ -63,7 +63,7 @@ test('FR-012: Given a selected table, When completing a FROM name versus an unqu
   expect(requests().at(-1)).toMatchObject({ tables: ['data'] });
   view.receive({ type: 'browserCompletions', requestId: 4, items: [], hasMore: false }); await column;
 });
-test('NFR-005: Given a local QA exercise, When appearance is sampled, Then only bounded computed theme colors are reported', () => {
+test('NFR-007: Given a local QA exercise, When appearance is sampled, Then only bounded computed theme colors are reported', () => {
   vi.stubGlobal('getComputedStyle', () => ({ color: 'rgb(0, 0, 0)', backgroundColor: 'rgb(255, 255, 255)' }));
   vi.stubGlobal('document', { createElement: () => new BrowserElement(), body: { className: 'vscode-light' } });
   view.exercise({ type: 'browserExercise', action: 'appearance', exerciseId: 1 });

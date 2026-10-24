@@ -1,4 +1,5 @@
 import type * as vscode from 'vscode';
+import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import type { CsvImportController } from './csv-import';
 import type { SqliteDocument, SqliteEditorProvider } from './sqlite-editor';
@@ -6,8 +7,9 @@ import { fileFormat, type TabularFormat } from './file-opening';
 
 async function hasSqliteHeader(path: string): Promise<boolean> {
   try {
-    const file = await open(path, 'r');
+    const file = await open(path, constants.O_RDONLY | (process.platform === 'win32' ? 0 : constants.O_NONBLOCK));
     try {
+      if (!(await file.stat()).isFile()) { return false; }
       const header = Buffer.alloc(16); const read = await file.read(header, 0, header.length, 0);
       return read.bytesRead === header.length && header.equals(Buffer.from('SQLite format 3\0'));
     } finally { await file.close(); }

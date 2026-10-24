@@ -1,6 +1,6 @@
 import type { Engine, EngineMode, EngineOpened } from '../engine/engine';
 import { SqliteBrowser } from './sqlite-browser';
-import { ExportService } from './export-service';
+import { ExportService, type ImportExportSource } from './export-service';
 import type { ExportFormat } from '../engine/engine';
 
 export interface SqliteEditorState {
@@ -32,8 +32,8 @@ export class SqliteSession {
     return () => { this.listeners.delete(listener); };
   }
 
-  configureExport(choose: (format: ExportFormat) => Promise<string | undefined>): void {
-    if (this.path !== undefined) { this.browser.setExporter(new ExportService(this.path, this.engine, choose)); }
+  configureExport(choose: (format: ExportFormat) => Promise<string | undefined>, original?: ImportExportSource): void {
+    if (this.path !== undefined) { this.browser.setExporter(new ExportService(this.path, this.engine, choose, original)); }
   }
 
   start(confirm: Confirm): Promise<void> {

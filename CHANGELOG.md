@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- T-027 review repairs: protect original imported sources and their aliases during
+  query export, reject non-file inputs before header reads, and reject forbidden
+  literal XML characters in XLSX. Log fixed lifecycle labels in the Lite Voyager
+  Output channel and enforce the existing strict 10-MB VSIX packaging ceiling.
+
 - T-025: open CSV, TSV, JSON, JSONL and XLSX through Open With, Explorer's
   Open in Lite Voyager action or the editor-title button. Keep their normal
   editors by default; opt in with `liteVoyager.openCsvByDefault`, preserving

@@ -8,6 +8,7 @@ import { SqliteSession } from './sqlite-session';
 import { isBrowserRequest, isBrowserStatus, isCellRequest, type BrowserStatus } from '../protocol';
 import { CellService } from './cell-service';
 import { writeClipboard } from './clipboard';
+import { logLifecycle } from '../diagnostics';
 
 export const SQLITE_EDITOR_VIEW_TYPE = 'lite-voyager.sqlite';
 
@@ -78,14 +79,20 @@ export class SqliteDocument implements vscode.CustomDocument {
 /** Binary documents never become TextDocuments or enter the save pipeline. */
 export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider<SqliteDocument>, vscode.Disposable {
   private readonly documents = new Map<string, SqliteDocument>();
-  constructor(private readonly extensionPath: string) {}
+  constructor(private readonly extensionPath: string, private readonly output?: vscode.OutputChannel) {}
+
+  private createSession(path: string | undefined): SqliteSession {
+    const session = new SqliteSession(path, new EngineClient({ directory: join(this.extensionPath, 'dist') }));
+    logLifecycle(this.output, 'sqlite', { get state() { return session.state; }, closed: session.closed, subscribe: (listener) => session.subscribe(listener) });
+    return session;
+  }
 
   getDocument(uri: vscode.Uri): SqliteDocument | undefined { return this.documents.get(uri.toString()); }
 
   openCustomDocument(uri: vscode.Uri, openContext: vscode.CustomDocumentOpenContext, token: vscode.CancellationToken): SqliteDocument {
     const key = uri.toString();
     const path = uri.scheme === 'file' && openContext.backupId === undefined && openContext.untitledDocumentData === undefined ? uri.fsPath : undefined;
-    const session = new SqliteSession(path, new EngineClient({ directory: join(this.extensionPath, 'dist') }));
+    const session = this.createSession(path);
     const document = new SqliteDocument(uri, session, () => { this.documents.delete(key); }, path);
     this.documents.set(key, document);
     if (token.isCancellationRequested) { void session.cancel(); }
@@ -93,7 +100,7 @@ export class SqliteEditorProvider implements vscode.CustomReadonlyEditorProvider
   }
 
   async resolveCustomEditor(document: SqliteDocument, panel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
-    const session = document.attach(panel, () => new SqliteSession(document.path, new EngineClient({ directory: join(this.extensionPath, 'dist') })));
+    const session = document.attach(panel, () => this.createSession(document.path));
     const directory = vscode.Uri.file(join(this.extensionPath, 'dist'));
     panel.webview.options = { enableScripts: true, localResourceRoots: [directory] };
     const assets = {

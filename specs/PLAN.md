@@ -1435,6 +1435,33 @@ passes. Power-event fields/limits, failed gates and source hashes are retained i
 docs/t026-csv-observer-repair.md. No executable edits follow; owner-pushed exact-
 candidate three-platform CI remains required, and T-026 stays unchecked.
 
+### T-027 Milestone 2 QA/review (2026-10-24)
+
+Reconcile the existing import/storage/opening/completion implementation rather
+than adding features. Use disposable fixtures, isolated real VS Code profiles,
+existing both-engine tests and a fresh independent cumulative review from v0.1.0.
+Add regressions before confirmed repairs; no new dependencies. Keep canonical
+verification separate from visual instrumentation and preserve every failed run.
+Evidence and measured comparisons: [T-027 QA record](../docs/t027-milestone2-qa.md).
+Owner retains push/CI; actual-candidate three-platform evidence remains required.
+Release/tag/publishing are separate from this task.
+
+Local reviewed candidate: literal verify passes 1,032 units / 106 files with zero
+errors/warnings; full passes the same units plus 76 real-host tests in 2820.206 s.
+All 304 before/after hashes match in both gates. Full reports exactly one approved
+HOST-001 renderer warning; it is not warning-free (exact record in QA evidence).
+Populated CSV 1.000/5.000 GB first DOM 439.2255/530.6000 ms (<2000), combined
+peaks 311537664/304254976 bytes (<500000000), paging growth 27660288/25608192
+bytes (<50000000), and host gaps 53.3519/42.0640 ms (<100). SQLite 1.285/5.874 GB
+first DOM 1002.4356/910.8946 ms, peaks 284127232/294121472 and file-size peak
+growth 9994240 bytes meet the same unchanged targets. JSON/JSONL 1/5 GB peaks
+291250176..303464448 bytes and maximum host gap 47.7989 ms pass. All complete
+data/source hashes pass; CSV/SQLite each exercise 60 Browse/20 SQL pages. Sampled
+resident memory covers host plus helpers, renderer separately; no physical-paint,
+cold-disk or unsampled-peak claim. Largest large-file observation gap 1300.7913 ms
+(<3000). The exact source sizes, hashes, samples, renderer peaks and limits are
+in the QA record. Three-platform CI for this candidate remains owner handoff.
+
 ## 9. Risks
 
 | ID | Risk | Mitigation |
@@ -1448,6 +1475,9 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-027 (2026-10-24): Record independently cleared test-first repairs, delegated
+  QA and measured passing local gates with one explicit approved full warning.
+  Preserve safety/performance/diagnostic guards and separate CI/release scope.
 - T-026 (2026-10-20): Complete T-026 after independently confirmed run39904711322/attempt1 at exactb46a14eda4ba3ad2594e3a8688345da26569d4c0 passes locked installs and applicable full checks on Windows/macOS/Ubuntu (2026-10-23). FR-012 implementation, bounded both-engine metadata/keyboard/lifecycle/source-safety tests, scoped delegated renderer QA and independent reviews pass. Unchanged executable59a236f has989-unit/100-file zero-error/zero-warning standalone evidence (585.006s/295matching hashes). Preserve all failed runs, exact historical diagnostics, unestablished GPU/timing/exit causes and remote raw-log limits; no warning-free remote claim. Only T-026 closes; milestone-wide QA/review/release/tag remain separate. Owner pushes records. Evidence: docs/t026-ci-repair.md.
 - T-025 (2026-10-18): Owner delegates optional unified file-editor routing, local opening controls, all-five-format default setting, fixtures/repairs and scoped visual QA. Preserve explicit editor choices with journaled reversible associations; acceptance and retained failures in docs/t025-opening.md. Owner retains push/CI.
 - T-024 completion (2026-10-18): Independently confirm repaired run 39067782337 /attempt 1/exact 7e8eaef succeeds on all three platforms, including locked installs/full verification. Close only T-024 with prior acceptance/review/QA/local gates; preserve failures, diagnostics and remote-log limits.
