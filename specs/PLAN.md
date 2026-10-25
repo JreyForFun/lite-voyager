@@ -1505,6 +1505,22 @@ cold-disk or unsampled-peak claim. Largest large-file observation gap 1300.7913 
 (<3000). The exact source sizes, hashes, samples, renderer peaks and limits are
 in the QA record. Three-platform CI for this candidate remains owner handoff.
 
+### T-028 Milestone 2 checkpoint (2026-10-26)
+
+Owner directs completing local closure and next-chat preparation now. T-027 is
+complete; run40211134222/attempt1/exact8cd5983 passes locked installs/full gates
+on Windows/macOS/Ubuntu. Latest local executable full passes1074 units/77 hosts
+with the exact HOST-005/HOST-001 warnings retained in its evidence. Historical
+causes remain unknown. Reuse this evidence only after proving source parity.
+Run standalone verification for closure; build and inspect a checkpoint VSIX in
+an isolated committed tree so owner README/spec edits cannot enter the archive.
+Keep manifest0.0.1, matching the v0.1.0 checkpoint convention; publishing is T-070.
+Commit task-owned records, create annotated local v0.2.0, then owner pushes.
+Owner delegates visual QA and simulated-persona assessment as the handoff decision;
+external feedback collection is not a blocker. Label simulation honestly and
+recommend the next task for a fresh chat. No Milestone 3 code/publishing in T-028.
+Evidence/artifact/install/feedback/handoff: docs/t028-milestone2-checkpoint.md.
+
 ## 9. Risks
 
 | ID | Risk | Mitigation |
@@ -1518,6 +1534,8 @@ in the QA record. Three-platform CI for this candidate remains owner handoff.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-028 (2026-10-26): Define local v0.2.0 checkpoint, committed-tree artifact and
+  next-chat handoff; retain manifest version/publishing scope and honest feedback status.
 - T-027 CI investigation (2026-10-25): Preserve failed 176b184 CI and rejected
   active status probe; prepare independently reviewed bounded passive diagnostics
   without changing any guard or claiming a product/GPU repair.

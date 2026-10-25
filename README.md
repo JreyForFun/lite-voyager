@@ -5,6 +5,18 @@ files and querying them with SQL in an editor tab.
 
 ## Current status
 
+Milestone 2 implementation, QA and independent review are complete. Lite Voyager
+can preview and import CSV/TSV, JSON/JSONL and XLSX into temporary SQLite tables,
+browse/query exact values, inspect schema, complete table/column names and save
+explicitly as SQLite. Source files stay unchanged. XLSX and the fallback engine
+show their memory limitations before loading.
+
+The local Milestone 2 checkpoint is `v0.2.0`. This is a source checkpoint, not a
+Marketplace release: the development extension manifest remains `0.0.1`.
+See [checkpoint, installation and feedback instructions](docs/t028-milestone2-checkpoint.md).
+
+### Implementation history
+
 Milestone 0 is complete. T-009 adds a production, worker-backed `Engine` interface
 with native disk-backed SQLite and the memory-limited sql.js fallback, plus an
 **Engine Check** command to exercise mode notices and large-file consent.
@@ -22,7 +34,7 @@ T-015 adds streamed CSV/JSON export of complete SQL results with progress,
 cancellation and atomic output saves. T-015 is complete with owner QA 1–6,
 independent review and local gates passing. CI on the final implementation commit
 remains tracked at the milestone gate.
-The schema panel remains later milestone work.
+The paged schema panel and schema-aware table/column autocomplete are available.
 See [PROGRESS.md](PROGRESS.md) and [specs/TASKS.md](specs/TASKS.md).
 T-008 now provides an experimental CodeMirror editor and synthetic grid;
 owner manual QA passes and confirms CodeMirror 6 (steps and evidence below).

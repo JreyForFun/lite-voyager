@@ -1,32 +1,35 @@
 # Progress
 
 ## Current phase / task
-T-027 complete (2026-10-26); owner reports PASS ALL and candidate CI is confirmed.
-Evidence: docs/t027-milestone2-qa.md and docs/t027-ci-startup-warning-proposal.md.
+T-028: owner-authorized local Milestone 2 checkpoint/handoff (2026-10-26).
+T-027 is complete. No Milestone 3 code or public publishing in this task.
+Read docs/t028-milestone2-checkpoint.md for acceptance and next-chat prompt.
 
-## Confirmed candidate CI
-Run40211134222 / attempt1 / exact8cd598317a56c96e3038d7ae7fb598d9e4462411.
-Public REST confirms Windows/macOS/Ubuntu locked installs and applicable full
-verification all SUCCESS. Remote raw warning records are not retrieved;
-no warning-free remote claim. Owner pushes record-only task closure.
+## Existing acceptance
+All eight delegated T-027 QA checks, cumulative review and original large-file
+source/data/paging/memory/timer checks pass. Confirmed CI run40211134222,
+attempt1/exact8cd598317a56c96e3038d7ae7fb598d9e4462411 passes Windows/macOS/Ubuntu.
+Latest local executable verify:1074 units/108 files, zero errors/warnings.
+Full:1074 units plus77 hosts,2898.017s,314matching hashes; NOT warning-free.
+Approved warnings: HOST-00549ms renderer.log:1 and HOST-001 signed-out GitHub
+renderer.log:11, session20261025T233217/window1; exact records in T-028 evidence.
+Preserve every failed run, unknown historical causes and remote/physical limits.
 
-## Acceptance / local evidence
-All eight delegated checks, scoped both-engine light/dark QA, fidelity/NFR
-reconciliation, cumulative independent review and test-first repairs pass.
-Approved HOST-006 is only chat.builtinTools unsigned-integer timing; every other
-diagnostic source/severity/reporting and performance/workload guard remains.
-Latest executable standalone PASS:1074 units/108 files, zero errors/warnings.
-CI-enabled full PASS:1074 units plus77 hosts,2898.017s,314matching hashes.
-Full NOT warning-free: severity warning, HOST-00549ms line1 and HOST-001 line11,
-source20261025T233217/window1/renderer.log; exact records/metrics in evidence.
-All original populated data/source/paging/memory/timer checks pass.
-Closure standalone PASS:1074 units/108 files, zero errors/warnings,612.155s;
-314matching hashes and 997.32-KB VSIX. No executable changes.
+## Checkpoint work
+Add scoped T-028 acceptance; update release records and current README status.
+Follow v0.1.0 convention: local annotated tag v0.2.0, manifest stays0.0.1.
+T-070 retains Marketplace/Open VSX publishing/versioning. No dependency change.
+Prove runtime/config parity; run standalone verify; build/inspect an isolated
+committed-tree VSIX, then record hashes/provenance, commit and tag locally.
+Retained light/dark screenshots reviewed; fresh live UI binding fails in both
+interfaces. Record the limitation; prior T-027 QA/77-host pass remains evidence.
+Preparation review clear. Standalone PASS:1074 units/108 files, zero diagnostics,
+486.079s,315matching hashes. Committed artifact and local tag are next.
 
-## Retained limits / next
-Keep failed40055575496/176b184 and40178896696/084ab2b and every local failure.
-Historical GPU/timing/WidgetHost causes remain unestablished; no causal repair
-or new physical-paint/unsampled-peak claim follows from passing CI.
-Owner README/shared-spec hunks and unrelated fixtures/debug files stay untouched.
-T-027 may be checked. No new task, release/tag/publication or milestone-release
-closure is performed. Owner pushes closure records; start next work in a fresh chat.
+## Owner / next-chat handoff
+Owner retains push/CI and existing README/shared-spec hunks/unrelated fixtures.
+No staging or cleanup of unrelated work. No local tag/archive claimed yet.
+Owner delegates QA and simulated-persona assessment instead of external feedback.
+Five clearly labelled personas support T-030 planning next; no real-user claim.
+Prepare push/install commands and a self-contained T-030 planning prompt.
+External feedback collection is not a blocker; no T-030 implementation here.

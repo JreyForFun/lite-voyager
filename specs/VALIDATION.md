@@ -1886,6 +1886,30 @@ No other warning or error is accepted. This full run is not warning-free.
 
 Evidence and every retained failure: [T-027 QA record](../docs/t027-milestone2-qa.md).
 
+#### T-028 Milestone 2 checkpoint (2026-10-26)
+
+Owner authorizes local closure and next-chat preparation. T-027 acceptance is
+complete at exact8cd5983, confirmed run40211134222/attempt1 on all three platforms.
+Preserve its full workload/QA/review evidence and exact HOST-005/HOST-001 local
+warnings; remote raw warning counts and historical causes remain unestablished.
+No executable change: establish source/config parity before reusing that full
+evidence. Run standalone verify, inspect a committed-tree VSIX and create local
+annotated v0.2.0 only after checks. Keep manifest0.0.1 under the existing
+checkpoint convention; T-070 owns Marketplace/Open VSX versioning/publishing.
+Artifact hashes/contents/provenance, owner commands, feedback status and next-chat
+prompt are recorded in docs/t028-milestone2-checkpoint.md.
+
+- [ ] Required standalone verification passes with zero errors/warnings.
+- [ ] Committed-tree VSIX has expected manifest/files, strict size, bundle parity and SHA-256.
+- [ ] Task-owned records committed and annotated local v0.2.0 checkpoint created.
+- [ ] Delegated visual QA and clearly labelled simulated-persona assessment complete; next-task recommendation recorded.
+- [ ] Owner branch/tag push confirmed; not inferred from local preparation.
+
+Owner explicitly delegates visual QA and asks the assistant to consider different
+user personas instead of waiting for outside feedback. Adopt this as the current
+handoff decision; label simulated feedback separately from actual QA evidence.
+No outside-user claim and no T-030 implementation occurs in this task.
+
 #### T-021 streaming CSV / TSV import (2026-10-15)
 
 The owner approves full T-021 implementation, fixture edits and necessary repairs,
@@ -5000,6 +5024,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-028 (2026-10-26): Add local checkpoint/artifact/provenance acceptance; keep
+  owner push/feedback explicit and separate from completed local preparation.
 - T-027 CI investigation (2026-10-25): Confirm failed Windows/macOS and successful
   Ubuntu at 176b184. Retain exact errors, bounded test-first passive/named traces,
   rejected active probe and observation limits; no cause/repair/CI closure claim.

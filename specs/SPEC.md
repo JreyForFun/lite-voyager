@@ -737,6 +737,23 @@ Targets marked "start" are starting points to validate in the benchmark task, th
   warning remains a failure. Preserve all performance/workload/console guards.
   This is a policy amendment, not a repair of earlier GPU/timing failures.
 
+### T-028 Milestone 2 checkpoint and handoff (2026-10-26)
+
+- Owner authorizes finishing local Milestone 2 closure in this chat. Reconcile
+  completed T-027 QA/review and successful exact-candidate three-platform CI;
+  preserve all historical failures, approved diagnostics and observation limits.
+- Follow the v0.1.0 milestone convention: create a local annotated `v0.2.0`
+  checkpoint after verification. Keep the extension manifest at `0.0.1`;
+  Marketplace/Open VSX publishing/versioning remains T-070. No runtime changes.
+- Prepare an installable VSIX from an isolated copy of committed task-owned
+  files. Inspect manifest, expected contents, bundle parity, size strictly below
+  10,000,000 bytes and SHA-256. Exclude unrelated owner work and generated data.
+- Record artifact provenance, exact owner push/install commands, feedback checks
+  and a self-contained next-chat prompt. Owner delegates QA and substitutes an
+  assistant-led simulated-persona assessment for waiting on outside feedback.
+  Label simulation honestly, make the next-task recommendation and do not begin
+  Milestone 3 in this task. No real-user report is inferred from simulation.
+
 ## 5.5 Screens and states
 
 Every screen must handle each of these, with a test or a manual checklist item:
@@ -761,6 +778,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-028 (2026-10-26): Owner authorizes local Milestone 2 checkpoint and handoff;
+  preserve publishing/versioning scope, committed-artifact provenance and feedback gate.
 - T-027 CI investigation (2026-10-25): Define bounded opt-in named sync/await spans
   and passive canonical-profile snapshots; retain rejected active-status errors and
   all failed-candidate evidence without any workload/clock/diagnostic relaxation.

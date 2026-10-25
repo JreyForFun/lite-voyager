@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Milestone 2 source checkpoint v0.2.0: CSV/TSV, JSON/JSONL and XLSX previews,
+  background imports, temporary storage/Save as SQLite, unified file opening
+  and schema autocomplete pass scoped QA/review and three-platform CI. The
+  development manifest remains 0.0.1; Marketplace/Open VSX release/versioning
+  and later editing features remain separate.
+
 - T-027 review repairs: protect original imported sources and their aliases during
   query export, reject non-file inputs before header reads, and reject forbidden
   literal XML characters in XLSX. Log fixed lifecycle labels in the Lite Voyager
