@@ -1437,6 +1437,14 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 
 ### T-027 Milestone 2 QA/review (2026-10-24)
 
+HOST-006 decision (2026-10-25): owner approves the exact reviewed chat.builtinTools
+unsigned-integer constructor timing family after run40178896696/084ab2b passes
+Windows/Ubuntu and all77 macOS hosts but fails on that unapproved warning.
+Add only this anchored rule with existing renderer/severity/reporting guards;
+write acceptance/negative/console regressions first, then verify/full and review.
+Keep earlier failures, all workloads/limits and fresh candidate CI required.
+Evidence: [HOST-006 decision](../docs/t027-ci-startup-warning-proposal.md).
+
 CI investigation (2026-10-25): exact 176b184 fails run 40055575496 on Windows
 (102.5402-ms JSONL startup interval and separate WidgetHost error) and macOS
 (all 76 hosts pass, 40 GPU mailbox errors rejected); Ubuntu succeeds. Causes are

@@ -713,6 +713,15 @@ Rules:
     adopt only this family. `N` must be an unsigned integer duration. Official
     VS Code source registers its remote-status indicator at BlockStartup and
     logs synchronous constructor time before the extension host starts.
+  - `VSCODE-HOST-006`: `Creation of workbench contribution 'chat.builtinTools' took Nms.`
+    Owner approves the exact reviewed T-027 proposal on 2026-10-25. `N` must
+    contain only ASCII digits (unsigned integer duration). Installed VS Code
+    1.140 vendor code registers this contribution at Eventually and measures
+    synchronous construction; do not claim it runs before the extension host.
+    Retain all structured renderer/severity/reporting restrictions above.
+    Failed run40178896696/084ab2b and exact source-revision limits remain in
+    docs/t027-ci-startup-warning-proposal.md. This is a policy amendment, not a
+    performance or graphics repair. Every other warning and every error fails.
   The original manifest-creation and cloud-dictation timeout warnings remain
   failures. Console diagnostic checks, types, lint and builds retain zero
   errors/warnings. No blanket vendor-warning allowance or retry-to-green is permitted.

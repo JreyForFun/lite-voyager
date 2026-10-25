@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-T-027 CI investigation (2026-10-25); keep T-027 unchecked.
-Evidence: docs/t027-ci-investigation.md and docs/t027-milestone2-qa.md.
+T-027 HOST-006 verified locally (2026-10-26); keep T-027 unchecked.
+Current evidence/proposal: docs/t027-ci-startup-warning-proposal.md.
 
 ## CI status
-Run 40055575496 / attempt 1 / exact 176b18450b63a3a7c75382bb441b68ce60b6680c:
-Ubuntu SUCCESS; Windows/macOS FAIL, independently confirmed from REST metadata.
-Windows: 1,032 units pass, 75 hosts pass/1 fails; 1-GB JSONL startup 102.5402 ms
-exceeds unchanged 100 ms. Separate blink WidgetHost console error also fails.
-macOS: 1,018 units pass/14 platform skips, all 76 hosts pass; 40 GPU mailbox errors
-fail strict diagnostics. Causes remain unestablished; no unchanged retry.
+Run 40178896696 / attempt 1 / exact 084ab2ba07f81cb4b2a4b3b69a35ba2dbc31596f:
+Windows/Ubuntu SUCCESS; macOS FAIL, independently confirmed by REST metadata.
+All installs pass. macOS 1,034 units pass/14 skips; all 77 hosts pass and exit 0.
+Full fails on renderer.log:13, 2026-10-25 09:04:55.382 [warning]
+Creation of workbench contribution 'chat.builtinTools' took 212ms.
+HOST-001 also reported at renderer.log:16, session 20261025T090446/window1.
+No GPU error or original >100-ms interval appears in the supplied macOS log.
+Old 40055575496 failures remain retained; their causes/repairs are unestablished.
 
 ## Current candidate
-Add bounded opt-in fixed-label sync/await host spans and passive OS process tree.
-No subscriber preserves original values/promises/errors without clocks/CPU reads.
-Keep original timer and every workload, deadline, renderer and diagnostic guard.
-Reject and retain active CLI-status probe: assertion passes but GPU error fails;
-it starts another Code/GPU tree. Replace with passive canonical-profile observer.
-Stronger privacy/ownership/collector regressions pass: 42 focused tests/6 files.
-Independent follow-up clears inspected implementation; no remaining concrete finding.
-Changed passive probe passes 1 host with exact source; its three approved
-warnings and all retained failures/observation limits are in the CI record.
+Owner approves exact reviewed sixth-family proposal and delegates implementation.
+Add only chat.builtinTools unsigned-integer timing regex/rule type; preserve
+existing renderer/severity/reporting guards and every other diagnostic failure.
+Installed vendor 1.140 Windows bundle identifies Eventually contribution and
+synchronous constructor timing warning; exact macOS source fetch returns 404.
+Update current AGENTS/SPEC/PLAN/VALIDATION; retain prior failed CI and limits.
+No UI, dependency, launch-argument, performance guard or workload changes.
 
 ## Verify status
-Literal verify PASS: 1,048 units/108 files, zero errors/warnings, 598.476 s.
-CI-enabled literal full PASS: same units plus 77 hosts, 2602.983 s.
-Both retain 310 identical hashes and every original data/source/large-file check.
-Full NOT warning-free: one warning HOST-001, signed-out CloudSandboxApi GitHub
-session, 20261025T160104/window1/renderer.log:10; exact message in CI record.
-Matching 1-GB JSONL raw 41.3198 ms/fork 30.1641 ms does not explain failed CI.
+26 new acceptance/guard tests: red 6 fail/68 pass before rule, green 74 pass.
+Standalone PASS: 1,074 units/108 files, zero errors/warnings, 583.110 s.
+CI-enabled full PASS: same units plus 77 hosts, 2898.017 s; 314 unchanged hashes.
+Full NOT warning-free: HOST-005 (49ms) line1 and HOST-001 line11, severity warning,
+source 20261025T233217/window1/renderer.log; exact records/metrics in evidence.
+All original large-file/data/source/timing/memory checks pass; no guard changes.
+Independent review clear; retain red/green and sandbox/tool-preview failures.
 
 ## Decisions / next
 Owner README/shared-spec hunks and unrelated fixtures/debug files stay untouched.
-No dependency, source-safety, diagnostic-exception or later-feature change.
-Commit only task-owned changes. Owner pushes and supplies
-fresh candidate CI URL/SHA plus complete Windows/macOS/Ubuntu verify logs.
-Do not tick T-027 or claim release/tag/milestone closure from diagnostic success.
+Commit only eight task files; post-gate edits are records only.
+Owner pushes and supplies fresh actual-candidate three-platform CI.
+No task/release/tag/milestone closure or historical GPU/timing repair claim.

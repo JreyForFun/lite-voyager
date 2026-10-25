@@ -703,7 +703,7 @@ Targets marked "start" are starting points to validate in the benchmark task, th
 - Independently review the actual cumulative milestone diff from v0.1.0.
   Reproduce confirmed findings with failing regressions before repair. Preserve
   source safety, bounded worker/paging behavior, full workloads, deadlines and
-  the exact five-family renderer-only diagnostic policy; no retry-to-green.
+  the exact six-family renderer-only diagnostic policy; no retry-to-green.
 - Record requirement coverage, source hashes, performance comparisons, exact
   diagnostics, failures and remaining limits. Local verify must have zero errors
   and warnings; local full and owner-pushed actual-candidate three-platform CI
@@ -729,6 +729,13 @@ Targets marked "start" are starting points to validate in the benchmark task, th
   perturb timing. Neither overlap nor a passing probe establishes causation;
   Windows startup/WidgetHost and macOS mailbox failures remain unresolved until
   causal evidence and a reviewed repair support a fresh candidate CI pass.
+- T-027 HOST-006 decision (2026-10-25): owner approves only the exact
+  `Creation of workbench contribution 'chat.builtinTools' took Nms.` family,
+  with an unsigned integer duration. Accept only structured timestamped renderer
+  warnings and explicitly report original source, line, severity, rule and message.
+  Every error, other source, malformed duration, altered wording and unrelated
+  warning remains a failure. Preserve all performance/workload/console guards.
+  This is a policy amendment, not a repair of earlier GPU/timing failures.
 
 ## 5.5 Screens and states
 
