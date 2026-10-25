@@ -52,25 +52,52 @@ shareable archive below will use only committed task-owned content.
 Independent preparation review finds no concrete scope/provenance defect.
 Only records change after this gate; runtime/config parity remains unchanged.
 
-Preparation in progress. A shareable archive must be generated from an isolated
-copy of the task-only committed tree, with the installed locked dependencies,
-normal prepublish build and strict package-size/diagnostic checks. This prevents
-the owner's unstaged README edits from entering a supposedly tagged artifact.
-Inspect all archive entries, manifest/version, worker/WASM/license files and
-bundle hashes. Record build commit, final checkpoint, bytes and SHA-256 here.
-No archive, local tag, installation, external push or feedback is claimed yet.
+Shareable archive:
+`out/t028-checkpoint/lite-voyager-v0.2.0-checkpoint.vsix`.
+Build commit: `703624510dfc1325b77e9b4b94b32715c575b94f`, archived with git into
+`out/t028-checkpoint/committed-tree`. Existing locked node_modules is linked
+only inside that generated tree; normal prepublish/build and strict packaging
+run there. The owner's unstaged README/spec hunks are excluded.
+
+- Bytes: **1,021,601**, nonempty and strictly below10,000,000.
+- SHA-256: `4e09701f7df27d6de32e915b4c1c2753ce801a4bde03b3c4c5b6c360d43b1550`.
+- Manifest: `jreyinnovarev.lite-voyager`, version`0.0.1`, VS Code`^1.140.0`.
+- Exactly34 expected archive entries; all28 dist JS/CSS/worker/WASM/license
+  payloads match the committed-tree build and the standalone-verified workspace
+  build byte-for-byte. No test data, profiles, logs or node_modules are shipped.
+- Evidence: `out/t028-checkpoint/package.log`, `artifact.json` and
+  `archive-audit.json`. Packaging exits0 with zero errors/warnings. The audit's
+  first console summary used Select-Object on a hashtable and printed nulls;
+  the persisted JSON contains the correct values and is independently checked.
+  Fixing that display does not change the archive or any assertion.
+
+Final checkpoint records change no packaged input after the build commit.
+Local annotated `v0.2.0` is created after the final record commit and verified
+to resolve to it. This is not an installed preview or a public release; owner
+push/CI remain external. No source/runtime change requires a new full run.
 
 ## Owner handoff
 
-After local preparation finishes, push only the intended checkpoint and branch;
-review the preserved unrelated work before committing it. A normal owner push
-will trigger the existing CI. Never include all dirty files using `git add .`.
+Push the prepared branch first, then the checkpoint tag after that succeeds:
+
+```powershell
+git push origin main
+git push origin v0.2.0
+```
+
+The branch push triggers existing CI. The workflow has no separate tag-specific
+publishing step. The owner may provide the resulting URL for record-only
+confirmation. Review preserved unrelated work before committing it; never use
+`git add .` to include every dirty file automatically.
 
 The installed extension ID is `jreyinnovarev.lite-voyager`, manifest version
 `0.0.1`. Use VS Code's Extensions menu, **Install from VSIX**, and select the
 checkpoint archive described above. This installs development code and may
 replace an existing 0.0.1 preview. Review the confirmation rather than assuming
 a same-version archive was loaded. Use disposable source copies for feedback.
+Packaging/install preparation is complete without modifying the owner's installed
+extension/profile. The archive and optional install are not prerequisites for
+the already delegated next-task planning decision.
 
 Feedback checklist:
 

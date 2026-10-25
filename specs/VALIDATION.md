@@ -1899,10 +1899,10 @@ checkpoint convention; T-070 owns Marketplace/Open VSX versioning/publishing.
 Artifact hashes/contents/provenance, owner commands, feedback status and next-chat
 prompt are recorded in docs/t028-milestone2-checkpoint.md.
 
-- [ ] Required standalone verification passes with zero errors/warnings.
-- [ ] Committed-tree VSIX has expected manifest/files, strict size, bundle parity and SHA-256.
-- [ ] Task-owned records committed and annotated local v0.2.0 checkpoint created.
-- [ ] Delegated visual QA and clearly labelled simulated-persona assessment complete; next-task recommendation recorded.
+- [x] Required standalone verification passes with zero errors/warnings:1074 units/108 files,486.079s,315matching hashes.
+- [x] Committed-tree VSIX has expected manifest/files, strict size, bundle parity and SHA-256:1021601 bytes/34 entries; all28 payloads match verified build, version0.0.1; exact SHA/provenance in checkpoint record.
+- [x] Task-owned records committed and annotated local v0.2.0 checkpoint created after verification; owner pushes.
+- [x] Delegated retained-screenshot QA and clearly labelled simulated-persona assessment complete; T-030 planning recommended. Fresh live visual binding/DEP0169 probe limits remain explicit; no new live pass or real-user feedback claim.
 - [ ] Owner branch/tag push confirmed; not inferred from local preparation.
 
 Owner explicitly delegates visual QA and asks the assistant to consider different
