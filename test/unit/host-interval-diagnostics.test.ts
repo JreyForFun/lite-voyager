@@ -1,6 +1,38 @@
 import { performance } from 'node:perf_hooks';
+import { channel } from 'node:diagnostics_channel';
+import { IMPORT_HOST_CHANNEL, traceHostSync } from '../../src/import-host-diagnostics';
 import { expect, test, vi } from 'vitest';
 import { HostIntervalTrace, startHostIntervalDiagnostics } from '../../src/test/host-interval-diagnostics';
+
+test('NFR-005: Given named synchronous and await spans around an over-limit interval, When the bounded trace is sampled, Then original raw time and both distinct scopes remain intact', () => {
+  const trace = new HostIntervalTrace(() => ({ user: 0, system: 0 }), 2);
+  const span = { stage: 'import-helper-fork' as const, kind: 'sync' as const, from: 3, to: 104, milliseconds: 101, processCpuUserUs: 0, processCpuSystemUs: 0 };
+  trace.operation(span); trace.operation({ ...span, stage: 'storage-initialize', kind: 'await' });
+  trace.sample(0, 105, 'ready/none', 'importing/none');
+  trace.operation({ ...span, stage: 'import-helper-send', from: 200, to: 201, milliseconds: 1 });
+  expect(trace.result().largest?.milliseconds).toBe(105);
+  expect(trace.result().operations.map((value) => [value.stage, value.kind, value.milliseconds])).toEqual([
+    ['import-helper-fork', 'sync', 101], ['storage-initialize', 'await', 101],
+  ]);
+  expect(trace.result().droppedOperations).toBe(1); expect(trace.result().truncated).toBe(true);
+});
+
+test('NFR-005: Given a live named-operation subscriber, When diagnostics stop, Then spans are captured with fixed labels and the listener is removed', () => {
+  const sink = channel(IMPORT_HOST_CHANNEL); expect(sink.hasSubscribers).toBe(false);
+  const live = startHostIntervalDiagnostics(true); const from = performance.now(); traceHostSync('lifecycle-output', () => 1);
+  live?.sample(from, performance.now(), 'ready', 'importing');
+  const result = live?.stop(); expect(result?.operations.some((value) => value.stage === 'lifecycle-output')).toBe(true);
+  expect(sink.hasSubscribers).toBe(false); expect(live?.stop()).toBe(result);
+});
+
+test('NFR-010: Given malformed or extra channel fields, When retaining named host evidence, Then untrusted labels are counted and unrelated private fields cannot enter logs', () => {
+  const sink = channel(IMPORT_HOST_CHANNEL); const live = startHostIntervalDiagnostics(true);
+  const span = { stage: 'webview-state', kind: 'sync', from: 10, to: 12, milliseconds: 2, processCpuUserUs: 0, processCpuSystemUs: 0 };
+  sink.publish({ ...span, privateData: 'secret.csv SELECT password' }); sink.publish({ ...span, stage: 'secret.csv' });
+  live?.sample(0, 20, 'ready', 'importing'); const result = live?.stop();
+  expect(result?.operations).toEqual([span]); expect(JSON.stringify(result)).not.toContain('secret');
+  expect(result?.untrackedResources).toBeGreaterThanOrEqual(1);
+});
 
 test('NFR-005: Given an over-limit raw interval, When diagnostic CPU and callback evidence is recorded, Then the original elapsed time and phase boundaries are unchanged', () => {
   const cpu = [{ user: 100, system: 20 }, { user: 130, system: 25 }, { user: 140, system: 29 }];

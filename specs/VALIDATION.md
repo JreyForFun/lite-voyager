@@ -1825,6 +1825,26 @@ remain separate. All original workloads, targets and diagnostic guards apply.
 
 #### T-027 Milestone 2 universal gate (2026-10-24)
 
+Current follow-up (2026-10-25): run 40055575496 / attempt 1 / exact 176b184 fails
+Windows timer/WidgetHost and macOS GPU-console validation; Ubuntu passes.
+The dated local 176b184 results below are historical, not a current-candidate CI
+pass. Diagnostic acceptance/retained exact errors and the rejected active status
+probe: [T-027 CI investigation](../docs/t027-ci-investigation.md).
+No error allowance, renderer argument, workload or 100-ms guard changes.
+
+Current diagnostic candidate passes literal standalone verify: 1,048 units /
+108 files, strict types/lint/build/VSIX, zero errors/warnings, 598.476 s; and
+CI-enabled literal full: the same units plus 77 hosts, 2602.983 s. Both capture
+310 matching hashes. All original large-file data, source, paging, memory and
+timer checks pass. Full is not warning-free: one severity-warning HOST-001,
+20261025T160104/window1/renderer.log:10, exact message:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+No other error/warning is accepted. Matching 1-GB JSONL raw interval 41.3198 ms
+and named fork 30.1641 ms do not reproduce/explain failed CI. Independently
+reviewed passive/named diagnostic acceptance passes; root causes and fresh
+owner-pushed Windows/macOS/Ubuntu CI remain open. Completion records only follow
+the gates. The dated local 176b184 results/checklist below remain historical.
+
 - [x] Local verify/full pass: 1,032 units / 106 files and 76 real-host tests; unchanged 304-file hashes in each run. Standalone has zero errors/warnings; full has exactly one approved HOST-001 warning, explicitly reported below.
 - [ ] Actual-candidate Windows/macOS/Ubuntu CI; owner pushes and supplies run URL, tested SHA and conclusions. Earlier task CI does not cover these repairs.
 - [x] NFR-001 full source hashes, exact data, atomic save and imported-source export protection pass both engines; delegated crash/cancel cleanup passes.
@@ -4959,6 +4979,9 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-027 CI investigation (2026-10-25): Confirm failed Windows/macOS and successful
+  Ubuntu at 176b184. Retain exact errors, bounded test-first passive/named traces,
+  rejected active probe and observation limits; no cause/repair/CI closure claim.
 - T-027 (2026-10-24): Complete eight delegated manual checks, reconcile actual
   acceptance tests and independently clear repairs. Record passing local gates
   and the exact approved full warning; retain owner-pushed CI and separate release.

@@ -10,6 +10,8 @@ import { SqliteSession } from '../../src/editor/sqlite-session';
 import { SqliteSaveService } from '../../src/editor/sqlite-save';
 import { TempStorage } from '../../src/storage/temp-storage';
 import type { JsonPreviewResult } from '../../src/protocol';
+import { channel } from 'node:diagnostics_channel';
+import { IMPORT_HOST_CHANNEL } from '../../src/import-host-diagnostics';
 
 const notifyError = vi.hoisted(() => vi.fn());
 const disk = vi.hoisted(() => ({ low: false }));
@@ -45,6 +47,23 @@ async function fixture(loader: FileLoader, started?: number, format: 'csv' | 'js
   const session = new CsvImportSession({ fsPath: source } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started, format);
   await session.finished; return { directory, view, db, session };
 }
+
+test('NFR-005: Given diagnostic observation of real import preflight, When importing a disposable source, Then state delivery and asynchronous boundaries have fixed named scopes and source bytes survive', async () => {
+  const records: unknown[] = []; const listener = (value: unknown): void => { records.push(value); }; const sink = channel(IMPORT_HOST_CHANNEL);
+  const run = await fixture({ extensions: ['csv'], preview: () => Promise.resolve(preview), import: async (_source, target) => { await writeFile(target.path, 'owned'); return []; } });
+  sink.subscribe(listener);
+  try {
+    await run.session.startImport(); expect(run.session.state.phase).toBe('opened');
+    expect(records).toEqual(expect.arrayContaining([
+      expect.objectContaining({ stage: 'webview-state', kind: 'sync' }),
+      expect.objectContaining({ stage: 'storage-initialize', kind: 'await' }),
+      expect.objectContaining({ stage: 'source-snapshot', kind: 'await' }),
+      expect.objectContaining({ stage: 'space-check', kind: 'await' }),
+      expect.objectContaining({ stage: 'storage-create', kind: 'await' }),
+    ]));
+    expect(await readFile(run.session.uri.fsPath, 'utf8')).toBe('a\n1\n'); expect(JSON.stringify(records)).not.toContain(run.session.uri.fsPath);
+  } finally { sink.unsubscribe(listener); run.view.dispose(); await run.session.closed; }
+});
 
 test('D-5: Given a resolving custom editor whose frame is not mounted, When the first post is undelivered then the webview announces ready, Then preview starts once without disposing the editor', async () => {
   const view = panel(); view.webview.postMessage.mockResolvedValue(false); const read = vi.fn<FileLoader['preview']>().mockResolvedValue(preview);

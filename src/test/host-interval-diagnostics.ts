@@ -1,5 +1,7 @@
 import { createHook } from 'node:async_hooks';
 import { performance, PerformanceObserver } from 'node:perf_hooks';
+import { channel } from 'node:diagnostics_channel';
+import { IMPORT_HOST_CHANNEL, isImportHostSpan, type ImportHostSpan } from '../import-host-diagnostics';
 
 interface Span { from: number; to: number; milliseconds: number; }
 interface CallbackSpan extends Span { type: string; }
@@ -18,6 +20,9 @@ export class HostIntervalTrace {
   private droppedCallbacks = 0;
   private droppedGc = 0;
   private untrackedResources = 0;
+  private readonly operations: ImportHostSpan[] = [];
+  private matchingOperations: ImportHostSpan[] = [];
+  private droppedOperations = 0;
   constructor(private readonly cpu: () => Cpu, private readonly capacity = 128) {
     if (!Number.isInteger(capacity) || capacity < 1 || capacity > 128) { throw new Error('Invalid diagnostic trace capacity.'); }
     this.previousCpu = cpu();
@@ -31,6 +36,7 @@ export class HostIntervalTrace {
       this.largest = interval;
       this.matchingCallbacks = this.callbacks.filter((entry) => this.overlaps(entry));
       this.matchingGc = this.collections.filter((entry) => this.overlaps(entry));
+      this.matchingOperations = this.operations.filter((entry) => this.overlaps(entry));
     }
   }
   callback(type: string, from: number, to: number): void {
@@ -49,18 +55,29 @@ export class HostIntervalTrace {
     if (this.overlaps(entry) && this.matchingGc.length < this.capacity) { this.matchingGc.push(entry); }
   }
   noteUntrackedResources(count: number): void { this.untrackedResources += count; }
+  operation(span: ImportHostSpan): void {
+    const entry: ImportHostSpan = { stage: span.stage, kind: span.kind, from: span.from, to: span.to, milliseconds: span.milliseconds,
+      processCpuUserUs: span.processCpuUserUs, processCpuSystemUs: span.processCpuSystemUs };
+    if (this.operations.length === this.capacity) { this.operations.shift(); this.droppedOperations++; }
+    this.operations.push(entry);
+    if (this.overlaps(entry) && this.matchingOperations.length < this.capacity) { this.matchingOperations.push(entry); }
+  }
   private overlaps(entry: Span): boolean { return this.largest !== undefined && entry.from < this.largest.to && entry.to > this.largest.from; }
   result() {
     return { intervals: this.intervals, largest: this.largest, callbacks: [...this.matchingCallbacks], gc: [...this.matchingGc],
-      capacity: this.capacity, droppedCallbacks: this.droppedCallbacks, droppedGc: this.droppedGc, untrackedResources: this.untrackedResources,
-      truncated: this.droppedCallbacks > 0 || this.droppedGc > 0 || this.untrackedResources > 0,
-      scope: 'Raw timer intervals; process-wide CPU deltas; overlapping GC and >=1-ms async callbacks. Bounded diagnostic evidence, no duration subtraction or cause attribution.' };
+      operations: [...this.matchingOperations], capacity: this.capacity, droppedCallbacks: this.droppedCallbacks, droppedGc: this.droppedGc,
+      droppedOperations: this.droppedOperations, untrackedResources: this.untrackedResources,
+      truncated: this.droppedCallbacks > 0 || this.droppedGc > 0 || this.droppedOperations > 0 || this.untrackedResources > 0,
+      scope: 'Raw timer intervals; process-wide CPU deltas; overlapping GC and >=1-ms async callbacks; fixed-label host operations (sync versus await elapsed). Bounded evidence, no duration subtraction or cause attribution.' };
   }
 }
 
 export function startHostIntervalDiagnostics(enabled: boolean) {
   if (!enabled) { return undefined; }
   const trace = new HostIntervalTrace(() => process.cpuUsage());
+  const sink = channel(IMPORT_HOST_CHANNEL);
+  const operation = (value: unknown): void => { if (isImportHostSpan(value)) { trace.operation(value); } else { trace.noteUntrackedResources(1); } };
+  sink.subscribe(operation);
   const resources = new Map<number, string>(); const active = new Map<number, { type: string; at: number }>();
   let untracked = 0;
   const hook = createHook({
@@ -80,6 +97,7 @@ export function startHostIntervalDiagnostics(enabled: boolean) {
     stop: () => {
       if (stopped === undefined) {
         hook.disable();
+        sink.unsubscribe(operation);
         for (const entry of observer.takeRecords()) { trace.gc(entry.startTime, entry.duration); }
         observer.disconnect(); resources.clear(); active.clear(); trace.noteUntrackedResources(untracked); stopped = trace.result();
       }

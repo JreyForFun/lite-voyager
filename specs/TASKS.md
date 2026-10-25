@@ -157,6 +157,12 @@ Every milestone ends with a gate (`VALIDATION.md` section 4): green `npm run ver
 When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part of `SPEC.md` and `PLAN.md`, and only the single task you are working on.
 
 ## Changelog
+- T-027 CI investigation (2026-10-25): Failed 40055575496/176b184 remains recorded;
+  Ubuntu succeeds, Windows timer/WidgetHost and macOS mailbox errors block closure.
+  Prepare bounded passive/named diagnostics; preserve every gate and keep T-027 open.
+  Reviewed diagnostic candidate passes 1048-unit clean verify and CI-enabled
+  1048-unit/77-host full with one exact approved HOST-001 warning. Original causes
+  remain unknown; require owner-pushed fresh actual-candidate three-platform CI.
 - T-027 (2026-10-24): Owner delegates local milestone QA/review and repairs. All eight manual checks, independent follow-up, 1032-unit clean verify and 1032-unit/76-host full pass with one explicit HOST-001 warning. Preserve existing owner work, every failed check and observation limit; keep T-027 open for owner-pushed actual-candidate three-platform CI. Release/tag/publishing remain separate.
 - T-026 (2026-10-20): Complete T-026 after independently confirmed run39904711322/attempt1 at exactb46a14eda4ba3ad2594e3a8688345da26569d4c0 passes locked installs and applicable full checks on Windows/macOS/Ubuntu (2026-10-23). FR-012 implementation, bounded both-engine metadata/keyboard/lifecycle/source-safety tests, scoped delegated renderer QA and independent reviews pass. Unchanged executable59a236f has989-unit/100-file zero-error/zero-warning standalone evidence (585.006s/295matching hashes). Preserve all failed runs, exact historical diagnostics, unestablished GPU/timing/exit causes and remote raw-log limits; no warning-free remote claim. Only T-026 closes; milestone-wide QA/review/release/tag remain separate. Owner pushes records. Evidence: docs/t026-ci-repair.md.
 - T-025 completion (2026-10-20): Check only T-025 after independently confirmed 39369888255 /attempt 1/exact repaired d6cdaf9 passes all three locked-install/full jobs. Preserve failed 39304280687, local gates/exact warnings, independent reviews and scoped visual limits. Closure-only verification passes 920 units with zero errors/warnings; owner pushes records and T-026 starts in a fresh chat.

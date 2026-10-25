@@ -7,6 +7,12 @@ features remain separate. T-027 stays unchecked until its CI evidence passes.
 
 ## Local results and remaining gate
 
+CI follow-up (2026-10-25): run 40055575496/attempt 1 at exact 176b184 fails
+Windows (JSONL startup timer plus WidgetHost error) and macOS (40 GPU mailbox
+errors); Ubuntu passes. Historical local results below remain valid for 176b184.
+Current diagnostic candidate and preserved failures:
+[T-027 CI investigation](t027-ci-investigation.md). No CI repair/closure claim.
+
 - Canonical `npm run verify` PASS: 1,032 units / 106 files, strict host/webview/
   tooling types, lint, production builds and VSIX packaging; zero errors/warnings.
   The runner records 2026-10-24T01:32:59.165Z through 01:43:21.092Z (621.927 s),

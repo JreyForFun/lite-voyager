@@ -1,3 +1,4 @@
+import { traceHostSync } from './import-host-diagnostics';
 export interface DiagnosticOutput { appendLine(value: string): void; }
 interface LifecycleSource {
   readonly state: { readonly phase: string };
@@ -12,7 +13,7 @@ export function logLifecycle(output: DiagnosticOutput | undefined, operation: 'c
   let previous: string | undefined;
   const report = (phase: string): void => {
     if (!phases.has(phase) || previous === phase) { return; } previous = phase;
-    try { output.appendLine(`${operation}: ${phase}`); }
+    try { traceHostSync('lifecycle-output', () => { output.appendLine(`${operation}: ${phase}`); }); }
     catch { /* Disposed diagnostic channels must not interrupt source cleanup. */ }
   };
   const unsubscribe = source.subscribe(() => { report(source.state.phase); });

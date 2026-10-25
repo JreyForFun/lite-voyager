@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import type { ImportedTable, ImportTarget, LoadOptions, Progress } from './file-loader';
 import { isCsvImportProgress } from '../protocol';
 import { registerStorageHelper } from '../storage/temp-storage';
+import { traceHostAwait, traceHostSync } from '../import-host-diagnostics';
 
 function cancelled(): Error { return new Error('CSV import cancelled. Source is unchanged; reopen to retry.'); }
 function validTables(value: unknown, xlsx: boolean): value is ImportedTable[] {
@@ -23,21 +24,22 @@ export async function runCsvImport(directory: string, source: string, target: Im
   if (signal.aborted) { throw cancelled(); }
   if (typeof target.path !== 'string' || target.path.length === 0 || target.path.includes('\0') || !['node:sqlite', 'sql.js'].includes(target.engine)) { throw new Error('Invalid internal CSV import target.'); }
   const destination = resolve(target.path);
-  const work = await mkdtemp(join(dirname(destination), '.lv-import-')); const output = join(work, 'import.sqlite');
+  const work = await traceHostAwait('import-work-directory', () => mkdtemp(join(dirname(destination), '.lv-import-'))); const output = join(work, 'import.sqlite');
   let child: ChildProcess | undefined; let exited = Promise.resolve(); let published = false;
   let abort: () => void = () => {};
   try {
     if (signal.aborted) { throw cancelled(); }
-    child = fork(join(directory, 'csv-import-process.js'), [], {
+    child = traceHostSync('import-helper-fork', () => fork(join(directory, 'csv-import-process.js'), [], {
       execPath: process.execPath, execArgv: [], windowsHide: true, serialization: 'advanced',
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
-    });
+    }));
     const helper = child;
     let spawnFailed = false;
     helper.on('error', () => { spawnFailed = true; });
     exited = new Promise<void>((accept) => { helper.once('close', () => { accept(); }); });
     // No storage work starts before its PID marker is durable in the owned session.
-    if (target.ownerDirectory !== undefined && helper.pid !== undefined) { await registerStorageHelper(target.ownerDirectory, helper.pid); }
+    const ownerDirectory = target.ownerDirectory; const pid = helper.pid;
+    if (ownerDirectory !== undefined && pid !== undefined) { await traceHostAwait('import-helper-register', () => registerStorageHelper(ownerDirectory, pid)); }
     if (spawnFailed || !helper.connected || helper.exitCode !== null || helper.signalCode !== null) { throw new Error('CSV import helper stopped before starting. Reopen the file.'); }
     const tables = await new Promise<ImportedTable[]>((accept, reject) => {
       let settled = false;
@@ -56,7 +58,7 @@ export async function runCsvImport(directory: string, source: string, target: Im
         } else if (reply['type'] === 'imported' && validTables(reply['tables'], format === 'xlsx')) { settled = true; accept(reply['tables']); }
         else { fail(new Error('Invalid CSV import response. Rebuild and reopen.')); }
       });
-      helper.send({ source, path: output, directory, engine: target.engine, options, ...(format === undefined ? {} : { format }), ...(xlsxSnapshot === undefined ? {} : { xlsxSnapshot }) }, (error) => { if (error !== null) { fail(new Error('Import helper could not receive import request.')); } });
+      traceHostSync('import-helper-send', () => helper.send({ source, path: output, directory, engine: target.engine, options, ...(format === undefined ? {} : { format }), ...(xlsxSnapshot === undefined ? {} : { xlsxSnapshot }) }, (error) => { if (error !== null) { fail(new Error('Import helper could not receive import request.')); } }));
       if (signal.aborted) { abort(); }
     });
     if (helper.exitCode === null && helper.signalCode === null && helper.pid !== undefined) { helper.kill('SIGKILL'); }

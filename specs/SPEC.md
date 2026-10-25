@@ -717,6 +717,18 @@ Targets marked "start" are starting points to validate in the benchmark task, th
 - The owner delegates fixtures, repairs, independent review and local visual QA
   to the assistant and retains push/CI. Release/tag/publishing and later features
   are separate; completing this task does not itself close Milestone 2.
+- T-027 CI investigation (2026-10-25): retain run 40055575496 at 176b184 as
+  failed. Collect bounded, opt-in, fixed-label synchronous host-operation spans
+  separately from asynchronous preflight elapsed spans. Preserve the original
+  timer timestamps, return/error/cancellation behavior, workloads and all gates.
+  Record a passive OS process/argument snapshot of the canonical isolated host;
+  refuse linked profiles, missing host identity or failed collection. Never launch
+  another Code or GPU process for diagnostics; the rejected active status query
+  and its GPU error remain recorded. Collector failure cannot clear verification.
+  Instrumentation can
+  perturb timing. Neither overlap nor a passing probe establishes causation;
+  Windows startup/WidgetHost and macOS mailbox failures remain unresolved until
+  causal evidence and a reviewed repair support a fresh candidate CI pass.
 
 ## 5.5 Screens and states
 
@@ -742,6 +754,9 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-027 CI investigation (2026-10-25): Define bounded opt-in named sync/await spans
+  and passive canonical-profile snapshots; retain rejected active-status errors and
+  all failed-candidate evidence without any workload/clock/diagnostic relaxation.
 - T-027 (2026-10-24): Define owner-delegated Milestone 2 QA/review acceptance,
   retained gates and separate owner CI/release scope.
 - T-026 (2026-10-20): Define owner-delegated schema/keyword completion before implementation, bounded prefix lookup/context, exact quoted insertion and distinct host/component-render evidence. Preserve existing safety and diagnostic rules.

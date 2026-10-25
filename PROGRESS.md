@@ -1,35 +1,39 @@
 # Progress
 
 ## Current phase / task
-T-027 Milestone 2 QA/review: local implementation and QA PASS (2026-10-24).
-Keep T-027 unchecked pending actual-candidate three-platform CI.
-Evidence/files: docs/t027-milestone2-qa.md (complete task manifest and limits).
+T-027 CI investigation (2026-10-25); keep T-027 unchecked.
+Evidence: docs/t027-ci-investigation.md and docs/t027-milestone2-qa.md.
+
+## CI status
+Run 40055575496 / attempt 1 / exact 176b18450b63a3a7c75382bb441b68ce60b6680c:
+Ubuntu SUCCESS; Windows/macOS FAIL, independently confirmed from REST metadata.
+Windows: 1,032 units pass, 75 hosts pass/1 fails; 1-GB JSONL startup 102.5402 ms
+exceeds unchanged 100 ms. Separate blink WidgetHost console error also fails.
+macOS: 1,018 units pass/14 platform skips, all 76 hosts pass; 40 GPU mailbox errors
+fail strict diagnostics. Causes remain unestablished; no unchanged retry.
+
+## Current candidate
+Add bounded opt-in fixed-label sync/await host spans and passive OS process tree.
+No subscriber preserves original values/promises/errors without clocks/CPU reads.
+Keep original timer and every workload, deadline, renderer and diagnostic guard.
+Reject and retain active CLI-status probe: assertion passes but GPU error fails;
+it starts another Code/GPU tree. Replace with passive canonical-profile observer.
+Stronger privacy/ownership/collector regressions pass: 42 focused tests/6 files.
+Independent follow-up clears inspected implementation; no remaining concrete finding.
+Changed passive probe passes 1 host with exact source; its three approved
+warnings and all retained failures/observation limits are in the CI record.
 
 ## Verify status
-Literal npm run verify PASS: 1,032 units/106 files, strict types/lint/build/VSIX,
-zero errors/warnings; 621.927 s and 304 matching before/after hashes.
-Literal npm run verify:full PASS: 1,032 units/76 real-host tests, 2820.206 s,
-304 matching hashes; every original populated workload/data/source hash passes.
-Full is NOT warning-free: one severity-warning VSCODE-HOST-001 record,
-20261024T095412/window1/renderer.log:10, signed-out CloudSandboxApi GitHub session.
-Exact message and preserved logs/failures are in the QA record. No unchanged retry.
+Literal verify PASS: 1,048 units/108 files, zero errors/warnings, 598.476 s.
+CI-enabled literal full PASS: same units plus 77 hosts, 2602.983 s.
+Both retain 310 identical hashes and every original data/source/large-file check.
+Full NOT warning-free: one warning HOST-001, signed-out CloudSandboxApi GitHub
+session, 20261025T160104/window1/renderer.log:10; exact message in CI record.
+Matching 1-GB JSONL raw 41.3198 ms/fork 30.1641 ms does not explain failed CI.
 
-## Last session
-Independent cumulative v0.1.0 review finds and clears three test-first repairs:
-import-export original/alias protection, nonblocking regular-file sniff, strict XML.
-Add fixed private lifecycle Output labels, strict VSIX size gate and policy tests.
-All eight delegated manual checks pass with stated DOM/pixel/physical limits.
-Both engines and light/dark keyboard QA pass; actual crash/orphan cleanup passes.
-CSV 1/5 GB peaks 311537664/304254976 bytes, DOM 439.2255/530.6000 ms,
-host gaps 53.3519/42.0640 ms; unchanged memory/paging/timer targets pass.
-
-## Decisions / limits
-Owner README/shared-spec edits and unrelated fixtures/debug files are preserved.
-Only task-owned changes belong in the local T-027 commit. No dependency change.
-No workload, deadline, source-safety or diagnostic guard relaxed.
-No release/tag/publishing or milestone-closure claim; no later feature work.
-
-## Next
-Owner pushes the T-027 commit; send CI run URL, exact tested SHA and all three
-Windows/macOS/Ubuntu conclusions (failing step logs if any). Keep checkbox open
-until that candidate passes. Continue T-027 CI follow-up, not a new feature.
+## Decisions / next
+Owner README/shared-spec hunks and unrelated fixtures/debug files stay untouched.
+No dependency, source-safety, diagnostic-exception or later-feature change.
+Commit only task-owned changes. Owner pushes and supplies
+fresh candidate CI URL/SHA plus complete Windows/macOS/Ubuntu verify logs.
+Do not tick T-027 or claim release/tag/milestone closure from diagnostic success.

@@ -1437,6 +1437,29 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 
 ### T-027 Milestone 2 QA/review (2026-10-24)
 
+CI investigation (2026-10-25): exact 176b184 fails run 40055575496 on Windows
+(102.5402-ms JSONL startup interval and separate WidgetHost error) and macOS
+(all 76 hosts pass, 40 GPU mailbox errors rejected); Ubuntu succeeds. Causes are
+unestablished. Add bounded opt-in fixed-label sync/await spans and a passive
+canonical-profile OS process snapshot. Reject and retain the active status
+probe and its GPU error. Do not alter renderers, clocks, workloads or guards.
+Diagnostic acceptance is separate from a causal repair and fresh candidate CI.
+Details: [T-027 CI investigation](../docs/t027-ci-investigation.md).
+
+The reviewed diagnostic candidate passes literal standalone verify (1,048 units /
+108 files, zero errors/warnings, 598.476 s) and CI-enabled full (same units plus
+77 real-host tests, 2602.983 s). Both retain all 310 before/after hashes. Full has
+one exact approved HOST-001 renderer warning and is not warning-free. The matching
+1-GB JSONL case observes raw 41.3198 ms / named fork 30.1641 ms; no historical
+stall or GPU cause is established. CSV 1/5 GB peaks 320831488/322756608 bytes,
+first DOM 507.5368/616.6773 ms, paging growth 37019648/29958144 bytes and host
+gaps 43.7158/49.7959 ms meet the unchanged targets. SQLite peaks
+277676032/290275328 and JSON/JSONL peaks 295645184..303968256 also pass.
+Full data/source hashes and original paging/sampling limits remain intact.
+Exact metrics, renderer-only peaks, diagnostics and limits are in the CI record.
+Fresh owner-pushed candidate CI remains required. Original 2026-10-24 candidate
+measurements and approach follow as historical evidence.
+
 Reconcile the existing import/storage/opening/completion implementation rather
 than adding features. Use disposable fixtures, isolated real VS Code profiles,
 existing both-engine tests and a fresh independent cumulative review from v0.1.0.
@@ -1475,6 +1498,9 @@ in the QA record. Three-platform CI for this candidate remains owner handoff.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-027 CI investigation (2026-10-25): Preserve failed 176b184 CI and rejected
+  active status probe; prepare independently reviewed bounded passive diagnostics
+  without changing any guard or claiming a product/GPU repair.
 - T-027 (2026-10-24): Record independently cleared test-first repairs, delegated
   QA and measured passing local gates with one explicit approved full warning.
   Preserve safety/performance/diagnostic guards and separate CI/release scope.

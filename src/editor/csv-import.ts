@@ -19,6 +19,7 @@ import { checkImportSpace, TempStorage, type SpaceApproval } from '../storage/te
 import { captureOriginalSource, SqliteSaveService, type OriginalSourceSnapshot } from './sqlite-save';
 import { isSqliteSaveDom, isSqliteSaveRequest, type SqliteSaveDom, type SqliteSaveState } from '../protocol';
 import { logLifecycle, type DiagnosticOutput } from '../diagnostics';
+import { traceHostAwait, traceHostSync } from '../import-host-diagnostics';
 
 export class CsvImportSession {
   readonly contextId = randomBytes(16).toString('hex');
@@ -94,13 +95,13 @@ export class CsvImportSession {
     if (this.sendingState) { this.latestState = value; return; }
     this.sendingState = true;
     const complete = (): void => { this.sendingState = false; const next = this.latestState; this.latestState = undefined; if (next !== undefined && !this.disposed) { this.deliverState(next); } };
-    void this.panel.webview.postMessage(value).then(complete, complete);
+    void traceHostSync('webview-state', () => this.panel.webview.postMessage(value)).then(complete, complete);
   }
   private deliverState(value: CsvImportState): void {
     if (this.disposed) { return; }
     this.sendingState = true;
     const complete = (): void => { this.sendingState = false; const next = this.latestState; this.latestState = undefined; if (next !== undefined) { this.deliverState(next); } };
-    void this.panel.webview.postMessage(value).then(complete, complete);
+    void traceHostSync('webview-state', () => this.panel.webview.postMessage(value)).then(complete, complete);
   }
   private async readPreview(options: LoadOptions): Promise<void> {
     this.update({ phase: 'loading', options, message: 'Reading preview with selected options…' });
@@ -127,14 +128,14 @@ export class CsvImportSession {
   private async importTable(): Promise<void> {
     try {
       if (this.storage !== undefined && !await this.cleanup()) { return; }
-      const storage = new TempStorage(this.storageRoot); const root = await storage.initialize();
-      const original = await captureOriginalSource(this.uri.fsPath);
-      await checkImportSpace(root, original.metadata.size, this.spaceApproval ?? (async ({ available, required }) => {
+      const storage = new TempStorage(this.storageRoot); const root = await traceHostAwait('storage-initialize', () => storage.initialize());
+      const original = await traceHostAwait('source-snapshot', () => captureOriginalSource(this.uri.fsPath));
+      await traceHostAwait('space-check', () => checkImportSpace(root, original.metadata.size, this.spaceApproval ?? (async ({ available, required }) => {
         const answer = await vscode.window.showWarningMessage(`Low disk space: ${String(available)} bytes available; estimated ${String(required)} bytes needed (three source copies plus 64 MiB). This is an estimate, not reserved space. Import can fail if space runs out.`, { modal: true }, 'Import anyway');
         return answer === 'Import anyway' && !this.disposed && !this.cancellation.signal.aborted;
-      }), undefined, this.cancellation.signal);
+      }), undefined, this.cancellation.signal));
       if (this.disposed || this.cancellation.signal.aborted) { return; }
-      this.storage = await storage.create();
+      this.storage = await traceHostAwait('storage-create', () => storage.create());
       if (this.disposed || this.cancellation.signal.aborted) { return; }
       const path = join(this.storage, 'table.sqlite'); let fallback = process.env['LITE_VOYAGER_FORCE_FALLBACK'] === '1';
       const tables = await this.loader.import(this.uri.fsPath, { path, engine: fallback ? 'sql.js' : 'node:sqlite', ownerDirectory: this.storage }, this.state.options, (progress) => {
