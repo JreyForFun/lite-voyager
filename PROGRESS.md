@@ -1,39 +1,32 @@
 # Progress
 
 ## Current phase / task
-T-027 HOST-006 verified locally (2026-10-26); keep T-027 unchecked.
-Current evidence/proposal: docs/t027-ci-startup-warning-proposal.md.
+T-027 complete (2026-10-26); owner reports PASS ALL and candidate CI is confirmed.
+Evidence: docs/t027-milestone2-qa.md and docs/t027-ci-startup-warning-proposal.md.
 
-## CI status
-Run 40178896696 / attempt 1 / exact 084ab2ba07f81cb4b2a4b3b69a35ba2dbc31596f:
-Windows/Ubuntu SUCCESS; macOS FAIL, independently confirmed by REST metadata.
-All installs pass. macOS 1,034 units pass/14 skips; all 77 hosts pass and exit 0.
-Full fails on renderer.log:13, 2026-10-25 09:04:55.382 [warning]
-Creation of workbench contribution 'chat.builtinTools' took 212ms.
-HOST-001 also reported at renderer.log:16, session 20261025T090446/window1.
-No GPU error or original >100-ms interval appears in the supplied macOS log.
-Old 40055575496 failures remain retained; their causes/repairs are unestablished.
+## Confirmed candidate CI
+Run40211134222 / attempt1 / exact8cd598317a56c96e3038d7ae7fb598d9e4462411.
+Public REST confirms Windows/macOS/Ubuntu locked installs and applicable full
+verification all SUCCESS. Remote raw warning records are not retrieved;
+no warning-free remote claim. Owner pushes record-only task closure.
 
-## Current candidate
-Owner approves exact reviewed sixth-family proposal and delegates implementation.
-Add only chat.builtinTools unsigned-integer timing regex/rule type; preserve
-existing renderer/severity/reporting guards and every other diagnostic failure.
-Installed vendor 1.140 Windows bundle identifies Eventually contribution and
-synchronous constructor timing warning; exact macOS source fetch returns 404.
-Update current AGENTS/SPEC/PLAN/VALIDATION; retain prior failed CI and limits.
-No UI, dependency, launch-argument, performance guard or workload changes.
+## Acceptance / local evidence
+All eight delegated checks, scoped both-engine light/dark QA, fidelity/NFR
+reconciliation, cumulative independent review and test-first repairs pass.
+Approved HOST-006 is only chat.builtinTools unsigned-integer timing; every other
+diagnostic source/severity/reporting and performance/workload guard remains.
+Latest executable standalone PASS:1074 units/108 files, zero errors/warnings.
+CI-enabled full PASS:1074 units plus77 hosts,2898.017s,314matching hashes.
+Full NOT warning-free: severity warning, HOST-00549ms line1 and HOST-001 line11,
+source20261025T233217/window1/renderer.log; exact records/metrics in evidence.
+All original populated data/source/paging/memory/timer checks pass.
+Closure standalone PASS:1074 units/108 files, zero errors/warnings,612.155s;
+314matching hashes and 997.32-KB VSIX. No executable changes.
 
-## Verify status
-26 new acceptance/guard tests: red 6 fail/68 pass before rule, green 74 pass.
-Standalone PASS: 1,074 units/108 files, zero errors/warnings, 583.110 s.
-CI-enabled full PASS: same units plus 77 hosts, 2898.017 s; 314 unchanged hashes.
-Full NOT warning-free: HOST-005 (49ms) line1 and HOST-001 line11, severity warning,
-source 20261025T233217/window1/renderer.log; exact records/metrics in evidence.
-All original large-file/data/source/timing/memory checks pass; no guard changes.
-Independent review clear; retain red/green and sandbox/tool-preview failures.
-
-## Decisions / next
+## Retained limits / next
+Keep failed40055575496/176b184 and40178896696/084ab2b and every local failure.
+Historical GPU/timing/WidgetHost causes remain unestablished; no causal repair
+or new physical-paint/unsampled-peak claim follows from passing CI.
 Owner README/shared-spec hunks and unrelated fixtures/debug files stay untouched.
-Commit only eight task files; post-gate edits are records only.
-Owner pushes and supplies fresh actual-candidate three-platform CI.
-No task/release/tag/milestone closure or historical GPU/timing repair claim.
+T-027 may be checked. No new task, release/tag/publication or milestone-release
+closure is performed. Owner pushes closure records; start next work in a fresh chat.

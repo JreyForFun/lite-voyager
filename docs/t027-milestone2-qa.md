@@ -3,9 +3,27 @@
 Owner authorization: 2026-10-24, Asia/Manila. The assistant owns local QA, visual
 inspection, independent review, fixtures and necessary test-first repairs. The
 owner pushes and supplies actual-candidate CI. Release/tag/publishing and later
-features remain separate. T-027 stays unchecked until its CI evidence passes.
+features remain separate. T-027 is complete following the candidate CI
+confirmation below; earlier pending entries are historical snapshots.
 
-## Local results and remaining gate
+## Current acceptance (2026-10-26)
+
+Owner reports PASS ALL. Public GitHub REST independently confirms
+[run 40211134222](https://github.com/JreyForFun/lite-voyager/actions/runs/40211134222),
+attempt 1 at exact `8cd598317a56c96e3038d7ae7fb598d9e4462411`, succeeds on
+Windows/macOS/Ubuntu, including locked installs and applicable full checks.
+This clears the remaining T-027 gate. All eight delegated checks, cumulative
+independent review and requirement reconciliation below remain the scoped
+acceptance evidence. Latest candidate local verification passes 1,074 units /
+108 files with zero errors/warnings; full passes those units plus 77 hosts with
+the two exact approved HOST-005/HOST-001 records reported in
+[the final follow-up](t027-ci-startup-warning-proposal.md).
+Remote raw warning records are not retrieved; no warning-free remote claim.
+Retain every failed run and unestablished historical GPU/timing/WidgetHost cause.
+Only T-027 closes; release/tag/publishing and milestone-release closure remain
+separate. Owner pushes these record-only updates.
+
+## Historical local results and remaining gate
 
 CI follow-up (2026-10-25): run 40055575496/attempt 1 at exact 176b184 fails
 Windows (JSONL startup timer plus WidgetHost error) and macOS (40 GPU mailbox

@@ -1834,6 +1834,18 @@ remain separate. All original workloads, targets and diagnostic guards apply.
 
 #### T-027 Milestone 2 universal gate (2026-10-24)
 
+T-027 complete (2026-10-26): owner reports PASS ALL. Public GitHub REST confirms
+run40211134222/attempt1/exact8cd598317a56c96e3038d7ae7fb598d9e4462411 succeeds
+on Windows/macOS/Ubuntu, including locked installs and applicable full checks.
+This clears current-candidate CI for the already reviewed/scoped delegated QA.
+Latest local standalone:1074 units/108 files, zero errors/warnings; CI-enabled
+full:1074 units plus77 hosts with exact HOST-005/HOST-001 records retained in
+[the confirmation record](../docs/t027-ci-startup-warning-proposal.md).
+Remote raw warnings are not retrieved; no warning-free remote claim. Preserve
+every failed run and unestablished historical GPU/timer/WidgetHost cause. Only
+T-027 closes, with no executable change; milestone-release/tag/publishing remain
+separate. Earlier dated local/diagnostic descriptions below are historical.
+
 Current follow-up (2026-10-25): run 40055575496 / attempt 1 / exact 176b184 fails
 Windows timer/WidgetHost and macOS GPU-console validation; Ubuntu passes.
 The dated local 176b184 results below are historical, not a current-candidate CI
@@ -1855,7 +1867,7 @@ owner-pushed Windows/macOS/Ubuntu CI remain open. Completion records only follow
 the gates. The dated local 176b184 results/checklist below remain historical.
 
 - [x] Local verify/full pass: 1,032 units / 106 files and 76 real-host tests; unchanged 304-file hashes in each run. Standalone has zero errors/warnings; full has exactly one approved HOST-001 warning, explicitly reported below.
-- [ ] Actual-candidate Windows/macOS/Ubuntu CI; owner pushes and supplies run URL, tested SHA and conclusions. Earlier task CI does not cover these repairs.
+- [x] Actual-candidate Windows/macOS/Ubuntu CI: run40211134222/attempt1 at exact8cd598317a56c96e3038d7ae7fb598d9e4462411 passes locked installs and applicable full checks on all three platforms (2026-10-26); independently confirmed from public REST metadata. No remote raw-warning claim.
 - [x] NFR-001 full source hashes, exact data, atomic save and imported-source export protection pass both engines; delegated crash/cancel cleanup passes.
 - [x] FR-004, FR-005, FR-006, FR-007, FR-012, fidelity and applicable NFR tests reconciled with actual assertions; trace leaves only future FR-013/020/021/022/030/040.
 - [x] PLAN records measured open/memory/timer comparisons against unchanged targets; raw source sizes/hashes/sample counts and observation limits are in the QA record.

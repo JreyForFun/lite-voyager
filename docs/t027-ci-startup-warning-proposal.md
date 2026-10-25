@@ -2,7 +2,8 @@
 
 Status: exact proposal approved and implemented test-first on 2026-10-25;
 canonical local verify/full pass by 2026-10-26 (Asia/Manila). The owner retains
-push/CI. T-027 stays unchecked pending fresh candidate three-platform CI.
+push/CI. T-027 is complete after independently confirmed candidate three-platform
+CI on 2026-10-26; see the final confirmation below.
 The investigation/proposal below is historical context, superseded only by
 the dated decision and observed results at the end.
 
@@ -252,3 +253,42 @@ allowed; no executable change may be included without revalidation. Owner pushes
 the local task commit and supplies fresh actual-candidate CI URL/SHA and complete
 failed-step logs if needed. Do not tick T-027, tag or claim earlier GPU/timing
 causes repaired from this policy amendment or these local passes.
+
+## Actual-candidate CI confirmation (2026-10-26 Asia/Manila)
+
+The owner reports PASS ALL and supplies
+[run 40211134222](https://github.com/JreyForFun/lite-voyager/actions/runs/40211134222).
+Public GitHub REST independently confirms attempt 1, exact tested commit
+`8cd598317a56c96e3038d7ae7fb598d9e4462411`, completed/success:
+
+- Windows job 121222400478: locked installation and applicable full verification
+  succeed.
+- macOS job 121222400648: locked installation and applicable full verification
+  succeed.
+- Ubuntu job 121222400650: locked installation and session-bus/virtual-display
+  full verification succeed.
+
+Run created 2026-10-25T16:19:38Z, updated 16:34:03Z. Metadata is retained in
+`out/t027-ci-40211134222-run.json` and `-jobs.json`. Remote raw logs and approved
+warning records were not independently retrieved; do not call remote runs
+warning-free or infer their warning counts from metadata. The local full's two
+exact approved warning records remain reported above.
+
+This clears actual-candidate three-platform CI for the already reviewed and
+locally verified implementation. Prior cumulative review, scoped eight-item
+delegated QA and acceptance reconciliation remain in the milestone QA record.
+T-027 may be checked. Only task acceptance closes: no new feature, release,
+tag, publication or separate milestone-release closure. Historical Windows
+startup/WidgetHost and macOS GPU causes remain unestablished; this passing run
+does not establish a causal repair. Keep all failed runs and limits.
+
+This confirmation changes records only. The executable candidate remains the
+verified 8cd5983 source. Owner document hunks and unrelated fixtures are preserved;
+the owner pushes closure records.
+
+Required closure `npm run verify` also passes: 1,074 units / 108 files, strict
+types/lint/build, 34-file/997.32-KB VSIX, zero errors/warnings. Started
+2026-10-25T16:40:32.936Z, finished 16:50:45.091Z (612.155 s), exit zero and
+314 unchanged before/after hashes. Evidence: `out/t027-closure-verify-1.log`,
+`-before.json`, `-status.json`. Final result/checklist wording updates are records
+only; executable parity with the successful candidate remains unchanged.

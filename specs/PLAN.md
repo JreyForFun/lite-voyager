@@ -1437,6 +1437,18 @@ candidate three-platform CI remains required, and T-026 stays unchecked.
 
 ### T-027 Milestone 2 QA/review (2026-10-24)
 
+T-027 complete (2026-10-26): owner reports PASS ALL and public REST independently
+confirms run40211134222/attempt1/exact8cd598317a56c96e3038d7ae7fb598d9e4462411
+passes locked installs and applicable full verification on Windows/macOS/Ubuntu.
+Scoped eight-item delegated QA, cumulative independent review and reconciliation
+pass. Latest local standalone has1074 units/108 files, zero errors/warnings;
+full adds77 hosts with exact HOST-005/HOST-001 reporting. Preserve failed CI,
+unestablished historical causes and remote raw-log limits; no remote warning-free
+claim or causal graphics/timing repair. Only task acceptance closes; release/tag,
+publishing and later features remain separate. Owner pushes record-only closure.
+Details: [candidate CI confirmation](../docs/t027-ci-startup-warning-proposal.md).
+The subsequent dated implementation/investigation paragraphs are historical.
+
 HOST-006 decision (2026-10-25): owner approves the exact reviewed chat.builtinTools
 unsigned-integer constructor timing family after run40178896696/084ab2b passes
 Windows/Ubuntu and all77 macOS hosts but fails on that unapproved warning.
