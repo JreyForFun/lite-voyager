@@ -587,6 +587,11 @@ file loading remain later tasks.
 
 **FR-020 (P1) Inline edit (SQLite).** Edits are staged, shown with VS Code's dirty indicator, and applied in a single transaction on save. Undo / revert discards staged changes. Tables are addressed by primary key, else by `rowid`. SQLite requires a primary key on every valid `WITHOUT ROWID` table; address these tables by that key, including every component of a composite key.
 
+T-030 owner-delegated detailed acceptance (2026-10-27):
+[staged SQLite editing](../docs/t030-staged-edits.md). Includes explicit value
+types, stable identities, queued SQL, source-conflict guards, undo/revert,
+custom-document dirty state and recovery; implementation evidence remains pending.
+
 **FR-021 (P1) Add and delete rows,** same staging and save rules.
 
 **FR-022 (P2) Write-back for CSV and JSON.** Written to a temp file and renamed atomically. A warning explains that type inference and formatting may change.
@@ -778,6 +783,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-030 (2026-10-27): Link owner-delegated staged SQLite editing acceptance,
+  explicit scalar/SQL/save semantics, recovery and source-conflict guards.
 - T-028 (2026-10-26): Owner authorizes local Milestone 2 checkpoint and handoff;
   preserve publishing/versioning scope, committed-artifact provenance and feedback gate.
 - T-027 CI investigation (2026-10-25): Define bounded opt-in named sync/await spans

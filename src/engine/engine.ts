@@ -6,7 +6,7 @@ export type EngineName = 'node:sqlite' | 'sql.js';
 export type Parameter = string | number | null | Uint8Array;
 export type Cell = string | null;
 export interface PageAddress { offset?: number; limit?: number; }
-export interface EnginePage { columns: string[]; rows: Cell[][]; hasMore: boolean; sortWarning?: string; total?: string; }
+export interface EnginePage { columns: string[]; rows: Cell[][]; hasMore: boolean; sortWarning?: string; total?: string; staged?: { row: number; column: number }[]; }
 export interface EngineMode {
   engine: EngineName;
   memoryLimited: boolean;
@@ -26,6 +26,10 @@ export interface ExportProgress extends ExportReport { phase: 'writing' | 'savin
 
 /** All callers use the supervised helper/worker client, never a synchronous backend. */
 export interface Engine {
+  /** Worker-only editing protocol. Read-only import adapters need not implement it. */
+  edit?(command: import('../staging/edit-types').EditCommand): Promise<EnginePage>;
+  /** Temporarily release this document's secondary reader for a native Save. */
+  suspendReads?(): Promise<() => Promise<void>>;
   open(path: string, options?: OpenOptions): Promise<EngineOpened>;
   schema(page?: PageAddress): Promise<EnginePage>;
   /** cid, name, type, notNull, defaultValue, primaryKey, hidden; ordered by cid. */

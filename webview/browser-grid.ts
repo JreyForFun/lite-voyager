@@ -109,7 +109,7 @@ export class BrowserGrid {
       element.setAttribute('aria-label', `Row ${String(this.offset + row + 1)}`);
       element.style.top = `${String(row * ROW_HEIGHT)}px`;
       for (let column = colStart; column < colEnd; column++) {
-        const cell = this.cell(this.page.rows[row]?.[column] ?? null, column);
+        const cell = this.cell(this.page.rows[row]?.[column] ?? null, column, row);
         cell.id = `browser-cell-${String(row)}-${String(column)}`;
         cell.setAttribute('aria-selected', String(this.includes(row, column)));
         cell.addEventListener('click', (event) => { this.root.focus(); this.selectCell(row, column, event.shiftKey); });
@@ -128,13 +128,17 @@ export class BrowserGrid {
     if (notify) { this.changed(); }
   }
 
-  private cell(value: string | null, column: number): HTMLElement {
+  private cell(value: string | null, column: number, row = -1): HTMLElement {
     const cell = document.createElement('div');
     cell.className = `browser-cell${value === null ? ' cell-null' : value === '' ? ' cell-empty' : ''}`;
     cell.setAttribute('role', 'gridcell'); cell.setAttribute('aria-colindex', String(column + 1));
     cell.style.left = `${String(column * COLUMN_WIDTH)}px`;
     cell.textContent = value === null ? this.nullText.display : value === '' ? '(empty)' : value;
     cell.title = cell.textContent;
+    if (this.page.staged?.some((pending) => pending.row === row && pending.column === column)) {
+      cell.className += ' cell-staged'; cell.title = `Staged: ${cell.textContent}`;
+      cell.setAttribute('aria-description', 'Staged change, not saved');
+    }
     if (value === null || value === '') { cell.setAttribute('aria-label', value === null ? this.nullText.label : 'Empty string'); }
     return cell;
   }

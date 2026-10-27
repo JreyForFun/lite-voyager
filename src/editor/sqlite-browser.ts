@@ -3,6 +3,7 @@ import { quoteIdentifier } from '../engine/read-engine';
 import { BROWSER_PAGE_SIZE, isBrowserRequest, type BrowserObject, type BrowserRequest, type BrowserResponse } from '../protocol';
 import type { ExportRunner } from './export-service';
 import { findCompletions } from './sql-completion';
+import type { StagedEdits } from '../staging/staged-edits';
 
 interface Pending { request: BrowserRequest; send: (message: BrowserResponse) => void; resolve: () => void; }
 
@@ -19,9 +20,11 @@ export class SqliteBrowser {
   private exportRunning = false;
   private committedCancel: { requestId: number; send: (message: BrowserResponse) => void; resolve: () => void } | undefined;
   private saveOutcome: BrowserResponse | undefined;
+  private edits: StagedEdits | undefined;
 
   constructor(private readonly engine: Engine) {}
   setExporter(exporter: ExportRunner): void { this.exporter = exporter; }
+  setEdits(edits: StagedEdits): void { this.edits = edits; }
 
   handle(request: BrowserRequest, send: (message: BrowserResponse) => void): Promise<void> {
     if (this.disposed || !isBrowserRequest(request) || request.requestId <= this.lastId) { return Promise.resolve(); }
@@ -121,7 +124,8 @@ export class SqliteBrowser {
       }
       case 'browserPage': {
         const address = { offset: request.offset, limit: request.limit };
-        const page = request.grid === undefined ? await this.engine.page(request.table, address)
+        const page = this.edits !== undefined && (this.edits.writeMode || this.edits.dirty) ? await this.edits.page(request.table, request.grid ?? {}, address, this.engine)
+          : request.grid === undefined ? await this.engine.page(request.table, address)
           : await this.engine.grid(request.table, request.grid, address);
         if (!this.disposed && requestId === this.lastId && page.sortWarning === undefined) { this.successfulSql = undefined; }
         return page.sortWarning === undefined

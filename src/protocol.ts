@@ -140,18 +140,50 @@ export function isSqliteSaveDom(value: unknown): value is SqliteSaveDom {
 export function isSqliteSaveExercise(value: unknown): value is SqliteSaveExercise {
   return isRecord(value) && value['type'] === 'sqliteSaveExercise' && (value['action'] === 'save' || value['action'] === 'cancel');
 }
-export type WebviewToHostMessage = { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest | CsvPreviewRequest | CsvPreviewStatus | CsvImportRequest | SqliteSaveRequest | SqliteSaveDom;
-export type HostToWebviewMessage = { type: 'error'; message: string; context: string }
+export type WebviewToHostMessage = EditingRequest | { type: 'ready' } | SpikePageRequest | SpikeStatus | BrowserRequest | BrowserStatus | CellRequest | CsvPreviewRequest | CsvPreviewStatus | CsvImportRequest | SqliteSaveRequest | SqliteSaveDom;
+export type HostToWebviewMessage = EditingState | { type: 'error'; message: string; context: string }
   | { type: 'spikeInit'; rowCount: number } | SpikePage
   // Integration-only no-op for the SQLite editor. Delivery checks
   // VS Code's outer webview transport readiness, not content rendering.
   | { type: 'sqliteEditorProbe' } | BrowserResponse | BrowserExercise | CellResponse | CsvPreviewState | CsvImportState | CsvImportExercise | SqliteSaveState | SqliteSaveExercise;
+
+export type EditingRequest = { type: 'editingRequest'; contextId: string; requestId: number } & (
+  | { action: 'ready' }
+  | { action: 'save' }
+  | { action: 'revert' }
+  | { action: 'cancel' }
+  | { action: 'mode'; on: boolean }
+  | { action: 'stage'; target: import('./staging/edit-types').EditTarget }
+  | { action: 'sql'; sql: string });
+export interface EditingState { type: 'editingState'; revision: number; writeMode: boolean; dirty: boolean; count: number; busy: boolean; message: string; }
+export function isEditingRequest(value: unknown): value is EditingRequest {
+  if (!isRecord(value) || value['type'] !== 'editingRequest' || typeof value['contextId'] !== 'string'
+    || !/^[a-f\d-]{36}$/iu.test(value['contextId']) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
+  if (['ready', 'save', 'revert', 'cancel'].includes(String(value['action']))) { return true; }
+  if (value['action'] === 'mode') { return typeof value['on'] === 'boolean'; }
+  if (value['action'] === 'sql') { return identifier(value['sql']) && value['sql'].length > 0; }
+  const target = value['target'];
+  if (value['action'] !== 'stage' || !isRecord(target) || !identifier(target['table']) || !identifier(target['column'])
+    || !integer(target['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE)
+    || target['expected'] !== null && typeof target['expected'] !== 'string'
+    || typeof target['expected'] === 'string' && target['expected'].length > 4 * 1024 * 1024
+    || target['grid'] !== undefined && !isGridOptions(target['grid'])) { return false; }
+  const cell = target['value'];
+  return isRecord(cell) && ['text', 'integer', 'real', 'null'].includes(String(cell['kind']))
+    && typeof cell['text'] === 'string' && cell['text'].length <= 4 * 1024 * 1024;
+}
+export function isEditingState(value: unknown): value is EditingState {
+  return isRecord(value) && value['type'] === 'editingState' && integer(value['revision'], 0, Number.MAX_SAFE_INTEGER)
+    && typeof value['writeMode'] === 'boolean' && typeof value['dirty'] === 'boolean' && typeof value['busy'] === 'boolean'
+    && integer(value['count'], 0, 1000) && typeof value['message'] === 'string' && value['message'].length <= 4096;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function isWebviewMessage(value: unknown): value is WebviewToHostMessage {
+  if (isEditingRequest(value)) { return true; }
   if (!isRecord(value)) { return false; }
   if (isBrowserRequest(value) || isBrowserStatus(value) || isCellRequest(value)) { return true; }
   if (isCsvPreviewRequest(value) || isCsvPreviewStatus(value)) { return true; }
@@ -167,6 +199,7 @@ export function isWebviewMessage(value: unknown): value is WebviewToHostMessage 
 }
 
 export function isHostMessage(value: unknown): value is HostToWebviewMessage {
+  if (isEditingState(value)) { return true; }
   if (isCsvPreviewState(value)) { return true; }
   if (isCsvImportState(value)) { return true; }
   if (isCsvImportExercise(value)) { return true; }
@@ -297,6 +330,7 @@ export type BrowserResponse =
   | { type: 'browserError'; requestId: number; message: string };
 /** Bounded DOM summaries for local integration tests; long contents are length-only. */
 export interface BrowserStatus {
+  editing?: { writeMode: boolean; saveDisabled: boolean; stageDisabled: boolean; busy: boolean; kind: string; valueLength: number; valuePreview: string | null; message: string };
   type: 'browserStatus'; revision: number; table: string | null; offset: number;
   cachedRows: number; renderedRows: number; renderedColumns: number; columns: number;
   hasMore: boolean; count: string | null; busy: boolean; message: string;
@@ -316,6 +350,7 @@ export interface BrowserExercise {
   type: 'browserExercise'; action: 'next' | 'previous' | 'count' | 'cancel' | 'listNext' | 'listPrevious' | 'select' | 'size' | 'lastCell' | 'sql' | 'run' | 'shortcut' | 'selection' | 'browse' | 'sort' | 'filter' | 'removeFilter' | 'clearGrid' | 'continueSort' | 'dismissSort'
     | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'
     | 'exportCsv' | 'exportJson' | 'completionKey'
+    | 'editMode' | 'editType' | 'editValue' | 'editCell' | 'editSql' | 'editSave' | 'editRevert'
     | 'schema' | 'schemaKind' | 'schemaNext' | 'schemaPrevious' | 'schemaSize' | 'schemaIndex' | 'appearance' | 'gridKey'
     | 'startResponsiveness' | 'stopResponsiveness' | 'pulseResponsiveness'; value?: string; exerciseId?: number;
 }
@@ -401,6 +436,7 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && (value['sqlLength'] === undefined || integer(value['sqlLength'], 0, Number.MAX_SAFE_INTEGER))
     && (value['selectionLength'] === undefined || integer(value['selectionLength'], 0, Number.MAX_SAFE_INTEGER))
     && (value['cell'] === undefined || isCellSummary(value['cell']))
+    && (value['editing'] === undefined || isEditingSummary(value['editing']))
     && (value['appearance'] === undefined || isAppearanceSummary(value['appearance']))
     && (value['completion'] === undefined || isRecord(value['completion']) && typeof value['completion']['open'] === 'boolean'
       && (value['completion']['selected'] === null || typeof value['completion']['selected'] === 'string' && value['completion']['selected'].length <= 128)
@@ -421,6 +457,12 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
 function isAppearanceSummary(value: unknown): boolean {
   return isRecord(value) && ['theme', 'foreground', 'background'].every((key) => typeof value[key] === 'string' && value[key].length <= 128);
 }
+function isEditingSummary(value: unknown): boolean {
+  return isRecord(value) && ['writeMode', 'saveDisabled', 'stageDisabled', 'busy'].every((key) => typeof value[key] === 'boolean')
+    && typeof value['kind'] === 'string' && value['kind'].length <= 16 && integer(value['valueLength'], 0, Number.MAX_SAFE_INTEGER)
+    && (value['valuePreview'] === null || typeof value['valuePreview'] === 'string' && value['valuePreview'].length <= 128)
+    && typeof value['message'] === 'string' && value['message'].length <= 4096;
+}
 function isCellSummary(value: unknown): boolean {
   return isRecord(value) && (value['row'] === null || integer(value['row'], 0, BROWSER_PAGE_SIZE - 1))
     && (value['column'] === null || integer(value['column'], 0, Number.MAX_SAFE_INTEGER)) && integer(value['length'], 0, MAX_CELL_OUTPUT)
@@ -431,7 +473,7 @@ function isCellSummary(value: unknown): boolean {
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
-    && ['next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'completionKey', 'schema', 'schemaKind', 'schemaNext', 'schemaPrevious', 'schemaSize', 'schemaIndex', 'appearance', 'gridKey', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
+    && ['editMode', 'editType', 'editValue', 'editCell', 'editSql', 'editSave', 'editRevert', 'next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'completionKey', 'schema', 'schemaKind', 'schemaNext', 'schemaPrevious', 'schemaSize', 'schemaIndex', 'appearance', 'gridKey', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 
@@ -445,7 +487,7 @@ function pageAddress(value: Record<string, unknown>): boolean {
 
 // Production helper/worker messages. The script-free T-009 status panel does
 // not exchange webview messages; future editor messages stay in this file too.
-export interface DatabaseWorkerOptions { path: string; directory: string; forceFallback: boolean; }
+export interface DatabaseWorkerOptions { path: string; directory: string; forceFallback: boolean; recoverEditVersion?: string; }
 export interface DatabaseQuery {
   type: 'query'; id: number; sql: string;
   parameters: import('./engine/engine').Parameter[];
@@ -458,7 +500,8 @@ export interface DatabaseGrid {
   type: 'grid'; id: number; table: string; options: GridOptions;
   page: import('./engine/engine').PageAddress; kind: 'rows' | 'count';
 }
-export type DatabaseOperation = DatabaseQuery | DatabaseMetadata | DatabaseGrid;
+export interface DatabaseEdit { type: 'edit'; id: number; command: import('./staging/edit-types').EditCommand; }
+export type DatabaseOperation = DatabaseQuery | DatabaseMetadata | DatabaseGrid | DatabaseEdit;
 export interface DatabaseExport {
   type: 'export'; id: number; sql: string; format: import('./engine/engine').ExportFormat; path: string;
 }

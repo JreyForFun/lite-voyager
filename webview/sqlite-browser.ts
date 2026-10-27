@@ -7,6 +7,8 @@ import { SchemaView } from './schema-view';
 import './sqlite-browser.css';
 import { installSqliteSave } from './sqlite-save';
 import { isCompletionSearch, type CompletionSearch, type SchemaSuggestions } from '../src/protocol';
+import { isEditingState, type EditingRequest } from '../src/protocol';
+import { EditingView } from './editing-view';
 
 type Post = (message: BrowserRequest | BrowserStatus | CellRequest) => void;
 type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'> & Partial<Pick<SqlEditor, 'completionKey'>>;
@@ -92,8 +94,10 @@ export class BrowserView {
   private probeTimer: ReturnType<typeof setInterval> | undefined;
   private probePrevious = 0;
   private probeKey: string | undefined;
+  private readonly editing: EditingView | undefined;
+  private editRefreshPending = false;
 
-  constructor(private readonly root: HTMLElement, private readonly post: Post, private readonly saved: BrowserSavedState = INITIAL_STATE) {
+  constructor(private readonly root: HTMLElement, private readonly post: Post, private readonly saved: BrowserSavedState = INITIAL_STATE, editPost?: (message: EditingRequest) => void) {
     this.requestId = saved.requestId; this.listOffset = saved.listOffset; this.limit = saved.limit;
     const find = <T extends HTMLElement>(id: string): T => {
       const element = root.querySelector<T>(`#${id}`);
@@ -114,8 +118,17 @@ export class BrowserView {
     this.gridSummary = find('browser-grid-summary'); this.sortWarning = find('browser-sort-warning');
     this.continueSort = find('browser-sort-continue'); this.dismissSort = find('browser-sort-dismiss');
     this.details = new CellDetails(root, this.contextId, (message) => { this.post(message); }, (mode) => this.grid.copyRows(mode), () => { this.report(); });
+    if (editPost !== undefined && root.querySelector('#edit-mode') !== null) {
+      this.editing = new EditingView(root, editPost, () => this.editor?.text ?? '', () => {
+        this.editRefreshPending = true; this.refreshEditing();
+      });
+    }
     this.grid = new BrowserGrid(find('browser-grid'), () => { this.report(); }, (column) => { this.sortColumn(column); },
-      (selection) => { this.details.select(selection); }, () => { this.details.copy('selection'); });
+      (selection) => {
+        this.details.select(selection);
+        this.editing?.select(selection === null || this.table === null || this.query.sql !== null ? undefined
+          : { table: this.table, column: selection.name, offset: selection.rowNumber - 1, expected: selection.value, grid: this.shownGrid });
+      }, () => { this.details.copy('selection'); });
     this.schema = new SchemaView(root, (request) => { this.request({ type: 'browserSchema', requestId: ++this.requestId, ...request }); });
     const options = { signal: this.events.signal };
     this.select.addEventListener('change', () => { this.choose(this.select.value); }, options);
@@ -135,7 +148,14 @@ export class BrowserView {
     this.controls();
   }
 
-  start(): void { this.list(this.listOffset); }
+  start(): void { this.editing?.start(); this.list(this.listOffset); }
+  receiveEditing(message: import('../src/protocol').EditingState): void { this.editing?.receive(message); this.report(); }
+  private refreshEditing(): void {
+    if (!this.editRefreshPending || this.pending !== null || this.disposed) { return; }
+    this.editRefreshPending = false;
+    if (this.query.sql !== null) { this.queryPage(this.query.sql, this.offset); }
+    else if (this.table !== null) { this.page(this.offset); }
+  }
   receiveCell(message: CellResponse): void { this.details.receive(message); }
 
   attachEditor(editor: BrowserSqlEditor): void { this.editor = editor; this.controls(); this.editorChanged(); }
@@ -357,7 +377,7 @@ export class BrowserView {
       case 'browserError': this.schema.failed(message.message); this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
     }
     // Page replacement renders synchronously; publish only settled controls/status.
-    this.controls(); this.report();
+    this.controls(); this.report(); this.refreshEditing();
   }
 
   private message(text: string, error = false): void { this.status.textContent = text; this.status.setAttribute('role', error ? 'alert' : 'status'); }
@@ -365,6 +385,7 @@ export class BrowserView {
   private controls(): void {
     if (this.pending === null) { this.size.value = String(this.limit); }
     const busy = this.pending !== null;
+    this.editing?.setBrowserBusy(busy);
     this.schema.setBusy(busy || this.warningPage !== undefined);
     const pageBlocked = busy || this.warningPage !== undefined;
     this.root.setAttribute('aria-busy', String(busy));
@@ -406,6 +427,8 @@ export class BrowserView {
     }
     if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
+      case 'editMode': case 'editType': case 'editValue': case 'editCell': case 'editSql': case 'editSave': case 'editRevert':
+        this.editing?.exercise(message.action, message.value); break;
       case 'appearance': {
         const style = getComputedStyle(document.body);
         this.appearance = { theme: document.body.className.slice(0, 128), foreground: style.color.slice(0, 128), background: style.backgroundColor.slice(0, 128) }; break;
@@ -490,6 +513,7 @@ export class BrowserView {
         ...(this.responsiveness === undefined ? {} : { responsiveness: { ...this.responsiveness } }),
         cell: this.details.summary(),
         schema: this.schema.summary(),
+        ...(this.editing === undefined ? {} : { editing: this.editing.summary() }),
         ...(this.appearance === undefined ? {} : { appearance: this.appearance }),
         query: this.query.sql !== null, summary: this.total.textContent ?? '', ...this.editor?.metrics(),
         hasMore: this.hasMore, count: this.count, busy: this.pending !== null, message: this.status.textContent ?? '', firstRow: this.grid.firstRow() });
@@ -521,7 +545,7 @@ export class BrowserView {
     this.probeKey = undefined;
   }
 
-  dispose(): void { this.disposed = true; this.completionResolve?.(undefined); this.completionResolve = undefined; this.stopProbe(); this.events.abort(); this.schema.dispose(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
+  dispose(): void { this.disposed = true; this.editing?.dispose(); this.completionResolve?.(undefined); this.completionResolve = undefined; this.stopProbe(); this.events.abort(); this.schema.dispose(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
 }
 
 declare function acquireVsCodeApi(): {
@@ -540,7 +564,7 @@ if (typeof acquireVsCodeApi === 'function') {
       view = new BrowserView(root, (message) => {
         if (view !== undefined) { api.setState(view.savedState()); }
         api.postMessage(message);
-      }, readSavedState(api.getState()));
+      }, readSavedState(api.getState()), (message) => { api.postMessage(message); });
       const browser = view;
       const editorRoot = document.getElementById('sql-editor');
       const runButton = document.getElementById('sql-run');
@@ -548,6 +572,7 @@ if (typeof acquireVsCodeApi === 'function') {
       if (editorRoot === null || !(runButton instanceof HTMLButtonElement) || nonce === undefined) { throw new Error('Missing SQL editor assets'); }
       window.addEventListener('message', (event: MessageEvent<unknown>) => {
         if (isBrowserResponse(event.data)) { browser.receive(event.data); }
+        else if (isEditingState(event.data)) { browser.receiveEditing(event.data); }
         else if (isCellResponse(event.data)) { browser.receiveCell(event.data); }
         else if (isBrowserExercise(event.data)) { browser.exercise(event.data); }
       }, { signal: events.signal });

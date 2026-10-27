@@ -22,6 +22,7 @@
 !dist/csv-import-process.js
 !dist/csv-import-worker.js
 !dist/sqlite-save-worker.js
+!dist/sqlite-edit-copy-worker.js
 !dist/json-preview-worker.js
 !dist/json-import-worker.js
 !dist/xlsx-preview-worker.js

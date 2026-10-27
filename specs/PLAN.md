@@ -808,6 +808,10 @@ three-platform CI is required before closing this follow-up.
 
 **D-8 Edits are staged in the extension, applied on save.** The grid shows staged changes. Save runs them in one transaction.
 
+T-030 delegated design (2026-10-27): [staged editing](../docs/t030-staged-edits.md).
+Document-owned operation queue; worker-only identity validation and writes;
+read-only browsing remains independent of staged values until explicit Save.
+
 ### T-017 production sort and filter (2026-10-12)
 
 Owner authorizes implementation, scoped fixes and disposable fixture edits;
@@ -1534,6 +1538,8 @@ Evidence/artifact/install/feedback/handoff: docs/t028-milestone2-checkpoint.md.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-030 (2026-10-27): Document the host-owned edit queue and worker-only save
+  design; preserve read-only browsing and all existing diagnostic policies.
 - T-028 (2026-10-26): Define local v0.2.0 checkpoint, committed-tree artifact and
   next-chat handoff; retain manifest version/publishing scope and honest feedback status.
 - T-027 CI investigation (2026-10-25): Preserve failed 176b184 CI and rejected

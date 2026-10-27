@@ -14,7 +14,7 @@ interface WasmStatement {
   getColumnNames(): string[];
   free(): boolean;
 }
-interface WasmDatabase { prepare(sql: string): WasmStatement; run(sql: string): void; close(): void; }
+interface WasmDatabase { prepare(sql: string): WasmStatement; run(sql: string): void; export(): Uint8Array; close(): void; }
 interface WasmModule { Database: new (bytes: Uint8Array) => WasmDatabase; }
 type InitializeWasm = (options: { wasmBinary: Uint8Array }) => Promise<WasmModule>;
 
@@ -22,14 +22,14 @@ type InitializeWasm = (options: { wasmBinary: Uint8Array }) => Promise<WasmModul
 export class SqlJsEngine implements ReadBackend {
   private constructor(private readonly database: WasmDatabase) {}
 
-  static async open(snapshot: FileSnapshot, directory: string): Promise<SqlJsEngine> {
+  static async open(snapshot: FileSnapshot, directory: string, writable = false): Promise<SqlJsEngine> {
     const requireLocal = createRequire(__filename);
     const loaded: unknown = requireLocal(join(directory, 'sql-wasm.cjs'));
     if (typeof loaded !== 'function') { throw new Error('Memory-limited mode could not initialize the packaged sql.js engine. Rebuild and retry.'); }
     const module = await (loaded as InitializeWasm)({ wasmBinary: readFileSync(join(directory, 'sql-wasm.wasm')) });
     const bytes = readFallback(snapshot);
     const database = new module.Database(bytes);
-    try { database.run('PRAGMA trusted_schema=OFF; PRAGMA query_only=ON'); }
+    try { database.run(`PRAGMA trusted_schema=OFF; PRAGMA query_only=${writable ? 'OFF' : 'ON'}; PRAGMA foreign_keys=ON`); }
     catch (error: unknown) { database.close(); throw error; }
     return new SqlJsEngine(database);
   }
@@ -60,4 +60,11 @@ export class SqlJsEngine implements ReadBackend {
   }
 
   close(): void { this.database.close(); }
+
+  execute(sql: string, parameters: Parameter[] = []): void {
+    const statement = this.database.prepare(sql);
+    try { statement.bind(parameters); while (statement.step()) { /* RETURNING is intentionally not collected. */ } }
+    finally { statement.free(); }
+  }
+  export(): Uint8Array { return this.database.export(); }
 }

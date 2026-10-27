@@ -22,7 +22,7 @@ export class SqliteSession {
   private shutdown: Promise<void> | undefined;
   private stopped = false;
 
-  constructor(private readonly path: string | undefined, private readonly engine: Engine) {
+  constructor(private readonly path: string | undefined, readonly engine: Engine) {
     this.browser = new SqliteBrowser(engine);
     this.closed = new Promise((resolve) => { this.resolveClosed = resolve; });
   }

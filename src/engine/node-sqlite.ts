@@ -8,11 +8,11 @@ export class NodeSqliteEngine implements ReadBackend {
   private readonly database: DatabaseSync;
   private readonly decoder: TextDecoder;
 
-  constructor(sqlite: typeof import('node:sqlite'), path: string) {
-    this.database = new sqlite.DatabaseSync(path, { readOnly: true, allowExtension: false });
+  constructor(sqlite: typeof import('node:sqlite'), path: string, writable = false) {
+    this.database = new sqlite.DatabaseSync(path, { readOnly: !writable, allowExtension: false });
     // Connection-local temporary sort storage may spill to disk. This never
     // writes the read-only source. https://www.sqlite.org/pragma.html#pragma_temp_store
-    try { this.database.exec('PRAGMA temp_store=FILE; PRAGMA trusted_schema=OFF; PRAGMA query_only=ON'); }
+    try { this.database.exec(`PRAGMA temp_store=FILE; PRAGMA trusted_schema=OFF; PRAGMA query_only=${writable ? 'OFF' : 'ON'}; PRAGMA foreign_keys=ON`); }
     catch (error: unknown) { this.database.close(); throw error; }
     const encoding = this.database.prepare('PRAGMA encoding').get()?.['encoding'];
     if (typeof encoding !== 'string') { this.database.close(); throw new Error('SQLite text encoding could not be confirmed.'); }
@@ -76,4 +76,8 @@ export class NodeSqliteEngine implements ReadBackend {
   }
 
   close(): void { this.database.close(); }
+  get inTransaction(): boolean { return this.database.isTransaction; }
+
+  /** Internal save path only; never exposed through the read-query transport. */
+  execute(sql: string, parameters: Parameter[] = []): void { this.database.prepare(sql).run(...parameters); }
 }

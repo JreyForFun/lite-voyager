@@ -21,12 +21,23 @@ ${browser && saveContext !== undefined ? `<section aria-label="Save imported dat
 <div class="browser-toolbar"><button id="sqlite-save">Save as SQLite</button><button id="sqlite-save-cancel" disabled>Cancel save</button></div>
 <p id="sqlite-save-status" role="status" aria-live="polite">Save the entire imported database, including all rows and original BLOB bytes.</p>
 <p class="browser-help">Saving keeps this tab open and the original source unchanged. Cancel works until Saving begins.</p></section>` : ''}
-${browser ? browserShell(assets) : ''}
+${browser ? browserShell(assets, saveContext === undefined) : ''}
 </body></html>`;
 }
 
-function browserShell(assets: SqliteEditorAssets): string {
+function browserShell(assets: SqliteEditorAssets, editing: boolean): string {
   return `<section id="browser" aria-label="Table browser">
+${editing ? `<section id="editing" aria-label="Staged SQLite editing">
+<div class="browser-toolbar"><label><input id="edit-mode" type="checkbox"> Write mode</label>
+<button id="edit-save" disabled>Save changes</button><button id="edit-revert" disabled>Revert all changes</button>
+<button id="edit-sql" disabled>Stage SQL write</button><button id="edit-cancel" disabled>Cancel editing operation</button></div>
+<p id="edit-status" role="status" aria-live="polite">Read-only. Enable write mode to stage edits.</p>
+<details><summary>Editing and save safety</summary><p class="browser-help">Edits stay staged until explicit Save. Undo/Redo use VS Code commands. Revert discards all pending edits.
+Sorting, filters, counts and SQL read saved data until Save. Stage SQL reads the whole editor and queues one direct UPDATE, INSERT or DELETE.
+SQL is validated and applied on Save; RETURNING rows are discarded. Unbound parameters are refused; parameter entry is not supported.
+Staging is limited to 1,000 operations / 16 MiB; each cell transport is limited to 4 Mi characters. Nothing is truncated.
+Write mode requires files.autoSave off so VS Code can back up pending work. Cancel interrupts the helper; a Save may already have committed, so inspect the source before retrying.
+SQLite column affinity still applies to explicitly typed inputs. Undo applies to pending operations; saved writes cannot be undone.</p></details></section>` : ''}
 <div class="sql-toolbar"><h2>SQL</h2><button id="sql-run" disabled>Run SQL</button><span>Ctrl/Cmd+Enter · selection or whole editor · read-only</span></div>
 <div id="sql-editor"></div>
 <div class="browser-toolbar" aria-label="Export query results"><button id="browser-export-csv" disabled>Export CSV</button>
@@ -77,6 +88,10 @@ Select a table or view to return to table browsing.</p>
 <aside id="cell-details" aria-labelledby="cell-title">
 <h2 id="cell-title">Cell details</h2><p id="cell-kind"></p>
 <pre id="cell-value" tabindex="0" aria-label="Complete cell value"></pre>
+${editing ? `<section aria-label="Edit selected cell"><p id="edit-selected">Select a Browse cell to edit.</p>
+<label for="edit-type">New value type</label><select id="edit-type" disabled><option value="text">TEXT</option><option value="integer">INTEGER (64-bit)</option><option value="real">REAL</option><option value="null">NULL</option></select>
+<label for="edit-value">New value</label><textarea id="edit-value" rows="3" disabled></textarea><button id="edit-cell" disabled>Stage cell edit</button>
+<p class="browser-help">Choose the type explicitly. Empty TEXT, literal NULL and SQL NULL are different. BLOB and generated cells remain read-only.</p></section>` : ''}
 <div class="browser-toolbar"><button id="cell-copy-cell" disabled>Copy cell</button><button id="cell-copy-row" disabled>Copy row</button>
 <button id="cell-copy-selection" disabled>Copy selection</button><button id="cell-cancel" disabled>Cancel preparation</button></div>
 <p id="cell-status" role="status" aria-live="polite">Select a cell to see its complete value.</p>

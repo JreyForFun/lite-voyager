@@ -6,6 +6,18 @@ import { join, resolve } from 'node:path';
 import { build } from 'esbuild';
 import { expect, test } from 'vitest';
 
+test('FR-020: Given the staged-edit snapshot worker, When listing actual VSIX contents, Then native Save As ships its helper without development files', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t030-package-'));
+  try {
+    for (const name of ['package.json', '.vscodeignore', 'README.md', 'CHANGELOG.md', 'LICENSE']) { await copyFile(name, join(directory, name)); }
+    await mkdir(join(directory, 'dist'));
+    const result = await build({ entryPoints: [resolve('src/worker/sqlite-edit-copy-worker.ts')], outfile: join(directory, 'dist/sqlite-edit-copy-worker.js'), bundle: true, platform: 'node', format: 'cjs', target: 'es2022', external: ['node:sqlite'], logLevel: 'silent' });
+    expect(result.warnings).toEqual([]);
+    const packaged = await promisify(execFile)(process.execPath, [resolve('node_modules/@vscode/vsce/vsce'), 'ls', '--no-dependencies'], { cwd: directory });
+    expect(packaged.stderr).toBe(''); expect(packaged.stdout.trim().split(/\r?\n/u)).toContain('dist/sqlite-edit-copy-worker.js');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+}, 30000);
+
 test('FR-006: Given XLSX workers and notice, When listing the actual VSIX, Then the two workers and Apache license ship without the vendor tarball', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'lv-xlsx-package-'));
   try {

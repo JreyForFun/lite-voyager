@@ -8,7 +8,8 @@ import type { SqliteEditorProvider } from '../../src/editor/sqlite-editor';
 import type { CsvImportController } from '../../src/editor/csv-import';
 vi.mock('vscode', () => ({}));
 function fixture() {
-  const sqlite = { openCustomDocument: vi.fn().mockReturnValue({ kind: 'sqlite' }), resolveCustomEditor: vi.fn(), dispose: vi.fn() };
+  const sqlite = { openCustomDocument: vi.fn().mockReturnValue({ kind: 'sqlite' }), resolveCustomEditor: vi.fn(), dispose: vi.fn(),
+    onDidChangeCustomDocument: vi.fn(), saveCustomDocument: vi.fn(), saveCustomDocumentAs: vi.fn(), revertCustomDocument: vi.fn(), backupCustomDocument: vi.fn() };
   const controllers = { csv: { ready: Promise.resolve(), attach: vi.fn().mockResolvedValue(undefined) }, json: { ready: Promise.resolve(), attach: vi.fn().mockResolvedValue(undefined) }, xlsx: { ready: Promise.resolve(), attach: vi.fn().mockResolvedValue(undefined) } };
   const provider = new TabularEditorProvider(sqlite as unknown as SqliteEditorProvider, controllers as unknown as Record<'csv' | 'json' | 'xlsx', CsvImportController>);
   const cancellation = new Set<() => void>(); const token = { isCancellationRequested: false, onCancellationRequested: (fn: () => void) => { cancellation.add(fn); return { dispose: () => { cancellation.delete(fn); } }; } };
@@ -17,6 +18,18 @@ function fixture() {
 }
 function uri(path: string, scheme = 'file'): vscode.Uri { return { fsPath: path, scheme, toString: () => `${scheme}:${path}` } as vscode.Uri; }
 const openContext = { backupId: undefined, untitledDocumentData: undefined };
+
+test('FR-020: Given the registered multi-format provider, When SQLite changes or saves, Then custom document events and every persistence callback reach the SQLite provider', async () => {
+  const run = fixture(); const doc = await run.provider.openCustomDocument(uri('/a.sqlite'), openContext, run.token);
+  expect(run.provider.onDidChangeCustomDocument).toBe(run.sqlite.onDidChangeCustomDocument);
+  await run.provider.saveCustomDocument(doc, run.token); expect(run.sqlite.saveCustomDocument).toHaveBeenCalledWith(doc, run.token);
+  const destination = uri('/copy.sqlite');
+  await run.provider.saveCustomDocumentAs(doc, destination, run.token); expect(run.sqlite.saveCustomDocumentAs).toHaveBeenCalledWith(doc, destination, run.token);
+  await run.provider.revertCustomDocument(doc, run.token); expect(run.sqlite.revertCustomDocument).toHaveBeenCalledWith(doc, run.token);
+  const context = { destination }; await run.provider.backupCustomDocument(doc, context, run.token); expect(run.sqlite.backupCustomDocument).toHaveBeenCalledWith(doc, context, run.token);
+  const imported = await run.provider.openCustomDocument(uri('/a.csv'), openContext, run.token);
+  await expect(run.provider.saveCustomDocument(imported, run.token)).rejects.toThrow(/Save as SQLite/iu);
+});
 test.each(['csv', 'tsv', 'json', 'jsonl', 'xlsx'])('D-5: Given a %s custom document, When resolving, Then the supplied editor panel reaches the existing controller', async (extension) => {
   const run = fixture(); const source = uri(`/data/a.${extension}`); const doc = await run.provider.openCustomDocument(source, openContext, run.token);
   expect(doc).toBeInstanceOf(TabularDocument); await run.provider.resolveCustomEditor(doc, run.panel, run.token);

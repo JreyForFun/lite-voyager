@@ -10,6 +10,7 @@ import { needsFallbackConsent, selectBuiltin } from '../engine/selection';
 import { metadataPage } from '../engine/schema';
 import { gridPage } from '../engine/grid-query';
 import { writeResults } from './result-export';
+import { recoverInterruptedSave, SqliteEdits, sourceVersion } from '../staging/sqlite-edits';
 
 const port = parentPort;
 if (port === null) { throw new Error('The database engine must run in a worker.'); }
@@ -18,9 +19,11 @@ function optionsFrom(value: unknown): DatabaseWorkerOptions {
   if (typeof value !== 'object' || value === null || !('path' in value) || typeof value.path !== 'string'
     || !('directory' in value) || typeof value.directory !== 'string'
     || !('forceFallback' in value) || typeof value.forceFallback !== 'boolean') { throw new Error('Invalid database worker options.'); }
-  return { path: value.path, directory: value.directory, forceFallback: value.forceFallback };
+  if ('recoverEditVersion' in value && (typeof value.recoverEditVersion !== 'string' || value.recoverEditVersion.length > 65536)) { throw new Error('Invalid SQLite recovery identity.'); }
+  return { path: value.path, directory: value.directory, forceFallback: value.forceFallback,
+    ...('recoverEditVersion' in value && typeof value.recoverEditVersion === 'string' ? { recoverEditVersion: value.recoverEditVersion } : {}) };
 }
-function query(backend: ReadBackend, request: DatabaseOperation): void {
+function query(backend: ReadBackend, request: Exclude<DatabaseOperation, { type: 'edit' }>): void {
   reply({ type: 'started', id: request.id });
   try {
     const value = request.type === 'query'
@@ -46,7 +49,12 @@ async function start(): Promise<void> {
   const options = optionsFrom(workerData as unknown);
   const requireLocal = createRequire(__filename);
   const sqlite = selectBuiltin(() => requireLocal('node:sqlite') as typeof import('node:sqlite'), options.forceFallback ? '1' : undefined);
+  if (options.recoverEditVersion !== undefined) {
+    if (sqlite === undefined) { throw new Error('SQLite journal recovery requires the native engine. Preserve the source and its sidecars.'); }
+    recoverInterruptedSave(options.path, options.recoverEditVersion, sqlite);
+  }
   const snapshot = inspectFile(options.path);
+  let editing: SqliteEdits | undefined;
   const engine = sqlite === undefined ? 'sql.js' : 'node:sqlite';
   const mode: EngineMode = {
     engine, memoryLimited: sqlite === undefined, bytes: String(snapshot.stat.size), needsConsent: needsFallbackConsent(engine, snapshot.stat.size),
@@ -61,6 +69,29 @@ async function start(): Promise<void> {
   port?.on('message', (request: DatabaseWorkerRequest) => {
     if (request.type === 'consent' && resolveConsent !== undefined) {
       const resolve = resolveConsent; resolveConsent = undefined; resolve(request.approved === true);
+    } else if (request.type === 'edit' && backend !== undefined && editing !== undefined) {
+      const selected = backend;
+      reply({ type: 'started', id: request.id });
+      void editing.execute(selected, request.command, (replacement) => { backend = replacement; }).then(async (value) => {
+        if (request.command.action === 'save' && request.command.destination === undefined) {
+          try {
+            if (sqlite === undefined) {
+              selected.close(); backend = undefined;
+              const current = inspectFile(options.path);
+              backend = await SqlJsEngine.open(current, options.directory);
+              editing = new SqliteEdits(current.path, options.directory, sqlite, sourceVersion(current.path), options.path);
+            }
+            if (backend === undefined) { throw new Error('Reader unavailable'); }
+          } catch {
+            reply({ type: 'result', id: request.id, value });
+            reply({ type: 'failed', message: 'The save operation settled, but the reader could not reopen the source. Inspect the save result, then close and reopen the editor.' }); return;
+          }
+        }
+        reply({ type: 'result', id: request.id, value });
+      }).catch((error: unknown) => {
+        reply({ type: 'queryFailed', id: request.id, message: error instanceof Error ? error.message : 'SQLite editing failed. Pending changes were preserved.' });
+        if (backend === undefined) { reply({ type: 'failed', message: 'The SQLite reader could not reopen after Save. Close and reopen the editor to continue.' }); }
+      });
     } else if (request.type === 'export' && backend !== undefined) {
       void writeResults(backend, request.sql, request.format, request.path, (value) => reply({ type: 'exportProgress', id: request.id, value }))
         .then((value) => reply({ type: 'exported', id: request.id, value }), (error: unknown) => {
@@ -80,12 +111,13 @@ async function start(): Promise<void> {
     run('SELECT name FROM sqlite_schema LIMIT 1');
     if (run('PRAGMA trusted_schema').rows[0]?.[0] !== '0' || run('PRAGMA query_only').rows[0]?.[0] !== '1') { throw new Error('SQLite safety settings could not be confirmed.'); }
     if (sqlite === undefined && run("SELECT name FROM pragma_function_list WHERE name='load_extension'").rows.length !== 0) { throw new Error('SQLite extension loading could not be disabled.'); }
+    editing = new SqliteEdits(snapshot.path, options.directory, sqlite, sourceVersion(snapshot.path), options.path);
     reply({ type: 'opened', value: { ...mode, threadId, processId: process.pid, sqlite: run('SELECT sqlite_version()').rows[0]?.[0] ?? 'unknown' } });
   } catch (error: unknown) { backend?.close(); throw error; }
 }
 void start().catch((error: unknown) => {
   const text = error instanceof Error ? error.message : '';
-  const message = /^(Memory-limited|The file changed)/u.test(text) ? `Unable to open: ${text}`
+  const message = /^(Memory-limited|The file changed|The SQLite source identity changed|SQLite journal recovery)/u.test(text) ? `Unable to open: ${text}`
     : 'Unable to open the SQLite file. Check that it exists, is readable, and is a valid complete database.';
   reply({ type: 'failed', message });
   port.close();

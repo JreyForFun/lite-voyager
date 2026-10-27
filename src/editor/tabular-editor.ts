@@ -26,10 +26,27 @@ export class TabularDocument implements vscode.CustomDocument {
   }
 }
 /** One picker entry preserves SQLite's arbitrary-extension header validation. */
-export class TabularEditorProvider implements vscode.CustomReadonlyEditorProvider<TabularDocument | SqliteDocument>, vscode.Disposable {
+export class TabularEditorProvider implements vscode.CustomEditorProvider<TabularDocument | SqliteDocument>, vscode.Disposable {
   private readonly documents = new Set<TabularDocument>();
   private disposed = false;
   constructor(private readonly sqlite: SqliteEditorProvider, private readonly controllers: Readonly<Record<TabularFormat, CsvImportController>>) {}
+  get onDidChangeCustomDocument(): vscode.Event<vscode.CustomDocumentEditEvent<TabularDocument | SqliteDocument>> { return this.sqlite.onDidChangeCustomDocument; }
+  private editable(document: TabularDocument | SqliteDocument): SqliteDocument {
+    if (document instanceof TabularDocument) { throw new Error('Imported sources remain read-only. Use Save as SQLite, then open that SQLite file to edit it.'); }
+    return document;
+  }
+  async saveCustomDocument(document: TabularDocument | SqliteDocument, token: vscode.CancellationToken): Promise<void> {
+    await this.sqlite.saveCustomDocument(this.editable(document), token);
+  }
+  async saveCustomDocumentAs(document: TabularDocument | SqliteDocument, destination: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+    await this.sqlite.saveCustomDocumentAs(this.editable(document), destination, token);
+  }
+  async revertCustomDocument(document: TabularDocument | SqliteDocument, token: vscode.CancellationToken): Promise<void> {
+    await this.sqlite.revertCustomDocument(this.editable(document), token);
+  }
+  async backupCustomDocument(document: TabularDocument | SqliteDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
+    return this.sqlite.backupCustomDocument(this.editable(document), context, token);
+  }
   async openCustomDocument(uri: vscode.Uri, context: vscode.CustomDocumentOpenContext, token: vscode.CancellationToken): Promise<TabularDocument | SqliteDocument> {
     const format = uri.scheme === 'file' ? fileFormat(uri.fsPath) : undefined;
     const sqliteHeader = format !== undefined && await hasSqliteHeader(uri.fsPath);

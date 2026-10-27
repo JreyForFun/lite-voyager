@@ -73,7 +73,7 @@ async function main() {
     external: ['node:sqlite'],
   });
   await mkdir('dist', { recursive: true });
-  for (const name of ['db-process', 'db-worker', 'cell-worker', 'csv-preview-worker', 'csv-import-process', 'csv-import-worker', 'sqlite-save-worker', 'json-preview-worker', 'json-import-worker', 'xlsx-preview-worker', 'xlsx-import-worker']) {
+  for (const name of ['db-process', 'db-worker', 'cell-worker', 'csv-preview-worker', 'csv-import-process', 'csv-import-worker', 'sqlite-save-worker', 'sqlite-edit-copy-worker', 'json-preview-worker', 'json-import-worker', 'xlsx-preview-worker', 'xlsx-import-worker']) {
     await buildBundle({
       entryPoints: [`src/worker/${name}.ts`],
       platform: 'node', format: 'cjs', target: 'es2022',

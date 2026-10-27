@@ -4,6 +4,9 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 **Rule:** nothing is "done" because an AI says it is. Done means there is evidence: command output you have seen, or a manual check you have performed.
 
+T-030 (2026-10-27): [acceptance and pending evidence](../docs/t030-staged-edits.md).
+Only T-030 is active. Existing workloads and diagnostic policies are unchanged.
+
 **Honest limit:** validation lowers the risk of errors; it cannot prove there are none. Large-file speed, memory use, and behavior on other operating systems are only validated by actually running them.
 
 ---
@@ -5024,6 +5027,8 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-030 (2026-10-27): Link detailed staged-edit acceptance and test-first
+  evidence. Local gates, visual-tool limits and owner-pushed CI remain separate.
 - T-028 (2026-10-26): Add local checkpoint/artifact/provenance acceptance; keep
   owner push/feedback explicit and separate from completed local preparation.
 - T-027 CI investigation (2026-10-25): Confirm failed Windows/macOS and successful
