@@ -15,6 +15,32 @@ const changed = 'The SQLite source changed. Pending edits were preserved. Revert
 type Writer = NodeSqliteEngine | SqlJsEngine;
 interface Identity { keys: string[]; columns: string[]; editable: Set<string>; }
 
+function sameFile(left: string, right: string, followLinks = true): boolean {
+  try {
+    const metadata = followLinks ? statSync : lstatSync;
+    const a = metadata(left, { bigint: true }); const b = metadata(right, { bigint: true });
+    return a.dev === b.dev && a.ino === b.ino;
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') { return false; }
+    throw error;
+  }
+}
+
+/** Resolve existing aliases by identity. For absent case-variant sidecars, use
+ * the already-owned workspace entry to observe this destination parent's case
+ * lookup behavior; never create a probe beside or inside the source database. */
+function protectSourceSidecars(target: string, source: string, workspace: string): void {
+  const refused = 'Save As cannot replace the original source or its protected SQLite sidecars.';
+  for (const suffix of ['', '-wal', '-shm', '-journal']) {
+    if (sameFile(target, source + suffix)) { throw new Error(refused); }
+  }
+  const name = basename(target); const suffix = ['-wal', '-shm', '-journal'].find((value) => name.toLowerCase().endsWith(value));
+  if (suffix === undefined || !sameFile(target.slice(0, -suffix.length), source)) { return; }
+  if (name.endsWith(suffix)) { throw new Error(refused); }
+  const alternate = basename(workspace).replace(/[A-Za-z]/u, (letter) => letter === letter.toLowerCase() ? letter.toUpperCase() : letter.toLowerCase());
+  if (sameFile(workspace, join(dirname(workspace), alternate), false)) { throw new Error(refused); }
+}
+
 /** Small metadata fingerprint; never read a database into host memory. Include
  * WAL because committed WAL changes need not alter the main database header. */
 export function sourceVersion(path: string): string {
@@ -27,13 +53,13 @@ export function sourceVersion(path: string): string {
       throw error;
     }
   });
-  return JSON.stringify([realpathSync(path), records]);
+  return JSON.stringify([realpathSync.native(path), records]);
 }
 
 /** Called only after a supervised, explicit in-place Save was interrupted and
  * its helper exited. Ordinary opens never authorize this recovery connection. */
 export function recoverInterruptedSave(path: string, version: string, sqlite: typeof import('node:sqlite')): void {
-  const canonical = realpathSync(path);
+  const canonical = realpathSync.native(path);
   try { statSync(canonical + '-journal'); }
   catch (error: unknown) { if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') { return; } throw error; }
   const original: unknown = JSON.parse(version); const current = statSync(canonical, { bigint: true });
@@ -130,7 +156,7 @@ export class SqliteEdits {
   }
 
   private check(expected?: string): void {
-    if (realpathSync(this.requestedPath) !== this.path || sourceVersion(this.path) !== this.version || expected !== undefined && expected !== this.version) { throw new Error(changed); }
+    if (realpathSync.native(this.requestedPath) !== this.path || sourceVersion(this.path) !== this.version || expected !== undefined && expected !== this.version) { throw new Error(changed); }
   }
   private rows(backend: ReadBackend, table: string, grid: GridOptions, page: PageAddress, metadata: Identity): EditRows {
     // Keep the ordinary indexed-sort warning and validation unchanged.
@@ -253,9 +279,9 @@ export class SqliteEdits {
     // Canonicalize the parent even for a new destination: a directory junction
     // must not turn a different-looking path into a source SQLite sidecar.
     const requestedTarget = command.destination === undefined ? this.path : resolve(command.destination);
-    const target = join(realpathSync(dirname(requestedTarget)), basename(requestedTarget));
+    const target = join(realpathSync.native(dirname(requestedTarget)), basename(requestedTarget));
     const normalized = (path: string): string => process.platform === 'win32' ? resolve(path).toLowerCase() : resolve(path);
-    const sources = [this.path, realpathSync(this.path)];
+    const sources = [this.path, realpathSync.native(this.path)];
     if (command.destination !== undefined && sources.some((source) => ['', '-wal', '-shm', '-journal'].some((suffix) => normalized(target) === normalized(source + suffix)))) {
       throw new Error('Save As cannot replace the original source or its SQLite sidecars.');
     }
@@ -277,10 +303,11 @@ export class SqliteEdits {
       throw new Error('Atomic Save refuses SQLite sidecars. Close other database programs and reopen the file.');
     }
     const directory = command.temporaryDirectory ?? await mkdtemp(join(dirname(target), '.lite-voyager-edit-'));
-    if (normalized(realpathSync(dirname(directory))) !== normalized(realpathSync(dirname(target))) || lstatSync(directory).isSymbolicLink()
+    if (normalized(realpathSync.native(dirname(directory))) !== normalized(realpathSync.native(dirname(target))) || lstatSync(directory).isSymbolicLink()
       || !lstatSync(directory).isDirectory() || !basename(directory).startsWith('.lite-voyager-edit-')) { throw new Error('Invalid owned save workspace.'); }
     const temporary = join(directory, basename(target)); let writer: Writer | undefined;
     try {
+      if (command.destination !== undefined) { protectSourceSidecars(target, this.path, directory); }
       if (this.sqlite !== undefined) {
         await this.copy(temporary);
         writer = new NodeSqliteEngine(this.sqlite, temporary, true);

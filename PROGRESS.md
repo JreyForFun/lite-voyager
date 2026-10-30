@@ -1,37 +1,36 @@
 # Progress
 
 ## Current phase / task
-T-030 local implementation and QA complete (2026-10-27); owner CI pending.
-Owner authorized implementation, scoped fixes/fixtures and QA; retains push/CI.
-Only T-030 is active. Details/files/evidence: docs/t030-staged-edits.md.
+T-030 local CI repair gates pass (2026-10-30); fresh candidate CI pending.
+Owner authorized scoped fixes, QA and local commit; retains push and CI.
+Only T-030 is active. Current details: docs/t030-ci-repair.md.
 
 ## Accepted implementation / checks
-FR-016/FR-020: read-only default, write mode, typed cells and queued DML.
-PK/composite/rowid identity, dirty tabs, staged Undo/Redo/Revert, atomic saves.
-Exact int64/NULL/text, conflict checks, backups, cancellation and journal recovery.
-Native Save As uses a fresh snapshot worker; fallback uses atomic replacement.
-Final independent recovery/lifecycle review is clear;115 focused cases pass.
-Standalone npm run verify passes1134 units/112 files, zero errors/warnings.
-Full npm run verify:full passes1134 units plus79 integration tests in2828.843s.
-Both gates preserve366 hashes, identical between gates; only records change later.
-Full uses minimum VSCode1.140.0/Node24.21.0; both T-030 engine workflows pass.
+Failed run40568873744 /attempt1 at1257ca5: Windows/macOS fail, Ubuntu passes.
+Windows17 failures: native/short path mismatch reproduced and repaired test-first.
+Case-insensitive POSIX Save As sidecar bypass also repaired;11 path cases pass.
+Bounded test-only scheduling diagnostics pass9 cases; raw100ms guard unchanged.
+Independent review and follow-up find no remaining concrete repair defects.
+Final npm run verify:1146 units/113 files, zero errors/warnings,655.414s.
+Final npm run verify:full:1146 units plus79 integration tests,2488.068s.
+Minimum VSCode1.140.0/Node24.21.0; both T-030 engine workflows pass.
+Both gates preserve368 hashes, identical between gates; only records change later.
 Full is NOT warning-free: VSCODE-HOST-001, warning, renderer.log:10,
-source20261027T230326/window1 under out/integration-profile-mIT6rq/logs/.
+source20261030T193906/window1 under out/integration-profile-o91RbA/logs/.
 Exact message: [CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
-Strict log scan passes; all other warnings/errors still fail. No policy changes.
-Logs/status/hashes: out/t030-verify-6*, out/t030-full-2*, final-gate-links.json.
+Logs/status/hashes: out/t030-ci-verify-2* and out/t030-ci-full-2*.
 
 ## QA / remaining work
-Live light/dark staging/dirty/Save QA passes on installed VSCode1.143.1.
-Earlier window-binding failures and unapproved ad-hoc QA diagnostics are retained.
-Full1 deliberately stopped for the failing spill regression; never a full PASS.
-Final full2 passes original large-file/hash/paging/memory/responsiveness checks.
-Fallback external-writer race and unknown interrupted-save outcome stay explicit.
-Owner authorized task-only commit (2026-10-28); owner pushes and runs existing CI.
-Keep T-030 unchecked until actual-candidate Windows/macOS/Ubuntu CI passes.
-No later task or milestone-release closure. Preserve every failed run.
+Mac's266.675ms JSONL5GB gap remains unexplained; no causal repair claim.
+Local JSONL5GB passes at40.879ms; this does not establish macOS behavior.
+Minimum-host scheduling counters emit zeros; treat them as indeterminate.
+Retain all failed/stopped runs, including the first repair full stopped for safety.
+Earlier physical QA limits, fallback writer race and unknown save outcome remain.
+Owner pushes the repair commit and supplies new CI run URL/exact SHA/OS results.
+Keep T-030 unchecked until fresh three-platform candidate CI passes.
+No relaxed guard, warning policy, later task or milestone-release closure.
 
 ## Preserved work / checkpoint
 Preserve owner README/shared-spec/TASKS hunks, debug.log, gingTryWan and fixtures.
-T-028 local v0.2.0 remains accepted; manifest stays0.0.1; parent checkpointf12a2ed.
-Only T-030 is committed. No push, tag, release, dependency or CI-policy change.
+Repair is prepared over failed1257ca5; no push/tag/release/dependency change.
+Manifest stays0.0.1; T-028 local v0.2.0 remains accepted.

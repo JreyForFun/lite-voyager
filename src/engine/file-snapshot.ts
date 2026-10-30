@@ -11,7 +11,8 @@ function same(before: BigIntStats, after: BigIntStats): boolean {
 }
 
 export function inspectFile(path: string): FileSnapshot {
-  const source = realpathSync(path);
+  // Match fs.promises.realpath used by the host, including Windows 8.3 names.
+  const source = realpathSync.native(path);
   const file = openSync(source, constants.O_RDONLY);
   try {
     const stat = fstatSync(file, { bigint: true });

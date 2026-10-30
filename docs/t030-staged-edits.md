@@ -4,6 +4,11 @@ Owner authorization: 2026-10-27 (Asia/Manila), implement T-030 completely,
 resolve uncertainties, repair scoped defects/fixtures and perform visual QA.
 The owner retains push and actual-candidate CI.
 
+Current follow-up (2026-10-30): actual-candidate run40568873744 fails Windows
+and macOS at1257ca5; Ubuntu passes. Earlier local results below remain historical.
+See [CI repair/investigation](t030-ci-repair.md) for the test-first Windows path
+repair and the still-unresolved macOS266.675ms timer gap. Keep T-030 unchecked.
+
 ## Acceptance and decisions
 
 - FR-016: opening is read-only, including in the fallback. Write mode is an

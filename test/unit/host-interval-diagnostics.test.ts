@@ -48,6 +48,21 @@ test('NFR-005: Given an over-limit raw interval, When diagnostic CPU and callbac
   expect(result.gc).toEqual([{ from: 40, to: 55, milliseconds: 15 }]);
 });
 
+test('NFR-005: Given a low-CPU over-limit interval and cumulative scheduling counters, When the largest raw gap is retained, Then endpoint deltas remain bounded evidence without changing the failure duration', () => {
+  const observations = [
+    { active: 10, idle: 100, voluntary: 20, involuntary: 4 },
+    { active: 13, idle: 363, voluntary: 21, involuntary: 6 },
+    { active: 14, idle: 371, voluntary: 22, involuntary: 6 },
+  ];
+  const trace = new HostIntervalTrace(() => ({ user: 0, system: 0 }), 2,
+    () => observations.shift() ?? { active: 14, idle: 371, voluntary: 22, involuntary: 6 });
+  trace.sample(100, 366.67525, 'importing/reading', 'importing/reading');
+  trace.sample(366.67525, 376, 'importing/reading', 'importing/reading');
+  expect(trace.result().largest).toMatchObject({ milliseconds: 266.67525,
+    scheduling: { eventLoopActiveMs: 3, eventLoopIdleMs: 263, voluntaryContextSwitches: 1, involuntaryContextSwitches: 2 } });
+  expect(trace.result().intervals).toBe(2);
+});
+
 test('NFR-005: Given GC delivered after a long interval, When evidence is finalized, Then overlapping late entries remain visible without subtracting their duration', () => {
   const trace = new HostIntervalTrace(() => ({ user: 0, system: 0 }));
   trace.sample(1, 102, 'reading', 'reading'); trace.gc(20, 60);
@@ -67,8 +82,11 @@ test('NFR-005: Given bounded traces, When capacity is exceeded, Then dropped obs
 
 test('NFR-005: Given disabled diagnostics, When the ordinary import path initializes, Then no CPU sampler or native hook is created', () => {
   const cpu = vi.spyOn(process, 'cpuUsage');
-  try { expect(startHostIntervalDiagnostics(false)).toBeUndefined(); expect(cpu).not.toHaveBeenCalled(); }
-  finally { cpu.mockRestore(); }
+  const usage = vi.spyOn(process, 'resourceUsage'); const loop = vi.spyOn(performance, 'eventLoopUtilization');
+  try {
+    expect(startHostIntervalDiagnostics(false)).toBeUndefined(); expect(cpu).not.toHaveBeenCalled();
+    expect(usage).not.toHaveBeenCalled(); expect(loop).not.toHaveBeenCalled();
+  } finally { cpu.mockRestore(); usage.mockRestore(); loop.mockRestore(); }
 });
 
 test('NFR-005: Given a live diagnostic observer, When one raw timer interval is sampled and stopped twice, Then native observation cleans up and the evidence is stable', async () => {
@@ -78,5 +96,7 @@ test('NFR-005: Given a live diagnostic observer, When one raw timer interval is 
   live?.sample(from, performance.now(), 'reading', 'reading');
   const result = live?.stop(); expect(result?.intervals).toBe(1);
   expect(result?.largest?.processCpuUserUs).toBeGreaterThanOrEqual(0);
+  expect(result?.largest?.scheduling?.eventLoopActiveMs).toBeGreaterThanOrEqual(0);
+  expect(result?.largest?.scheduling?.eventLoopIdleMs).toBeGreaterThanOrEqual(0);
   expect(live?.stop()).toEqual(result);
 });

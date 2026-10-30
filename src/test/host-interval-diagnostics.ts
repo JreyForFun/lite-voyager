@@ -5,12 +5,15 @@ import { IMPORT_HOST_CHANNEL, isImportHostSpan, type ImportHostSpan } from '../i
 
 interface Span { from: number; to: number; milliseconds: number; }
 interface CallbackSpan extends Span { type: string; }
-interface IntervalSpan extends Span { fromPhase: string; toPhase: string; processCpuUserUs: number; processCpuSystemUs: number; }
+interface SchedulingSnapshot { active: number; idle: number; voluntary: number; involuntary: number; }
+interface SchedulingDelta { eventLoopActiveMs: number; eventLoopIdleMs: number; voluntaryContextSwitches: number; involuntaryContextSwitches: number; }
+interface IntervalSpan extends Span { fromPhase: string; toPhase: string; processCpuUserUs: number; processCpuSystemUs: number; scheduling?: SchedulingDelta; }
 interface Cpu { user: number; system: number; }
 
 /** Evidence only: callers supply the same raw timestamps used by their guard. */
 export class HostIntervalTrace {
   private previousCpu: Cpu;
+  private previousScheduling: SchedulingSnapshot | undefined;
   private intervals = 0;
   private largest: IntervalSpan | undefined;
   private readonly callbacks: CallbackSpan[] = [];
@@ -23,14 +26,23 @@ export class HostIntervalTrace {
   private readonly operations: ImportHostSpan[] = [];
   private matchingOperations: ImportHostSpan[] = [];
   private droppedOperations = 0;
-  constructor(private readonly cpu: () => Cpu, private readonly capacity = 128) {
+  constructor(private readonly cpu: () => Cpu, private readonly capacity = 128, private readonly scheduling?: () => SchedulingSnapshot) {
     if (!Number.isInteger(capacity) || capacity < 1 || capacity > 128) { throw new Error('Invalid diagnostic trace capacity.'); }
     this.previousCpu = cpu();
+    this.previousScheduling = scheduling?.();
   }
   sample(from: number, to: number, fromPhase: string, toPhase: string): void {
     const current = this.cpu();
+    const nextScheduling = this.scheduling?.(); const previousScheduling = this.previousScheduling;
+    const scheduling = nextScheduling === undefined || previousScheduling === undefined ? undefined : {
+      eventLoopActiveMs: nextScheduling.active - previousScheduling.active, eventLoopIdleMs: nextScheduling.idle - previousScheduling.idle,
+      voluntaryContextSwitches: nextScheduling.voluntary - previousScheduling.voluntary,
+      involuntaryContextSwitches: nextScheduling.involuntary - previousScheduling.involuntary,
+    };
     const interval = { from, to, milliseconds: to - from, fromPhase, toPhase,
-      processCpuUserUs: current.user - this.previousCpu.user, processCpuSystemUs: current.system - this.previousCpu.system };
+      processCpuUserUs: current.user - this.previousCpu.user, processCpuSystemUs: current.system - this.previousCpu.system,
+      ...(scheduling === undefined ? {} : { scheduling }) };
+    this.previousScheduling = nextScheduling;
     this.previousCpu = current; this.intervals++;
     if (this.largest === undefined || interval.milliseconds > this.largest.milliseconds) {
       this.largest = interval;
@@ -68,13 +80,16 @@ export class HostIntervalTrace {
       operations: [...this.matchingOperations], capacity: this.capacity, droppedCallbacks: this.droppedCallbacks, droppedGc: this.droppedGc,
       droppedOperations: this.droppedOperations, untrackedResources: this.untrackedResources,
       truncated: this.droppedCallbacks > 0 || this.droppedGc > 0 || this.droppedOperations > 0 || this.untrackedResources > 0,
-      scope: 'Raw timer intervals; process-wide CPU deltas; overlapping GC and >=1-ms async callbacks; fixed-label host operations (sync versus await elapsed). Bounded evidence, no duration subtraction or cause attribution.' };
+      scope: 'Raw timer intervals; process-wide CPU deltas; overlapping GC and >=1-ms async callbacks; fixed-label host operations (sync versus await elapsed). Event-loop active/idle and process context-switch deltas are sampled near timer endpoints, not an OS scheduler trace. Bounded evidence, no duration subtraction or cause attribution.' };
   }
 }
 
 export function startHostIntervalDiagnostics(enabled: boolean) {
   if (!enabled) { return undefined; }
-  const trace = new HostIntervalTrace(() => process.cpuUsage());
+  const trace = new HostIntervalTrace(() => process.cpuUsage(), 128, () => {
+    const loop = performance.eventLoopUtilization(); const usage = process.resourceUsage();
+    return { active: loop.active, idle: loop.idle, voluntary: usage.voluntaryContextSwitches, involuntary: usage.involuntaryContextSwitches };
+  });
   const sink = channel(IMPORT_HOST_CHANNEL);
   const operation = (value: unknown): void => { if (isImportHostSpan(value)) { trace.operation(value); } else { trace.noteUntrackedResources(1); } };
   sink.subscribe(operation);
