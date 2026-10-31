@@ -7,6 +7,7 @@ import type { activate } from '../extension';
 import type { CsvImportSession } from '../editor/csv-import';
 import { xlsxFixture, xlsxCell } from './xlsx-fixture';
 import { closeEditor } from './sqlite-editor-lifecycle';
+import { OpeningLifecycleTrace } from './opening-lifecycle-diagnostics';
 
 async function api() {
   const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>('jreyinnovarev.lite-voyager'); assert.ok(extension); return extension.activate();
@@ -37,40 +38,58 @@ suite('T-025 production file opening', () => {
     test(`D-5: Given all five local tabular formats and fallback=${String(fallback)}, When using Open With and the menu command, Then their real editor panels preview/import exact values and close safely`, async function () {
       this.timeout(90000); const application = await api(); const directory = await mkdtemp(join(tmpdir(), 'lv-opening-'));
       const previous = process.env['LITE_VOYAGER_FORCE_FALLBACK']; process.env['LITE_VOYAGER_FORCE_FALLBACK'] = fallback ? '1' : '0';
+      const trace = new OpeningLifecycleTrace(process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1'); let view = 0;
       try {
         for (const extension of ['csv', 'tsv', 'json', 'jsonl', 'xlsx']) {
+          const scope = { fallback, format: extension, kind: 'tabular', view: ++view };
           const uri = vscode.Uri.file(join(directory, `awkward ' 🙂.${extension}`)); const source = content(extension); await writeFile(uri.fsPath, source);
           const before = await readFile(uri.fsPath);
+          trace.record(scope, 'text:start');
           await vscode.commands.executeCommand('vscode.open', uri, { preview: false }); assert.equal(isVoyager(), false, `default off for ${extension}`); await close(uri);
+          trace.record(scope, 'text:complete'); trace.record(scope, 'open:start');
           if (extension === 'csv' || extension === 'xlsx') { await vscode.commands.executeCommand('lite-voyager.open', uri); }
           else { await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false }); }
           assert.ok(isVoyager());
+          trace.record(scope, 'open:complete');
           const controller = extension === 'xlsx' ? application.xlsxImport : extension.startsWith('json') ? application.jsonImport : application.csvImport;
           const session = controller.sessions(uri)[0]; assert.ok(session); await session.finished; assert.equal(session.state.phase, 'ready', session.state.message);
           assert.equal(session.state.preview?.rows[0]?.[0], '9007199254740993'); await wait(session, () => session.firstRowsMs !== undefined);
+          trace.record(scope, 'preview:ready'); trace.record(scope, 'import:start');
           await session.startImport(); assert.equal(session.state.phase, 'opened', session.state.message);
+          trace.record(scope, 'import:complete');
           await wait(session, () => session.browserStatus?.renderedRows === 1 && session.browserStatus.editorReady === true && !session.browserStatus.busy);
           assert.equal(session.browserStatus?.firstRow[0]?.text, '9007199254740993'); assert.equal(session.browserStatus?.firstRow[1]?.text, 'literal <script>🙂');
           assert.equal(session.state.progress?.engine, fallback ? 'sql.js' : 'node:sqlite');
+          trace.record(scope, 'browser:ready');
           const context = session.browserStatus?.contextId;
+          trace.record(scope, 'hide:start');
           await vscode.window.showTextDocument(await vscode.workspace.openTextDocument({ content: 'D-5 hide/show' }), { preview: false });
+          trace.record(scope, 'hide:complete'); trace.record(scope, 'reveal:start');
           await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
           await wait(session, () => session.browserStatus?.contextId !== context && session.browserStatus?.renderedRows === 1 && !session.browserStatus.busy);
           assert.equal(session.browserStatus?.firstRow[0]?.text, '9007199254740993');
-          await close(uri); await session.closed; assert.deepEqual(await readFile(uri.fsPath), before); assert.equal(controller.sessions(uri).length, 0);
+          trace.record(scope, 'reveal:complete'); trace.record(scope, 'close:start');
+          await close(uri); trace.record(scope, 'tab:closed'); await session.closed; trace.record(scope, 'session:closed');
+          assert.deepEqual(await readFile(uri.fsPath), before); assert.equal(controller.sessions(uri).length, 0);
         }
         const extension = vscode.extensions.getExtension('jreyinnovarev.lite-voyager'); assert.ok(extension);
         for (const suffix of ['csv', 'tsv', 'json', 'jsonl', 'xlsx']) {
+          const scope = { fallback, format: suffix, kind: 'sqlite', view: ++view };
           const uri = vscode.Uri.file(join(directory, `renamed-sqlite.${suffix}`)); await copyFile(join(extension.extensionPath, 'test/fixtures/sample.sqlite'), uri.fsPath); const before = await readFile(uri.fsPath);
+          trace.record(scope, 'open:start');
           await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
           const document = application.sqliteEditor.getDocument(uri); assert.ok(document); assert.equal(document.session.state.phase, 'opened');
           assert.equal(document.session.state.opened?.engine, fallback ? 'sql.js' : 'node:sqlite');
+          trace.record(scope, 'open:complete'); trace.record(scope, 'close:start');
           await closeEditor(document, undefined, () => close(uri)); assert.deepEqual(await readFile(uri.fsPath), before);
+          trace.record(scope, 'close:complete');
         }
+        trace.record({ fallback, format: 'all', kind: 'cleanup', view: 0 }, 'cleanup:start');
       } finally {
         await vscode.commands.executeCommand('workbench.action.closeAllEditors');
         if (previous === undefined) { delete process.env['LITE_VOYAGER_FORCE_FALLBACK']; } else { process.env['LITE_VOYAGER_FORCE_FALLBACK'] = previous; }
         await rm(directory, { recursive: true, force: true });
+        trace.record({ fallback, format: 'all', kind: 'cleanup', view: 0 }, 'cleanup:complete');
       }
     });
   }

@@ -1,8 +1,9 @@
-import { spawn } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createInterface } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
+import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
 import { HostExitLines, runDiagnosticCommand, startWindowsIdentityCollector, type ShutdownSignal } from '../../scripts/ci-diagnostics.mts';
 
@@ -66,6 +67,10 @@ test('NFR-005: Given a diagnostic child, When its environment is initialized, Th
 });
 
 test.skipIf(process.platform !== 'win32')('NFR-005: Given an owned Windows child and its original creation identity, When it exits, Then the native collector reports identity and absence without retaining a handle or killing it', async () => {
+  const provider = await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+    '-File', resolve('test/unit/fixtures/windows-identity-provider.ps1'), '-CollectorPath', resolve('scripts/windows-exit-diagnostics.ps1')],
+  { windowsHide: true, timeout: 15000, maxBuffer: 65536 });
+  expect(provider.stderr).toBe(''); expect(provider.stdout.trim()).toBe('T030 provider edge checks passed');
   const output: string[] = []; let sawStart: () => void = () => {};
   const started = new Promise<void>((accept) => { sawStart = accept; });
   const collector = await startWindowsIdentityCollector((text) => { output.push(text); if (text.includes('"phase":"started"')) { sawStart(); } });
@@ -76,6 +81,28 @@ test.skipIf(process.platform !== 'win32')('NFR-005: Given an owned Windows child
     const pid = Number(pidText); collector.accept({ phase: 'started', pid }); await started;
     child.stdin.end('\n'); expect((await exited)[0]).toBe(0); collector.accept({ phase: 'exited', pid });
     await collector.finish();
+    const object = (value: unknown): Record<string, unknown> => {
+      if (value === null || typeof value !== 'object' || Array.isArray(value)) { throw new Error('NFR-005: invalid identity metadata'); }
+      return value as Record<string, unknown>;
+    };
+    const records = output.map((line) => object(JSON.parse(line.slice('T026 shutdown identity evidence: '.length)) as unknown));
+    const startRecord = records.find((record) => record['phase'] === 'started');
+    if (startRecord === undefined) { throw new Error('NFR-005: missing original identity'); }
+    const creation = object(startRecord['identity'])['creation'];
+    if (typeof creation !== 'string') { throw new Error('NFR-005: missing creation timestamp'); }
+    expect(Number.isFinite(Date.parse(creation))).toBe(true);
+    expect(startRecord['originalCreation']).toBe(creation);
+    const exitRecords = records.filter((record) => record['phase'] === 'exited');
+    expect(exitRecords).toHaveLength(20);
+    for (const record of exitRecords) {
+      expect(record).toMatchObject({ phase: 'exited', pid });
+      expect(record['originalCreation']).toBe(creation);
+      for (const field of ['queryStartedUtc', 'queryFinishedUtc']) {
+        const timestamp = record[field];
+        if (typeof timestamp !== 'string') { throw new Error('NFR-005: missing query timestamp'); }
+        expect(Number.isFinite(Date.parse(timestamp))).toBe(true);
+      }
+    }
     expect(output.join('')).toContain('"phase":"exited"');
     expect(output.join('')).toContain('"present":false');
     expect(output.join('')).toContain('"creation"');
