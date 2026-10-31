@@ -1,5 +1,10 @@
 # T-030: actual-candidate CI follow-up
 
+Follow-up (2026-10-31): run41054019454 at8a1d9af fails seven fixture cases on
+Windows/macOS before host tests; Ubuntu passes. Current fixture-only repair and
+fresh-CI status are in [canonical-path fixture repair](t030-ci-fixture-repair.md).
+The local gates and timing limitations below remain historical evidence.
+
 Status (2026-10-30): path and sidecar safety repairs pass final local gates;
 macOS timing cause remains unresolved. Fresh owner-pushed candidate CI pending.
 Only T-030 is active. Existing owner authorization covers scoped repairs and QA;

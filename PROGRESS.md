@@ -1,36 +1,35 @@
 # Progress
 
 ## Current phase / task
-T-030 local CI repair gates pass (2026-10-30); fresh candidate CI pending.
-Owner authorized scoped fixes, QA and local commit; retains push and CI.
-Only T-030 is active. Current details: docs/t030-ci-repair.md.
+T-030 canonical-path fixture repair locally verified (2026-10-31); CI pending.
+Owner authorizes scoped fixes, QA and local commit; retains push and CI.
+Only T-030 is active. Details: docs/t030-ci-fixture-repair.md.
 
 ## Accepted implementation / checks
-Failed run40568873744 /attempt1 at1257ca5: Windows/macOS fail, Ubuntu passes.
-Windows17 failures: native/short path mismatch reproduced and repaired test-first.
-Case-insensitive POSIX Save As sidecar bypass also repaired;11 path cases pass.
-Bounded test-only scheduling diagnostics pass9 cases; raw100ms guard unchanged.
-Independent review and follow-up find no remaining concrete repair defects.
-Final npm run verify:1146 units/113 files, zero errors/warnings,655.414s.
-Final npm run verify:full:1146 units plus79 integration tests,2488.068s.
-Minimum VSCode1.140.0/Node24.21.0; both T-030 engine workflows pass.
-Both gates preserve368 hashes, identical between gates; only records change later.
-Full is NOT warning-free: VSCODE-HOST-001, warning, renderer.log:10,
-source20261030T193906/window1 under out/integration-profile-o91RbA/logs/.
-Exact message: [CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
-Logs/status/hashes: out/t030-ci-verify-2* and out/t030-ci-full-2*.
+Run41054019454 /attempt1 at8a1d9af: Windows/macOS fail7 fixtures; Ubuntu passes.
+REST confirms exact candidate; both failing jobs stop before host tests.
+Fixtures passed raw temp paths; worker requires the canonical snapshot path.
+Forced-alias reproduction fails the exact7 cases locally before correction.
+Fixture parents/maps are canonical; constructors now retain a distinct alias.
+All original safety/writer/byte assertions remain; no runtime changes or new skips.
+Focused53 tests/3 files pass; independent fixture review finds no concrete defect.
+Final npm run verify passes1146 units/113 files, zero errors/warnings,691.519s.
+All369 gate hashes match; only evidence records change afterward.
+All165 runtime/host/verification files match the prior full run byte-for-byte.
+No product source, host test, build/config or guard change in this repair.
+Retain pasted CI logs and red/green records under out/t030-fixture-*.
 
 ## QA / remaining work
-Mac's266.675ms JSONL5GB gap remains unexplained; no causal repair claim.
-Local JSONL5GB passes at40.879ms; this does not establish macOS behavior.
-Minimum-host scheduling counters emit zeros; treat them as indeterminate.
-Retain all failed/stopped runs, including the first repair full stopped for safety.
-Earlier physical QA limits, fallback writer race and unknown save outcome remain.
-Owner pushes the repair commit and supplies new CI run URL/exact SHA/OS results.
-Keep T-030 unchecked until fresh three-platform candidate CI passes.
-No relaxed guard, warning policy, later task or milestone-release closure.
+Prior local verify1146 units and full79 hosts pass; these are historical results.
+Prior full is NOT warning-free; exact HOST-001 warning is in docs/t030-ci-repair.md.
+No new full-host pass claimed for this fixture-only repair; fresh CI is required.
+The earlier266.675ms macOS gap remains unexplained and untested by failed CI.
+Scheduling zeros are indeterminate; no causal timing repair claim.
+Retain prior physical-QA limits, fallback writer race and unknown save outcome.
+Owner pushes the repair commit and supplies fresh CI run URL/exact SHA/OS results.
+Keep T-030 unchecked; no later task, relaxed guard/policy or milestone closure.
 
 ## Preserved work / checkpoint
 Preserve owner README/shared-spec/TASKS hunks, debug.log, gingTryWan and fixtures.
-Repair is prepared over failed1257ca5; no push/tag/release/dependency change.
+Prepared over failed8a1d9af; no push/tag/release/dependency change.
 Manifest stays0.0.1; T-028 local v0.2.0 remains accepted.

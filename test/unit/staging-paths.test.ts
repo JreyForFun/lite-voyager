@@ -28,7 +28,9 @@ beforeAll(async () => {
 }, 30000);
 
 async function fixture(run: (path: string, alias: string, parent: string) => Promise<void>) {
-  const directory = await mkdtemp(join(tmpdir(), 'lv-t030-path-spelling-'));
+  // Case-lookup maps must use the same native parent spelling as the worker,
+  // including RUNNER~1 on Windows and /var -> /private/var on macOS.
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'lv-t030-path-spelling-')));
   const parent = join(directory, 'real'); const alias = join(directory, 'alias');
   await mkdir(parent); await symlink(parent, alias, process.platform === 'win32' ? 'junction' : 'dir');
   const path = join(parent, 'source.sqlite'); const db = new DatabaseSync(path);
@@ -75,8 +77,9 @@ test('FR-020: Given an authorized journal recovery and an alias spelling of the 
 });
 
 test.each(['-wal', '-shm', '-journal'].flatMap((suffix) => [false, true].map((exists) => ({ suffix, exists }))))('FR-020: Given a case-insensitive POSIX sidecar alias $suffix with existing=$exists, When Save As targets it, Then protection precedes opening any writer and preserves source bytes', async ({ suffix, exists }) => {
-  await fixture(async (path, _alias, parent) => {
-    const directory = resolve('dist'); const backend = await SqlJsEngine.open(inspectFile(path), directory);
+  await fixture(async (path, alias, parent) => {
+    const directory = resolve('dist'); const snapshot = inspectFile(alias); const backend = await SqlJsEngine.open(snapshot, directory);
+    expect(snapshot.path).not.toBe(alias);
     const workspace = await mkdtemp(join(parent, '.lite-voyager-edit-'));
     const target = join(parent, 'SOURCE.SQLITE' + suffix.toUpperCase());
     aliases.set(join(parent, 'SOURCE.SQLITE'), path);
@@ -87,9 +90,9 @@ test.each(['-wal', '-shm', '-journal'].flatMap((suffix) => [false, true].map((ex
     // Windows itself is case insensitive, but its old lexical lowercase check
     // masks this POSIX bug. Exercise the POSIX branch on every test platform.
     vi.stubGlobal('process', { ...process, platform: 'darwin' });
-    const edits = new SqliteEdits(path, directory, undefined, sourceVersion(path));
+    const edits = new SqliteEdits(snapshot.path, directory, undefined, sourceVersion(snapshot.path), alias);
     try {
-      await expect(edits.execute(backend, { action: 'save', version: sourceVersion(path), destination: target,
+      await expect(edits.execute(backend, { action: 'save', version: sourceVersion(alias), destination: target,
         temporaryDirectory: workspace, operations: [{ kind: 'sql', sql: 'UPDATE t SET v=42' }] }, () => {})).rejects.toThrow(/original source|protected.*sidecar/iu);
       expect(writer).not.toHaveBeenCalled(); expect(await readFile(path)).toEqual(before);
       if (exists) { expect(await readFile(protectedPath)).toEqual(marker); }
@@ -98,17 +101,18 @@ test.each(['-wal', '-shm', '-journal'].flatMap((suffix) => [false, true].map((ex
 });
 
 test('FR-020: Given a case-sensitive destination parent, When a distinct uppercase suffix is chosen for Save As, Then the protected-sidecar guard permits the writer without changing source bytes', async () => {
-  await fixture(async (path, _alias, parent) => {
-    const directory = resolve('dist'); const backend = await SqlJsEngine.open(inspectFile(path), directory);
+  await fixture(async (path, alias, parent) => {
+    const directory = resolve('dist'); const snapshot = inspectFile(alias); const backend = await SqlJsEngine.open(snapshot, directory);
+    expect(snapshot.path).not.toBe(alias);
     const workspace = await mkdtemp(join(parent, '.lite-voyager-edit-')); const target = path + '-WAL';
     // Model a case-sensitive parent even on Windows. No writer is allowed to
     // reach the actual filesystem with this model: the sentinel ends the save.
     aliases.set(join(parent, basename(workspace).replace('.lite-', '.Lite-')), join(parent, 'missing-workspace'));
     const before = await readFile(path); const writer = vi.spyOn(SqlJsEngine, 'open').mockRejectedValue(new Error('Writer permitted.'));
     vi.stubGlobal('process', { ...process, platform: 'darwin' });
-    const edits = new SqliteEdits(path, directory, undefined, sourceVersion(path));
+    const edits = new SqliteEdits(snapshot.path, directory, undefined, sourceVersion(snapshot.path), alias);
     try {
-      await expect(edits.execute(backend, { action: 'save', version: sourceVersion(path), destination: target,
+      await expect(edits.execute(backend, { action: 'save', version: sourceVersion(alias), destination: target,
         temporaryDirectory: workspace, operations: [{ kind: 'sql', sql: 'UPDATE t SET v=42' }] }, () => {})).rejects.toThrow('Writer permitted.');
       expect(writer).toHaveBeenCalledOnce(); expect(await readFile(path)).toEqual(before);
     } finally { vi.unstubAllGlobals(); writer.mockRestore(); aliases.clear(); backend.close(); await rm(workspace, { recursive: true, force: true }); }
