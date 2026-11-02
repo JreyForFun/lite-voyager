@@ -1,6 +1,110 @@
 # T-030: macOS GPU failure and retained-log reporting
 
-## Follow-up run41205204032: current investigation
+## Run41463176404: watcher deletion investigation (2026-11-02)
+
+Public REST confirms attempt1 at exact4c7c51311989cf35ab4169652a8627b269027287.
+Windows job125337148371 and Ubuntu job125337148130 pass locked install/full.
+macOS job125337147814 passes1173 units/14 existing platform skips and all79
+hosts, exits0, then strict saved-log validation correctly rejects:
+
+```text
+20261102T143927/window1/fileWatcher.log:1: 2026-11-02 14:39:47.953 [warning] [File Watcher (node.js)] Watcher shutdown because watched path got deleted
+20261102T143927/window1/renderer.log:31: 2026-11-02 14:39:47.938 [warning] [File Watcher (node.js)] Watcher shutdown because watched path got deleted
+```
+
+Metadata: out/t030-ci-41463176404-metadata.json. No remote artifacts are available.
+Byte-identical supplied log: out/t030-ci-41463176404-macos.log, SHA256
+69ef0bb56c2f41e1b5dffe9605adb67438838c463649941aee54073752076bad.
+No historical GPU error or HOST-007 rejection appears in this supplied log;
+do not infer either historical cause or guaranteed future reliability.
+
+Console delivery falls between first native T-030 close-command start and
+completion. Fixture deletion follows close/helper exit, so that deletion cannot
+be attributed from these labels alone. Native Save uses an in-place transaction;
+Save As removes a separate owned work directory. Prior import fixtures remove
+their directories after session closure. Independent read-only diagnosis finds
+no demonstrated extension defect or originating watched path. Installed official
+Windows1.140 watcher source raises this warning after a delayed rename handler
+finds a watched root absent; this is supporting vendor evidence, not inspection
+of the exact macOS revision or identification of its root. No speculative fixture
+lifetime change or eighth warning allowance is adopted.
+
+Global --log=trace in the canonical launch was considered and rejected before
+gates: the isolated two-host probe emits expected ENOENT Error tokens that the
+unchanged console scanner rejects. Its native exit0 and saved-log HOST-001 at
+20261102T231000/window1/renderer.log:110 do NOT make it a passing or warning-free
+gate. Evidence: out/t030-watcher-probe-1.log/-status.json and retained profile.
+Canonical launch/config, workload, deadline, console scanner and seven exact
+approved warning families remain byte-identical to4c7c513.
+
+The candidate instead reports the original full rejection first and retains
+status1. Only macOS, existing diagnostic flag exactly1 and an exact dated
+window/fileWatcher.log deletion record trigger one separate focused trace host.
+Its four original early suites run all seven tests unchanged in an additional
+isolated profile. Complete raw console, native logs and JSON status are retained.
+This is supplemental diagnosis, never a canonical verification retry or a
+successful replacement. A successful or failed probe cannot clear the original
+failure. Its native watcher output is a labelled recent tail: at most64 JSON
+records/16384 characters, text at most1024 characters including any truncation
+marker. Older tail records may be omitted; full raw logs remain.
+
+The saved-log scanner also appends bounded adjacent native trace if available,
+otherwise explicitly records unknown path evidence. Shared bounds apply across
+windows without an unbounded auxiliary line-index collection. Its complete
+severity scan, all rejected records and approved-warning reports remain intact.
+No unsupported flag, sleep, clock correction, workload reduction, dependency,
+workflow change or ignored warning/error is introduced.
+
+Failing-first evidence: context/launch baseline4fail/3pass in
+out/t030-watcher-red-2.log (sandbox startup EPERM retained separately); missing
+probe module in out/t030-watcher-probe-red.log; warning-only false-trace report
+1fail/2pass in out/t030-watcher-tail-red.log. Independent review catches nested
+source matching and inherited-CI-env test isolation; each is reproduced before
+repair (out/t030-watcher-trigger-red.log and -env-red.log). Canonical global
+trace is discarded, not described as an implemented repair. After source-anchor,
+bounded-context and deterministic/inherited-env repairs, focused142/7 passes
+with the actual CI diagnostic flag1: out/t030-watcher-focused-final.log.
+
+The actual separate probe implementation runs once locally on Windows1.140.0:
+all seven early hosts pass and native source-watcher paths are retained; no
+deletion warning recurs. Its saved-log approved HOST-001 is
+20261102T231656/window1/renderer.log:103, original severity warning and exact
+signed-out CloudSandboxApi message. Raw trace retains expected ENOENT Error
+strings. This is NOT a console-gate pass, warning-free run, macOS reproduction,
+or cause/repair claim. Evidence: out/t030-watcher-production-probe-1.log and
+out/integration-profile-watcher-probe-ocBwmQ/watcher-probe-{console.log,status.json}.
+
+Both approved probe records have original severity warning, rule VSCODE-HOST-001,
+and exact message `[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The two sources/lines are stated separately above. Neither probe is a passing
+console gate. Trace output can affect scheduling, and a separate fresh host's
+paths cannot recover the discarded original watcher identity or prove its cause.
+
+Final independent read-only review finds no remaining concrete defect after the
+failing-first repairs. Literal `npm run verify` passes1212 units/120 files, strict
+host/webview/tooling types, lint, production build and35-file/1012.28KB VSIX.
+Zero gate warnings/errors; exit0; UTC2026-11-02T15:22:27.102Z through15:34:02.187Z,
+695.085 seconds. All382 tracked/task-new before/after hashes match. Evidence:
+out/t030-watcher-verify-1.log, -before.json, -after.json and -status.json.
+Only PROGRESS.md and this evidence record change after the gate. Normal launch,
+console checker and workflow match the parent; owner README/PLAN/TASKS/VALIDATION
+work remains excluded from the eight-file local commit. The staging/commit
+proofs are retained under out/t030-watcher-{prepare,staged,committed}-proof.json.
+
+No new canonical full gate is claimed. The executable product is unchanged;
+current evidence covers diagnostic boundaries plus the actual seven-host probe,
+not physical macOS QA or repaired macOS CI. Fresh owner-pushed evidence is
+required; retain run41463176404 even if a later run passes. T-030 remains unchecked.
+Owner retains push/CI. Prior scoped visual evidence/limits below stay.
+
+Files: scripts/integration-check.mts; scripts/integration-logs.mts;
+scripts/integration-watcher-probe.mts; test/unit/integration-watcher-diagnostics.test.ts;
+test/unit/integration-watcher-probe.test.ts; test/unit/integration-watcher-tail.test.ts;
+PROGRESS.md; this document. Commands: npm run verify; focused npm test --
+test/unit/integration-watcher-diagnostics.test.ts test/unit/integration-watcher-probe.test.ts
+test/unit/integration-watcher-tail.test.ts. Owner's full CI command stays npm run verify:full.
+
+## Follow-up run41205204032: historical investigation
 
 Public REST confirms attempt1 at exact `bd3f85e7930fc05123661156c1b8ad014e792eb9`.
 Ubuntu job124548761467 succeeds. Windows job124548761450 fails two native

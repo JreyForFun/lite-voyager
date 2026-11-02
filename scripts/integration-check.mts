@@ -5,6 +5,7 @@ import { runCheck } from './checks.mts';
 import { checkIntegrationLogs } from './integration-logs.mts';
 import { integrationEnvironment } from './integration-environment.mts';
 import { validateIntegrationRun } from './integration-validation.mts';
+import { reportIntegrationFailure, runWatcherProbe } from './integration-watcher-probe.mts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -21,6 +22,6 @@ try {
     env: integrationEnvironment(process.env, profile),
   }), () => checkIntegrationLogs(join(profile, 'logs')), (message) => { process.stdout.write(message); });
 } catch (error: unknown) {
-  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-  process.exitCode = 1;
+  process.exitCode = await reportIntegrationFailure(error, () => runWatcherProbe(root, (message) => { process.stdout.write(message); }),
+    (message) => { process.stderr.write(message); });
 }

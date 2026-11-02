@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-T-030 follow-up CI repair locally verified (2026-10-31); continue in this chat.
-Owner authorizes fixes/QA, exact HOST-007/local commit; retains push/CI.
+T-030 macOS diagnostic candidate verified (2026-11-02); continue in this chat.
+Owner authorizes scoped fixes/QA/review/local commit; retains push/CI.
 Details: docs/t030-macos-ci-investigation.md; T-030 unchecked, no later task.
 
-## Failed candidate and repairs
-Run41205204032/attempt1/exactbd3f85e: Ubuntu succeeds, Windows/macOS fail.
-Windows:2 native staged-edit5000ms timeouts;1153 pass; stalled phase unknown.
-Fixture seeds identical15 statements in one transaction; default durability intact.
-Failing-first rollback case fails baseline; new rollback/closure/fidelity tests pass.
-All24 old test bodies and5s limits unchanged; cleanup strengthened after failures.
-Opt-in private phase timings; measured setup65-83ms to5-9ms, no CI-cause claim.
-macOS:1141 units/14 existing skips and79 hosts pass; HOST-007116ms warning rejected.
-Owner delegates exact reviewed HOST-007; anchored ASCII duration, renderer/warning only.
-All other source/severity/reporting/console guards and diagnostic failures retained.
-Thirty new tests first6fail/24pass; combined focused135/5 and independent review clear.
+## Latest actual-candidate CI
+Run41463176404/attempt1/exact4c7c513: Windows and Ubuntu full checks pass.
+macOS1173 units/14 existing skips and79 hosts pass; log scan rejects2 warnings.
+Exact watched-path-deleted family: fileWatcher.log:1 and renderer.log:31.
+Console arrives inside first native T-030 close; source/root cause is unknown.
+Fixture rm follows close/helper exit; no speculative cleanup fix/new allowance.
+Full supplied log/metadata/hash retained; remote artifacts absent.
 
-## Final local evidence
-Literal verify1187/117 passes623.667s, zero warnings/errors;35-file package passes.
-CI-enabled literal full1187 units+79 hosts passes2844.361s; minimum VS Code1.140.0.
-Tooling Node26.5.0 matches CI; embedded Node24.21.0;378 hashes match all4 manifests.
-Full NOT warning-free: only HOST-001 at20261031T222944/window1/renderer.log:10.
-194 D-5/22 fixture/20 shutdown records validated; max fixture1410.233ms/seed10.725ms.
-All original multi-GB data/source/paging/memory/DOM/raw-timer assertions pass.
+## Diagnostic candidate
+Canonical launch/config, seven warning families and console scanner unchanged.
+Global trace rejected for gates: expected ENOENT Error tokens fail strict console.
+After exact saved watcher failure only: Mac/flag1 runs one separate early trace host.
+Original rejection prints first; status remains1 even if probe succeeds or fails.
+All7 original early tests run unchanged; raw console/native logs/status retained.
+Bounded native tail/adjacent context reports paths or explicitly unknown evidence.
+Review findings reproduced first; focused142/7 under CI flag1 and final review pass.
 
-## Visual QA / limits
-Fresh isolated installed1.144.0 light/dark UI, write mode, int64/NULL/empty/BLOB pass.
-Staging leaves source hash unchanged; explicit Save persists full Unicode, clears dirty.
-Task window/PID close confirmed; proofs/logs retained under out/t030-host007-*.
-Visual host has rejected vendor/fixture diagnostics, explicitly recorded; not a clean gate.
-No physical minimum/macOS, GPU-cause, cold-disk or unsampled-peak claim.
-Retain historical failures/unknown timer causes and fallback writer/save-outcome limits.
+## Retained evidence / limits
+Previous frozen378-file candidate: verify1187/117 and full1187+79 pass locally.
+That full NOT warning-free: HOST-001 at20261031T222944/window1/renderer.log:10.
+Actual new diagnostic probe7 hosts pass on Windows1.140; not a console gate.
+Its HOST-001:20261102T231656/window1/renderer.log:103; raw trace has Error tokens.
+No macOS reproduction, repair, physical minimum QA or original cause claim.
+Prior1.144 light/dark/int64/NULL/empty/BLOB/staging/explicit-save QA retained.
+Visual host rejected vendor/fixture diagnostics remain explicit; not a clean gate.
+Retain prior timing/GPU/Windows failures and fallback writer/save-outcome limits.
 
-## Preserved work / handoff
-Verified nine-file local commit scope excludes owner README/PLAN/TASKS/VALIDATION hunks.
-Preserve debug.log, gingTryWan and untracked fixtures; no push/tag/dependency change.
-Manifest stays0.0.1; owner pushes candidate and returns fresh CI here.
+## Preserved work / next evidence
+Preserve owner README/PLAN/TASKS/VALIDATION hunks and unrelated untracked files.
+No product save/UI/runtime/dependency/workflow/version/tag/release change.
+Standalone verify1212/120 passes695.085s, zero warnings/errors;382 hashes match.
+Owner pushes diagnostic candidate, returns CI/logs here; no retry-to-green.

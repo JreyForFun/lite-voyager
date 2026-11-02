@@ -50,6 +50,36 @@ async function logFiles(directory: string): Promise<string[]> {
   return files;
 }
 
+function appendWatcherContext(record: string, context: string[]): boolean {
+  const truncated = '[truncated: watcher context capacity reached]';
+  if (context.at(-1) === truncated) { return false; }
+  // Reserve space for the explicit truncation marker within both bounds.
+  if (context.length >= 63 || context.reduce((total, item) => total + item.length + 1, 0) + record.length + 1 > 16300) {
+    context.push(truncated); return false;
+  }
+  context.push(record); return true;
+}
+
+/** Bounded evidence only: the complete severity scan below always runs. */
+function collectWatcherContext(source: string, lines: readonly string[], context: string[]): void {
+  if (context.at(-1) === '[truncated: watcher context capacity reached]' || !/^\d{8}T\d{6}\/window\d+\/fileWatcher\.log$/.test(source)) { return; }
+  let visited = -1; let affected = false; let found = false;
+  for (const [index, line] of lines.entries()) {
+    if (!line.endsWith('[warning] [File Watcher (node.js)] Watcher shutdown because watched path got deleted')) { continue; }
+    affected = true;
+    const end = Math.min(lines.length - 1, index + 16);
+    for (let nearby = Math.max(visited + 1, index - 16, 0); nearby <= end; nearby++) {
+      const text = lines[nearby];
+      if (text === undefined || !/^\d{4}-\d{2}-\d{2} .* \[trace\] \[File Watcher /u.test(text)) { continue; }
+      found = true;
+      const record = JSON.stringify({ source, line: nearby + 1, text: text.length <= 1024 ? text : `${text.slice(0, 1012)} [truncated]` });
+      if (!appendWatcherContext(record, context)) { return; }
+    }
+    visited = end;
+  }
+  if (affected && !found) { appendWatcherContext(JSON.stringify({ source, message: 'No adjacent watcher trace records; watched path remains unknown.' }), context); }
+}
+
 export async function checkIntegrationLogs(directory: string): Promise<ApprovedHostDiagnostic[]> {
   const files = await logFiles(directory);
   if (files.length === 0) {
@@ -57,9 +87,11 @@ export async function checkIntegrationLogs(directory: string): Promise<ApprovedH
   }
   const diagnostics: string[] = [];
   const approved: ApprovedHostDiagnostic[] = [];
+  const watcherContext: string[] = [];
   for (const file of files) {
     const source = relative(directory, file).replaceAll('\\', '/');
     const lines = (await readFile(file, 'utf8')).split(/\r?\n/);
+    collectWatcherContext(source, lines, watcherContext);
     for (const [index, line] of lines.entries()) {
       if (/\[(?:warning|error)\]/i.test(line)) {
         const known = approvedHostDiagnostic(source, line, index + 1);
@@ -72,7 +104,8 @@ export async function checkIntegrationLogs(directory: string): Promise<ApprovedH
     }
   }
   if (diagnostics.length > 0) {
-    throw new Error(`VS Code runtime logs contain diagnostics:\n${diagnostics.join('\n')}\n${formatApprovedHostDiagnostics(approved)}`);
+    const context = watcherContext.length === 0 ? '' : `VS Code watcher context (adjacent trace; bounded to64 records/16384 characters, lines to1024 characters):\n${watcherContext.join('\n')}\n`;
+    throw new Error(`VS Code runtime logs contain diagnostics:\n${diagnostics.join('\n')}\n${formatApprovedHostDiagnostics(approved)}${context}`);
   }
   return approved;
 }
