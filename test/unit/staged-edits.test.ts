@@ -7,6 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { EngineClient } from '../../src/engine/engine-client';
 import { StagedEdits } from '../../src/staging/staged-edits';
+import { seedStagedEditDatabase } from './fixtures/staged-edit-database';
 import { checkWriteStatement, editValue } from '../../src/staging/edit-types';
 
 beforeAll(async () => {
@@ -15,24 +16,25 @@ beforeAll(async () => {
 }, 30000);
 
 async function fixture(fallback: boolean, run: (edits: StagedEdits, engine: EngineClient, path: string) => Promise<void>) {
+  const diagnostics = process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1';
+  const stages: Record<string, number> = {};
+  const mark = (stage: string): void => { if (diagnostics) { stages[stage] = performance.now(); } };
+  mark('directory:start');
   const directory = await mkdtemp(join(tmpdir(), 'lite-voyager-t030-'));
   const path = join(directory, 'data.sqlite');
-  const db = new DatabaseSync(path);
-  db.exec(`CREATE TABLE data(id INTEGER PRIMARY KEY, value TEXT UNIQUE, number INTEGER, bytes BLOB, computed TEXT GENERATED ALWAYS AS (value || '!'));
-    INSERT INTO data(id,value,number,bytes) VALUES(9223372036854775807,'first',-9223372036854775808,zeroblob(4)),(2,'second',NULL,NULL);
-    CREATE TABLE composite(a INTEGER,b TEXT,value,PRIMARY KEY(a,b)) WITHOUT ROWID;
-    INSERT INTO composite VALUES(9223372036854775807,'quote''😀','old');
-    CREATE TABLE no_key(value); INSERT INTO no_key VALUES('one'),('two');
-    CREATE TABLE nullable(a TEXT PRIMARY KEY,value); INSERT INTO nullable VALUES(NULL,'a'),(NULL,'b');
-    CREATE TABLE shadow(rowid,_rowid_,oid,value); INSERT INTO shadow VALUES(1,2,3,4);
-    CREATE TABLE gaps(value); INSERT INTO gaps(rowid,value) VALUES(7,'seven'),(99,'last');
-    CREATE TABLE "select ""😀"("key ""🚀" TEXT PRIMARY KEY,note TEXT); INSERT INTO "select ""😀" VALUES('k'||char(0)||'tail','old');
-    CREATE VIEW view_data AS SELECT * FROM data;`);
-  db.close();
   const engine = new EngineClient({ directory: resolve('dist'), forceFallback: fallback });
   const edits = new StagedEdits(engine);
-  try { await engine.open(path); await run(edits, engine, path); }
-  finally { await engine.close(); await rm(directory, { recursive: true, force: true }); }
+  try {
+    mark('seed:start'); seedStagedEditDatabase(path); mark('seed:complete');
+    mark('open:start'); await engine.open(path); mark('open:complete');
+    mark('body:start'); await run(edits, engine, path); mark('body:complete');
+  } finally {
+    try { mark('close:start'); await engine.close(); mark('close:complete'); }
+    finally {
+      try { mark('cleanup:start'); await rm(directory, { recursive: true, force: true }); mark('cleanup:complete'); }
+      finally { if (diagnostics) { console.log(`T030 staged fixture phases: ${JSON.stringify({ fallback, stages })}`); } }
+    }
+  }
 }
 
 test('FR-020: Given explicit cell types, When parsing values, Then int64 stays exact and invalid or overflowing values are refused', () => {

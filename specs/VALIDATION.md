@@ -725,6 +725,16 @@ Rules:
     Failed run40178896696/084ab2b and exact source-revision limits remain in
     docs/t027-ci-startup-warning-proposal.md. This is a policy amendment, not a
     performance or graphics repair. Every other warning and every error fails.
+  - `VSCODE-HOST-007`: `Creation of workbench contribution 'workbench.contrib.dynamicWindowConfiguration' took Nms.`
+    Owner delegates judgement on the exact reviewed T-030 proposal on 2026-10-31.
+    `N` contains only ASCII digits (unsigned integer duration). Installed Windows
+    VS Code 1.140 vendor code registers this window-profile configuration
+    contribution at Eventually and measures synchronous construction; do not
+    claim it runs before the extension host or that exact macOS source was inspected.
+    Retain every structured renderer/severity/reporting guard above. The failed
+    run41205204032/bd3f85e and source-revision limits are recorded in
+    docs/t030-macos-ci-investigation.md. This is an explicit policy amendment,
+    not a performance or graphics repair. Every other warning and every error fails.
   The original manifest-creation and cloud-dictation timeout warnings remain
   failures. Console diagnostic checks, types, lint and builds retain zero
   errors/warnings. No blanket vendor-warning allowance or retry-to-green is permitted.
