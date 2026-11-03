@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-T-030 macOS GPU evidence follow-up (2026-11-03); continue here.
+T-030 macOS JSON timer/capability follow-up (2026-11-03); continue here.
 Owner authorizes scoped fixes/QA/review/local commit; retains push/CI.
 Details: docs/t030-macos-ci-investigation.md; T-030 remains unchecked.
 
 ## Latest actual-candidate CI
-Run41602840009/attempt1/exact1d07b3e: Windows and Ubuntu full checks pass.
-macOS1251 units/17 platform skips and all79 hosts pass, then console gate fails.
-12 Chromium GPU errors: six missing overlay mailboxes and six invalid mailboxes.
-All194 D-5 stages close; errors177ms after final cleanup, next split test active.
-No demonstrated closure defect or GPU cause; no renderer/fixture toggle adopted.
-All4 JSON/JSONL1/5GB and both CSV1/5GB full-data/hash/memory/timer checks pass.
-HOST-001 warning:20261103T082559/window1/renderer.log:15; NOT warning-free.
-Supplied log/hash/metadata retained; zero artifacts, raw runner logs unavailable.
+Run41611740185/attempt1/exact05eb47c: Windows and Ubuntu full checks pass.
+macOS1267 units/17 platform skips;78 hosts pass/one JSON5GB timer failure.
+Raw114.567291ms importing/reading;165us CPU, no retained callback/GC overlap.
+Dropped/untracked observations and zero ELU counters do not establish cause.
+JSON1GB full checks and CSV1/5GB full-data/hash/memory/paging checks pass.
+JSON5GB full-data/memory/post-hash and both JSONL sizes are not reached.
+No GPU error or approved warning in supplied logs; three failed-test log errors.
+Upload succeeds:19 files,45004-byte ZIP; verified digest/inventory retained.
 
-## Scoped evidence-retention candidate
-Mac/exact diagnostic flag1: failed host saves existing merged decoded console.
-Success/default/other platforms do not request a transcript; all errors still fail.
-wx preserves prior evidence; write failure keeps original first in message/causes.
-Failure-only macOS upload retains only isolated console/logs for7 days.
-Official upload-artifact7.0.2 MIT pinned SHA; no npm/runtime dependency added.
-All original run commands/matrix/timeout/permissions/Node/install rules retained.
-Red11fail/41pass and sync-launch missing-transcript red retained; focused64/4 PASS.
-Independent review clear; verify1284/124 PASS, zero warnings/errors,388 frozen hashes.
+## Scoped capability candidate
+Local utility-host calibration has loopStart=-1/ELU0; standalone control advances.
+Same bundled Node24.21/Electron43.7.3 on Windows; macOS state remains unknown.
+Calibration HOST-001/20261103T182334/window1/renderer.log:10; NOT warning-free.
+Mac-only diagnostics add two raw ELU/loop-start endpoints for the largest gap.
+Unset/valid-zero/invalid states explicit; no new timer/IO or duration adjustment.
+All existing numeric fields, bounds and Windows/Linux sampling remain unchanged.
+Red11fail/11pass; focused43/3; review clear; standalone1299/124 PASS, zero diagnostics.
+Windows79hosts/loggate PASS;388 tracked hashes frozen in both verification runs.
 
 ## Retained evidence / limits
-Prior Windows full1268 units/124 files+79 hosts passes with388 frozen hashes.
-Its HOST-001/20261103T154804/window1/renderer.log:10 remains NOT warning-free.
+Windows host HOST-001/20261103T184339/window1/renderer.log:10; NOT warning-free.
+Earlier Windows full1268/124+79hosts passes; its HOST-001 remains recorded.
 Earlier GC102ms, CSV watchdogs and macOS watcher/GPU causes remain unproved.
-Windows GC metadata, bounded CSV slots and stderr capture remain unchanged.
+Windows GC metadata, bounded CSV slots, stderr and artifact capture unchanged.
 Prior light/dark/int64/NULL/empty/BLOB/staging/explicit-save visual QA retained.
-No new physical macOS QA or GPU repair claim; missing-files upload also fails.
+No physical macOS QA, proven timer/GPU repair or task completion claim.
 
 ## Preserved work / next evidence
-Preserve owner README/PLAN/TASKS/VALIDATION hunks and unrelated untracked files.
+Preserve owner README/PLAN/TASKS/VALIDATION hunks, supplied ZIP and other files.
 No product/UI/renderer/workload/scanner change; no unchanged retry to seek green.
-Owner pushes reviewed candidate/runs CI; inspect retained macOS artifacts if it fails.
+Owner retains push/CI; T-030 still requires actual-candidate platform acceptance.

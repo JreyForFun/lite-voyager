@@ -7,10 +7,33 @@ import { captureWindowsGcContext, type WindowsGcContext } from './windows-gc-dia
 interface Span { from: number; to: number; milliseconds: number; }
 interface GcSpan extends Span { windows?: WindowsGcContext; }
 interface CallbackSpan extends Span { type: string; }
-interface SchedulingSnapshot { active: number; idle: number; voluntary: number; involuntary: number; }
-interface SchedulingDelta { eventLoopActiveMs: number; eventLoopIdleMs: number; voluntaryContextSwitches: number; involuntaryContextSwitches: number; }
+type EventLoopField = 'loopStartMs' | 'activeMs' | 'idleMs';
+interface EventLoopCounters {
+  status: 'reported' | 'loop-start-unset' | 'invalid';
+  loopStartMs: number | null; activeMs: number | null; idleMs: number | null;
+  invalidFields: readonly EventLoopField[];
+}
+interface SchedulingSnapshot { active: number; idle: number; voluntary: number; involuntary: number; eventLoop?: EventLoopCounters; }
+interface SchedulingDelta {
+  eventLoopActiveMs: number; eventLoopIdleMs: number; voluntaryContextSwitches: number; involuntaryContextSwitches: number;
+  eventLoop?: { from: EventLoopCounters; to: EventLoopCounters };
+}
 interface IntervalSpan extends Span { fromPhase: string; toPhase: string; processCpuUserUs: number; processCpuSystemUs: number; scheduling?: SchedulingDelta; }
 interface Cpu { user: number; system: number; }
+
+/** Raw capability evidence only. A reported zero does not establish idleness. */
+export function describeEventLoopCounters(loopStart: unknown, active: unknown, idle: unknown): EventLoopCounters {
+  const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+  const loopStartMs = finite(loopStart) ? loopStart : null;
+  const activeMs = finite(active) && active >= 0 ? active : null;
+  const idleMs = finite(idle) && idle >= 0 ? idle : null;
+  const invalidFields: EventLoopField[] = [];
+  if (loopStartMs === null) { invalidFields.push('loopStartMs'); }
+  if (activeMs === null) { invalidFields.push('activeMs'); }
+  if (idleMs === null) { invalidFields.push('idleMs'); }
+  const status = invalidFields.length > 0 ? 'invalid' : loopStartMs !== null && loopStartMs <= 0 ? 'loop-start-unset' : 'reported';
+  return { status, loopStartMs, activeMs, idleMs, invalidFields };
+}
 
 /** Evidence only: callers supply the same raw timestamps used by their guard. */
 export class HostIntervalTrace {
@@ -40,6 +63,9 @@ export class HostIntervalTrace {
       eventLoopActiveMs: nextScheduling.active - previousScheduling.active, eventLoopIdleMs: nextScheduling.idle - previousScheduling.idle,
       voluntaryContextSwitches: nextScheduling.voluntary - previousScheduling.voluntary,
       involuntaryContextSwitches: nextScheduling.involuntary - previousScheduling.involuntary,
+      ...(previousScheduling.eventLoop === undefined || nextScheduling.eventLoop === undefined ? {} : {
+        eventLoop: { from: previousScheduling.eventLoop, to: nextScheduling.eventLoop },
+      }),
     };
     const interval = { from, to, milliseconds: to - from, fromPhase, toPhase,
       processCpuUserUs: current.user - this.previousCpu.user, processCpuSystemUs: current.system - this.previousCpu.system,
@@ -91,7 +117,8 @@ export function startHostIntervalDiagnostics(enabled: boolean, platform: NodeJS.
   if (!enabled) { return undefined; }
   const trace = new HostIntervalTrace(() => process.cpuUsage(), 128, () => {
     const loop = performance.eventLoopUtilization(); const usage = process.resourceUsage();
-    return { active: loop.active, idle: loop.idle, voluntary: usage.voluntaryContextSwitches, involuntary: usage.involuntaryContextSwitches };
+    return { active: loop.active, idle: loop.idle, voluntary: usage.voluntaryContextSwitches, involuntary: usage.involuntaryContextSwitches,
+      ...(platform === 'darwin' ? { eventLoop: describeEventLoopCounters(performance.nodeTiming.loopStart, loop.active, loop.idle) } : {}) };
   });
   const sink = channel(IMPORT_HOST_CHANNEL);
   const operation = (value: unknown): void => { if (isImportHostSpan(value)) { trace.operation(value); } else { trace.noteUntrackedResources(1); } };

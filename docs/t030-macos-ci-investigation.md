@@ -1,4 +1,92 @@
-# T-030: macOS GPU failure and retained-log reporting
+# T-030: macOS CI investigation
+
+## Run41611740185: populated JSON timer failure and runtime capability (2026-11-03)
+
+Public REST confirms attempt1 at exact05eb47c9d4455b5f9892f4c9eff17424b79a1ea8.
+Windows125835060430 and Ubuntu125835060541 pass locked installs/applicable full
+verification. Raw logs for those jobs are not retrieved; no warning-free claim.
+macOS125835060014 passes1267 units/17 existing platform skips across123 passed
+files/one skipped file, build/package, then78 host tests pass and one fails:
+5-GB JSON import records114.56729099998483ms against the original100ms guard.
+All T-030 staged-edit hosts pass. No GPU error occurs in the supplied transcript.
+The earlier GPU failures remain unexplained; absence here does not repair them.
+
+The failure interval is190056.27175–190170.839041ms, at6134.179958ms from timer
+start, with both endpoints importing/reading. Process CPU deltas are107us user
+and58us system; voluntary/involuntary switch deltas0/5. Retained overlapping
+callbacks/GC/operations are empty, but393 dropped operations and405 untracked
+resources make that evidence incomplete. No product blockage, native wait or
+OS scheduling cause is established. The completed import/row/byte assertions
+precede the timer failure. Subsequent5-GB full-data/memory/post-source-hash checks
+and both JSONL sizes are not reached. JSON1GB completes all its checks with
+17.641541ms maximum, sampled combined peak272695296 bytes and matching source.
+Both CSV1/5GB full-data/hash/memory/60Browse+20SQL checks pass. Their host timer
+maxima are19.37675/26.356542ms. No assertion, workload or deadline is relaxed.
+
+The failure-only upload succeeds. Owner-supplied archive has19 entries,45004
+bytes, SHA2568ec9c1c58554a1a4f2ba22eecd09fe4ffcef1397bc97480f0b21737da5fe3d66,
+matching GitHub artifact13220290706, macos-verification-diagnostics-41611740185-1.
+Its console transcript is122357 bytes plus18 runtime logs. Safe extraction and
+per-entry hashes are under out/t030-macos-41611740185-artifact and -inspection.json.
+All saved severities are three errors caused by the failed test: exthost.log:10
+and renderer.log:1049/1050 under20261103T093434/window1. No saved severity warning
+or approved warning family is present. This full remains FAILED, not clean.
+The pasted verify log is148660 bytes, SHA256
+491736b326eb7793734d1e830a873c8c52b94003f9851382dc92361b7bb2b635,
+retained as out/t030-macos-41611740185.log; REST metadata and388-file baseline
+are matching -metadata.json/-before.json. Preserve the owner ZIP untracked.
+
+Independent read-only causal review finds no demonstrated product defect.
+It identifies a diagnostic limitation: zero ELU deltas lack cumulative endpoints
+and initialization state. [Node24.21 source](https://raw.githubusercontent.com/nodejs/node/v24.21.0/lib/internal/perf/event_loop_utilization.js)
+returns zero counters when the loop-start milestone is unset. A separate local
+one-turn calibration on actual Windows VS Code1.140.0 utility host, embedded
+Node24.21.0/Electron43.7.3, records loopStart=-1 and all-zero ELU at both ends.
+The ordinary80ms timer takes135.7963ms wall time; it has no responsiveness PASS
+claim or import workload. Matched executable in ELECTRON_RUN_AS_NODE mode starts
+with loopStart=-1, then reports55.1496ms loopStart,85.0012ms idle/0.7836ms active.
+This demonstrates a Windows embedding limitation, not the failed macOS state.
+Evidence: out/t030-macos-elu-calibration-host.log/-status.json and -node.log.
+The host calibration is NOT warning-free: approved VSCODE-HOST-001, severity
+warning,20261103T182334/window1/renderer.log:10, exact signed-out GitHub message.
+
+The scoped diagnostic change adds only macOS raw ELU/loop-start endpoints around
+the retained largest interval. Status distinguishes an unset milestone from
+reported values and invalid data. Valid zeros stay reported, never proof of
+idleness; invalid values become explicit nulls with fixed field names. Getter
+failures propagate. Only the two endpoints of the retained largest interval are
+reported, with no new timer, history, file IO, retry or profiler in the measured
+path. Instrumentation can affect timing; it cannot establish historical cause.
+Existing numeric fields,
+timers, CPU/context deltas, bounds, GC handling and non-macOS sampling remain.
+No product/UI/renderer/workflow/dependency change or proven timer repair.
+Files: src/test/host-interval-diagnostics.ts; its unit test; PROGRESS.md; this report.
+Red-first11fail/11pass is retained in out/t030-macos-elu-red-1.log; focused43/3
+and initial tooling types/scoped lint pass. Independent implementation review is
+clear. Final literal npm run verify passes1299 units/124 files, all types/lint/
+build/package, zero warnings/errors,774.301s. All388 tracked-file hashes remain
+unchanged throughout. Evidence: out/t030-macos-elu-verify-1.log and matching
+-status/-before/-after.json.
+
+One subsequent current-candidate Windows regression runs integration compilation
+and canonical scripts/integration-check.mts with the existing CI diagnostic
+wrapper/identity collector:79 hosts and strict runtime logs PASS,2123.607s,
+all388 tracked-file hashes unchanged. This is staged validation following the
+standalone gate, not a new literal verify:full invocation or macOS execution.
+It is NOT warning-free: one VSCODE-HOST-001, severity warning,
+20261103T184339/window1/renderer.log:10,
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+All four JSON/JSONL full-data/hash/memory checks pass: raw maxima58.7579/57.4645/
+42.9446/44.435ms, combined sampled peaks298594304–302563328 bytes. Both CSV sizes
+pass complete data/source hashes,60Browse+20SQL pages and memory; raw maxima
+57.04/46.2642ms, peaks319930368/320106496, actual paging growth34832384/32837632.
+Both ten-million-row SQLite sizes pass hashes/data/paging/memory. Renderers remain
+reported separately; no physical paint or unsampled-peak claim. Evidence:
+out/t030-macos-elu-host-1.log/-status/-before/-after.json and -host-evidence.json.
+No unchanged failed-workload retry is run. Final audits allow only this report
+and PROGRESS updates after the gates and preserve all owner files/archive bytes.
+T-030 remains unchecked; actual macOS capability/cause and current-candidate
+three-platform CI are still unknown. Owner retains push/CI.
 
 ## Run41602840009: recurrent macOS GPU errors (2026-11-03)
 

@@ -2,7 +2,66 @@ import { performance } from 'node:perf_hooks';
 import { channel } from 'node:diagnostics_channel';
 import { IMPORT_HOST_CHANNEL, traceHostSync } from '../../src/import-host-diagnostics';
 import { expect, test, vi } from 'vitest';
-import { HostIntervalTrace, startHostIntervalDiagnostics } from '../../src/test/host-interval-diagnostics';
+import { describeEventLoopCounters, HostIntervalTrace, startHostIntervalDiagnostics } from '../../src/test/host-interval-diagnostics';
+
+test.each([-1, 0])('NFR-005: Given an unset loop-start marker %s and zero counters, When describing runtime evidence, Then zeros are labelled uninitialized rather than idle', (loopStartMs) => {
+  expect(describeEventLoopCounters(loopStartMs, 0, 0)).toEqual({ status: 'loop-start-unset', loopStartMs, activeMs: 0, idleMs: 0, invalidFields: [] });
+});
+
+test('NFR-005: Given initialized but zero counters, When describing runtime evidence, Then valid zero observations remain reported without inferring runtime support or idleness', () => {
+  expect(describeEventLoopCounters(1, 0, 0)).toEqual({ status: 'reported', loopStartMs: 1, activeMs: 0, idleMs: 0, invalidFields: [] });
+});
+
+test.each([
+  [undefined, 2, 3, 'loopStartMs'], [Number.NaN, 2, 3, 'loopStartMs'], [1, Number.POSITIVE_INFINITY, 3, 'activeMs'],
+  [1, -1, 3, 'activeMs'], [1, 2, Number.NEGATIVE_INFINITY, 'idleMs'], [1, 2, -1, 'idleMs'],
+])('NFR-005: Given invalid runtime counter values (%s,%s,%s), When describing evidence, Then the invalid field is explicit and never replaced with zero', (loopStartMs, activeMs, idleMs, field) => {
+  const evidence = describeEventLoopCounters(loopStartMs, activeMs, idleMs);
+  expect(evidence.status).toBe('invalid'); expect(evidence.invalidFields).toEqual([field]);
+  expect(evidence).toHaveProperty(field, null); expect(JSON.stringify(evidence)).toContain('null');
+});
+
+test('NFR-010: Given several malformed capability values containing private text, When evidence is described, Then only fixed field names and explicit nulls can be retained', () => {
+  const evidence = describeEventLoopCounters('private.csv SELECT password', undefined, Number.NaN);
+  expect(evidence).toEqual({ status: 'invalid', loopStartMs: null, activeMs: null, idleMs: null, invalidFields: ['loopStartMs', 'activeMs', 'idleMs'] });
+  expect(JSON.stringify(evidence)).not.toContain('private');
+});
+
+test('NFR-005: Given disabled macOS diagnostics, When initialized, Then no event-loop observation occurs and an observation failure is never converted into a clean result', () => {
+  const loop = vi.spyOn(performance, 'eventLoopUtilization').mockImplementation(() => { throw new Error('capability read failed'); });
+  try {
+    expect(startHostIntervalDiagnostics(false, 'darwin')).toBeUndefined(); expect(loop).not.toHaveBeenCalled();
+    expect(() => startHostIntervalDiagnostics(true, 'darwin')).toThrow('capability read failed');
+  } finally { loop.mockRestore(); }
+});
+
+test('NFR-005: Given raw cumulative endpoints around several intervals, When the largest changes, Then only its adjacent endpoints are retained with the original duration and deltas', () => {
+  const snapshots = [
+    { active: 10, idle: 20, voluntary: 1, involuntary: 2, eventLoop: { status: 'reported' as const, loopStartMs: 1, activeMs: 10, idleMs: 20, invalidFields: [] } },
+    { active: 15, idle: 126, voluntary: 2, involuntary: 3, eventLoop: { status: 'reported' as const, loopStartMs: 1, activeMs: 15, idleMs: 126, invalidFields: [] } },
+    { active: 18, idle: 132, voluntary: 3, involuntary: 4, eventLoop: { status: 'reported' as const, loopStartMs: 1, activeMs: 18, idleMs: 132, invalidFields: [] } },
+    { active: 23, idle: 277, voluntary: 4, involuntary: 6, eventLoop: { status: 'reported' as const, loopStartMs: 1, activeMs: 23, idleMs: 277, invalidFields: [] } },
+  ] as const;
+  const [first, second, third, fourth] = snapshots; let index = 0;
+  const trace = new HostIntervalTrace(() => ({ user: 0, system: 0 }), 2, () => snapshots[index++] ?? snapshots[3]);
+  trace.sample(10, 121, 'reading', 'reading'); trace.sample(121, 130, 'reading', 'reading');
+  expect(trace.result().largest?.scheduling).toMatchObject({ eventLoop: { from: first?.eventLoop, to: second?.eventLoop } });
+  trace.sample(130, 280, 'reading', 'reading');
+  expect(trace.result().largest).toMatchObject({ from: 130, to: 280, milliseconds: 150,
+    scheduling: { eventLoopActiveMs: 5, eventLoopIdleMs: 145, voluntaryContextSwitches: 1, involuntaryContextSwitches: 2,
+      eventLoop: { from: third?.eventLoop, to: fourth?.eventLoop } } });
+});
+
+test.each(['win32', 'linux'] as const)('NFR-005: Given %s diagnostics, When sampling and stopping, Then the established scheduling record has no added macOS capability fields', (platform) => {
+  const live = startHostIntervalDiagnostics(true, platform); live?.sample(0, 1, 'reading', 'reading');
+  expect(live?.stop().largest?.scheduling).not.toHaveProperty('eventLoop');
+});
+
+test('NFR-005: Given macOS diagnostics, When sampling and stopping, Then the largest interval includes the raw runtime capability endpoints', () => {
+  const live = startHostIntervalDiagnostics(true, 'darwin'); live?.sample(0, 1, 'reading', 'reading');
+  const evidence = live?.stop().largest?.scheduling;
+  expect(evidence).toHaveProperty('eventLoop.from.loopStartMs'); expect(evidence).toHaveProperty('eventLoop.to.loopStartMs');
+});
 
 test('NFR-005: Given named synchronous and await spans around an over-limit interval, When the bounded trace is sampled, Then original raw time and both distinct scopes remain intact', () => {
   const trace = new HostIntervalTrace(() => ({ user: 0, system: 0 }), 2);
