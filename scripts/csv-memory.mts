@@ -1,7 +1,8 @@
 import { execFile } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { basename, extname } from 'node:path';
+import { basename, dirname, extname, resolve } from 'node:path';
 import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
 const requireLocal = createRequire(import.meta.url);
 const { memorySample, parseProcessTable } = requireLocal('../out/integration/test/sqlite-memory-support.js') as typeof import('../src/test/sqlite-memory-support');
@@ -18,15 +19,21 @@ const started = performance.now(); const execute = promisify(execFile);
 // https://learn.microsoft.com/dotnet/api/system.diagnostics.process.workingset64
 // https://learn.microsoft.com/dotnet/api/system.diagnostics.process.getprocessesbyname
 const name = basename(process.execPath, extname(process.execPath));
+let diagnostics: Awaited<ReturnType<typeof import('../src/test/csv-native-diagnostics')['createCsvNativeDiagnostics']>>;
 try {
   if (process.platform === 'win32') {
     const cache = new ProcessMemoryCache();
-    const native = windowsCsvMemoryScript(name);
+    let native = windowsCsvMemoryScript(name);
+    if (process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1') {
+      const { createCsvNativeDiagnostics, instrumentCsvNativeScript } = requireLocal('../out/integration/test/csv-native-diagnostics.js') as typeof import('../src/test/csv-native-diagnostics');
+      diagnostics = await createCsvNativeDiagnostics(resolve(dirname(fileURLToPath(import.meta.url)), '../out'), process.platform, '1');
+      if (diagnostics !== undefined) { native = instrumentCsvNativeScript(native, diagnostics.path); }
+    }
     await observeProcessLines('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(native, 'utf16le').toString('base64')], async (line) => {
       const counters = parseNativeCounters(line);
       const rows = await cache.merge(counters, (items) => Promise.resolve(counters.filter((counter) => items.some((item) => item.pid === counter.pid && item.stamp === counter.stamp))));
       process.stdout.write(`${JSON.stringify(memorySample(rows, hostPid, performance.now() - started))}\n`);
-    }, abort.signal, 20000, 3000, true);
+    }, abort.signal, 20000, 3000, true, diagnostics !== undefined);
   } else {
     while (!abort.signal.aborted) {
       const result = await execute('ps', ['-axo', 'pid=,ppid=,rss=,command='], { timeout: 3000, maxBuffer: 4 * 1024 * 1024, signal: abort.signal });
@@ -37,5 +44,13 @@ try {
   }
 } catch (error: unknown) {
   const expectedAbort = abort.signal.aborted && error instanceof Error && error.name === 'AbortError';
-  if (!expectedAbort) { process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`); process.exitCode = 1; }
+  if (!expectedAbort) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (diagnostics === undefined) { process.stderr.write(`${message}\n`); }
+    else {
+      const { reportCsvNativeFailure } = requireLocal('../out/integration/test/csv-native-diagnostics.js') as typeof import('../src/test/csv-native-diagnostics');
+      await reportCsvNativeFailure(message, diagnostics);
+    }
+    process.exitCode = 1;
+  }
 } finally { process.stdin.pause(); }

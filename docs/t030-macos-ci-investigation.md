@@ -1,5 +1,349 @@
 # T-030: macOS GPU failure and retained-log reporting
 
+## Run41477363734: Windows JSONL timer investigation (2026-11-03)
+
+Public REST confirms attempt1/exact0da70fb064d6ba920055618159d28a60d15b4fd4.
+macOS job125386353753 and Ubuntu job125386354401 pass locked install/full.
+Their raw logs/warning counts are not retrieved; no warning-free remote claim.
+Windows job125386354542 passes1212 units/120 files, types/lint/build/package,
+then78 hosts pass and the populated JSON/JSONL memory host fails:
+
+```text
+AssertionError [ERR_ASSERTION]: JSON host timer gap 102.45370000001276ms
+```
+
+This is the JSONL1GB case, not the two earlier JSON cases (69.3425/53.0275ms,
+both with complete data/source/memory checks). JSONL1GB import/row/byte assertions
+complete before its unchanged100ms timer guard fails; its later SQL/source/memory
+assertions and JSONL5GB are not reached. All original tests and guards remain.
+Saved errors at20261102T160634/window1/exthost/exthost.log:10 and renderer.log:1053–1054
+report that failed assertion; no independent runtime cause is inferred from them.
+The exact approved record is severity warning, source
+20261102T160634/window1/renderer.log:15, VSCODE-HOST-001:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This failed full is NOT warning-free. No macOS watcher probe runs on Windows.
+
+Metadata: out/t030-ci-41477363734-metadata.json; no remote artifacts available.
+Byte-identical supplied log: out/t030-ci-41477363734-windows.log, SHA256
+9a35f4bb9d43e8c9cd6e585eb97271d2548139d390bbabeb587e1de1a74804f9.
+The original largest interval334287.7364–334390.1901ms overlaps GC
+334287.8878–334390.0292ms (102.1414ms) and an asynchronous helper-marker
+registration span334287.5873–334390.5705ms. CPU deltas are0 user/16000 system
+microseconds; scheduling deltas are0 and the trace reports truncated/untracked
+resources. Empty callback arrays are not proof of no callback work.
+
+Source ordering and independent read-only review show the helper's empty PID
+marker is awaited before its import request is sent; this import's JSON parsing
+has not begun during that interval. The marker write is asynchronous; its await
+duration includes GC/scheduling time. Source hashing reuses one1MiB buffer,
+fixture generation is external, preview workers terminate, and diagnostic/session
+retention is bounded with explicit cleanup. No demonstrated allocation/retention
+defect supports changing the parser, storage ordering or product saves. The GC
+overlap does not identify its kind, flags, allocation trigger or historical cause.
+
+The candidate fills only that Windows diagnostic gap. Existing opt-in GC spans
+retain raw start/end/duration and additionally copy native detail.kind/flags,
+monotonic delivery time and six selected heap counters at delivery. Heap at
+delivery is not GC-start heap or allocation provenance. Unknown/private fields
+are discarded. Unavailable metadata counts as untracked evidence while the raw
+span survives. Existing128-entry bounds, dropped counts and stop/drain/cleanup
+semantics remain. There is no additional observer, forced GC or adjusted clock.
+
+macOS/Linux take the original plain-span branch: no GC-detail, heap or delivery-
+clock reads. Disabled diagnostics initialize no observer. Canonical launch,
+seven warning families, console scanner, workflow, all tests/workloads/deadlines,
+product sources/dependencies and owner edits remain unchanged. Current Windows
+CI remains failed; a local passing diagnostic cannot clear it or prove a repair.
+
+Failing-first tests: missing module in out/t030-windows-gc-red-1.log; then the
+old recorder drops metadata (1fail/15pass), out/t030-windows-gc-red-2.log.
+Initial focused53/5 and tooling types/scoped lint pass. Independent review finds
+no concrete defect and requests observer callback/queued-drain coverage; those
+tests plus missing metadata/raw-span retention, stable repeated stop and direct
+macOS/Linux/disabled no-observation checks pass in focused57/6.
+Final focused57/6 after removing non-Windows per-event metadata calls/empty-spread
+allocation is out/t030-windows-gc-focused-final.log. Final independent review
+finds no blocking defect. Final candidate gate results and limits follow below.
+
+The API fields are checked against installed Node24 types and the official
+[Node24 GC-detail documentation](https://nodejs.org/docs/latest-v24.x/api/perf_hooks.html#garbage-collection-gc-details).
+The nondeprecated detail fields avoid kind/flags getter deprecations. An embedded
+Node24.21 standalone cost probe captures10000 valid records in21.6829ms,
+average0.00216829ms, maximum observed1.1849ms; stderr is empty. This is a local
+cost observation, not a future timing bound, responsiveness gate or GC-pause
+reproduction. Evidence: out/t030-windows-gc-overhead-2.json. The first PowerShell
+GUI-executable redirection produced an empty capture; no pass is claimed from it.
+
+One separate Windows diagnostic runs the two unchanged populated JSON tests,
+including ten-million-row and1/5GB workloads, with an additional bounded GC
+observer and startup heap snapshots. It retains every original assertion and
+raw100ms guard; it is not canonical verification or a retry-to-green. Evidence:
+out/t030-windows-gc-probe-1.log and -status.json. Both tests pass on Windows1.140.0/
+embedded Node24.21.0;18m host suite, UTC01:53:26.671Z–02:11:24.459Z on2026-11-03.
+Four populated-case raw maxima: JSON1GB57.0476ms/5GB35.1063ms, JSONL1GB46.5626ms/
+5GB40.6034ms. Source hashes/full-data/memory checks pass in all four cases;
+combined sampled peaks255410176–259194880 bytes, renderer reported separately.
+The28 extra GC/startup records have no drops; largest observed GC24.9033ms.
+It does NOT reproduce the102.4537ms CI gap or identify its kind/allocation cause.
+One approved severity-warning record:20261103T095331/window1/renderer.log:11,
+VSCODE-HOST-001, exact signed-out CloudSandboxApi message quoted above.
+It is not warning-free. Its paths/heap/GC events belong to that separate run,
+not the failed CI; generated data are warm and memory is sampled, not a cold-
+disk/physical-paint or unsampled-peak guarantee. Current task stays T-030; owner
+retains push/CI, and historical timing/watcher/GPU failures remain explicit.
+
+### Frozen candidate gates and CSV follow-up
+
+Literal standalone `npm run verify` passes1232 units/122 files, strict types,
+lint, production build and35-file1012.28-KB package, zero errors/warnings.
+Evidence: out/t030-windows-gc-verify-1.log, -before.json, -after.json and
+-status.json;730.452s, all385 captured tracked/task-new hashes unchanged.
+
+One changed-candidate literal `npm run verify:full` with the workflow's diagnostic
+flag FAILS after1232 units/122 files pass and77 hosts pass/2 fail;2824.321s,
+all385 hashes unchanged. Evidence: out/t030-windows-gc-full-1.log and matching
+before/after/status files; minimum VS Code1.140.0, embedded Node24.21.0.
+All four populated JSON/JSONL cases complete full data/source-hash/memory checks:
+JSON1GB/5GB raw maxima47.8217/91.7948ms, sampled peaks295931904/298942464 bytes;
+JSONL1GB/5GB49.8393/57.5140ms, peaks295505920/290734080 bytes. The original100ms
+guard passes in each. Both ten-million-row full-data/hash cases pass too.
+These local results do not reproduce or repair the failed CI's102.4537ms gap.
+The four largest-interval records have no overlapping GC event and report
+untracked/truncated evidence; no complete callback or historical-cause claim.
+
+The two failures are the unchanged Windows CSV observer:
+- Calibration: `OS observer startup exceeded 20000 ms; stage=waiting for first snapshot; snapshots=0.`
+- Populated CSV1GB: `OS observer snapshot exceeded 3000 ms; stage=waiting for next snapshot; snapshots=42.`
+Its later data/source/memory/paging checks and5GB CSV are not reached. Do not
+report those workloads as passing. Strict saved-log validation rejects the
+resulting error `2 tests failed.` at20261103T104137/window1/renderer.log:1052.
+The sole approved record is severity warning, VSCODE-HOST-001, at the same file
+line10, exact signed-out CloudSandboxApi message quoted above. Full is NOT
+warning-free and remains failed. No unchanged full retry is run.
+
+Independent read-only review confirms all eight CSV sampler/support/test files
+match the before-study baseline. The active native sampler has identity-pruned
+metadata caching, refreshed RSS, original-handle metadata ordering and normal-path
+disposal. The new GC capture is not invoked on the CSV observer path; JSON GC
+observers disconnect at stop. Startup0 shows no first complete native stdout
+snapshot within20s. Snapshot42/waiting-next shows that snapshot's JS processing
+finished, then no next complete native line within3s. The log cannot distinguish
+PowerShell/CIM initialization, process enumeration, metadata/counter reads, OS
+scheduling or pipe delivery. No demonstrated defect supports a sampler repair,
+deadline change, product edit or passing-platform change.
+
+Separate ignored native-boundary probes retain original20s/3s watchdogs; they
+cannot clear the failed full. Stable owned-helper probe completes60 snapshots,
+first8.6038632s, maximum later gap905.291ms, empty child stderr. Its sidecar caps
+at512 and truncates;21 first-discovery metadata calls total6468.1052ms. Evidence:
+out/t030-csv-native-probe-1-result.json, -native.jsonl and
+out/t030-csv-native-probe-summary.json. Instrumented native collection/sidecar
+writes add observation cost; these are local measurements, not future bounds.
+
+The original one-million-row CSV calibration in a separate isolated1.140 host
+then passes39 snapshots/import-helper/renderer coverage, maximum gap1350.0078ms,
+40.255s test;377 native records below2048 cap. Its first native flush is11.9016s
+after the native clock starts;32 metadata calls total10906.419ms. Evidence:
+out/t030-csv-native-host-2.log/-status.json and
+out/t030-csv-native-host-9804.jsonl. No watchdog failure is reproduced. The sole
+approved severity-warning HOST-001 is20261103T112619/window1/renderer.log:9,
+exact signed-out CloudSandboxApi message; this probe is NOT warning-free.
+
+Retain the preceding failed diagnostic fixture, out/t030-csv-native-host-1.log/
+-status.json: a relative-to-host-CWD script path fails before native observation,
+not a sampler reproduction. Corrected paths are module-relative only in ignored
+probe files. Its error `1 test failed.` is renderer.log:45 in20261103T112526;
+approved severity-warning records there: HOST-002 line2/chatLanguageModelsData23ms,
+HOST-004 line3/chatPetContext21ms and HOST-001 line11/exact signed-out message.
+It is NOT a passing or warning-free probe.
+
+The system-log query succeeds with no matching Kernel-Power42/107/506/507 in
+the full gate window10:29:42–11:16:47+08:00; exact query/result retained in
+out/t030-csv-power-events-query.json. A WMI5858 query around the failures initially displays many
+ClientProcessId22760/ResultCode0x80041032 records; output truncates and exact count/
+raw event file are not retained. Later identity lookup returns no row. A repeat
+event query finds no entries for that window; oldest available is then11:18:05,
+after it. No client identity, sampler relation or cause is established. Evidence:
+out/t030-csv-system-events-observations.json. Do not change or stop owner processes.
+
+At that frozen full gate, scope is six project files, Windows diagnostic context/tests and
+these progress records only. Independent preliminary audit compares all382 old
+tracked hashes: only host-interval-diagnostics.ts and these two records differ;
+three new helper/test files are expected. Owner edits, Mac/Linux branches,
+original workloads/deadlines, launch/scanners/workflow/product remain unchanged.
+No full-pass, repaired-CI, task-closure or ready-to-push claim is justified.
+
+### Windows CSV native checkpoint follow-up
+
+Owner answers "Not sure" about process monitoring around the two local CSV
+failures. Keep WMI activity/client identity unattributed; do not alter or stop
+owner processes. Independent design review supports bounded native observation,
+not a speculative sampler repair. The new follow-up changes scripts/csv-memory.mts
+and adds src/test/csv-native-diagnostics.ts plus its unit test. Alongside the
+existing GC candidate and two records, that initial scope was nine project files.
+
+Only Windows with existing LITE_VOYAGER_INTERVAL_DIAGNOSTICS exactly1 loads the
+new helper. Off/other flags do not require it; macOS/Linux retain their original
+ps branch. The native script retains original counter/metadata functions and
+snapshot stdout, stderr failure, acknowledgment and20s/3s watchdogs. Instrumented
+source structure must match exactly or fail collection. No workflow, warning
+allowance, product, workload, raw timer or memory assertion changes.
+
+Fixed begin/end markers cover warm CIM, process enumeration, each uncached
+metadata PID and the aggregate counter batch. A unique owned directory under
+repository out/csv-native-* initially retained checkpoint.json and at most one
+incomplete checkpoint.json.tmp. This replacement design later fails in the
+native probe documented below and is superseded by two alternating slots.
+The last16 markers and up to two active nested operations stay below16384 bytes
+per file, with sequence and dropped counts.
+Fields are fixed labels, numeric PIDs/counts and native Stopwatch elapsed times;
+no commands, paths, source data or arbitrary diagnostic strings enter context.
+Before the first marker, native bootstrap remains unobserved. Writes themselves
+add cost inside measured native work; a latest marker cannot establish OS cause.
+The File.Replace and PowerShell NullString APIs are checked against Microsoft
+[File.Replace](https://learn.microsoft.com/dotnet/api/system.io.file.replace?view=netframework-4.8.1)
+and [NullString](https://learn.microsoft.com/dotnet/api/system.management.automation.language.nullstring) documentation and actual PowerShell.
+
+After failed native termination, the original error is emitted before checkpoint
+reading. Supplemental waiting is capped at1000ms; malformed, unavailable or late
+context explicitly means unknown and cannot replace the original error/status.
+The read has a16385-byte buffer for rejecting over-limit evidence. Its reporting
+deadline does not cancel an underlying filesystem request or guarantee sampler
+exit at1s; original outer5s forced cleanup remains the final process bound.
+Full/truncated history is checked by reverse active-stack replay; no omitted-
+prefix reconstruction or cause claim. Original failures remain failures.
+
+Test-first missing-module/reporting/disabled-module and reviewer findings are
+retained in out/t030-csv-native-red-*.log. Initial focused native fixture,
+serialization and null-string failures are retained in focused-1 through-3;
+all are corrected without assertion/deadline changes. Review regressions first
+show7fail/20pass, then focused-7 passes45 tests/four files, including the eleven
+unchanged Windows native lifecycle scenarios and unchanged metadata/phase cases.
+Coverage includes opt-out/non-Windows, unique ownership, byte/ring bounds,
+private-field discard, latest active metadata after44 markers/28 dropped,
+unchanged counters/original CIM error, contradictory history, immediate original
+error and a never-resolving reader. Final tooling types/scoped lint/integration
+compilation pass; follow-up independent review finds no blocking defect.
+
+One scoped original CSV calibration against this reviewed checkpoint candidate
+passes37 snapshots/import-helper/renderer coverage, maximum gap1357.2722ms,
+46.267s test. Evidence: out/t030-csv-checkpoint-1.log/-status.json. Its retained
+checkpoint is1349 bytes,214 markers/198 dropped/16 retained/active empty, final
+counter-end marker, no temporary file; out/t030-csv-checkpoint-state.json records
+path/hash. Sole approved severity-warning HOST-001 is
+20261103T120158/window1/renderer.log:9, exact signed-out CloudSandboxApi message.
+This scoped run is NOT warning-free and cannot clear the failed full or CI.
+It does not reproduce either watchdog failure or identify their native stage.
+That reviewed checkpoint candidate's literal npm run verify passes1259 units/123 files,
+strict types/lint/build and35-file1012.28-KB VSIX, zero errors/warnings,
+730.898s, all387 captured hashes unchanged. Evidence:
+out/t030-csv-checkpoint-verify-1.log and its before/after/status files.
+Its changed-candidate literal npm run verify:full FAILS after1259 units/123 files
+and77 host tests pass, with2 failures;1728.512s, all387 hashes unchanged.
+Evidence: out/t030-csv-checkpoint-full-1.log and matching before/after/status files.
+Both failures are native CSV stderr containing only `#< CLIXML`: JSON1GB before
+the import/timer window and CSV1GB after native sampling has begun. JSON timers,
+large-import data/hash/memory gates and later CSV paging/5GB checks are not
+reached; do not report them as passing. Both ten-million-row JSON/JSONL cases,
+SQLite1/5GB and T-030 native/fallback staged-edit/save/revert DOM cases pass.
+CSV calibration separately passes36 samples/max gap952.0195ms/34.400s test.
+The sole approved severity-warning HOST-001 is20261103T123210/window1/renderer.log:10,
+exact signed-out CloudSandboxApi message quoted above. The same file:1045 records
+the disallowed error `2 tests failed.` Full is NOT warning-free and remains failed.
+JSON's checkpoint ends at metadata-begin/PID20328, sequence56; CSV's ends at
+enumeration-end, sequence236. A latest marker cannot distinguish native work
+from a subsequent checkpoint-write error. The missing error bodies preclude
+attribution; this run is not an unchanged retry and cannot clear previous failures.
+
+### Bounded stderr capture and checkpoint replacement repair
+
+The existing observer kills its child on the first stderr chunk and keeps only
+that chunk. The header-only errors demonstrate an evidence-retention gap, not
+their native cause. New test/unit/observer-stderr.test.ts first records6fail/1pass
+in out/t030-stderr-red-1.log. The repaired optional path marks failure immediately,
+stops snapshots/acknowledgments, retains at most16384 raw bytes, decodes once and
+allows at most100ms for remaining stderr. The original20s/3s watchdogs stay armed,
+can kill sooner, and are never reset by diagnostics. Forced termination and byte
+truncation are explicit. Earlier parser/watchdog failures remain primary; stderr
+still rejects zero exit and cancellation. Both timers clear on close. Only the
+enabled Windows CSV diagnostic caller opts in; default/SQLite/macOS/Linux behavior
+retains immediate termination. Focused43/3 and independent review pass; that
+review does not claim a native repair. Current scope adds this observer and test,
+bringing the scoped project files to eleven.
+
+A separate real EncodedCommand probe then fails after6 snapshots/14.2018212s,
+capturing the actual CLIXML body: File.Replace throws IOException, "Unable to
+remove the file to be replaced." Evidence: out/t030-stderr-native-probe-1.json.
+This proves a defect in the new diagnostic writer under this environment. It
+does not establish the cause of the earlier header-only errors, original CSV
+watchdogs or remote JSONL GC/timer failure. No owner process is identified/stopped.
+
+The writer now alternates exactly two fixed owned checkpoint.json.0/.1 files by
+sequence modulo2, with no replacement, deletion, retry or swallowed write error.
+Each stays within16KiB; total disk footprint is bounded by32KiB. The reader bounds
+and validates both slots, parity and adjacent sequences, selects the latest
+complete history and explicitly reports incompleteSlots. Missing/partial/invalid
+slots can hide newer operations; both-invalid or contradictory evidence means
+unknown. Direct writes can still fail and every native stderr byte still fails.
+Test-first slot regressions record3fail/25pass in out/t030-checkpoint-slots-red-1.log.
+Focused1 retains an EncodedCommand fixture progress failure; its setup now applies
+the unchanged production SilentlyContinue setting before fixture module loading.
+Focused2 passes56 tests/four files, including real encoded stderr/body capture,
+interrupted/missing slots, byte bounds and all eleven original lifecycle cases.
+A subsequent parity assertion passes in final verification below.
+The changed native EncodedCommand probe completes60 snapshots in41.9432601s with
+empty stderr; out/t030-stderr-native-probe-2.json. It cannot clear either failed
+full or establish historical cause. The first implementation-review attempt was
+interrupted by a usage limit. A separate available independent reviewer completes
+the actual slot writer/tests, observer/tests and caller review with no concrete
+defect or cross-platform regression found. It checks failure ordering, raw bounds,
+original deadlines, default/other-platform behavior and retained red/probe evidence;
+it runs no gates. Prior GC implementation review remains applicable unchanged.
+
+### Final frozen gates and scope
+
+Literal npm run verify passes1268 units/124 files, strict types/lint/production
+build and35-file1012.28-KB VSIX, zero errors/warnings. Evidence:
+out/t030-slots-verify-1.log and before/after/status files;638.427s, all388 captured
+tracked/task-new hashes unchanged during the run.
+
+One changed-writer literal npm run verify:full with the workflow diagnostic flag
+passes1268 units/124 files and all79 host tests;2381.342s, all388 hashes unchanged.
+Evidence: out/t030-slots-full-1.log and before/after/status files. It retains every
+original test, workload and deadline. All four populated JSON/JSONL cases complete
+data/source-hash/memory checks: JSON1GB/5GB raw timer maxima46.3601/41.3059ms,
+sampled host+helper peaks271355904/268091392 bytes; JSONL1GB/5GB42.8895/55.1604ms,
+peaks262135808/264802304 bytes. The original100ms guard passes in each. Both
+ten-million-row full-data/hash cases and SQLite1/5GB checks also pass.
+
+CSV calibration passes36 samples/max gap1078.3226ms. CSV1GB/5GB each complete
+60 Browse+20 SQL pages, source hashes and data/memory checks, with sampled peaks
+288952320/288931840 bytes, paging growth10842112/26251264 bytes and host timer
+maxima38.3134/52.0742ms. Native/fallback T-030 real-editor staged edit, undo, revert,
+explicit save, exact DOM/dirty state and source-safety cases pass. No product/UI
+source changes invalidate the retained light/dark/NULL/int64/BLOB visual QA;
+these DOM results are not a new physical-paint or unsampled-peak claim.
+
+Strict saved-log validation passes with exactly one approved severity warning:
+20261103T154804/window1/renderer.log:10, VSCODE-HOST-001, exact signed-out
+CloudSandboxApi message quoted above. Full is NOT warning-free. No other warning,
+error, diagnostic allowance or retry is accepted. Seven new full-run native
+directories contain exactly14 bounded slot files, maximum observed1419 bytes;
+even two intact slots cannot prove an attempted newer marker was written.
+
+Final measurements, warning records, slot hashes and limits are recorded in
+out/t030-slots-final-evidence-1.json; retained raw evidence hashes are in
+out/t030-slots-evidence-inventory-1.json. The scope audit verifies the owner's
+README/PLAN/TASKS/VALIDATION bytes against the pre-study baseline. Only the eleven
+task project files change; product/UI/dependencies/version/launch/scanner/workflow
+remain unchanged. Final PROGRESS/report updates follow the gates; executable
+candidate hashes must continue matching their frozen records.
+
+These local passes do not establish the original remote GC/timer cause or original
+CSV-watchdog/macOS-watcher cause. The observed new File.Replace failure is repaired,
+with red-first coverage and full regression evidence. Owner retains push and fresh
+actual-candidate three-platform CI; T-030 remains unchecked and no later task starts.
+
 ## Run41463176404: watcher deletion investigation (2026-11-02)
 
 Public REST confirms attempt1 at exact4c7c51311989cf35ab4169652a8627b269027287.

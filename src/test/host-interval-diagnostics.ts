@@ -1,9 +1,11 @@
 import { createHook } from 'node:async_hooks';
-import { performance, PerformanceObserver } from 'node:perf_hooks';
+import { performance, PerformanceObserver, type PerformanceEntry } from 'node:perf_hooks';
 import { channel } from 'node:diagnostics_channel';
 import { IMPORT_HOST_CHANNEL, isImportHostSpan, type ImportHostSpan } from '../import-host-diagnostics';
+import { captureWindowsGcContext, type WindowsGcContext } from './windows-gc-diagnostics';
 
 interface Span { from: number; to: number; milliseconds: number; }
+interface GcSpan extends Span { windows?: WindowsGcContext; }
 interface CallbackSpan extends Span { type: string; }
 interface SchedulingSnapshot { active: number; idle: number; voluntary: number; involuntary: number; }
 interface SchedulingDelta { eventLoopActiveMs: number; eventLoopIdleMs: number; voluntaryContextSwitches: number; involuntaryContextSwitches: number; }
@@ -17,9 +19,9 @@ export class HostIntervalTrace {
   private intervals = 0;
   private largest: IntervalSpan | undefined;
   private readonly callbacks: CallbackSpan[] = [];
-  private readonly collections: Span[] = [];
+  private readonly collections: GcSpan[] = [];
   private matchingCallbacks: CallbackSpan[] = [];
-  private matchingGc: Span[] = [];
+  private matchingGc: GcSpan[] = [];
   private droppedCallbacks = 0;
   private droppedGc = 0;
   private untrackedResources = 0;
@@ -60,8 +62,9 @@ export class HostIntervalTrace {
     this.callbacks.push(entry);
     if (this.overlaps(entry) && this.matchingCallbacks.length < this.capacity) { this.matchingCallbacks.push(entry); }
   }
-  gc(from: number, milliseconds: number): void {
-    const entry = { from, to: from + milliseconds, milliseconds };
+  gc(from: number, milliseconds: number, windows?: WindowsGcContext): void {
+    const entry: GcSpan = { from, to: from + milliseconds, milliseconds };
+    if (windows !== undefined) { entry.windows = windows; }
     if (this.collections.length === this.capacity) { this.collections.shift(); this.droppedGc++; }
     this.collections.push(entry);
     if (this.overlaps(entry) && this.matchingGc.length < this.capacity) { this.matchingGc.push(entry); }
@@ -84,7 +87,7 @@ export class HostIntervalTrace {
   }
 }
 
-export function startHostIntervalDiagnostics(enabled: boolean) {
+export function startHostIntervalDiagnostics(enabled: boolean, platform: NodeJS.Platform = process.platform) {
   if (!enabled) { return undefined; }
   const trace = new HostIntervalTrace(() => process.cpuUsage(), 128, () => {
     const loop = performance.eventLoopUtilization(); const usage = process.resourceUsage();
@@ -104,7 +107,13 @@ export function startHostIntervalDiagnostics(enabled: boolean) {
     },
     after(id) { const value = active.get(id); if (value !== undefined) { active.delete(id); trace.callback(value.type, value.at, performance.now()); } },
   });
-  const observer = new PerformanceObserver((entries) => { for (const entry of entries.getEntries()) { trace.gc(entry.startTime, entry.duration); } });
+  const recordGc = (entry: PerformanceEntry): void => {
+    if (platform !== 'win32') { trace.gc(entry.startTime, entry.duration); return; }
+    const windows = captureWindowsGcContext(platform, entry);
+    if (windows === undefined) { trace.noteUntrackedResources(1); }
+    trace.gc(entry.startTime, entry.duration, windows);
+  };
+  const observer = new PerformanceObserver((entries) => { for (const entry of entries.getEntries()) { recordGc(entry); } });
   observer.observe({ entryTypes: ['gc'] }); hook.enable();
   let stopped: ReturnType<HostIntervalTrace['result']> | undefined;
   return {
@@ -113,7 +122,7 @@ export function startHostIntervalDiagnostics(enabled: boolean) {
       if (stopped === undefined) {
         hook.disable();
         sink.unsubscribe(operation);
-        for (const entry of observer.takeRecords()) { trace.gc(entry.startTime, entry.duration); }
+        for (const entry of observer.takeRecords()) { recordGc(entry); }
         observer.disconnect(); resources.clear(); active.clear(); trace.noteUntrackedResources(untracked); stopped = trace.result();
       }
       return stopped;
