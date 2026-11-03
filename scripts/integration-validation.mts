@@ -1,4 +1,10 @@
 import { formatApprovedHostDiagnostics, type ApprovedHostDiagnostic } from './integration-logs.mts';
+import { join } from 'node:path';
+
+/** No extra persistence outside the existing macOS diagnostic opt-in. */
+export function integrationFailureLog(profile: string, platform: NodeJS.Platform, enabled: string | undefined): string | undefined {
+  return platform === 'darwin' && enabled === '1' ? join(profile, 'integration-console.log') : undefined;
+}
 
 /** Inspect saved logs even when the host fails; neither failure can become success. */
 export async function validateIntegrationRun(

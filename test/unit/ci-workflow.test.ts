@@ -48,3 +48,15 @@ test('T-007: Given a Windows or macOS runner, When verification executes, Then t
   expect(text).not.toMatch(/continue-on-error|NODE_NO_WARNINGS|--disable-warning|--no-warnings|\|\|\s*true|\bexit\s+0\b/);
   expect(text.match(/^        run:/gm)).toHaveLength(3);
 });
+
+test('T-030: Given a failed macOS full gate, When its job finishes, Then only isolated console and runtime logs are retained without changing commands or accepting failure', async () => {
+  const text = await workflow();
+  expect(text).toMatch(/id: verify_desktop\s*\r?\n        if: runner\.os != 'Linux'\s*\r?\n        run: npm run verify:full/);
+  const artifact = text.slice(text.indexOf('      - name: Retain failed macOS diagnostics'));
+  expect(artifact).toContain("if: ${{ failure() && runner.os == 'macOS' && env.LITE_VOYAGER_CI_DIAGNOSTICS == '1' && steps.verify_desktop.outcome == 'failure' }}");
+  expect(artifact).toContain('uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9');
+  expect(artifact).toContain('out/integration-profile-*/integration-console.log');
+  expect(artifact).toContain('out/integration-profile-*/logs/');
+  expect(artifact).toMatch(/if-no-files-found: error/); expect(artifact).toMatch(/retention-days: 7/);
+  expect(artifact).not.toMatch(/continue-on-error|include-hidden-files|out\/\*\*|\.vscode-test|User\/|extensions\//);
+});

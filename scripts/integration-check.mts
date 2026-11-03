@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { runCheck } from './checks.mts';
 import { checkIntegrationLogs } from './integration-logs.mts';
 import { integrationEnvironment } from './integration-environment.mts';
-import { validateIntegrationRun } from './integration-validation.mts';
+import { integrationFailureLog, validateIntegrationRun } from './integration-validation.mts';
 import { reportIntegrationFailure, runWatcherProbe } from './integration-watcher-probe.mts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,6 +20,7 @@ try {
   }, {
     cwd: root,
     env: integrationEnvironment(process.env, profile),
+    failureLogPath: integrationFailureLog(profile, process.platform, process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS']),
   }), () => checkIntegrationLogs(join(profile, 'logs')), (message) => { process.stdout.write(message); });
 } catch (error: unknown) {
   process.exitCode = await reportIntegrationFailure(error, () => runWatcherProbe(root, (message) => { process.stdout.write(message); }),

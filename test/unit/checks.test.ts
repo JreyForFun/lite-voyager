@@ -36,6 +36,55 @@ describe('verification gate', () => {
   });
 
   test.each([
+    ['GPU error', 'process.stderr.write("[7765:1103/083317:ERROR:gpu/test.cc:1] Invalid mailbox.\\n");', 'emitted an error', '[7765:1103/083317:ERROR:gpu/test.cc:1] Invalid mailbox.\n'],
+    ['warning', 'process.stdout.write("Warning: original native diagnostic\\n");', 'emitted a warning', 'Warning: original native diagnostic\n'],
+    ['nonzero exit', 'process.stdout.write("original console before exit\\n");process.exit(7);', 'exit code 7', 'original console before exit\n'],
+    ['colored error', 'process.stderr.write("\\u001b[31mERROR original diagnostic\\u001b[0m\\n");', 'emitted an error', '\u001b[31mERROR original diagnostic\u001b[0m\n'],
+    ['signal', 'process.stdout.write("original console before signal\\n",()=>{process.kill(process.pid,"SIGTERM")});', 'failed with', 'original console before signal\n'],
+  ])('T-030: Given a rejected command with %s and requested evidence, When verification settles, Then original console text is retained and its original failure still rejects', async (_kind, source, failure, expected) => {
+    const directory = await mkdtemp(join(tmpdir(), 'lv-failed-console-')); temporaryDirectories.push(directory);
+    const path = join(directory, 'console.log');
+    await expect(runCheck({ name: 'host', command: process.execPath, args: ['-e', source] }, { echo: false, failureLogPath: path })).rejects.toThrow(failure);
+    const text = await readFile(path, 'utf8');
+    expect(text).toBe(expected);
+  });
+
+  test('T-030: Given a successful command with evidence enabled, When verification settles, Then success does not create a failure transcript', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'lv-success-console-')); temporaryDirectories.push(directory);
+    const path = join(directory, 'console.log');
+    await expect(runCheck({ name: 'host', command: process.execPath, args: ['-e', 'console.log("ok")'] }, { echo: false, failureLogPath: path })).resolves.toBeUndefined();
+    await expect(readFile(path)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  test('T-030: Given a launch failure with evidence enabled, When no child output exists, Then original launch failure rejects and its empty transcript is retained', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'lv-launch-console-')); temporaryDirectories.push(directory);
+    const path = join(directory, 'console.log');
+    await expect(runCheck({ name: 'missing', command: 'lite-voyager-nonexistent-test-executable', args: [] }, { echo: false, failureLogPath: path })).rejects.toThrow('missing could not start:');
+    expect(await readFile(path, 'utf8')).toBe('');
+  });
+
+  test('T-030: Given synchronous launch validation failure with evidence enabled, When arguments contain a null byte, Then the original rejection survives and empty evidence is retained', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'lv-invalid-launch-console-')); temporaryDirectories.push(directory);
+    const path = join(directory, 'console.log');
+    await expect(runCheck({ name: 'invalid', command: process.execPath, args: ['\u0000'] }, { echo: false, failureLogPath: path })).rejects.toBeInstanceOf(TypeError);
+    expect(await readFile(path, 'utf8')).toBe('');
+  });
+
+  test('T-030: Given an existing evidence file and a rejected command, When retention cannot create it, Then the original failure stays primary and existing bytes are not overwritten', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'lv-console-collision-')); temporaryDirectories.push(directory);
+    const path = join(directory, 'console.log'); await writeFile(path, 'existing evidence');
+    await expect(runCheck({ name: 'host', command: process.execPath, args: ['-e', 'console.error("ERROR native failure")'] }, { echo: false, failureLogPath: path }))
+      .rejects.toThrow(/host emitted an error; verification requires zero errors\.[\s\S]*Failure transcript could not be retained/);
+    expect(await readFile(path, 'utf8')).toBe('existing evidence');
+    const failed = await runCheck({ name: 'host', command: process.execPath, args: ['-e', 'process.exit(7)'] }, { echo: false, failureLogPath: path }).catch((error: unknown) => error);
+    expect(failed).toBeInstanceOf(AggregateError);
+    if (!(failed instanceof AggregateError)) { throw new Error('Expected both original and retention failures'); }
+    const primary: unknown = failed.errors[0]; const retention: unknown = failed.errors[1];
+    expect(primary).toBeInstanceOf(Error); expect(primary).toHaveProperty('message', 'host failed with exit code 7.');
+    expect(retention).toHaveProperty('code', 'EEXIST'); expect(failed.errors).toHaveLength(2);
+  });
+
+  test.each([
     ['warning', 'process.stdout.write("\\u001b["); setTimeout(() => process.stdout.write("33mWarning: fixture diagnostic\\u001b[0m\\n"), 10);', 'emitted a warning'],
     ['error', 'process.stderr.write("\\u001b["); setTimeout(() => process.stderr.write("31mERROR fixture diagnostic\\u001b[0m\\n"), 10);', 'emitted an error'],
   ])('T-009: Given a %s with segmented terminal formatting, When checked, Then assembled output still rejects the diagnostic', async (_label, source, message) => {

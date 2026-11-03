@@ -1,5 +1,95 @@
 # T-030: macOS GPU failure and retained-log reporting
 
+## Run41602840009: recurrent macOS GPU errors (2026-11-03)
+
+Public REST confirms attempt1/exact1d07b3e0b21c4ab3d4bf7ded8b4b7dcb4df175b1.
+Windows job125805434556 and Ubuntu job125805434761 pass locked installs and
+applicable full verification. Their raw logs are not retrieved; no warning-free
+remote claim. macOS job125805434719 passes1251 units/17 existing platform skips,
+123 passed files/one platform-skipped file, build/package and all79 host tests.
+The host exits0, but strict console validation correctly rejects12 Chromium GPU
+errors: six ProduceOverlay/non-existent-mailbox and six Invalid-mailbox records,
+native timestamps1103/083317.395950 through.407448. No error allowance is added.
+
+The passive snapshot identifies PID7765 as --type=gpu-process under isolated
+Code PID7747, VS Code1.140.0/darwin-arm64 revisionb224f6bf5a4fcad5fa4c640ed10f179c3b613e48.
+All194 D-5 lifecycle records are present. Final fallback cleanup completes
+08:33:17.219Z, about177ms before the first GPU error; the next split-view case
+reports success afterward. This cannot distinguish prior teardown from subsequent
+creation/compositor activity. Independent read-only review finds no demonstrated
+product defect or failed closure. Five temporary hide/show tabs are retained
+until the existing bounded finally cleanup; this does not prove a leak or justify
+changing fixture ordering to claim a GPU repair. Renderer toggles/sleeps/redraws,
+upstream version changes and diagnostic exceptions are not adopted.
+
+All four populated JSON/JSONL1/5GB data/source/memory checks pass, with original
+raw timer maxima26.626292/31.829667/28.167208/33.976250ms. CSV1/5GB full data,
+60 Browse+20 SQL pages, source hashes and memory checks also pass. Sole approved
+severity-warning record:20261103T082559/window1/renderer.log:15, VSCODE-HOST-001,
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+This failed full is NOT warning-free. The saved-log scan runs despite console
+rejection and reports that warning; there is no saved runtime error in its report.
+
+Byte-identical attachment: out/t030-macos-41602840009.log,154227 bytes, SHA256
+bb6448ed17d06ce4f68f656591c2b850051da64725eafa676bd96db04ea14e00.
+Metadata and388-file pre-change baseline: matching -metadata.json/-before.json.
+The artifacts endpoint reports total_count0. The failed runner's raw host logs
+cannot now be recovered through that endpoint. Previous GPU/watchdog/timer and
+watcher failures remain explicit below; this recurrence is not an unchanged retry.
+
+### Failure evidence retention candidate
+
+The supported correction is evidence retention, not an established GPU repair.
+On macOS with existing LITE_VOYAGER_INTERVAL_DIAGNOSTICS exactly1, integration
+verification selects integration-console.log inside its unique isolated profile.
+runCheck writes its existing merged decoded stdout/stderr text only after a
+rejection is determined, then rejects with the original failure. This is not
+lossless separate byte streams. Success creates no transcript. Native warning,
+error, exit and signal rules keep their original priority and regexes. Async and
+synchronous launch failures retain empty text if nothing was emitted. wx prevents
+overwriting earlier evidence; persistence failure rejects AggregateError with the
+original failure first in both errors and message. The finishing guard prevents
+a close event resolving success while persistence is pending. No writes or new
+waits occur inside the host's measured workloads; default/non-macOS calls do not
+request persistence.
+
+The original three workflow run commands, two full invocations, matrix, budgets,
+permissions, runtime, lockfile install and failure rules remain. A failed macOS
+desktop verification with CI diagnostics exactly1 uploads only isolated profile
+console transcripts and logs for seven days. This uses official
+[actions/upload-artifact v7.0.2](https://github.com/actions/upload-artifact/releases/tag/v7.0.2),
+MIT, pinned to verified commitcf430e030ddbb5b0abf93d22962f4752f3646cd9. Its tagged
+action.yml inputs/runtime and license are checked; no npm/runtime dependency is
+added. No source data, whole profiles, extensions, hidden files or caches are in
+the artifact paths. Missing files fail the upload; if verification fails before
+integration creates evidence, this is an expected secondary failure and no host
+logs can be claimed. Successful upload never clears the failed verification.
+
+Red-first out/t030-macos-artifacts-red-1.log records11fail/41pass. The second red
+records5fail/29pass; its incorrectly quoted title filter runs the whole checks
+file rather than a selected title and is not an acceptance gate. Initial focused
+61/4 passes; added signal/ANSI cases pass63/4. Review then identifies synchronous
+launch validation bypassing persistence; its new NUL-argument test fails missing
+transcript in -sync-red.log, then final focused64/4 passes. The first typecheck
+rejects an explicit undefined optional path; the type now explicitly models its
+disabled value and subsequent types/lint pass. No test/strict compiler rule is
+weakened. Final independent implementation review finds no concrete defect.
+
+Nine scoped project files: .github/workflows/ci.yml; scripts/checks.mts;
+scripts/integration-check.mts; scripts/integration-validation.mts;
+test/unit/checks.test.ts; test/unit/ci-workflow.test.ts;
+test/unit/integration-validation.test.ts; PROGRESS.md; this report.
+Product/UI/renderer arguments, test workloads/clocks, seven warning families and
+owner README/shared-spec/TASKS edits remain unchanged. Final standalone verification
+passes:1284 tests/124 files, all types/lint/build/package, zero warnings/errors,
+727.854s. All388 tracked-file hashes remain identical throughout that run.
+Evidence:out/t030-macos-artifacts-verify-1.log and matching -status/-before/-after.json.
+Parsed YAML comparison preserves all five original steps except the desktop id;
+the sixth step is the guarded upload. Final source audit checks the nine-file
+scope and permits only this report/PROGRESS updates after verification.
+Hosted upload and the macOS GPU cause remain unverified. T-030 stays
+unchecked; owner retains push/CI and this chat stays on the same task.
+
 ## Run41477363734: Windows JSONL timer investigation (2026-11-03)
 
 Public REST confirms attempt1/exact0da70fb064d6ba920055618159d28a60d15b4fd4.

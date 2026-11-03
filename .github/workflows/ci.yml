@@ -32,5 +32,16 @@ jobs:
         if: runner.os == 'Linux'
         run: dbus-run-session -- xvfb-run -a npm run verify:full
       - name: Verify on Windows and macOS
+        id: verify_desktop
         if: runner.os != 'Linux'
         run: npm run verify:full
+      - name: Retain failed macOS diagnostics
+        if: ${{ failure() && runner.os == 'macOS' && env.LITE_VOYAGER_CI_DIAGNOSTICS == '1' && steps.verify_desktop.outcome == 'failure' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, MIT
+        with:
+          name: macos-verification-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            out/integration-profile-*/integration-console.log
+            out/integration-profile-*/logs/
+          if-no-files-found: error
+          retention-days: 7

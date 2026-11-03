@@ -4,10 +4,18 @@ import { join } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
 import { runCheck } from '../../scripts/checks.mts';
 import { checkIntegrationLogs } from '../../scripts/integration-logs.mts';
-import { validateIntegrationRun } from '../../scripts/integration-validation.mts';
+import { integrationFailureLog, validateIntegrationRun } from '../../scripts/integration-validation.mts';
 
 const directories: string[] = [];
 const approved = "[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]";
+
+test.each([['win32', '1'], ['linux', '1'], ['darwin', undefined], ['darwin', '0'], ['darwin', 'true']] as const)(
+  'T-030: Given %s with diagnostics=%s, When selecting failure retention, Then original non-macOS and opt-out behavior remains unchanged', (platform, enabled) => {
+    expect(integrationFailureLog('isolated-profile', platform, enabled)).toBeUndefined();
+  });
+test('T-030: Given enabled macOS diagnostics, When selecting failure retention, Then only the isolated profile console is selected', () => {
+  expect(integrationFailureLog('isolated-profile', 'darwin', '1')).toBe(join('isolated-profile', 'integration-console.log'));
+});
 
 afterEach(async () => {
   await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
