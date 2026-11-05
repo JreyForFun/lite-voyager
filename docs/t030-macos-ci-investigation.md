@@ -1,5 +1,98 @@
 # T-030: macOS CI investigation
 
+## Run41966870044: passing Ubuntu/Windows; macOS JSON control timeout (2026-11-05)
+
+Public REST confirms attempt1/exactb8e08d78fdb94f1af8d65154d0df7e4091330b49:
+Windows127045786722 and Ubuntu127045786813 pass; macOS127045786907 fails.
+Owner supplies the complete1356-line step as attachmentf6ab0949-3c97-413e-b5d0-a53c0d992757/
+Pasted text.txt, SHA256f3f43b5ed8f8c3e7a437b23f5d8b72a76b3ef4fc591e8a84ae3c805f4357b487.
+No ZIP is requested or required for this investigation. Mac passes1304 units/
+17 existing platform skips, types/lint/build/package/host compilation, then78
+hosts pass and one fails: fallback=true JSON/JSONL controls, JSON DOM deadline,
+phase=ready/browser=undefined. Neither fallback-format success line appears.
+All populated JSON/JSONL1/5GB and CSV1/5GB data/hash/memory/timer checks complete.
+No native GPU error appears. Saved errors are the failed-test records at
+20261105T042105/window1/exthost/exthost.log:10 and renderer.log:1050/1051.
+One approved HOST-001 warning is renderer.log:15 in that same window, message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The failed full is not warning-free. The Linux-only argument edit does not change
+macOS launch arguments; this failure does not establish a cross-platform regression.
+
+Independent review identifies a concrete integration-exercise ordering race:
+Refresh disables the real Start button; host ready listeners can settle before
+that refreshed state reaches the webview. A following exercised Start then calls
+.click() on the disabled button, which does nothing. This is compatible with the
+failure, not conclusive attribution: initial firstRowsMs and later control waits
+share the same existing diagnostic. Preserve that uncertainty and label waits.
+
+Acceptance written before code: arm one pending exercised Start only after an
+executed Refresh. If the exercised Start arrives before control readiness, retain
+it until an accepted state enables the actual button, then click exactly once.
+No direct import request or fabricated readiness. Clear pending work on cancel
+intent, changed options/new refresh intent, error/terminal states and disposal;
+ignore wrong contexts and coalesce duplicate exercised Start while pending.
+Ordinary human controls retain their existing posts and dirty-option lock.
+The queue proves control availability, not correlation to a preview revision.
+Add fixed wait-stage diagnostics without changing any15s deadline, test action,
+data/source assertion, workload, platform arguments, workflow or diagnostic gate.
+No sleeps, retries, dependencies or warning/error exceptions. Unit tests must
+first reproduce delayed refreshed-state delivery and the lost real button click.
+
+Scoped files: webview/csv-import.ts; test/unit/csv-import-view.test.ts;
+src/test/json-import.test.ts; this report; PROGRESS.md. Preserve all owner work.
+Red regression: two failures/16 passes prove lost real clicks for JSON/JSONL.
+After the scoped change,47 focused tests/five files pass; webview/tooling types
+pass. First lint reports one unsafe access in the new test mock; it is replaced
+by an explicitly typed mock and existing protocol guard, without a lint disable.
+Independent actual-diff review finds no concrete defect. Evidence:
+out/t030-macos-dom-red.log, -focused.log, -webview-types/-tooling-types.log and
+-lint/-lint-final.log.
+
+Canonical `npm run verify` passes:1333 tests/125 files, all strict types/lint,
+production build and VSIX packaging, zero errors/warnings,872.690s. Evidence:
+out/t030-macos-dom-verify-1.log and -status/-before/-after.json. All391 tracked
+file hashes remain unchanged during the gate.
+
+The additional Windows integration compilation and strict host/log regression
+FAILS:77 hosts pass/two fail, exit1,1673.542s. This staged check uses the existing
+integration-check, awake guard and CI identity collector; it is not a new literal
+`npm run verify:full` invocation. Evidence: out/t030-macos-dom-host-1.log and
+-status/-before/-after.json. All391 tracked hashes remain unchanged throughout.
+The repaired JSON/JSONL control cases pass on both engines, including all250
+rows, nested SQL, paging, exact values and SQLite saves. CSV1/5GB complete data,
+source hashes, memory,60 Browse/20 SQL pages and raw timers also pass.
+
+The two retained Windows failures are:
+- SQLite5GB: `OS observer snapshot exceeded 3000 ms; stage=waiting for next
+  snapshot; snapshots=55` (log:1038). This is missing timely observation, not
+  evidence of excess memory; the observer cannot identify the delayed boundary.
+- JSON5GB: raw host timer112.79689999995753ms exceeds the unchanged100ms limit.
+  Both endpoints are importing/reading; sampled CPU is0/0, evidence is truncated,
+  and the retained short callback/operation does not explain the full interval.
+  Do not attribute it to OS scheduling, GC or this repair without further evidence.
+  The import opens, but later5GB data/memory/hash checks and JSONL volumes are not
+  reached after this assertion; their passage is not claimed for this local run.
+
+Independent review finds no demonstrated relationship to the queue: SQLite uses
+its separate editor path, and the volume JSON test calls session.startImport()
+directly, never arming the exercised Refresh/Start flags. No justified performance
+repair follows from these records. Do not relax limits or retry unchanged to green.
+The host gate remains failed. Saved error20261105T234639/window1/renderer.log:1046
+records `2 tests failed.` One approved HOST-001 warning at that window's
+renderer.log:10 has exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The host run is not warning-free. The collector confirms its original process
+identity exits; no collector shutdown failure is reported.
+
+Acceptance coverage: deterministic delayed-state, exactly-one real click, wrong
+context and cancellation/options/terminal/disposal regressions pass; ordinary
+control behavior is covered. Existing visual QA is retained; no fresh physical
+macOS QA or repaired historical timeout claim. Platform launch configuration,
+workflow, protocol, engine, all workloads/deadlines and diagnostic gates are
+unchanged, preserving the passing Ubuntu candidate. Native candidate macOS and
+three-platform full CI remain necessary, and the two local Windows failures
+remain unresolved. Owner retains push/CI. T-030 stays unchecked.
+
 ## Run41959956546: Windows/macOS pass; Ubuntu console gate fails (2026-11-05)
 
 ### Supplied complete Ubuntu step: rejection identified

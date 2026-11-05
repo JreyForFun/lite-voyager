@@ -6,10 +6,10 @@ import * as vscode from 'vscode';
 import type { CsvImportSession } from '../editor/csv-import';
 import type { BrowserStatus, CsvImportState } from '../protocol';
 
-function wait(session: CsvImportSession, predicate: () => boolean): Promise<void> {
+function wait(session: CsvImportSession, predicate: () => boolean, stage = 'browser readiness'): Promise<void> {
   if (predicate()) { return Promise.resolve(); }
   return new Promise((accept, reject) => {
-    const timer = setTimeout(() => { remove(); reject(new Error(`JSON DOM deadline: phase=${session.state.phase}; browser=${JSON.stringify(session.browserStatus)}`)); }, 15000);
+    const timer = setTimeout(() => { remove(); reject(new Error(`JSON DOM deadline: stage=${stage}; phase=${session.state.phase}; browser=${JSON.stringify(session.browserStatus)}`)); }, 15000);
     const remove = session.onStatus(() => { if (predicate()) { clearTimeout(timer); remove(); accept(); } });
   });
 }
@@ -18,12 +18,12 @@ async function open(path: string): Promise<CsvImportSession> {
 }
 async function control(session: CsvImportSession, action: 'start' | 'refresh' | 'cancel', predicate: (state: CsvImportState) => boolean): Promise<void> {
   const before = session.state;
-  await Promise.all([wait(session, () => session.state !== before && predicate(session.state)),
+  await Promise.all([wait(session, () => session.state !== before && predicate(session.state), `control ${action}`),
     session.panel.webview.postMessage({ type: 'csvImportExercise', contextId: session.contextId, action, options: {} }).then((sent) => { assert.ok(sent); })]);
 }
 async function browser(session: CsvImportSession, action: 'sql' | 'run' | 'next', predicate: (status: BrowserStatus) => boolean, value?: string): Promise<void> {
   const revision = session.browserStatus?.revision ?? 0;
-  await Promise.all([wait(session, () => session.browserStatus !== undefined && session.browserStatus.revision > revision && predicate(session.browserStatus)),
+  await Promise.all([wait(session, () => session.browserStatus !== undefined && session.browserStatus.revision > revision && predicate(session.browserStatus), `browser ${action}`),
     session.panel.webview.postMessage({ type: 'browserExercise', action, ...(value === undefined ? {} : { value }) }).then((sent) => { assert.ok(sent); })]);
 }
 
@@ -38,7 +38,7 @@ suite('T-023 JSON / JSONL production import', () => {
           const contents = format === 'json' ? `[${rows.join(',')}]` : rows.join('\r\n'); await writeFile(path, contents); const session = await open(path);
           try {
             assert.equal(session.state.phase, 'ready'); assert.deepEqual(session.state.options, {}); assert.equal(session.state.preview?.rows[0]?.[0], '9007199254740993');
-            await wait(session, () => session.firstRowsMs !== undefined); await control(session, 'refresh', (state) => state.phase === 'ready');
+            await wait(session, () => session.firstRowsMs !== undefined, 'first preview'); await control(session, 'refresh', (state) => state.phase === 'ready');
             await control(session, 'start', (state) => state.phase === 'importing'); await session.finished; assert.equal(session.state.phase, 'opened');
             assert.equal(session.state.progress?.engine, fallback ? 'sql.js' : 'node:sqlite'); assert.equal(session.state.progress.rows, '250');
             await wait(session, () => session.browserStatus?.editorReady === true && !session.browserStatus.busy && session.browserStatus.renderedRows > 0);

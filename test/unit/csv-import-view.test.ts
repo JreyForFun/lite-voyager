@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { CsvImportView } from '../../webview/csv-import';
+import { isCsvImportRequest } from '../../src/protocol';
 import { BrowserElement, browserRoot } from './browser-dom';
 
-const contextId = '1'.repeat(32); const post = vi.fn();
+const contextId = '1'.repeat(32); const post = vi.fn<(message: unknown) => void>();
 let root: BrowserElement; let view: CsvImportView;
 const element = (name: string): BrowserElement => { const value = root.elements.get(name); if (value === undefined) { throw new Error('Missing element'); } return value; };
 beforeEach(() => {
@@ -23,6 +24,60 @@ test('FR-005: Given JSON controls, When retrying preview and starting import, Th
   view.receive({ ...ready, options: {}, preview: { columns: ['a'], rows: [['9007199254740993']], format: 'json', bytesRead: '30', totalBytes: '30', reachedEnd: true, notice: '', threadId: 1 } });
   expect(view.preview.grid.metrics().cachedRows).toBe(1); expect(element('import-start').disabled).toBe(false);
   element('import-refresh').click(); expect(post).toHaveBeenLastCalledWith({ type: 'csvImportRefresh', contextId, options: {} });
+});
+
+test.each(['json', 'jsonl'] as const)('FR-005: Given %s Refresh completes in the host before its state reaches the view, When exercised Start arrives while disabled, Then exactly one real click follows enabled control readiness', (format) => {
+  view.dispose(); root.setAttribute('data-format', 'json'); view = new CsvImportView(root as unknown as HTMLElement, contextId, post);
+  const refreshed = { ...ready, options: {}, preview: { columns: ['a'], rows: [['9007199254740993']], format, bytesRead: '30', totalBytes: '30', reachedEnd: true, notice: '', threadId: 1 } };
+  view.receive(refreshed); const clicks = vi.fn(); element('import-start').addEventListener('click', clicks);
+  view.receive({ type: 'csvImportExercise', contextId, action: 'refresh', options: {} });
+  expect(post).toHaveBeenLastCalledWith({ type: 'csvImportRefresh', contextId, options: {} });
+  view.receive({ type: 'csvImportExercise', contextId, action: 'start' });
+  view.receive({ type: 'csvImportExercise', contextId, action: 'start' });
+  expect(element('import-start').disabled).toBe(true); expect(clicks).not.toHaveBeenCalled();
+  view.receive({ ...refreshed, contextId: '2'.repeat(32) }); expect(clicks).not.toHaveBeenCalled();
+  view.receive({ type: 'csvImportState', contextId, phase: 'loading', options: {}, message: 'Refreshing' });
+  expect(clicks).not.toHaveBeenCalled(); view.receive(refreshed);
+  expect(clicks).toHaveBeenCalledOnce(); expect(element('import-start').disabled).toBe(true);
+  expect(post.mock.calls.filter(([message]) => isCsvImportRequest(message) && message.type === 'csvImportStart')).toEqual([[{ type: 'csvImportStart', contextId }]]);
+  view.receive(refreshed); expect(clicks).toHaveBeenCalledOnce();
+});
+
+test('FR-004: Given dirty options without executed Refresh, When exercised Start and later ready arrive, Then no Start was queued and normal manual import still works', () => {
+  view.receive(ready); element('import-delimiter').dispatchEvent(new Event('change'));
+  view.receive({ type: 'csvImportExercise', contextId, action: 'start' }); view.receive(ready);
+  expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'csvImportStart' }));
+  element('import-start').click(); expect(post).toHaveBeenLastCalledWith({ type: 'csvImportStart', contextId });
+});
+
+function pendingStart(): void {
+  view.receive(ready); view.receive({ type: 'csvImportExercise', contextId, action: 'refresh', options: {} });
+  view.receive({ type: 'csvImportExercise', contextId, action: 'start' });
+}
+test.each(['error', 'cancelled', 'opened'] as const)('FR-005: Given pending exercised Start, When %s arrives before readiness, Then later ready never starts import', (phase) => {
+  pendingStart(); view.receive({ ...ready, phase }); view.receive(ready);
+  expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'csvImportStart' }));
+});
+test('FR-005: Given pending exercised Start, When disposed before readiness, Then late state cannot execute it', () => {
+  pendingStart(); view.dispose(); view.receive(ready);
+  expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'csvImportStart' }));
+});
+test.each(['button', 'exercise'] as const)('FR-005: Given pending exercised Start, When %s cancellation precedes the cancelled acknowledgment, Then an intervening ready cannot start import', (kind) => {
+  pendingStart(); view.receive({ type: 'csvImportState', contextId, phase: 'loading', options: {}, message: 'Refreshing' });
+  if (kind === 'button') { element('import-cancel').click(); } else { view.receive({ type: 'csvImportExercise', contextId, action: 'cancel' }); }
+  expect(post).toHaveBeenLastCalledWith({ type: 'csvImportCancel', contextId }); view.receive(ready);
+  expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'csvImportStart' }));
+});
+test.each(['options', 'refresh'] as const)('FR-005: Given pending exercised Start, When new %s intent occurs, Then old Start cannot execute for a later preview', (kind) => {
+  pendingStart();
+  if (kind === 'options') { element('import-delimiter').dispatchEvent(new Event('change')); }
+  else { view.receive({ type: 'csvImportExercise', contextId, action: 'refresh', options: {} }); }
+  view.receive(ready); expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'csvImportStart' }));
+});
+test('FR-005: Given an executed Refresh, When a Start exercise has another context, Then it cannot queue an import', () => {
+  view.receive(ready); view.receive({ type: 'csvImportExercise', contextId, action: 'refresh', options: {} });
+  view.receive({ type: 'csvImportExercise', contextId: '2'.repeat(32), action: 'start' }); view.receive(ready);
+  expect(post).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'csvImportStart' }));
 });
 
 test('FR-006: Given an XLSX preview failure, When rendering it, Then the actionable error appears once and the grid clears', () => {

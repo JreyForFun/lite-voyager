@@ -16,6 +16,8 @@ export class CsvImportView {
   private dirty = false;
   private phase = 'loading';
   private disposed = false;
+  private exerciseRefreshPending = false;
+  private exerciseStartPending = false;
   private readonly fixedOptions: boolean;
   private readonly workbook: boolean;
   constructor(root: HTMLElement, private readonly contextId: string, post: Post) {
@@ -28,9 +30,10 @@ export class CsvImportView {
     this.status = element('import-status'); this.progress = element('import-progress');
     this.preview = new CsvPreviewView(root, contextId, post);
     for (const input of [this.delimiter, this.header, this.text]) {
-      input.addEventListener('change', () => { this.dirty = true; this.start.disabled = true; this.status.textContent = 'Apply options / preview before importing.'; }, { signal: this.events.signal });
+      input.addEventListener('change', () => { this.clearExerciseStart(); this.dirty = true; this.start.disabled = true; this.status.textContent = 'Apply options / preview before importing.'; }, { signal: this.events.signal });
     }
     this.refresh.addEventListener('click', () => {
+      this.clearExerciseStart();
       if (!['ready', 'error'].includes(this.phase)) { return; }
       if (this.fixedOptions) { this.refresh.disabled = true; this.start.disabled = true; post({ type: 'csvImportRefresh', contextId, options: {} }); return; }
       const delimiter = this.delimiter.value;
@@ -39,21 +42,29 @@ export class CsvImportView {
       post({ type: 'csvImportRefresh', contextId, options: { delimiter, header: this.header.checked, allText: this.text.checked } });
     }, { signal: this.events.signal });
     this.start.addEventListener('click', () => {
-      if (this.phase === 'ready' && !this.dirty) { this.start.disabled = true; post({ type: 'csvImportStart', contextId }); }
+      if (this.phase === 'ready' && !this.dirty) { this.clearExerciseStart(); this.start.disabled = true; post({ type: 'csvImportStart', contextId }); }
     }, { signal: this.events.signal });
-    this.cancel.addEventListener('click', () => { this.cancel.disabled = true; post({ type: 'csvImportCancel', contextId }); }, { signal: this.events.signal });
+    this.cancel.addEventListener('click', () => { this.clearExerciseStart(); this.cancel.disabled = true; post({ type: 'csvImportCancel', contextId }); }, { signal: this.events.signal });
   }
+  private clearExerciseStart(): void { this.exerciseRefreshPending = false; this.exerciseStartPending = false; }
   receive(value: unknown): void {
     if (!this.disposed && isCsvImportExercise(value) && value.contextId === this.contextId) {
       if (value.action === 'refresh' && value.options !== undefined) {
+        this.clearExerciseStart(); if (this.refresh.disabled) { return; }
         this.delimiter.value = value.options.delimiter ?? this.delimiter.value; this.header.checked = value.options.header !== false; this.text.checked = value.options.allText === true;
         this.delimiter.dispatchEvent(new Event('change')); this.refresh.click();
-      } else if (value.action === 'start') { this.start.click(); }
-      else if (value.action === 'cancel') { this.cancel.click(); }
+        this.exerciseRefreshPending = this.refresh.disabled;
+      } else if (value.action === 'start') {
+        // Host ready can precede delivery to this frame. Keep one exercised
+        // action until the real control is enabled; never bypass its click.
+        if (this.exerciseRefreshPending && this.start.disabled) { this.exerciseStartPending = true; }
+        else { this.start.click(); }
+      } else if (value.action === 'cancel') { this.clearExerciseStart(); this.cancel.click(); }
       return;
     }
     if (this.disposed || !isCsvImportState(value) || value.contextId !== this.contextId || this.phase === 'cancelled' || this.phase === 'opened') { return; }
     this.phase = value.phase; this.status.textContent = value.message; this.status.setAttribute('role', value.phase === 'error' ? 'alert' : 'status');
+    if (!['loading', 'ready'].includes(value.phase)) { this.clearExerciseStart(); }
     const busy = ['loading', 'importing', 'opening'].includes(value.phase);
     for (const input of [this.delimiter, this.header, this.text]) { input.disabled = busy || value.phase === 'cancelled'; }
     this.refresh.disabled = !['ready', 'error'].includes(value.phase); this.start.disabled = value.phase !== 'ready'; this.cancel.disabled = !busy;
@@ -69,8 +80,9 @@ export class CsvImportView {
     } else if (value.phase === 'loading' || value.phase === 'error' || value.phase === 'cancelled') {
       this.preview.receive({ type: 'csvPreviewState', contextId: this.contextId, phase: value.phase, message: this.workbook ? '' : value.message });
     }
+    if (this.exerciseStartPending && !this.start.disabled && !this.dirty) { this.start.click(); }
   }
-  dispose(): void { this.disposed = true; this.events.abort(); this.preview.dispose(); }
+  dispose(): void { this.disposed = true; this.clearExerciseStart(); this.events.abort(); this.preview.dispose(); }
 }
 
 declare function acquireVsCodeApi(): { postMessage(message: CsvImportRequest | CsvPreviewRequest | CsvPreviewStatus): void };
