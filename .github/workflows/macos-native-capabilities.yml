@@ -1,0 +1,32 @@
+name: macOS native trace capabilities
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+
+jobs:
+  capabilities:
+    runs-on: macos-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v6.5.0
+        with:
+          node-version: '26.5.0'
+          package-manager-cache: false
+      - name: Collect installed native trace capabilities
+        id: capabilities
+        run: node scripts/macos-native-capabilities.mts
+      - name: Retain capability evidence
+        if: ${{ !cancelled() && (steps.capabilities.outcome == 'success' || steps.capabilities.outcome == 'failure') }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, MIT
+        with:
+          name: macos-native-capabilities-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/macos-native-capabilities-*/
+          if-no-files-found: error
+          retention-days: 7

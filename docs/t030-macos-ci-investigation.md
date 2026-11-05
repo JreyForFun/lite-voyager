@@ -1,5 +1,120 @@
 # T-030: macOS CI investigation
 
+## Run41629924409: current diagnostic candidate still fails (reviewed 2026-11-05)
+
+Owner now supplies the ZIP; its45148 bytes/digest match GitHub exactly. Safe
+extraction produces19 files under out/t030-macos-41629924409-artifact, with
+per-entry hashes and structured evidence in -inspection.json. The console has
+78 passing/one failing host: JSON1GB raw111.89050000003772ms during importing/
+reading, from277523.070417 to277634.960917ms, at1685.058292ms from timer start.
+Process CPU is224us user/87us system, involuntary switches7. Both new capability
+endpoints explicitly report loop-start-unset, loopStart=-1 and ELU0/0. ELU cannot
+classify this pause. No retained callback/GC/operation overlaps it, but47 dropped
+operations/108 untracked resources limit that negative evidence. No product
+blockage, native wait or OS scheduling cause is established by this trace.
+
+The import reaches opened with matching engine/row/byte assertions, but the
+timer failure precedes all JSON1GB full-data/memory/post-hash assertions and
+the remaining JSON5GB/JSONL sizes. No completed JSON memory record is present.
+Both CSV1/5GB data/hash/memory/60Browse+20SQL checks pass: raw host intervals
+65.651584/62.529916ms, sampled combined peaks253181952/240369664 bytes. No GPU
+error appears in the console. Saved severities are only the three failed-test
+errors at20261103T114742/window1/exthost/exthost.log:10 and renderer.log:1046/1047.
+No approved warning is present. The full remains FAILED. Earlier unavailable
+evidence notes below are historical, superseded by this supplied archive.
+
+### Next native evidence: manual runner capability check
+
+Owner confirms GitHub Actions is the only available Mac. Independent causal
+review finds no demonstrated product defect. A CPU-only profile/post-gap stack
+cannot distinguish overdue native wakeups from runnable-but-unscheduled threads.
+The next useful capture needs the actual utility host's main and embed/poll
+threads, wakeups/ready-to-run latency and syscall/wait stacks aligned to raw
+timer endpoints. Normal poll waits are expected and are not defects by themselves.
+[Apple hang analysis](https://developer.apple.com/tutorials/instruments/getting-started-with-hang-analysis)
+describes native thread-state tracing; Apple's
+[Xcode CLI reference](https://developer.apple.com/documentation/xcode/xcode-command-line-tool-reference)
+directs readers to the installed man xctrace reference. Do not invent recorder
+options, assume permissions, change renderer flags or call a new probe a repair.
+
+Under existing delegated judgment, prepare a separate workflow_dispatch-only
+macOS capability job. Acceptance: collect OS/architecture, selected Xcode version,
+xctrace path, installed xctrace manual and template listing; preserve bounded
+stdout/stderr bytes, exit/signal/killed/limit status for every attempted command.
+Read template-list syntax from the captured manual before executing that listing;
+if unavailable, record explicit failure instead of guessing. A nonzero exit,
+signal, launch/capture failure, output bound, empty stdout or stderr makes the
+collection fail while retaining evidence. Never reinterpret these outcomes as
+passing verification. No native recording, process attachment, elevated access,
+security/configuration change, workload rerun or new npm dependency occurs.
+Non-macOS invocation refuses before commands/output writes. Use only built-in
+Node modules and already-used CI actions; unique owned output prevents overwrite.
+Keep existing ci.yml bytes, every existing application/test source, matrix and gate intact.
+The owner pushes/dispatches this new workflow and returns its artifact. Pushing
+still triggers the repository's existing CI as configured; its result cannot
+establish a causal fix for these retained timing failures. This job only prepares
+a verified native recorder protocol; it does not prove tracing permissions.
+
+Scoped files: .github/workflows/macos-native-capabilities.yml;
+scripts/macos-native-capabilities.mts; test/unit/macos-native-capabilities.test.ts;
+this report; PROGRESS.md. Tests precede code. A separate review identified lost
+maxBuffer termination fields and SIGTERM's ignorable timeout. A real output-limit
+regression failed before the fix (18 pass/one fail); capture now uses SIGKILL for
+its owned child and records actual close status separately from capture errors.
+The deadline fixture installs a SIGTERM handler; the output-limit fixture checks
+that actual termination is retained. Focused regression:19 tests/one file PASS.
+The first lint attempt found three require-await errors, corrected without
+disables. Final scoped type/lint pass; independent follow-up finds both issues
+addressed and no remaining actionable collector defect. Canonical npm run verify
+passes1318 units/125 files, production build and VSIX packaging, zero errors and
+warnings,809.410s. All391 source hashes remain unchanged throughout the gate.
+Evidence: out/t030-native-capabilities-verify-1.log and -status/-before/-after.json;
+focused/type/lint-final logs retain scoped checks. These local fixtures do not
+exercise Apple's native tools. Baseline audit preserves all existing CI/app/
+integration bytes, four owner-dirty tracked files and both supplied ZIP digests.
+Prior visual QA remains applicable to the unchanged UI; no new Mac visual or
+host-test pass is claimed. T-030 remains unchecked and the Mac failure unresolved.
+
+Owner next steps: push this local commit, open Actions > macOS native trace
+capabilities > Run workflow on the pushed branch, then download and attach
+macos-native-capabilities-<run_id>-<run_attempt>.zip, including when the collector
+job fails. Existing CI will also run on push as configured. Do not treat a fresh
+passing timing sample as proof of a causal repair. We will inspect the installed
+manual/templates before preparing the native thread-state capture; no recorder
+command or permission is assumed here. Local reproduction commands are
+npm run verify and node node_modules/vitest/vitest.mjs run
+test/unit/macos-native-capabilities.test.ts; the native collector itself is
+macOS-only. npm run verify:full remains the unchanged full gate, not newly run
+for this isolated capability-workflow addition.
+
+### Historical pre-upload access notes (superseded above)
+
+Public REST confirms attempt1 at exact33149f07ff3a13e0e5e10ff231e77ffe52be587d.
+Windows125896588628 and Ubuntu125896588339 succeed; macOS125896588789 fails.
+Remote raw logs are not retrieved; no counts or warning-free claim for this run.
+The owner reports exactly one integration failure in json-import-memory.test.js,
+Context.<anonymous>, line224. The retained local compilation of this same source
+maps that line to assert.ok(hostGap <= 100), the unchanged responsiveness guard.
+An integration failure is established; exit1 alone cannot identify product
+blocking, native waiting or OS scheduling as the cause. The exact new duration,
+format/size and raw macOS capability snapshots remain unavailable. Do not copy
+the previous run's114.567291ms or5-GB JSON identity into this run as fact.
+
+The run retains artifact13228317857, macos-verification-diagnostics-41629924409-1,
+45148 bytes, public digest
+c972d60b4a3940372447ce4ef73ecbfe27529fcffd9c6bb0da3e99fc19462a55,
+created2026-11-03T11:55:57Z and expiring2026-11-10T11:55:55Z. Public metadata is
+saved in out/t030-macos-41629924409-metadata.json. An existing-credential download
+attempt cannot authenticate noninteractively; no secret/signed URL is printed
+or saved, no credential configuration changes and no authentication UI opens.
+Browser inventory reports its access host unavailable; no browser input follows.
+The owner must supply this new ZIP; the41611740185 ZIP is different evidence.
+
+No executable change, test relaxation, new verification run or unchanged CI retry
+is made. Only this report/PROGRESS records change while awaiting the artifact.
+Current executable retains the prior1299-unit/79-host local evidence below;
+those passes do not clear this new failed macOS run. T-030 stays unchecked.
+
 ## Run41611740185: populated JSON timer failure and runtime capability (2026-11-03)
 
 Public REST confirms attempt1 at exact05eb47c9d4455b5f9892f4c9eff17424b79a1ea8.

@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-T-030 macOS JSON timer/capability follow-up (2026-11-03); continue here.
+T-030 macOS evidence preparation (2026-11-05); docs/t030-macos-ci-investigation.md.
 Owner authorizes scoped fixes/QA/review/local commit; retains push/CI.
-Details: docs/t030-macos-ci-investigation.md; T-030 remains unchecked.
 
-## Latest actual-candidate CI
-Run41611740185/attempt1/exact05eb47c: Windows and Ubuntu full checks pass.
-macOS1267 units/17 platform skips;78 hosts pass/one JSON5GB timer failure.
-Raw114.567291ms importing/reading;165us CPU, no retained callback/GC overlap.
-Dropped/untracked observations and zero ELU counters do not establish cause.
-JSON1GB full checks and CSV1/5GB full-data/hash/memory/paging checks pass.
-JSON5GB full-data/memory/post-hash and both JSONL sizes are not reached.
-No GPU error or approved warning in supplied logs; three failed-test log errors.
-Upload succeeds:19 files,45004-byte ZIP; verified digest/inventory retained.
+## Latest actual-candidate CI / supplied artifact
+Run41629924409/attempt1/exact33149f0: Windows/Ubuntu jobs pass; macOS fails.
+Supplied45148-byte ZIP matches artifact13228317857/public SHA256 exactly.
+Safe19-file extraction:78 hosts pass/one fails, JSON1GB raw111.890500ms.
+Both endpoints loop-start-unset/-1/ELU0; process CPU311us, involuntary switches7.
+47 dropped operations/108 untracked resources limit empty-overlap evidence.
+Import opens; later JSON1GB data/memory/hash,5GB/JSONL checks are not reached.
+CSV1/5GB complete; no GPU error/approved host warning, three test errors only.
+No demonstrated product/native-wait/scheduling cause; macOS remains FAILED.
 
-## Scoped capability candidate
-Local utility-host calibration has loopStart=-1/ELU0; standalone control advances.
-Same bundled Node24.21/Electron43.7.3 on Windows; macOS state remains unknown.
-Calibration HOST-001/20261103T182334/window1/renderer.log:10; NOT warning-free.
-Mac-only diagnostics add two raw ELU/loop-start endpoints for the largest gap.
-Unset/valid-zero/invalid states explicit; no new timer/IO or duration adjustment.
-All existing numeric fields, bounds and Windows/Linux sampling remain unchanged.
-Red11fail/11pass; focused43/3; review clear; standalone1299/124 PASS, zero diagnostics.
-Windows79hosts/loggate PASS;388 tracked hashes frozen in both verification runs.
+## Scoped manual capability candidate
+Manual-only GitHub Mac workflow collects versions/path/manual/templates; no physical Mac.
+Read-only bounded raw streams/statuses; no recording/attachment/workload rerun.
+Unverified template syntax fails explicitly; original evidence never overwritten.
+Existing ci.yml/app/integration source/matrix/limits remain byte-identical.
+Review found lost maxBuffer termination and ignorable SIGTERM; both corrected.
+Red18pass/one fail retained; focused19/one file PASS; scoped type/lint PASS.
+Review clear; verify1318 units/125 files/build/package PASS, zero errors/warnings.
+Canonical809.410s/391 unchanged hashes; no native Mac run or causal repair yet.
 
 ## Retained evidence / limits
-Windows host HOST-001/20261103T184339/window1/renderer.log:10; NOT warning-free.
-Earlier Windows full1268/124+79hosts passes; its HOST-001 remains recorded.
+Prior canonical1299 units/124 files PASS, zero errors/warnings;388 hashes frozen.
+Windows79hosts/loggate PASS with388 frozen hashes; not a new verify:full run.
+HOST-001/20261103T184339/window1/renderer.log:10; host NOT warning-free.
+Calibration HOST-001/20261103T182334/window1/renderer.log:10; NOT warning-free.
 Earlier GC102ms, CSV watchdogs and macOS watcher/GPU causes remain unproved.
-Windows GC metadata, bounded CSV slots, stderr and artifact capture unchanged.
 Prior light/dark/int64/NULL/empty/BLOB/staging/explicit-save visual QA retained.
-No physical macOS QA, proven timer/GPU repair or task completion claim.
+No physical macOS QA, causal timer/GPU repair or task completion claim.
 
 ## Preserved work / next evidence
-Preserve owner README/PLAN/TASKS/VALIDATION hunks, supplied ZIP and other files.
-No product/UI/renderer/workload/scanner change; no unchanged retry to seek green.
-Owner retains push/CI; T-030 still requires actual-candidate platform acceptance.
+Preserve owner README/PLAN/TASKS/VALIDATION hunks, both ZIPs and other files.
+Five scoped files only; owner pushes/dispatches manual capability workflow.
+Return its artifact even if collection fails; T-030 unchecked/platforms pending.
