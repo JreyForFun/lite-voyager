@@ -1,31 +1,31 @@
 # Progress
 
 ## Current phase / task
-T-030 macOS evidence preparation (2026-11-05); docs/t030-macos-ci-investigation.md.
+T-030 Ubuntu renderer probe (2026-11-05); docs/t030-macos-ci-investigation.md.
 Owner authorizes scoped fixes/QA/review/local commit; retains push/CI.
 
-## Latest actual-candidate CI / supplied artifact
-Run41629924409/attempt1/exact33149f0: Windows/Ubuntu jobs pass; macOS fails.
-Supplied45148-byte ZIP matches artifact13228317857/public SHA256 exactly.
-Safe19-file extraction:78 hosts pass/one fails, JSON1GB raw111.890500ms.
-Both endpoints loop-start-unset/-1/ELU0; process CPU311us, involuntary switches7.
-47 dropped operations/108 untracked resources limit empty-overlap evidence.
-Import opens; later JSON1GB data/memory/hash,5GB/JSONL checks are not reached.
-CSV1/5GB complete; no GPU error/approved host warning, three test errors only.
-No demonstrated product/native-wait/scheduling cause; macOS remains FAILED.
+## Latest actual-candidate CI
+Run41959956546/attempt1/exactbf22428: Windows/macOS pass; Ubuntu fails.
+Public REST confirms job statuses; no artifacts retained for this run.
+Complete owner step:1301 units/17 existing skips and79 hosts/exit0 pass.
+Nine PID8245 ProduceMemory/non-existent-mailbox GPU errors reject the console.
+Passive snapshot identifies GPU process/use-gl=disabled; parent has disable-gpu.
+Approved HOST-001 at20261105T031348/window1/renderer.log:15; NOT warning-free.
+No demonstrated lifecycle defect; historical GPU/timer causes remain unknown.
+Raw download403/no existing noninteractive auth; supplied step resolves error text.
 
-## Scoped manual capability candidate
-Manual-only GitHub Mac workflow collects versions/path/manual/templates; no physical Mac.
-Read-only bounded raw streams/statuses; no recording/attachment/workload rerun.
-Unverified template syntax fails explicitly; original evidence never overwritten.
-Existing ci.yml/app/integration source/matrix/limits remain byte-identical.
-Review found lost maxBuffer termination and ignorable SIGTERM; both corrected.
-Red18pass/one fail retained; focused19/one file PASS; scoped type/lint PASS.
-Review clear; verify1318 units/125 files/build/package PASS, zero errors/warnings.
-Canonical809.410s/391 unchanged hashes; no native Mac run or causal repair yet.
+## Scoped Linux renderer candidate
+Omit only Linux helper-supplied disable-gpu; Windows/macOS arrays remain exact.
+Every other platform/isolation argument, workload and strict gate remains intact.
+No workflow/product/diagnostic allowance, sleeps, redraws or new switches.
+Red1fail/21pass; focused143 tests/six files PASS; scoped type/lint PASS.
+Review clear; verify1321 units/125 files/build/package PASS, zero errors/warnings.
+WSL inspected PATH lacks native Node; no tools installed/large native retry.
+Owner-run Linux full CI required; omission alone does not prove selected backend.
 
 ## Retained evidence / limits
-Prior canonical1299 units/124 files PASS, zero errors/warnings;388 hashes frozen.
+Canonical668.646s/391 frozen hashes; only record updates follow the gate.
+Manual Mac capability collector retained; actual native collector run pending.
 Windows79hosts/loggate PASS with388 frozen hashes; not a new verify:full run.
 HOST-001/20261103T184339/window1/renderer.log:10; host NOT warning-free.
 Calibration HOST-001/20261103T182334/window1/renderer.log:10; NOT warning-free.
@@ -35,5 +35,5 @@ No physical macOS QA, causal timer/GPU repair or task completion claim.
 
 ## Preserved work / next evidence
 Preserve owner README/PLAN/TASKS/VALIDATION hunks, both ZIPs and other files.
-Five scoped files only; owner pushes/dispatches manual capability workflow.
-Return its artifact even if collection fails; T-030 unchecked/platforms pending.
+Five scoped files only; owner retains push/CI; no native Linux PASS claimed.
+Actual-candidate CI pending; no historical causal fix; T-030 remains unchecked.

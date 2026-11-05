@@ -43,6 +43,19 @@ test('T-030: Given a zero-exit host with a GPU console error and a saved rendere
   expect(events).toEqual(['host', 'logs']);
 });
 
+test.each(['stdout', 'stderr'] as const)('T-030: Given the Ubuntu ProduceMemory error on %s and an approved signed-out warning, When a zero-exit host finishes, Then console rejection and exact approved metadata both survive', async (stream) => {
+  const directory = await logs(`2026-11-05 03:13:48.000 [warning] ${approved}\n`);
+  const diagnostic = '[8245:1105/031859.112463:ERROR:gpu/command_buffer/service/shared_image/shared_image_manager.cc:395] SharedImageManager::ProduceMemory: Trying to Produce a Memory representation from a non-existent mailbox.\n';
+  const reports: string[] = [];
+  await expect(validateIntegrationRun(() => runCheck({ name: 'Fixture host', command: process.execPath,
+    args: ['-e', `process.${stream}.write(${JSON.stringify(diagnostic)});`],
+  }, { echo: false }), () => checkIntegrationLogs(directory), message => { reports.push(message); }))
+    .rejects.toThrow('Fixture host emitted an error; verification requires zero errors.');
+  expect(reports).toHaveLength(1);
+  expect(reports[0]).toContain('"severity":"warning","rule":"VSCODE-HOST-001"');
+  expect(reports[0]).toContain(approved);
+});
+
 test('T-030: Given failed host assertions and clean runtime logs, When validation finishes, Then it reports approved warnings and rethrows the original host failure without retry', async () => {
   const directory = await logs(`2026-10-31 05:58:51.366 [warning] ${approved}\n`);
   const failure = new Error('Original host assertion failed');

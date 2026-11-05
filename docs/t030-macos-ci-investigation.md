@@ -1,5 +1,124 @@
 # T-030: macOS CI investigation
 
+## Run41959956546: Windows/macOS pass; Ubuntu console gate fails (2026-11-05)
+
+### Supplied complete Ubuntu step: rejection identified
+
+Owner supplies the complete step after the initial summary. Ubuntu passes1301
+units with17 pre-existing platform skips/124 passed files and one skipped file,
+all types/lint/build/package/host compilation, then79 host tests (6m) and host
+exit0. Nine native console errors follow the second all-formats opening case
+and precede the split-view case's completion. They share PID8245 and exact text:
+
+`ERROR:gpu/command_buffer/service/shared_image/shared_image_manager.cc:395] SharedImageManager::ProduceMemory: Trying to Produce a Memory representation from a non-existent mailbox.`
+
+Native timestamps1105/031859.112463,.112495,.112500,.112505,.112510,.112514,
+.112518,.112523,.112527 are retained from the pasted step; no claim is made
+that this compact excerpt is a downloaded raw archive. The earlier passive OS
+snapshot identifies8245 as the GPU process with --use-gl=disabled and its parent
+as the VS Code launch explicitly carrying --disable-gpu. The strict console
+gate correctly rejects these errors. The saved-log scan separately reports one
+approved warning: source20261105T031348/window1/renderer.log:15, original severity
+warning, VSCODE-HOST-001, exact message
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The failed full is not warning-free. No signed-in session/scopes repair is needed.
+
+Independent review finds no demonstrated successful-path lifecycle defect:
+the split test awaits cancellation/import settlement, exact first-tab closure
+and session cleanup, independent second import/render, then closure and source
+equality. Those guarantees do not prove compositor quiescence or identify the
+view/action responsible for the native mailbox lookup. Chromium's linked source
+below explains the missing-backing branch, not this run's originating cause.
+All four JSON/JSONL and both CSV size checks complete; their successful timing/
+source/memory results do not make the console errors acceptable.
+
+Controlled candidate acceptance, written before tests/code: omit only Linux's
+helper-supplied --disable-gpu argument so VS Code may choose its ordinary renderer.
+Freeze exact Windows/macOS arrays and retain all other platforms' current
+behavior with an explicit darwin-or-linux predicate. Retain Xvfb/D-Bus, exact
+versions, isolated directories/auth fixture, all workloads/order/deadlines,
+source checks and every warning/error rejection. No new switches, sleeps,
+forced redraws, dependency or diagnostic allowance. Test Linux's desired array
+before implementation; it must fail against the current helper. Add regressions
+that the exact ProduceMemory console error on either stream still fails with
+approved HOST-001 metadata reported. This is a single-variable environment
+experiment, not a demonstrated causal repair or acceptance of historical errors.
+Next native CI must inspect actual process arguments/backend evidence and retain
+any failure. Windows/macOS remain byte-identical at the argument boundary.
+
+Scoped files: scripts/integration-launch.mts;
+test/unit/integration-config.test.ts; test/unit/integration-validation.test.ts;
+this report; PROGRESS.md. No product or workflow changes. Red-first execution
+fails exactly the Linux argument case (21 pass/one fail), retained in
+out/t030-ubuntu-renderer-red.log. After the one-argument change,143 focused tests/
+six files pass in61.65s; scoped tooling types/lint pass with empty logs. An
+independent actual-diff review finds no concrete defect. Evidence: matching
+-focused/-types/-lint.log files. Local WSL inspection
+finds Xvfb/D-Bus but no native Node on the inspected PATH; it does not establish
+a ready Linux runtime. No tools are installed and no large native retry is made.
+Actual Linux execution remains owner CI evidence. Owner retains push/dispatch.
+
+Reviewed candidate passes canonical npm run verify:1321 units/125 files,
+strict types/lint, production build and VSIX packaging, zero errors/warnings,
+668.646s. All391 tracked file hashes remain unchanged throughout the gate.
+Evidence: out/t030-ubuntu-renderer-verify-1.log and -status/-before/-after.json.
+Only this report/PROGRESS change afterward. A pure argument comparison against
+committedbf22428 confirms exact original darwin/win32/freebsd arrays and only
+the single Linux removal; retained in out/t030-ubuntu-renderer-arguments.json.
+The installed @vscode/test-electron runner does not add --disable-gpu back.
+The existing CI workflow, all application/host tests, bounds and diagnostic
+scanners remain unchanged. Prior UI QA is retained for unchanged application
+code; no new native Linux renderer/physical-paint or local full-host pass is
+claimed. No causal graphics repair is established by these local checks.
+
+Owner next: push the scoped local commit and allow one fresh actual-candidate
+three-platform full run. Return the run URL; if anything fails, retain/paste the
+complete affected step rather than only its tail. Do not rerun this unchanged
+failed run to seek green. Reproduction: npm run verify; focused
+npm test -- test/unit/integration-config.test.ts test/unit/integration-validation.test.ts
+test/unit/integration-logs.test.ts test/unit/checks.test.ts test/unit/ci-workflow.test.ts
+test/unit/integration-environment.test.ts (one command). Hosted Linux retains
+dbus-run-session -- xvfb-run -a npm run verify:full. Owner retains push/dispatch;
+T-030 remains unchecked pending actual-candidate platform acceptance.
+
+Primary references: [VS Code CLI](https://code.visualstudio.com/docs/configure/command-line)
+documents --disable-gpu as disabling hardware acceleration;
+[Chromium missing-backing source](https://chromium.googlesource.com/chromium/src/gpu/+/f2ce5726738369eaf8f7dadb75667225a2353a41/command_buffer/service/shared_image/shared_image_manager.cc)
+is explanatory source, not the claimed exact bundled Chromium revision.
+
+### Initial access and summary review (superseded by the supplied step above)
+
+Public GitHub REST confirms attempt1/exactbf224283831b42502840ad70ea43217e2bbba46e:
+Windows job127023712349 and macOS job127023712216 succeed; Ubuntu job127023712060
+fails. No artifacts are retained for this run. Metadata is preserved in
+out/t030-ubuntu-41959956546-metadata.json. Existing executable CI/application/
+integration bytes are unchanged by bf22428; that commit adds only the separate
+manual capability workflow/collector/unit coverage and investigation records.
+The new macOS pass does not establish a causal repair of its historical pauses.
+
+Owner quotes79 passing/extension-host exit0 followed by an approved HOST-001
+record, then "VS Code integration tests emitted an error; verification requires
+zero errors." These establish a reported console-gate failure after passing
+assertions, not a missing-authentication root cause. The signed-out record is
+already owner-approved, renderer/source/severity-restricted and explicitly
+reported. The quoted failure originates in runCheck's raw child-console scan;
+validateIntegrationRun still scans/reports saved logs after that failure and
+then rethrows it. An approved warning printed near that rethrow is not itself
+evidence that it triggered rejection. The exact rejected console text remains
+unknown without the complete Ubuntu step log.
+
+Existing checks/integration-validation/integration-logs suites pass122 tests/
+three files in41.70s. A separate synthetic child emitting the exact formatted
+HOST-001 report passes the unchanged console scanner; this is local fixture
+evidence, not an Ubuntu reproduction or proof of its cause. Evidence is retained
+in out/t030-ubuntu-41959956546-gates-focused.log and -approved-probe.json.
+Public job-log access returns403 (repository admin rights required); existing
+GitHub authentication is unavailable noninteractively. No credential changes,
+workflow changes, diagnostic relaxation, test changes or CI retry are made.
+The owner is asked for the complete Ubuntu "Verify with session bus and virtual
+display on Linux" output, including lines before79 passing. Preserve the seven
+approved families and every other warning/error failure. T-030 remains unchecked.
+
 ## Run41629924409: current diagnostic candidate still fails (reviewed 2026-11-05)
 
 Owner now supplies the ZIP; its45148 bytes/digest match GitHub exactly. Safe

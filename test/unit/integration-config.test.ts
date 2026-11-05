@@ -7,14 +7,16 @@ import { integrationLaunchArgs } from '../../scripts/integration-launch.mts';
 
 const execute = promisify(execFile);
 
-test.each(['darwin', 'win32', 'linux'] as const)('NFR-005: Given the controlled renderer probe on %s, When integration launch arguments are built, Then only macOS permits the default renderer and every isolation argument is retained', (platform) => {
+test.each([
+  ['darwin', []], ['win32', ['--disable-gpu']], ['linux', []], ['freebsd', ['--disable-gpu']],
+] as const)('NFR-005: Given the controlled renderer probe on %s, When integration launch arguments are built, Then Linux permits the default renderer and all other platform arguments remain exact', (platform, renderer) => {
   const profile = resolve('out/integration-profile-renderer-probe');
   expect(integrationLaunchArgs(profile, platform)).toEqual([
     `--user-data-dir=${profile}`,
     `--extensions-dir=${join(profile, 'extensions')}`,
     `--builtin-extensions-dir=${join(profile, 'builtin-extensions')}`,
     '--disable-extensions',
-    ...(platform === 'darwin' ? [] : ['--disable-gpu']),
+    ...renderer,
     '--skip-welcome', '--skip-release-notes', '--disable-workspace-trust',
   ]);
 });
