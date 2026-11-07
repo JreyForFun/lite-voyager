@@ -1,5 +1,74 @@
 # T-030: macOS CI investigation
 
+## Run42360697008: native JSON export timer failure (owner log, 2026-11-07)
+
+The owner supplies the complete normal macOS verification step for attempt1,
+exact270639c78a2e4283053c2672b6bf64624a05fc6d. Types/lint/build/package pass;
+1324 unit tests pass with17 existing platform skips. Hosts finish78pass/1fail.
+The exact failure is T-015 streamed export in the real editor, FR-014:
+Given real SQL results and fallback=false, When exporting CSV/JSON and cancelling,
+Then all rows save, the page stays intact, timers tick and source/output safety hold.
+Native JSON export reports50000rows,1337.322708ms,55ticks and raw maximum
+286.73908400000073ms. The unchanged100ms guard rejects it at
+out/integration/test/result-export.test.js:112:28. Native CSV23.780917ms and
+fallback CSV12.663041ms/JSON21.430834ms pass. Later native cancellation/source
+checks in that failed test are not reached; do not claim all export criteria pass.
+
+All four large JSON/JSONL imports pass in this full run: JSON1/5GB maxima
+22.496125/30.082875ms; JSONL1/5GB30.908375/29.451375ms, with original full-data
+SQL, source hashes, memory and sampling guards. Large SQLite/CSV workloads pass.
+This identifies a different failing operation; it does not explain either pause.
+The three saved errors at20261107T094409/window1/exthost/exthost.log:10 and
+window1/renderer.log:1056/1057 are failed-test summaries. Approved warning
+VSCODE-HOST-001, severity warning, renderer.log:15, is exactly:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+The full run fails and is not warning-free. Ubuntu and Windows pass this commit.
+
+Read-only export-path review finds serialization in the helper and asynchronous
+host filesystem operations. The test clears its timer before reading/parsing
+the output, so those subsequent validations cannot cause this measured interval.
+Prior allocations, GC, scheduler delay, native rendering and product blocking
+remain hypotheses, not established causes. No product repair is justified yet.
+
+Prepare one manual macOS full-host System Trace diagnostic. Preserve the original
+verification prelude, entire host suite/order, all input volumes, assertions,
+100ms clock/guard, launch settings, strict runtime diagnostics and failure status.
+The installed xctrace manual from the supplied capability archive supports the
+used System Trace/all-processes/time-limit/window/output/no-prompt/export grammar.
+A2s recording/readable-TOC preflight must pass before any host workload starts.
+The main recorder retains a rolling120s window within a45m recording limit.
+Mac-only opt-in export CPU/callback/GC evidence uses existing bounded diagnostics;
+export and JSON timers emit their first original >100ms interval immediately,
+with PID, monotonic endpoints/time origin and UTC. The supervisor requests one
+SIGINT stop at that marker while the original host suite continues to completion.
+No interval is discarded or adjusted; stopping evidence cannot clear test failure.
+Separate stream decoders preserve split records and unfiltered raw console bytes.
+Launch, persistence, close, stop and export failures retain the original failure.
+
+Retain raw native trace, stdout/stderr/status, actual TOC and bounded selected
+table exports on success or failure. Schema-name selection is heuristic; inspect
+the actual trace's timestamp/PID coverage and scheduler tables before attribution.
+Process spawn does not prove recording readiness. Recording permission, native
+SIGINT completion and usable scheduler coverage still require actual macOS
+execution; no sudo, permission change, automatic retry or fallback is attempted.
+Profiling changes execution conditions; a pass is supplemental, never replacement
+full verification or proof that the historical failure is repaired.
+
+Regression tests first reproduce missing early-marker/stream/evidence cleanup
+behavior, then42 focused cases across3files pass. Tooling/integration types and
+scoped lint pass. Independent follow-up confirms the findings are addressed and
+finds no further concrete defect; native behavior remains unverified.
+Literal npm run verify passes1359 units/128files, strict types/lint, production
+build and VSIX package, zero detected errors/warnings;674.052s and all399 frozen
+source hashes match before/after. Evidence: out/t030-system-trace-verify-1.log,
+its status/before/after JSON, and out/t030-system-trace-preservation.json.
+All five supplied archive hashes and owner README/PLAN/TASKS/VALIDATION edits
+match the earlier preserved snapshot. Only scoped diagnostics and this report/
+PROGRESS change. Native execution remains pending owner push/dispatch of
+macos-system-trace.yml once. No full-gate or repaired-product claim; T-030 stays
+unchecked. No normal CI/launch/dependency/threshold/assertion/workload changes.
+The earlier pending-log statements below are historical and superseded above.
+
 ## Run42360961523: requested focused native macOS test passes (2026-11-07)
 
 Public REST confirms attempt1/exact270639c78a2e4283053c2672b6bf64624a05fc6d

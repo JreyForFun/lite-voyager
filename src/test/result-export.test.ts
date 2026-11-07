@@ -7,6 +7,8 @@ import type { activate } from '../extension';
 import type { SqliteDocument } from '../editor/sqlite-editor';
 import type { BrowserExercise, BrowserStatus } from '../protocol';
 import { closeEditor } from './sqlite-editor-lifecycle';
+import { startHostIntervalDiagnostics } from './host-interval-diagnostics';
+import { hostTimingBreach } from './host-timing-breach';
 
 function wait(document: SqliteDocument, predicate: (status: BrowserStatus) => boolean, revision = 0): Promise<BrowserStatus> {
   const previous = document.browserStatus;
@@ -50,10 +52,17 @@ suite('T-015 streamed export in the real editor', () => {
         await action(current, { type: 'browserExercise', action: 'sql', value: 'SELECT 999' }, ready);
         for (const [command, format] of [['exportCsv', 'csv'], ['exportJson', 'json']] as const) {
           let ticks = 0; let maxGapMs = 0; let last = performance.now(); const began = last;
-          const timer = setInterval(() => { const now = performance.now(); maxGapMs = Math.max(maxGapMs, now - last); last = now; ++ticks; }, 10);
+          const diagnostics = startHostIntervalDiagnostics(process.platform === 'darwin' && process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1');
+          const breach = hostTimingBreach(diagnostics !== undefined, `export/${format}`);
+          const timer = setInterval(() => { const now = performance.now(); diagnostics?.sample(last, now, `export/${format}`, `export/${format}`); breach?.(last, now, `export/${format}`); maxGapMs = Math.max(maxGapMs, now - last); last = now; ++ticks; }, 10);
           let saved: BrowserStatus;
           try { saved = await action(current, { type: 'browserExercise', action: command }, (status) => !status.busy && /Export saved: 50000 rows/.test(status.message)); }
-          finally { clearInterval(timer); }
+          finally {
+            clearInterval(timer);
+            if (diagnostics !== undefined) { console.log(`T-015 export interval diagnostic: ${JSON.stringify({ fallback, format, pid: process.pid,
+              timeOriginMs: performance.timeOrigin, began, ended: performance.now(), utc: new Date().toISOString(), evidence: diagnostics.stop(),
+              scope: 'Original raw export timer; import-operation spans do not cover export work. No discarded intervals or adjusted clock.' })}`); }
+          }
           console.log(`T-015 host export evidence: ${JSON.stringify({ fallback, format, rows: 50000, milliseconds: performance.now() - began, ticks, maxGapMs })}`);
           assert.ok(ticks >= 5); assert.ok(maxGapMs <= 100, `host export maximum timer interval ${String(maxGapMs)} ms`);
           assert.deepEqual(saved.firstRow, preserved.firstRow); assert.equal(saved.offset, preserved.offset); assert.equal(saved.summary, preserved.summary);

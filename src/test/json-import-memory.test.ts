@@ -11,6 +11,7 @@ import { TestBudget } from './sqlite-budget';
 import { csvFixtureCheckSql } from './csv-import-data-check';
 import { populatedJsonBrowseReady } from './json-import-readiness';
 import { startHostIntervalDiagnostics } from './host-interval-diagnostics';
+import { hostTimingBreach } from './host-timing-breach';
 
 suite('T-023 populated JSON memory', () => {
   test('FR-005: Given ten million JSON/JSONL objects, When streaming and querying the entire imported table, Then exact row counts, values and source hashes survive', async function () {
@@ -86,9 +87,11 @@ suite('T-023 populated JSON memory', () => {
             let previousPhase = phase();
             let largestInterval = { fromPhase: previousPhase, toPhase: previousPhase, atMs: 0 };
             const diagnostics = startHostIntervalDiagnostics(process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1');
+            const breach = hostTimingBreach(process.platform === 'darwin' && diagnostics !== undefined, `import/${format}`);
             const timer = setInterval(() => {
               const now = performance.now(); const observedPhase = phase();
               diagnostics?.sample(last, now, previousPhase, observedPhase);
+              breach?.(last, now, observedPhase);
               if (now - last > hostGap) { largestInterval = { fromPhase: previousPhase, toPhase: observedPhase, atMs: now - timerStarted }; }
               hostGap = Math.max(hostGap, now - last);
               last = now; previousPhase = observedPhase; ticks++;
