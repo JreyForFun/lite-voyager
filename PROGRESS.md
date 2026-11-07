@@ -1,39 +1,39 @@
 # Progress
 
 ## Current phase / task
-T-030 JSON exercised-Start race (2026-11-05); docs/t030-macos-ci-investigation.md.
-Owner authorizes scoped fixes/QA/review/local commit; retains push/CI.
+T-030 macOS populated JSON timer investigation; no product/threshold change.
+Owner authorizes scoped fixes/QA/review/local commit; retains push/CI dispatch.
 
 ## Latest actual-candidate CI
-Run41966870044/attempt1/exactb8e08d7: Windows/Ubuntu pass; macOS fails.
-Supplied full step:1304 units/17 existing skips;78 hosts pass/one fails.
-Fallback JSON controls timeout ready/browser undefined; exact wait stage unknown.
-Large JSON/JSONL/CSV data/hash/memory/timers pass; no GPU error in supplied log.
-Approved HOST-001 at20261105T042105/window1/renderer.log:15; NOT warning-free.
-Other saved errors are only three failed-test records; no ZIP requested/needed.
-Host ready can precede actual button enablement: exercised Start is lost.
-Deterministic reproduction proves that race, not this historical timeout's stage.
+Run42069600294/attempt1/exact52828ce: Windows/Ubuntu PASS; macOS78pass/1fail.
+Exact NFR-003 populated1/5GB JSON/JSONL timer assertion:136.357291ms >100ms.
+First1GB JSON, importing/reading; later volume acceptance checks not reached.
+353us sampled CPU; no retained callback/GC; truncated evidence; cause unproved.
+Both ELU endpoints loop-start-unset; zero fields do not establish idleness.
+Only three saved errors are test summaries; no saved warning record found.
+Archive19entries/283492bytes; original SHA/docs/t030-macos-ci-investigation.md.
+All JSON/JSONL control cases PASS, including the earlier exercised-Start repair.
 
-## Scoped exercise repair
-One pending exercised Start after executed Refresh; one real click when enabled.
-Cancel/options/new refresh/error/terminal/disposal clear; wrong contexts ignored.
-Human controls/platform launch args/workloads/deadlines/gates remain unchanged.
-Fixed JSON wait-stage diagnostics; original15s and all data assertions retained.
-Red2fail/16pass; focused47 tests/five files PASS; scoped types/lint PASS.
-Independent queue review clear; verify1333 tests/125 files PASS, zero diagnostics.
-No new dependencies, sleeps, retries, renderer edits or diagnostic exceptions.
+## Requested focused macOS diagnostic (native run pending)
+Manual-only macos-json-memory.yml + macos-json-memory-probe.mts prepared.
+Original test file/full title/all four volumes; fail-zero; retries0.
+Existing console/log guards; both-outcome raw console/log/status retention.
+Focused result cannot replace failed full run; no product/root-cause claim.
+Installed CLI selection verified without a host; focused23/3files PASS.
+Red status-save masking regression repaired; independent follow-up clear.
+Verify1341/126/types/lint/build/VSIX PASS; zero diagnostics;394 frozen hashes.
+Owner next: push then gh workflow run macos-json-memory.yml --ref main once.
+Inspect exact-test step and macos-json-memory-RUN-ATTEMPT evidence either way.
 
 ## Retained evidence / limits
-Current standalone and Windows host gates each freeze391 hashes with no changes.
-Manual Mac capability collector retained; actual native collector run pending.
-Current Windows host gate FAILS77pass/2fail; JSON controls both engines PASS.
-SQLite observer exceeds3000ms; JSON5GB timer112.7969ms exceeds100ms; causes unknown.
-HOST-001/20261105T234639/window1/renderer.log:10; host NOT warning-free.
-Earlier GC102ms, CSV watchdogs and macOS watcher/GPU causes remain unproved.
+Prior verify1333/125 PASS, zero diagnostics,391 frozen hashes.
+Prior Windows host77pass/2fail:3000ms observer/112.7969ms JSON timer; causes unknown.
+Prior approved HOST-001/20261105T234639/window1/renderer.log:10; NOT warning-free.
+Latest hosted Windows PASS does not explain those prior local failures.
+Native capability workflow retained; actual scheduler trace remains unavailable.
 Prior light/dark/int64/NULL/empty/BLOB/staging/explicit-save visual QA retained.
-No physical macOS QA, causal timer/GPU repair or task completion claim.
 
-## Preserved work / next evidence
-Preserve owner README/PLAN/TASKS/VALIDATION hunks, both ZIPs and other files.
-Five scoped files only; owner retains push/CI; native candidate platform CI pending.
-No relaxed limits or unchanged retries; Windows failures open; T-030 unchecked.
+## Preserved work / status
+Preserve owner README/PLAN/TASKS/VALIDATION hunks, all ZIPs and other files.
+Normal CI/launch config/product/test assertions/workloads/deadlines unchanged.
+No relaxed limits, diagnostic exceptions or automatic retries; T-030 unchecked.

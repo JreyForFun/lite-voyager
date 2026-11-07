@@ -1,5 +1,84 @@
 # T-030: macOS CI investigation
 
+## Run42069600294: exact populated JSON timer assertion (2026-11-07 inspection)
+
+Inspect the owner's existing specs/macos-verification-diagnostics-42069600294-1.zip
+directly; no replacement upload/download is needed. SHA256:
+ab920424c328f493fd270e3f273346397f784c8e70fb482a5a6903eeed1344d7.
+GitHub artifact13437411541 has the same digest/45408 bytes and expected name
+macos-verification-diagnostics-42069600294-1; provenance matches the supplied ZIP.
+All19 entries/283492 expanded bytes are checked for absolute/traversal paths
+and size bounds, then copied exclusively into
+out/t030-macos-42069600294-evidence/. The original archive is not modified.
+Public REST confirms attempt1/exact52828ce67fb3f367b321fb24364af08c0c48b70a:
+Ubuntu127393544521 and Windows127393544979 pass; macOS127393545021 fails.
+
+integration-profile-Viz1az/integration-console.log:1045-1057 contains78 hosts
+passing/one failing. Exact suite: `T-023 populated JSON memory`. Exact test:
+`NFR-003: Given populated 1/5-GB JSON and JSONL, When streaming native imports, Then actual helper/host residency stays bounded, sources match hashes and host timers stay responsive`.
+Exact assertion: `AssertionError [ERR_ASSERTION]: JSON host timer gap 136.3572910000221ms`.
+Compiled location: out/integration/test/json-import-memory.test.js:224:32;
+source src/test/json-import-memory.test.ts:105, `assert.ok(hostGap <= 100, ...)`.
+This is a timer failure, not a demonstrated memory-cap failure. It occurs for
+format=json/minimum1000000000. The import opens and reports expected engine,
+row and byte counts before this guard. Subsequent full-data SQL, memory checks
+and post-import hash for that input, and the other three volumes, are not reached.
+Separate ten-million-row JSON/JSONL data/hash tests pass.
+
+Largest interval329798.602584 to329934.959875ms is136.3572910000221ms, both
+endpoints importing/reading, ending1032.405375ms after the timer begins.
+Sampled CPU125us user/228us system; four involuntary switches. No retained
+callback/GC/host operation overlaps it;50 operations dropped/108 resources
+untracked, truncated=true. Both event-loop endpoints say loop-start-unset/-1,
+so zero active/idle fields cannot establish idleness. These bounded samples
+do not establish a product, GC, OS-scheduler, graphics or watcher cause.
+
+Saved renderer.log:722-723 repeats that same interval at17:16:44.164/.172 in
+the original log's timezone. The only saved severity errors are
+logs/20261105T171052/window1/exthost/exthost.log:10 (17:19:43.569), and
+window1/renderer.log:1046-1047 (17:19:43.581/.583): failed-test summaries at
+the suite's end. No saved warning record or earlier independent host error is
+found. The original failed run remains failed. All four JSON/JSONL control
+combinations pass; the prior exercised-Start timeout is not this failure.
+
+Owner requests one native macOS rerun of this exact test before any threshold
+or product changes. This environment is Windows; available hosted workflows
+previously offered only full CI or capability collection. Prepare a separate
+manual-only macos-json-memory.yml workflow and macos-json-memory-probe.mts.
+Retain original .vscode-test.mjs, production sources, test bodies, all four
+populated inputs, assertions, budgets, dependencies, platform launch arguments
+and regular ci.yml. The installed CLI's --run selects only the original file;
+--fgrep selects its exact full test title; --fail-zero rejects empty selection;
+--retries0 prevents another attempt. Existing strict console and saved-log
+validation still run, including on failure. Raw combined console, host logs and
+status are retained on success/failure. A focused pass is supplemental evidence,
+not full verification or permission to erase the original failed run.
+
+New harness acceptance tests are written first; the initial run rejects the
+missing runner module. Focused checks then pass22/3 files. Independent review
+finds status persistence could mask an existing rejection; a real directory
+collision reproduces it (one failure/seven passes). Aggregate the original
+error first with the save error; final focused23/3 pass. Scoped types pass;
+initial unsafe nested mock expectation is replaced with typed call inspection,
+without a lint disable. Independent follow-up finds no further concrete issue.
+Installed CLI --list-configuration confirms exactly one file/full-title filter,
+failZero=true/retries0, without executing a host. Evidence: out/t030-macos-json-
+probe-{red,status-red,focused,focused-final}.log and -selection.json.
+Canonical npm run verify passes1341 tests/126 files, all strict types/lint,
+production build and VSIX packaging, zero errors/warnings,662.495s. All394
+existing/new source hashes remain unchanged throughout. Evidence:
+out/t030-macos-json-probe-verify-1.log and -status/-before/-after.json. Only this
+report/PROGRESS change afterward. No native macOS rerun is claimed; owner
+retains push/dispatch. Do not change thresholds or product code before examining
+that diagnostic. T-030 remains unchecked.
+
+After owner pushes the diagnostic commit, run exactly once:
+`gh workflow run macos-json-memory.yml --ref main`.
+Alternatively select Actions > macOS focused JSON memory diagnostic > Run workflow.
+Inspect the Run-the-exact-test step and its macos-json-memory-RUN-ATTEMPT artifact
+on either outcome. Do not rerun unchanged automatically or interpret a focused
+pass as a complete three-platform gate. Local automation has not dispatched it.
+
 ## Run41966870044: passing Ubuntu/Windows; macOS JSON control timeout (2026-11-05)
 
 Public REST confirms attempt1/exactb8e08d78fdb94f1af8d65154d0df7e4091330b49:
