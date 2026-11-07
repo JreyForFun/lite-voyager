@@ -735,6 +735,14 @@ Rules:
     run41205204032/bd3f85e and source-revision limits are recorded in
     docs/t030-macos-ci-investigation.md. This is an explicit policy amendment,
     not a performance or graphics repair. Every other warning and every error fails.
+  - `VSCODE-HOST-008`: `Creation of workbench contribution 'workbench.contrib.onboarding' took Nms.`
+    Owner delegates judgement on the exact reviewed T-030 proposal on 2026-11-07.
+    `N` contains only ASCII digits (unsigned integer duration). This accepts only
+    the vendor onboarding constructor-timing message, with every structured
+    renderer/severity/reporting guard above unchanged. Do not infer a performance
+    repair or that exact macOS vendor source was inspected. The prior212ms
+    record and failed run42364917870/12f7bea remain in the investigation report.
+    Every other warning and every error still fails; no retry-to-green.
   The original manifest-creation and cloud-dictation timeout warnings remain
   failures. Console diagnostic checks, types, lint and builds retain zero
   errors/warnings. No blanket vendor-warning allowance or retry-to-green is permitted.
@@ -5037,6 +5045,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-030 HOST-008 owner authorization (2026-11-07): Adopt only onboarding unsigned-integer renderer warning timing with mandatory metadata reporting. Preserve all other warning/error failures, original100ms guards and all failed CI; this policy amendment does not repair CSV timing or the Windows WidgetHost rejection.
 - T-030 (2026-10-27): Link detailed staged-edit acceptance and test-first
   evidence. Local gates, visual-tool limits and owner-pushed CI remain separate.
 - T-028 (2026-10-26): Add local checkpoint/artifact/provenance acceptance; keep

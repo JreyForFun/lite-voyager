@@ -12,6 +12,8 @@ import type { BrowserExercise, BrowserStatus } from '../protocol';
 import { sourceDigest } from './sqlite-exercise';
 import { TestBudget } from './sqlite-budget';
 import { csvFixtureCheckSql } from './csv-import-data-check';
+import { startHostIntervalDiagnostics } from './host-interval-diagnostics';
+import { hostTimingBreach } from './host-timing-breach';
 
 let exerciseId = 3_000_000;
 async function pagingPhases(session: CsvImportSession, monitor: ReturnType<typeof observeCsvImport>, budget: TestBudget,
@@ -122,10 +124,20 @@ suite('T-021 production CSV memory', () => {
             scope: 'command start through host-received populated preview DOM; stages are command-relative and never subtracted' })}\n`);
           assert.ok(session.firstRowsMs !== undefined && session.firstRowsMs < 2000, `first-row DOM ${String(session.firstRowsMs)}ms; stages=${JSON.stringify(session.previewTimings)}`);
           let helper = 0; let ticks = 0; let maxGapMs = 0; let last = performance.now();
+          const diagnostics = startHostIntervalDiagnostics(process.platform === 'darwin' && process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1');
+          const phase = (): string => `${current.state.phase}/${current.state.progress?.phase ?? 'none'}`;
+          let previousPhase = diagnostics === undefined ? '' : phase(); const breach = hostTimingBreach(diagnostics !== undefined, 'import/csv');
           const remove = session.onStatus(() => { helper = current.state.progress?.processId ?? helper; });
-          const timer = setInterval(() => { const now = performance.now(); maxGapMs = Math.max(maxGapMs, now - last); last = now; ticks++; }, 10);
+          const timer = setInterval(() => { const now = performance.now();
+            if (diagnostics !== undefined) { const observedPhase = phase(); diagnostics.sample(last, now, previousPhase, observedPhase); breach?.(last, now, observedPhase); previousPhase = observedPhase; }
+            maxGapMs = Math.max(maxGapMs, now - last); last = now; ticks++; }, 10);
           const started = performance.now();
-          try { await session.startImport(); } finally { clearInterval(timer); remove(); }
+          try { await session.startImport(); } finally {
+            clearInterval(timer); remove();
+            if (diagnostics !== undefined) { console.log(`T-021 CSV interval diagnostic: ${JSON.stringify({ minimum, pid: process.pid, timeOriginMs: performance.timeOrigin,
+              started, ended: performance.now(), utc: new Date().toISOString(), ticks, maxGapMs, endPhase: phase(), evidence: diagnostics.stop(),
+              scope: 'Original raw CSV import timer; no discarded interval, adjusted clock or cause attribution.' })}`); }
+          }
           assert.equal(session.state.phase, 'opened'); assert.equal(session.state.progress?.engine, 'node:sqlite');
           assert.equal(session.state.progress?.rows, String(recipe.rows)); assert.equal(session.state.progress.bytes, String(before.bytes));
           assert.ok(helper > 0); assert.ok(ticks > 5); assert.ok(maxGapMs <= 100, `extension-host import timer gap ${String(maxGapMs)}ms`);

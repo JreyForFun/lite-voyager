@@ -1,5 +1,19 @@
 import { expect, test, vi } from 'vitest';
-import { hostTimingBreach } from '../../src/test/host-timing-breach';
+import { hostDiagnosticStage, hostTimingBreach } from '../../src/test/host-timing-breach';
+
+test('NFR-005: Given disabled action diagnostics, When a fixture reaches a stage, Then no diagnostic output is emitted', () => {
+  const report = vi.fn(); hostDiagnosticStage(false, 'completion/csv/native', 'dispose/start', report); expect(report).not.toHaveBeenCalled();
+});
+
+test('NFR-005: Given an enabled fixture action, When reporting its boundaries, Then the context, stage, process and raw clock are retained without changing action order', () => {
+  const report = vi.fn<(line: string) => void>();
+  hostDiagnosticStage(true, 'completion/csv/native', 'dispose/start', report);
+  hostDiagnosticStage(true, 'completion/csv/native', 'dispose/end', report);
+  const values = report.mock.calls.map(([line]) => JSON.parse(line.slice('T-030 host diagnostic stage: '.length)) as Record<string, unknown>);
+  expect(values.map(value => value['stage'])).toEqual(['dispose/start', 'dispose/end']);
+  expect(values[0]).toMatchObject({ label: 'completion/csv/native', pid: process.pid });
+  expect(typeof values[0]?.['atMs']).toBe('number'); expect(typeof values[0]?.['utc']).toBe('string');
+});
 
 test('NFR-005: Given disabled native tracing, When a timer reporter is requested, Then no callback or output is added', () => {
   const report = vi.fn(); expect(hostTimingBreach(false, 'export/json', report)).toBeUndefined(); expect(report).not.toHaveBeenCalled();

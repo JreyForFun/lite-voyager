@@ -8,6 +8,10 @@ import type { SqliteDocument } from '../editor/sqlite-editor';
 import type { BrowserExercise, BrowserStatus } from '../protocol';
 import { closeEditor } from './sqlite-editor-lifecycle';
 import { xlsxFixture, xlsxCell } from './xlsx-fixture';
+import { hostDiagnosticStage } from './host-timing-breach';
+
+const stage = process.platform === 'win32' && process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1'
+  ? (label: string, value: string): void => { hostDiagnosticStage(true, label, value); } : undefined;
 
 interface Surface { readonly browserStatus: BrowserStatus | undefined; readonly panel: vscode.WebviewPanel | undefined; onBrowserStatus(listener: (status: BrowserStatus) => void): () => void; }
 
@@ -21,9 +25,11 @@ function wait(document: Surface, predicate: (status: BrowserStatus) => boolean):
 let exerciseId = 26000;
 async function action(document: Surface, action: BrowserExercise['action'], value?: string): Promise<BrowserStatus> {
   const id = ++exerciseId; assert.ok(document.panel);
+  stage?.('completion/action', `${String(id)}/${action}/start`);
   const pending = wait(document, (status) => status.exerciseId === id);
   assert.equal(await document.panel.webview.postMessage({ type: 'browserExercise', action, exerciseId: id, ...(value === undefined ? {} : { value }) } satisfies BrowserExercise), true);
-  return pending;
+  if (stage === undefined) { return pending; }
+  try { return await pending; } finally { stage('completion/action', `${String(id)}/${action}/end`); }
 }
 
 suite('T-026 schema autocomplete in real CodeMirror', () => {
@@ -35,20 +41,26 @@ suite('T-026 schema autocomplete in real CodeMirror', () => {
       const previous = process.env['LITE_VOYAGER_FORCE_FALLBACK']; process.env['LITE_VOYAGER_FORCE_FALLBACK'] = fallback ? '1' : '0';
       try {
         for (const format of ['csv', 'tsv', 'json', 'jsonl', 'xlsx']) {
+          const label = `completion/${format}/${fallback ? 'fallback' : 'native'}`; stage?.(label, 'fixture/start');
           const path = join(directory, `source.${format}`);
           const data = format === 'xlsx' ? xlsxFixture([{ name: 'Data', rows: `<row r="1">${xlsxCell('A1', 'id', 'inlineStr')}${xlsxCell('B1', 'first name', 'inlineStr')}</row><row r="2">${xlsxCell('A2', '9007199254740993')}${xlsxCell('B2', 'Ada', 'inlineStr')}</row>` }])
             : format === 'json' ? '[{"id":9007199254740993,"first name":"Ada"}]' : format === 'jsonl' ? '{"id":9007199254740993,"first name":"Ada"}\n'
               : `id${format === 'tsv' ? '\t' : ','}first name\n9007199254740993${format === 'tsv' ? '\t' : ','}Ada\n`;
           await writeFile(path, data); const before = await readFile(path); const uri = vscode.Uri.file(path);
+          stage?.(label, 'open/start');
           await vscode.commands.executeCommand('vscode.openWith', uri, 'lite-voyager.sqlite', { preview: false });
+          stage?.(label, 'open/end');
           const controller = format === 'xlsx' ? api.xlsxImport : format.startsWith('json') ? api.jsonImport : api.csvImport;
           const session = controller.sessions(uri)[0]; assert.ok(session);
           try {
             await session.finished; assert.equal(session.state.phase, 'ready', session.state.message);
+            stage?.(label, 'import/start');
             await session.startImport(); assert.equal(session.state.phase, 'opened', session.state.message);
+            stage?.(label, 'import/end');
             const surface: Surface = { get browserStatus() { return session.browserStatus; }, panel: session.panel,
               onBrowserStatus: (listener) => session.onStatus(() => { if (session.browserStatus !== undefined) { listener(session.browserStatus); } }) };
             const ready = await wait(surface, (status) => status.editorReady === true && !status.busy && status.renderedRows === 1);
+            stage?.(label, 'browser/ready');
             assert.ok(ready.table !== null);
             const sql = `SELECT fi FROM "${ready.table.replaceAll('"', '""')}"`;
             await action(surface, 'sql', sql); await action(surface, 'selection', '9,9'); await action(surface, 'completionKey', 'Ctrl-Space');
@@ -59,7 +71,7 @@ suite('T-026 schema autocomplete in real CodeMirror', () => {
             await action(surface, 'run');
             await wait(surface, (status) => !status.busy && status.query === true && status.firstRow[0]?.text === 'Ada');
             assert.deepEqual(await readFile(path), before);
-          } finally { session.panel.dispose(); await session.closed; }
+          } finally { stage?.(label, 'dispose/start'); session.panel.dispose(); await session.closed; stage?.(label, 'dispose/end'); }
         }
       } finally {
         if (previous === undefined) { delete process.env['LITE_VOYAGER_FORCE_FALLBACK']; } else { process.env['LITE_VOYAGER_FORCE_FALLBACK'] = previous; }

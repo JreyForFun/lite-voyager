@@ -1,5 +1,206 @@
 # T-030: macOS CI investigation
 
+## Local candidate verification and visual QA (2026-11-07)
+
+Literal npm run verify passes1392unit tests/129files, host/webview/tooling
+strict types, lint, production build and35-file VSIX packaging. Zero errors
+and zero warnings. UTC2026-11-07T14:33:50.940Z through2026-11-07T14:45:50.881Z,
+719.941s, exit0; all400frozen source hashes match.
+Evidence: out/t030-csv-completion-verify-1.log, -before.json, -after.json and
+-status.json. This standalone gate does not establish three-platform host CI.
+
+Manual Windows visual QA uses the current production build in installed VS Code
+1.145.2 with an isolated test-mode profile and an owned disposable fixture.
+Observed dark/light readability, distinct NULL/empty/literal-NULL display,
+exact signed int64 values, BLOB placeholder, Stage SQL/dirty/Undo/Redo/Revert,
+explicit Save, clean reopen and201-row page ranges1-100/101-200/201-201 plus reverse paging.
+Before Save, staged/reverted/before-save checkpoints all retain original SHA256
+467527707c4d0f71a344172b440661ab5a3cce194ba3204f7d3ff32b8fe2d814.
+Only explicit Save changes the fixture to917ab5dc9b0f30d762a560d1e60d83baf207ce44a90526f55fecf0715bab1d53;
+read-only inspection confirms intended literal QA staged, exact int64s and24-byte
+BLOB, SQLite quick_check ok and201paging rows. Reopen starts read-only, clean;
+the owned QA host exits normally. Evidence: out/t030-visual-evidence.json and
+out/t030-visual-qa-QqBbVQ/checkpoint-*.json. Desktop screenshots were inspected
+live; no physical macOS QA or saved screenshot artifact is claimed.
+
+This manual host is NOT a strict verification pass. Saved source
+20261107T230745/main.log:5 reports severity error: Error: Error mutex already exists.
+20261107T230745/window1/renderer.log:1..3 reports severity warning: product.json
+extensionEnabledApiProposals for ms-vscode.remote-repositories/timeline,
+github.vscode-pull-request-github/agentsWindowActivation and github.remotehub/
+timeline do not exist. Exact full messages remain in out/t030-visual-log-result.json.
+None is approved or suppressed. The earlier cached manual launch incorrectly used
+development mode for the Test-only signed-out fixture; its guard correctly
+rejected activation and those failed logs remain retained. The ignored manual
+launcher was corrected to test mode without weakening the fixture guard. Cached1.140.0
+window attachment reports a same-name owner mismatch; visible manual QA therefore
+uses1.145.2, while automated full verification uses minimum1.140.0.
+
+### Complete standalone Windows host run
+
+Literal npm run verify:full PASS:1392units/129files and79hosts.
+UTC2026-11-07T15:04:48.309Z through2026-11-07T15:54:47.935Z,
+2999.626s, exit0; all400frozen hashes match=true.
+The standalone and full runs use the same captured400-file candidate=true.
+Minimum VS Code1.140.0; this execution does not enable the CI outer collector
+or opt-in stage/interval diagnostics. All original workloads, clock guards,
+launch settings and strict console/saved-log checks remain.
+Evidence: out/t030-csv-completion-full-1.log, -before.json, -after.json,
+-status.json and -evidence.json.
+
+This full run is NOT warning-free. Exact approved records:
+
+- VSCODE-HOST-005, severity warning, 20261107T231858/window1/renderer.log:1: Creation of workbench contribution 'workbench.contrib.remoteStatusIndicator' took 38ms.
+- VSCODE-HOST-002, severity warning, 20261107T231858/window1/renderer.log:3: Creation of workbench contribution 'workbench.contrib.chatLanguageModelsData' took 86ms.
+- VSCODE-HOST-004, severity warning, 20261107T231858/window1/renderer.log:4: Creation of workbench contribution 'workbench.contrib.chatPetContext' took 25ms.
+
+Raw CSV1/5GB timer maxima are54.747/45.0652ms, with combined sampled host/helper
+peaks312102912/307732480bytes and actual paging growth36519936/31645696bytes.
+All four JSON/JSONL maxima68.2286/61.3258/45.0782/39.3411ms and native/fallback
+CSV/JSON export maxima17.1227/20.4318/22.7509/21.0121ms pass the original100ms
+limits. Data and source-hash checks pass. Renderer residency is reported separately
+and is not claimed below the host/helper500MB cap.
+
+Native console ERROR records:[]. A local pass
+does not identify the historical Windows WidgetHost cause or clear failed CI.
+
+### Active Windows completion diagnostics
+
+Four unchanged T-026 schema-completion cases run with opt-in stage diagnostics
+active, after the complete host run; this is supplemental, not a reduced full gate.
+Result:PASS,400frozen files, changed=[]. All272stage records are retained;
+all five formats on both engines have their required import/disposal boundaries.
+UTC2026-11-07T15:56:15.141Z through2026-11-07T15:56:53.413Z. Console and saved logs retain
+strict validation. Evidence: out/t030-completion-active-1.log, -status.json and
+source snapshots. Exact approved records (a run containing these is not warning-free):
+
+- VSCODE-HOST-001, severity warning, 20261107T235617/window1/renderer.log:9: [CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]
+
+Mac CSV260.510084ms, prior export/import failures and native preflight timeout
+remain unresolved. No demonstrated causal product repair, new Mac visual pass
+or fresh three-platform acceptance is claimed. Owner pushes and runs normal CI
+once on the new candidate; use its opt-in CSV phase/operation and completion
+stage records if a failure remains. T-030 stays unchecked.
+
+Commands: npm run verify; npm run verify:full; npm run compile-tests;
+npm test -- test/unit/integration-logs-host008.test.ts test/unit/host-timing-breach.test.ts.
+
+Task files: AGENTS.md; PROGRESS.md; this report; scripts/integration-logs.mts;
+specs/VALIDATION.md (only HOST-008 policy/changelog); src/test/csv-import-memory.test.ts;
+src/test/host-timing-breach.ts; src/test/sql-completion.test.ts;
+test/unit/host-timing-breach.test.ts; test/unit/integration-logs-host008.test.ts.
+Owner README/PLAN/TASKS/other VALIDATION hunks and all six ZIPs remain unchanged.
+No push, dispatch, dependency, production backend, workload or threshold change.
+
+## Run42364917870: supplied macOS and Windows failure logs
+
+Both initial attachments are identical macOS transcripts:157739bytes each,
+SHA256cef0667c61d50f152194d95eedebcd9d53f66a01a773d769e37a5db2f1be087a.
+The owner then supplies the separate Windows transcript in chat. No more logs
+or ZIPs are needed to identify the current failures.
+
+macOS passes1342units/17existing platform skips and78hosts, fails1host:
+T-021 production CSV memory / NFR-003 populated1/5GB CSV. The5GB import reaches
+the original100ms host timer guard with260.51008400006685ms at
+out/integration/test/csv-import-memory.test.js:231:28. The1GB case fully passes
+with22.825417ms;5GB full-data SQL, paging, memory report and post-hash checks
+are not reached. Both export cases pass; native CSV/JSON maxima14.028416/
+16.019875ms, fallback13.674750/14.296625ms. All4large JSON/JSONL cases pass,
+maxima27.328833/41.489041/28.916250/37.503584ms. These passes do not explain
+the prior export/import failures. The CSV interval lacks causal per-gap evidence.
+
+macOS also rejects this unapproved saved renderer warning, independently of the
+failed test:20261107T104452/window1/renderer.log:12, severity warning,
+`Creation of workbench contribution 'workbench.contrib.onboarding' took 212ms.`
+Only3other saved errors summarize the failed test. No approved warning record is
+reported in the supplied macOS step; the run is failed and not warning-free.
+
+Windows passes1359units/128files and all79hosts with host exit0, including full
+CSV/JSON/SQLite workloads, export, editing and source checks. Strict console
+validation rejects this native Chromium error during the first T-026 imported
+schema-completion case:
+`[8196:1107/104741.418:ERROR:mojo\public\cpp\bindings\lib\interface_endpoint_client.cc:748] Message 4 rejected by interface blink.mojom.WidgetHost`.
+Saved logs being otherwise clean cannot clear the native console error. Its
+approved VSCODE-HOST-001 record has severity warning, source
+20261107T104537/window1/renderer.log:15, exact message:
+`[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]`.
+Windows full verification fails and is not warning-free. Passive shutdown
+identity samples report the original6244 process absent after its normal exit;
+this does not establish the cause of the earlier WidgetHost rejection.
+
+Independent read-only review finds no concrete causal defect: CSV parsing and
+insertion are off-thread, host filesystem calls asynchronous, progress bounded/
+coalesced. Completion sessions dispose and await closure between formats, cancel
+pending completion/listeners and destroy CodeMirror. A suite-level timestamp
+cannot identify the exact native rejected action or establish a lifecycle leak.
+Keep100ms guards, original workloads/sequence, launch settings and every-error
+rejection. Add opt-in diagnostic coverage only; no repaired-product claim.
+
+The scoped candidate reuses the bounded host interval recorder around the same
+CSV10ms timer, Mac-only under the existing diagnostic flag: raw phase endpoints,
+process CPU, overlapping callbacks/GC/operations, immediate first >100ms marker
+and final evidence before the unchanged assertion. Windows completion fixtures
+gain flag-gated UTC/monotonic/PID format, open/import/DOM/disposal and action-ID
+boundaries; no SQL, source paths or cell values are logged. Existing delays,
+actions, source guards, table sizes and cleanup remain. Instrumentation can alter
+timing; a passing diagnostic does not establish a historical cause or repair.
+Two new functional stage-reporter tests fail first, then44 focused cases/3files
+pass. Integration-test compilation and scoped lint pass. Canonical verification results are recorded above. Independent review is clear.
+
+### Owner-authorized HOST-008 onboarding warning amendment
+
+The owner delegates judgement on the exact reviewed proposal on2026-11-07.
+Adopt only the anchored onboarding constructor warning with ASCII unsigned-integer
+duration. Renderer path, timestamp, lowercase warning severity, structured
+mandatory reporting and all7prior families remain unchanged. Every other warning
+and every error still fails, including the Windows WidgetHost console error.
+AGENTS.md and VALIDATION.md record this eighth approved family; preserve the
+owner's preexisting T-015 VALIDATION hunks outside this change.
+
+Installed Windows VS Code1.140.0 vendor code identifies this contribution as
+workbench.contrib.onboarding, registered AfterRestored; the common constructor
+logger computes Date.now() elapsed time. This is Windows source inspection,
+not inspection of the exact macOS bundle or proof of pre-extension-host timing.
+The original212ms warning and failed run remain retained above.
+
+Test-first HOST-008 matrix:6fail/24pass before implementation, then163focused
+cases/5files pass, including path/severity/duration/wording/reporting rejection
+and explicit WidgetHost error rejection. Evidence: out/t030-host008-red.log and
+out/t030-host008-focused.log. Independent read-only review finds no concrete
+defect. This amendment does not resolve CSV timing or Windows Chromium rejection.
+
+## Supplied preflight archive and same-commit full CI (2026-11-07)
+
+Inspect specs/macos-system-trace-42365183964-1.zip directly without extraction or
+modification. Its SHA256 is
+a20de85351507fc76f2a11a69f6da8e86e82e9860e53736854cca41f9fa5ec3c,
+matching artifact13571442081's recorded digest and1726bytes. All5 entries total
+1336 uncompressed bytes. Both preflight.stdout.log and preflight.stderr.log are
+exactly0bytes, matching preflight.status.json. The manifest confirms exact12f7bea,
+start10:49:50.941UTC, finish10:50:21.016UTC, diagnosticPassed=false and
+fullVerification=false. There is no native trace, TOC, host transcript or VS Code
+profile in this archive. The collector timeout is established; the native stall's
+cause is not. Empty output provides no affirmative permissions or prompt error.
+The prior request for the two preflight text logs is now satisfied.
+
+Proactively inspect normal push CI42364917870/attempt1 at the same exact
+12f7bea9a912d14e4ab41c9c4d8eeb6a78c7076e. Public REST confirms Ubuntu job
+128380847645 PASS; Windows128380847425 and macOS128380847662 FAIL in their
+verification steps. Locked installs pass on all3. At the first public-only inspection, the failing assertions
+were unavailable: both public annotations say only exit1, and raw job-log
+download endpoints return403. The macOS queue-capacity notice is not causal
+runtime evidence. Do not relabel these failures as the earlier export assertion
+or claim Windows was regressed or unaffected based only on job conclusions.
+
+New macOS artifact13570579603 is macos-verification-diagnostics-42364917870-1,
+47328bytes, GitHub SHA256
+b54b4dcc71437dbc733818eac1b74ba6720d9ff9c534bf148c39c2483e2267aa.
+Public metadata/access results: out/t030-12f7bea-runs.json,
+out/t030-run-42364917870-jobs.json and out/t030-run-42364917870-access.json.
+That earlier text request is satisfied by the owner transcripts above. No more
+logs or ZIPs are requested. Original failed CI and collector settings remain
+retained; T-030 remains unchecked.
+
 ## Run42365183964: native preflight timeout; host suite not started (2026-11-07)
 
 Public GitHub REST confirms attempt1/exact
@@ -22,12 +223,12 @@ Do not increase deadlines, elevate permissions or retry unchanged to green.
 Artifact13571442081, macos-system-trace-42365183964-1, uploads successfully:
 1726bytes, GitHub SHA256
 a20de85351507fc76f2a11a69f6da8e86e82e9860e53736854cca41f9fa5ec3c.
-Unauthenticated artifact download returns401; no new local ZIP is supplied.
+Before the archive was supplied above, unauthenticated download returned401.
 Public metadata is retained in out/t030-run-42365183964-public.json.
-Request only preflight.stdout.log and preflight.stderr.log as text to inspect
-the native tool's own output. No new implementation or collector setting change
-is justified before that evidence. Prior verified399-file executable source is
-unchanged; update this report and PROGRESS only. T-030 remains unchecked.
+The subsequent supplied archive above satisfies that earlier text request. Both
+logs are empty, and no collector-setting or product change follows from them.
+The original399-file evidence is historical; current candidate evidence is above.
+T-030 remains unchecked.
 
 ## Run42360697008: native JSON export timer failure (owner log, 2026-11-07)
 
