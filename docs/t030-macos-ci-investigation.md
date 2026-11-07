@@ -1,5 +1,34 @@
 # T-030: macOS CI investigation
 
+## Run42365183964: native preflight timeout; host suite not started (2026-11-07)
+
+Public GitHub REST confirms attempt1/exact
+12f7bea9a912d14e4ab41c9c4d8eeb6a78c7076e fails. Job128381641990 passes locked
+install and the original verification prelude/integration compilation. The trace
+step runs10:49:50..10:50:21UTC (18:49:50..18:50:21Asia/Manila) and fails.
+The owner supplies the exact console error:
+`Native preflight failed: code=null, signal=SIGKILL, killed=true, failureCode=null.`
+The evidence directory is out/macos-system-trace-564MQG.
+
+The supervisor gives preflight executeCapability a30000ms timeout and SIGKILL
+termination. The31s step and killed=true match this collector-enforced deadline.
+The2s xctrace recording limit does not guarantee2s process startup/completion.
+Preflight rejection occurs before startRecorder or captureTraceHost, so no host
+test executes and no export/import timer is measured in this diagnostic step.
+Why native recording did not finish remains unproved; do not infer permissions,
+GUI prompting, tool malfunction or an extension defect from SIGKILL alone.
+Do not increase deadlines, elevate permissions or retry unchanged to green.
+
+Artifact13571442081, macos-system-trace-42365183964-1, uploads successfully:
+1726bytes, GitHub SHA256
+a20de85351507fc76f2a11a69f6da8e86e82e9860e53736854cca41f9fa5ec3c.
+Unauthenticated artifact download returns401; no new local ZIP is supplied.
+Public metadata is retained in out/t030-run-42365183964-public.json.
+Request only preflight.stdout.log and preflight.stderr.log as text to inspect
+the native tool's own output. No new implementation or collector setting change
+is justified before that evidence. Prior verified399-file executable source is
+unchanged; update this report and PROGRESS only. T-030 remains unchecked.
+
 ## Run42360697008: native JSON export timer failure (owner log, 2026-11-07)
 
 The owner supplies the complete normal macOS verification step for attempt1,

@@ -11,7 +11,7 @@ All four populated JSON/JSONL imports PASS: maxima22.496/30.083/30.908/29.451ms.
 SQLite/CSV large-file data/memory/hash workloads PASS; no root cause established.
 Saved errors are test summaries; approved HOST-001 warning, NOT warning-free:
 20261107T094409/window1/renderer.log:15; exact family in investigation report.
-## Prepared supplemental native macOS diagnostic
+## Supplemental native macOS diagnostic failed at preflight
 Manual macos-system-trace.yml: original verify prelude and entire host suite once.
 Native System Trace preflight before workload; rolling120s, recording45m bound.
 Immediate first raw >100ms export/import marker stops trace; suite continues.
@@ -20,8 +20,11 @@ Mac-only opt-in callbacks/CPU/GC; no changed Windows/Linux sampling or settings.
 42focused/3files PASS; tooling/integration types/scoped lint PASS.
 Verify1359/128/types/lint/build/VSIX PASS; zero diagnostics;399 frozen hashes.
 674.052s; independent follow-up clear; evidence out/t030-system-trace-verify-1.*.
-Native permission/readiness/SIGINT/scheduler coverage unverified until Mac run.
-Owner next: push, then dispatch macos-system-trace.yml once; no retry-to-green.
+Run42365183964/attempt1/exact12f7bea: prelude/compile PASS; preflight FAIL.
+31s trace step matches collector30000ms SIGKILL deadline; host suite never starts.
+Native stall cause unknown; no deadline/permission/product change or retry.
+Artifact13571442081/1726bytes uploads; download401; public metadata retained.
+Need preflight.stdout.log + preflight.stderr.log text; no new ZIP request.
 ## Retained evidence / limits
 Focused42360961523/exact270639c: all original JSON/JSONL volumes PASS,219919ms.
 Maxima16.680/20.567/18.364/48.722ms; complete data/source hashes/memory PASS.
