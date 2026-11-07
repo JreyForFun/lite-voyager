@@ -1,5 +1,59 @@
 # T-030: macOS CI investigation
 
+## Run42360961523: requested focused native macOS test passes (2026-11-07)
+
+Public REST confirms attempt1/exact270639c78a2e4283053c2672b6bf64624a05fc6d
+succeeds. Owner supplies specs/macos-json-memory-42360961523-1.zip (11674 bytes),
+SHA256c59625a571b8b219eb4cbc30c19a57725018bd0223642c6fe5f765a6c8b5031b,
+matching GitHub artifact13569374505's name/size/digest. All19 entries/25563
+expanded bytes are validated for path containment and size, then copied
+exclusively to out/t030-macos-json-42360961523-evidence; original ZIP unchanged.
+
+macos-json-memory-console.log reports exactly one passing test/219919ms with
+host exit0. integration-profile-macos-json-a16eKf/json-memory-probe-status.json
+confirms darwin, exact source commit, original file/full-title selection,
+fail-zero, retries0, diagnosticPassed=true, failure=null, fullVerification=false.
+All four original populated inputs complete data SQL, source hashes and memory
+checks. JSON1/5GB raw host maxima16.680209/20.566917ms, combined resident peaks
+262340608/260620288 bytes; JSONL1/5GB maxima18.363875/48.722375ms, peaks
+236683264/235585536 bytes. Every raw timer maximum is below unchanged100ms;
+every peak is below unchanged500MB. Actual helper samples97/427/84/405 and
+maximum observation gaps171.6145/882.888/184.917833/180.363416ms pass the
+original guards. No assertion, workload, threshold or launch setting changes.
+
+Independent artifact reinspection with the existing checkIntegrationLogs returns
+no approved warnings and no rejected diagnostics. Renderer/exthost logs report
+successful completion. This focused run contains no detected warnings/errors.
+Its fresh-host success does not reproduce the earlier full-suite136.357291ms
+failure, identify its cause, or establish full-suite acceptance. Preserve the
+failed run42069600294 and all earlier failures; do not retry unchanged to green.
+Review evidence/strict log scan: out/t030-macos-json-42360961523-audit.json.
+
+Also inspect the available specs/macos-native-capabilities-42360767270-1.zip:
+8415 bytes, SHA2560dcc73c0f82935523041de5d2ea996ba1eb11389131d0bde92d508fd1f51bc66,
+matching GitHub artifact13569197859. Run42360767270/attempt1/same270639c passes.
+All13 entries/25829 expanded bytes and manifest stdout/stderr hashes verify.
+All six read-only commands exit0 with empty stderr: macOS26.7.2/25G332, arm64,
+Xcode26.6/17F113, installed xctrace path/manual/templates including System Trace.
+This establishes installed capabilities, not recording permission or a scheduler
+trace. Native tracing itself has not run. Original evidence remains unchanged.
+
+Normal CI42360697008/attempt1/same270639c finishes during inspection:
+Ubuntu128368269144 and Windows128368269076 PASS; macOS128368268925 FAILS.
+Its new failure must not be labelled the same timer assertion without the log.
+Public annotations contain only `Process completed with exit code 1.` plus a
+macOS-arm64 queue-capacity notice, which does not establish a runtime cause.
+Artifact13570425242/macOS diagnostics is47353 bytes, GitHub digest
+2d4d2dbbcb9f5739014d779737ce2a47bc4b99ae3564550eb2afc7a704ee6b46.
+An unauthenticated download returns401. The configured Git credential helper
+cannot authenticate noninteractively; no secret is printed/saved. Browser
+inspection is unavailable (native pipe/browser access host unavailable).
+The new artifact is not downloaded and its assertion has not been inspected.
+Request the full failing verification step as text, not another ZIP. Do not
+change code/thresholds or start another unchanged run before identifying it.
+Only this report/PROGRESS change locally; the prior verified executable tree
+remains intact. T-030 stays unchecked; the focused PASS does not clear full CI.
+
 ## Run42069600294: exact populated JSON timer assertion (2026-11-07 inspection)
 
 Inspect the owner's existing specs/macos-verification-diagnostics-42069600294-1.zip
