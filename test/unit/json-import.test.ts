@@ -26,7 +26,7 @@ async function imported(input: string, engine: EngineName, format = 'json') {
 }
 async function mutationLoader(phase: 'reading' | 'publishing'): Promise<JsonLoader> {
   const directory = await mkdtemp(join(tmpdir(), 'lv-json-mutation-worker-')); directories.push(directory);
-  for (const name of ['csv-import-process.js', 'sql-wasm.cjs', 'sql-wasm.wasm']) { await copyFile(resolve('dist', name), join(directory, name)); }
+  for (const name of ['csv-import-process.js', 'csv-import-launch-worker.js', 'sql-wasm.cjs', 'sql-wasm.wasm']) { await copyFile(resolve('dist', name), join(directory, name)); }
   const built = await build({ entryPoints: [resolve('src/worker/json-import-worker.ts')], outfile: join(directory, 'json-import-worker.js'),
     bundle: true, platform: 'node', format: 'cjs', target: 'es2022', external: ['node:sqlite'], logLevel: 'silent', banner: { js: `
 // Inject an external fixture write in this worker before its real snapshot check.

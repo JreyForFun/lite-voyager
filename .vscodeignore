@@ -20,6 +20,7 @@
 !dist/csv-import.js
 !dist/csv-import.css
 !dist/csv-import-process.js
+!dist/csv-import-launch-worker.js
 !dist/csv-import-worker.js
 !dist/sqlite-save-worker.js
 !dist/sqlite-edit-copy-worker.js

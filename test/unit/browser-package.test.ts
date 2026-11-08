@@ -6,6 +6,21 @@ import { join, resolve } from 'node:path';
 import { build } from 'esbuild';
 import { expect, test } from 'vitest';
 
+test('NFR-005: Given the import launcher worker, When listing actual VSIX contents, Then the off-thread process launcher ships with the importer', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t030-launch-package-'));
+  try {
+    for (const name of ['package.json', '.vscodeignore', 'README.md', 'CHANGELOG.md', 'LICENSE']) { await copyFile(name, join(directory, name)); }
+    await mkdir(join(directory, 'dist'));
+    for (const name of ['csv-import-launch-worker', 'csv-import-process']) {
+      const built = await build({ entryPoints: [resolve(`src/worker/${name}.ts`)], outfile: join(directory, `dist/${name}.js`), bundle: true, platform: 'node', format: 'cjs', target: 'es2022', external: ['node:sqlite'], logLevel: 'silent' });
+      expect(built.warnings).toEqual([]);
+    }
+    const result = await promisify(execFile)(process.execPath, [resolve('node_modules/@vscode/vsce/vsce'), 'ls', '--no-dependencies'], { cwd: directory });
+    expect(result.stderr).toBe(''); const files = result.stdout.trim().split(/\r?\n/u);
+    expect(files).toContain('dist/csv-import-launch-worker.js'); expect(files).toContain('dist/csv-import-process.js');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+}, 30000);
+
 test('FR-020: Given the staged-edit snapshot worker, When listing actual VSIX contents, Then native Save As ships its helper without development files', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'lv-t030-package-'));
   try {

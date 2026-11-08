@@ -9,6 +9,7 @@ import type { BrowserExercise, BrowserStatus } from '../protocol';
 import { closeEditor } from './sqlite-editor-lifecycle';
 import { xlsxFixture, xlsxCell } from './xlsx-fixture';
 import { hostDiagnosticStage } from './host-timing-breach';
+import { completionReady } from './completion-readiness';
 
 const stage = process.platform === 'win32' && process.env['LITE_VOYAGER_INTERVAL_DIAGNOSTICS'] === '1'
   ? (label: string, value: string): void => { hostDiagnosticStage(true, label, value); } : undefined;
@@ -64,7 +65,7 @@ suite('T-026 schema autocomplete in real CodeMirror', () => {
             assert.ok(ready.table !== null);
             const sql = `SELECT fi FROM "${ready.table.replaceAll('"', '""')}"`;
             await action(surface, 'sql', sql); await action(surface, 'selection', '9,9'); await action(surface, 'completionKey', 'Ctrl-Space');
-            let status = await wait(surface, (status) => status.completion?.labels.includes('first name') === true && !status.busy);
+            let status = await wait(surface, (status) => completionReady(status, 'first name'));
             await new Promise<void>((resolve) => setTimeout(resolve, 100));
             for (let i = 0; i < 12 && status.completion?.selected !== 'first name'; i++) { status = await action(surface, 'completionKey', 'ArrowDown'); }
             assert.equal(status.completion?.selected, 'first name'); await action(surface, 'completionKey', 'Enter');
@@ -92,7 +93,7 @@ suite('T-026 schema autocomplete in real CodeMirror', () => {
         const edit = async (sql: string, position = sql.length): Promise<void> => { await action(current, 'sql', sql); await action(current, 'selection', `${String(position)},${String(position)}`); };
         const complete = async (label: string): Promise<BrowserStatus> => {
           await action(current, 'completionKey', 'Ctrl-Space');
-          let status = await wait(current, (status) => !status.busy && status.completion?.labels.includes(label) === true);
+          let status = await wait(current, (status) => completionReady(status, label));
           // CodeMirror's default interactionDelay is 75 ms after opening a list.
           // Model the user's time to read a suggestion before pressing Enter.
           await new Promise<void>((resolve) => setTimeout(resolve, 100));

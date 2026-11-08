@@ -1,5 +1,160 @@
 # T-030: macOS CI investigation
 
+## CI 42437310018: import launch repair (2026-11-08)
+
+Only T-030 is active. The owner retains push and CI dispatch. No workload,
+timer limit, deadline, renderer setting, launch flag, dependency, warning family,
+or error policy was relaxed. T-030 remains unchecked.
+
+The owner reports macOS passed. The supplied Ubuntu transcript passes 1,375
+units (17 existing platform skips) and all 79 host cases, then fails strict
+validation on nine native Chromium ProduceMemory errors from GPU PID 8487.
+They follow D-5 fallback opening/cleanup and occur during the next two-view case.
+The snapshot identifies the GPU process; the image-lifetime cause is unknown.
+The supplied Windows transcript passes 1,392 units and 78 host cases, with one
+failure: the 5-GB JSONL raw timer interval is 322.866700 ms. Its synchronous
+`import-helper-fork` span is 320.704600 ms, with no recorded overlapping GC.
+This identifies a blocking operation, without explaining OS process latency.
+Later checks in that failed case were not reached. The exact CI SHA and macOS
+transcript were not independently retrieved.
+
+Approved warnings are reported explicitly; this run is not warning-free:
+
+```json
+{"source":"20261108T021355/window1/renderer.log","line":15,"severity":"warning","rule":"VSCODE-HOST-001","message":"[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]"}
+```
+
+Attachment SHA-256: Ubuntu
+`1bbedf01e0e8489bbe8d881ce51391a23eaa0e264dc0036400489fb3825dfab7`;
+Windows `87fc895afa957a06162c25380c3101d6108dae6223409209cf1d59b009aff010`.
+All nine errors and parsed timing evidence remain in the supplied transcripts
+and `out/t030-42437310018-log-audit.json`.
+
+`ImportHelper` now creates a launcher worker. Only that worker forks the existing
+import helper. The host awaits readiness and durably registers the actual child
+PID before sending a job. Ordered IPC, exact BigInt/text values, progress
+validation, exclusive publication and source guards remain. Cancellation can
+queue a stop before a PID exists. Shutdown requires confirmed child close and
+launcher exit. Unconfirmed closure rejects a typed error; the importer and outer
+editor retain private storage for startup orphan cleanup, which checks that the
+old owner and registered helpers are absent.
+
+Tests cover an actual fork deliberately stalled for 350 ms while the original
+host timer stays within 100 ms, ordered IPC/NUL/Unicode/BigInt, cancellation
+before PID, thrown/asynchronous spawn failure, and uncertain closure. The
+initial missing-module RED is not an executed heartbeat failure. A separate RED
+reproduces outer editor cleanup deleting retained storage; the repair passes
+31 editor/launcher/registration tests and 25 transport/editor contract tests.
+
+The initial standalone verify passes 1,397 units in 130 files, zero diagnostics,
+866.805 seconds and 403 matching hashes. That result is superseded: review found
+the launcher missing from the VSIX allowlist. The actual-vsce listing regression
+fails before the packaging repair and passes afterward (11 package/launcher
+tests). The repaired package contains 36 entries, including the launcher.
+
+The autocomplete harness also accepted retained labels while CodeMirror was
+pending. Both waits now require an active matching popup on an idle host. The
+regression fails against the old predicate; 23 focused tests pass after repair.
+Original actions, 100-ms interaction delay, 15,000-ms waiter, 60,000-ms case
+budgets and keyboard bounds remain. This closes a readiness hole; it does not
+establish the exact cause of the earlier Linux deadline.
+
+Offline Ubuntu uses cached Node 26.5.0, VS Code 1.140.0 and locked dependencies,
+including the existing vendored XLSX, in a disposable tree. No download or
+system installation occurred; the prior Linux QA tree is untouched. A vanished
+temporary setup and a literal absolute-glob setup ran no tests; both failures
+remain recorded. The runtime probe uses the cached executable and a relative
+test glob, with renderer settings and workloads unchanged.
+
+The earlier 403-file Linux candidate, before retention/readiness hardening,
+finishes 78 host cases passing and one autocomplete deadline in 38 minutes.
+All populated SQLite, ten-million-row JSON/JSONL, 1/5-GB JSON/JSONL and 1/5-GB
+CSV cases pass with exact source hashes and unadjusted timers. JSON/JSONL maximum
+gaps are 21.954080, 45.496296, 24.793241 and 42.658568 ms; CSV gaps are 22.599706
+and 34.873831 ms. All 403 source hashes match. Strict validation fails on:
+
+```text
+[606:1108/111030.980975:ERROR:gpu/ipc/client/command_buffer_proxy_impl.cc:285] ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.
+```
+
+Approved warnings are reported explicitly; this run is not warning-free:
+
+```json
+{"source":"20261108T111035/window1/renderer.log","line":15,"severity":"warning","rule":"VSCODE-HOST-001","message":"[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]"}
+```
+
+The hardened 405-file candidate passes all four native autocomplete cases in
+20 seconds. All 405 source hashes match before/after and match the Windows run
+start. Strict validation nevertheless fails on:
+
+```text
+[625:1108/115607.029994:ERROR:gpu/ipc/client/command_buffer_proxy_impl.cc:285] ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.
+```
+
+Approved warnings are reported explicitly; this run is not warning-free:
+
+```json
+{"source":"20261108T115606/window1/renderer.log","line":15,"severity":"warning","rule":"VSCODE-HOST-001","message":"[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]"}
+```
+
+The focused pass does not replace the failed full probe. The original CI
+ProduceMemory error did not reproduce; this different startup family cannot
+establish its cause or a graphics repair. The temporary awake lease was released.
+Raw logs, exits and manifests remain in out/; t030-linux-probes-audit.json records
+both results. Their log SHA-256 values are respectively
+`81ca306f02161c8e44de15d70c04bc84c0f3d4885e2ce363012f2d3c36beb602` and
+`5b89d43569dd5739bbf65d69da4940d0291acfa084aedf6f39714e31361aab06`.
+
+The first Windows full attempt is INCOMPLETE: Windows restarted at
+12:38:30 local time while the host suite was running. The tool returned
+1073807364, then OpenDesktopW error 624. No final gate status was produced.
+All 405 sources still match; the interrupted log is retained with SHA-256
+`b3b7084cf8ad65602034f619bd51a7dbbaf2f5c7c00ed258d41cc9bb6b8b08f9`.
+Evidence: out/t030-launch-full-1-recovery.json. The restart justifies a fresh
+verification attempt; no failing assertion was discarded.
+
+Recovery runs literal npm run verify:full with LITE_VOYAGER_CI_DIAGNOSTICS=1,
+the real Windows identity collector and original full workloads. It finishes
+with exit 0 in 2955.65 seconds. Unit summary:
+ Test Files  131 passed (131);       Tests  1400 passed (1400). Host summary:   79 passing (35m).
+The actual VSIX contains 36 entries (1,013.68 KB), including the launcher.
+All 405 captured source hashes match.
+JSON/JSONL raw maximum timer intervals (JSON 1/5 GB, JSONL 1/5 GB) are
+34.749100, 41.657500, 40.545400, 49.254000 ms.
+CSV 1/5-GB raw maxima are 36.261700, 38.574600 ms.
+
+Approved warnings are reported explicitly; this run is not warning-free:
+
+```json
+{"source":"20261108T130400/window1/renderer.log","line":10,"severity":"warning","rule":"VSCODE-HOST-001","message":"[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]"}
+```
+
+No native Chromium error is present in the recovery transcript.
+
+
+Full status, original transcript, before/after manifests and parsed timing/memory
+evidence remain in out/t030-launch-full-2*; log SHA-256:
+`42a89acef9fcbfa2fde2ef3a7a4f26209325f8d0ca78670f63a677f2e64b3125`. This local result does not clear the failed Ubuntu
+probe or establish actual-candidate macOS/Ubuntu CI acceptance.
+
+Earlier visual QA and its failed manual-host diagnostics remain below. No new
+manual screenshot pass or physical macOS QA is claimed. Owner edits and six
+diagnostic ZIPs are preserved. No push, dispatch, release or later-task work was
+performed. Source preservation and complete evidence are recorded under `out/`.
+
+Changed files: `.vscodeignore`, `esbuild.js`, `src/editor/csv-import.ts`,
+`src/loaders/csv-import-client.ts`, `src/loaders/import-helper.ts`,
+`src/worker/csv-import-launch-worker.ts`, `src/test/completion-readiness.ts`,
+`src/test/sql-completion.test.ts`, `test/unit/browser-package.test.ts`,
+`test/unit/csv-import-panel.test.ts`, `test/unit/csv-import.test.ts`,
+`test/unit/dependency-audit.test.ts`, `test/unit/import-helper-launch.test.ts`,
+`test/unit/json-import.test.ts`, `test/unit/storage-helper-registration.test.ts`,
+`test/unit/completion-readiness.test.ts`, `PROGRESS.md`, and this document.
+
+Commands: `npm run verify:full` (CI sets `LITE_VOYAGER_CI_DIAGNOSTICS=1`);
+`npm test -- test/unit/import-helper-launch.test.ts test/unit/csv-import-panel.test.ts test/unit/storage-helper-registration.test.ts test/unit/browser-package.test.ts test/unit/completion-readiness.test.ts`.
+
+
 ## Local candidate verification and visual QA (2026-11-07)
 
 Literal npm run verify passes1392unit tests/129files, host/webview/tooling

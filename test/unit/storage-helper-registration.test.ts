@@ -7,17 +7,20 @@ import { EngineClient } from '../../src/engine/engine-client';
 import { runCsvImport } from '../../src/loaders/csv-import-client';
 import type { DatabaseHelperRequest } from '../../src/protocol';
 
-const mocks = vi.hoisted(() => ({ fork: vi.fn(), register: vi.fn() }));
+const mocks = vi.hoisted(() => ({ fork: vi.fn(), launch: vi.fn(), register: vi.fn() }));
 vi.mock('node:child_process', () => ({ fork: mocks.fork }));
+vi.mock('../../src/loaders/import-helper', () => ({ ImportHelper: class { constructor() { return mocks.launch() as Helper; } } }));
 vi.mock('../../src/storage/temp-storage', () => ({ registerStorageHelper: mocks.register }));
 class Helper extends EventEmitter {
+  ready = Promise.resolve();
+  closed = new Promise<void>((accept) => { this.once('close', () => { accept(); }); });
   pid = 42; connected = true; exitCode: number | null = null; signalCode: NodeJS.Signals | null = null;
   send = vi.fn();
   kill(): boolean { this.stop(); return true; }
   stop(): void { this.connected = false; this.exitCode = 1; this.emit('close', 1, null); }
 }
 const directories: string[] = [];
-beforeEach(() => { mocks.fork.mockReset(); mocks.register.mockReset(); });
+beforeEach(() => { mocks.fork.mockReset(); mocks.launch.mockReset(); mocks.register.mockReset(); });
 afterEach(async () => { for (const path of directories.splice(0)) { await rm(path, { recursive: true, force: true }); } });
 
 test.each(['cancel', 'open', 'open-then-close'] as const)('FR-020: Given a crashed Save awaiting worker recovery, When %s requests a reader, Then recovery and disposal finish before any reader can reopen', async (action) => {
@@ -45,7 +48,7 @@ test.each(['cancel', 'open', 'open-then-close'] as const)('FR-020: Given a crash
 });
 test.each(['import', 'database'] as const)('FR-007: Given a %s helper exiting during owner registration, When its marker finishes, Then no storage work starts and the operation fails promptly', async (kind) => {
   const root = await mkdtemp(join(tmpdir(), 'lv-t022-register-')); directories.push(root); await writeFile(join(root, 'source.csv'), 'a\n1\n');
-  const child = new Helper(); mocks.fork.mockReturnValue(child); let registered!: () => void;
+  const child = new Helper(); mocks.fork.mockReturnValue(child); mocks.launch.mockReturnValue(child); let registered!: () => void;
   mocks.register.mockImplementation(() => new Promise<void>((accept) => { registered = accept; }));
   const client = new EngineClient({ directory: '/dist', ownerDirectory: root });
   const task = kind === 'database' ? client.open(join(root, 'table.sqlite')) : runCsvImport('/dist', join(root, 'source.csv'),
@@ -56,7 +59,7 @@ test.each(['import', 'database'] as const)('FR-007: Given a %s helper exiting du
 });
 test('FR-007: Given a spawn error during import helper registration, When it arrives before registration finishes, Then it has a handler and becomes an actionable failure', async () => {
   const root = await mkdtemp(join(tmpdir(), 'lv-t022-register-')); directories.push(root); const child = new Helper();
-  mocks.fork.mockReturnValue(child); let registered!: () => void;
+  mocks.launch.mockReturnValue(child); let registered!: () => void;
   mocks.register.mockImplementation(() => new Promise<void>((accept) => { registered = accept; }));
   const task = runCsvImport('/dist', 'source', { path: join(root, 'table.sqlite'), engine: 'node:sqlite', ownerDirectory: root }, {}, () => {}, new AbortController().signal);
   const rejected = expect(task).rejects.toThrow(/helper.*stopped|helper.*failed/iu);

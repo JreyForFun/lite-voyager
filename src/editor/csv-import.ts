@@ -20,6 +20,7 @@ import { captureOriginalSource, SqliteSaveService, type OriginalSourceSnapshot }
 import { isSqliteSaveDom, isSqliteSaveRequest, type SqliteSaveDom, type SqliteSaveState } from '../protocol';
 import { logLifecycle, type DiagnosticOutput } from '../diagnostics';
 import { traceHostAwait, traceHostSync } from '../import-host-diagnostics';
+import { UnconfirmedImportExitError } from '../loaders/import-helper';
 
 export class CsvImportSession {
   readonly contextId = randomBytes(16).toString('hex');
@@ -172,6 +173,9 @@ export class CsvImportSession {
       this.configureSqliteSave();
       this.panel.webview.html = sqliteEditorHtml(basename(this.uri.fsPath), { ...database.state, message: this.state.message }, this.assets('sqlite-browser'), this.contextId);
     } catch (error: unknown) {
+      // Leave uncertain import storage to startup orphan cleanup, which checks
+      // the old owner and every registered helper before removing anything.
+      if (error instanceof UnconfirmedImportExitError) { this.storage = undefined; }
       await this.cleanup(); this.failure(error);
     } finally { if (this.disposed || this.cancellation.signal.aborted) { await this.cleanup(); } }
   }

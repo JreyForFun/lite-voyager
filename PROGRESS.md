@@ -1,33 +1,34 @@
 # Progress
 ## Current task
-T-030 CI investigation only. Owner authorizes fixes/fixtures/QA/local commit.
-Owner retains push and CI dispatch. No workload, limit or error guard relaxed.
+T-030 CI repair only; owner retains push and CI dispatch. No later task starts.
+Owner authorizes scoped fixes, fixtures, QA and task-only local commit.
 ## Implemented candidate
-Owner authorizes exact HOST-008 onboarding unsigned-integer renderer warning.
-Mandatory metadata reporting, all7prior families and every other failure remain.
-Mac CSV bounded phase/CPU/callback/GC diagnostics; Windows completion stage markers.
-Both opt-in/platform gated; original timers/actions/delays/data/cleanup unchanged.
-Tests first: stage reporter2fail, HOST-0086fail/24pass; focused44/3 and163/5PASS.
-Independent review clear; tooling types/scoped lint/integration compilePASS.
-## Current verification
-npm run verify PASS:1392units/129files, types/lint/build/35-file VSIX; zero diagnostics.
-2999.626s standalone Windows verify:full PASS:79hosts;400matching hashes.
-Full is NOT warning-free; approved records listed verbatim in investigation report.
-Active completion diagnostics PASS:4hosts/272records; strict logs;400frozen files.
-No Windows WidgetHost reproduction or historical-cause/repair claim follows.
-Visual QA1.145.2:dark/light, exact scalars, staging/Undo/Redo/Revert/Save/reopen/paging.
-Owned fixture unchanged until explicit Save; exact intended update/integrity confirmed.
-Manual QA host logs FAIL:mutex error and3proposal warnings, unapproved and retained.
-Automated host version1.140.0. No physical Mac QA claimed.
-## Still unresolved / retained failures
-CI42364917870/exact12f7bea:UbuntuPASS; Mac and WindowsFAIL for distinct reasons.
-Mac78hostsPASS/1FAIL:5GB CSV timer260.510084ms>100; later5GB checks unreached.
-Mac onboarding212ms warning now covered narrowly by authorized HOST-008.
-Windows79hostsPASS/exit0; strict console rejects native Chromium WidgetHost error.
-Exact errors/approved HOST-001 metadata and all archive hashes remain in report.
-Native42365183964:30s collectorSIGKILL; empty logs; host never starts; cause unknown.
-Older export286.739084ms/JSON136.357291ms and other failed CI remain retained.
-## Status / preservation
-Owner README/PLAN/TASKS/other VALIDATION hunks and six ZIPs preserved.
-Source/gate/QA evidence and commands:docs/t030-macos-ci-investigation.md.
-T-030 unchecked. Owner pushes candidate and runs fresh normal three-platform CI.
+Import process fork now runs in a launcher worker; host awaits real PID readiness.
+PID registration remains durable before jobs; ordered exact-value IPC is retained.
+Cancel-before-PID and child-close plus launcher-exit confirmation are covered.
+Unknown exit rejects; importer/editor retain storage for safe orphan cleanup.
+Build/VSIX/dependency audit include launcher; no dependency or launch flag changed.
+Autocomplete waits now require an active matching popup on an idle host.
+Original actions, workloads, timers, deadlines and all diagnostic failures remain.
+## Current evidence
+CI 42437310018: owner reports macOS PASS; supplied Ubuntu/Windows logs FAIL.
+Windows failure: 5-GB JSONL raw 322.8667 ms; sync fork 320.7046 ms, no GC overlap.
+Ubuntu: 79 hosts PASS, then strict FAIL on nine native ProduceMemory errors.
+RED/green cleanup, package and completion regressions retained in report/out.
+Initial standalone 1,397-unit PASS is superseded by package/guard hardening.
+First final full INCOMPLETE: Windows reboot at 12:38:30; 405 sources still match.
+Recovery npm run verify:full PASS: 1,400 units/131 files, 79 hosts, 2955.65 s.
+Types, lint, build, 36-entry VSIX, integration compilation and strict scans PASS.
+Windows 5-GB JSONL raw max: 49.254000 ms; all 405 hashes match.
+Full is NOT warning-free; every approved record is verbatim in investigation.
+Earlier 403-file Ubuntu full: 78 hosts PASS/1 autocomplete FAIL; big-data cases PASS.
+Final 405-file Ubuntu autocomplete: 4 hosts PASS; both probes fail startup GPU logs.
+CreateCommandBuffer differs from CI ProduceMemory; no graphics cause/fix claim.
+Offline cached runtimes/dependencies only; setup failures and raw logs retained.
+Earlier visual QA retained with failed manual-host logs; no new physical Mac QA.
+## Remaining acceptance / preservation
+Fresh actual-candidate three-platform CI and Ubuntu strict acceptance remain open.
+No threshold, workload, renderer setting, error policy or warning family relaxed.
+Owner README/PLAN/TASKS/VALIDATION edits, unrelated files and six ZIPs preserved.
+Evidence, all 18 changed files and commands: docs/t030-macos-ci-investigation.md.
+T-030 stays unchecked. No push, CI dispatch, tag or release performed.

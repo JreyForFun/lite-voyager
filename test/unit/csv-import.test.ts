@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, readFile, readdir, rm, truncate, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdtemp, readFile, readdir, rm, truncate, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
@@ -179,6 +179,7 @@ test('FR-004: Given a UTF-8 character and quoting across 64-KiB boundaries, When
 test.each(['invalid', 'exit'] as const)('FR-004: Given helper %s, When a worker response cannot complete, Then failure cleans owned files and source remains usable', async (failure) => {
   const files = await fixture('a\n1\n'); const helper = join(files.directory, 'helper');
   const { mkdir } = await import('node:fs/promises'); await mkdir(helper);
+  await copyFile(resolve('dist/csv-import-launch-worker.js'), join(helper, 'csv-import-launch-worker.js'));
   await writeFile(join(helper, 'csv-import-process.js'), failure === 'exit' ? 'process.exit(0);' : "process.once('message', () => { process.send({type:'progress',value:{bytes:'999',totalBytes:'1',rows:'0'}}); });");
   await expect(new CsvLoader(helper).import(files.source, { path: files.target, engine: 'node:sqlite' }, {}, () => {}, new AbortController().signal)).rejects.toThrow(/Invalid|stopped/);
   expect((await readdir(files.directory)).sort()).toEqual(['helper', 'source.csv']); expect(await readFile(files.source, 'utf8')).toBe('a\n1\n');

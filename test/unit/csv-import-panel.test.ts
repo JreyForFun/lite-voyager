@@ -12,6 +12,7 @@ import { TempStorage } from '../../src/storage/temp-storage';
 import type { JsonPreviewResult } from '../../src/protocol';
 import { channel } from 'node:diagnostics_channel';
 import { IMPORT_HOST_CHANNEL } from '../../src/import-host-diagnostics';
+import { UnconfirmedImportExitError } from '../../src/loaders/import-helper';
 
 const notifyError = vi.hoisted(() => vi.fn());
 const disk = vi.hoisted(() => ({ low: false }));
@@ -47,6 +48,23 @@ async function fixture(loader: FileLoader, started?: number, format: 'csv' | 'js
   const session = new CsvImportSession({ fsPath: source } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started, format);
   await session.finished; return { directory, view, db, session };
 }
+
+test('FR-007: Given an unconfirmed import helper exit, When the editor handles failure and closes, Then its owned storage survives until startup confirms the owner and helpers are absent', async () => {
+  const run = await fixture({ extensions: ['csv'], preview: () => Promise.resolve(preview), import: async (_source, target) => {
+    await writeFile(target.path, 'owned unfinished import'); throw new UnconfirmedImportExitError();
+  } });
+  try {
+    await run.session.startImport(); expect(run.session.state.phase).toBe('error');
+    expect(run.session.state.message).toContain('without confirmed helper closure');
+    const sessions = await readdir(run.directory); expect(sessions).toHaveLength(1);
+    expect(await readFile(join(run.directory, sessions[0]!, 'table.sqlite'), 'utf8')).toBe('owned unfinished import');
+    expect(await readFile(run.session.uri.fsPath, 'utf8')).toBe('a\n1\n');
+    run.view.dispose(); await run.session.closed;
+    expect(await readdir(run.directory)).toEqual(sessions);
+    await new TempStorage(run.directory, () => false).cleanupOrphans();
+    expect(await readdir(run.directory)).toEqual([]);
+  } finally { run.view.dispose(); await run.session.closed; }
+});
 
 test('NFR-005: Given diagnostic observation of real import preflight, When importing a disposable source, Then state delivery and asynchronous boundaries have fixed named scopes and source bytes survive', async () => {
   const records: unknown[] = []; const listener = (value: unknown): void => { records.push(value); }; const sink = channel(IMPORT_HOST_CHANNEL);

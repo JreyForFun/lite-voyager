@@ -1,10 +1,10 @@
-import { fork, type ChildProcess } from 'node:child_process';
 import { link, mkdtemp, rm, stat, unlink } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import type { ImportedTable, ImportTarget, LoadOptions, Progress } from './file-loader';
 import { isCsvImportProgress } from '../protocol';
 import { registerStorageHelper } from '../storage/temp-storage';
 import { traceHostAwait, traceHostSync } from '../import-host-diagnostics';
+import { ImportHelper } from './import-helper';
 
 function cancelled(): Error { return new Error('CSV import cancelled. Source is unchanged; reopen to retry.'); }
 function validTables(value: unknown, xlsx: boolean): value is ImportedTable[] {
@@ -25,26 +25,30 @@ export async function runCsvImport(directory: string, source: string, target: Im
   if (typeof target.path !== 'string' || target.path.length === 0 || target.path.includes('\0') || !['node:sqlite', 'sql.js'].includes(target.engine)) { throw new Error('Invalid internal CSV import target.'); }
   const destination = resolve(target.path);
   const work = await traceHostAwait('import-work-directory', () => mkdtemp(join(dirname(destination), '.lv-import-'))); const output = join(work, 'import.sqlite');
-  let child: ChildProcess | undefined; let exited = Promise.resolve(); let published = false;
+  let child: ImportHelper | undefined; let exited = Promise.resolve(); let published = false;
   let abort: () => void = () => {};
   try {
     if (signal.aborted) { throw cancelled(); }
-    child = traceHostSync('import-helper-fork', () => fork(join(directory, 'csv-import-process.js'), [], {
-      execPath: process.execPath, execArgv: [], windowsHide: true, serialization: 'advanced',
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
-    }));
+    child = new ImportHelper(directory);
     const helper = child;
     let spawnFailed = false;
     helper.on('error', () => { spawnFailed = true; });
-    exited = new Promise<void>((accept) => { helper.once('close', () => { accept(); }); });
+    exited = helper.closed;
+    abort = () => { helper.kill('SIGKILL'); };
+    signal.addEventListener('abort', abort, { once: true });
+    if (signal.aborted) { abort(); }
+    await traceHostAwait('import-helper-fork', () => helper.ready);
+    if (signal.aborted) { throw cancelled(); }
     // No storage work starts before its PID marker is durable in the owned session.
     const ownerDirectory = target.ownerDirectory; const pid = helper.pid;
     if (ownerDirectory !== undefined && pid !== undefined) { await traceHostAwait('import-helper-register', () => registerStorageHelper(ownerDirectory, pid)); }
+    if (signal.aborted) { throw cancelled(); }
     if (spawnFailed || !helper.connected || helper.exitCode !== null || helper.signalCode !== null) { throw new Error('CSV import helper stopped before starting. Reopen the file.'); }
     const tables = await new Promise<ImportedTable[]>((accept, reject) => {
       let settled = false;
       const fail = (error: Error): void => { if (!settled) { settled = true; reject(error); } };
-      abort = () => { fail(cancelled()); };
+      signal.removeEventListener('abort', abort);
+      abort = () => { helper.kill('SIGKILL'); fail(cancelled()); };
       signal.addEventListener('abort', abort, { once: true });
       helper.on('error', () => { fail(new Error('CSV import helper failed. Rebuild and reopen.')); });
       helper.once('close', () => { fail(new Error('CSV import helper stopped before completion. Reopen.')); });
@@ -75,7 +79,7 @@ export async function runCsvImport(directory: string, source: string, target: Im
     throw error;
   } finally {
     signal.removeEventListener('abort', abort);
-    if (child !== undefined && child.exitCode === null && child.signalCode === null && child.pid !== undefined) { child.kill('SIGKILL'); }
+    child?.kill('SIGKILL');
     await exited; await rm(work, { recursive: true, force: true });
   }
 }
