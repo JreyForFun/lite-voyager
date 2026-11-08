@@ -29,6 +29,7 @@ export class BrowserElement extends EventTarget {
 
 export function browserRoot(ids: string[]): BrowserElement {
   const root = new BrowserElement();
+  if (ids.includes('edit-mode')) { ids = [...ids, 'edit-add', 'edit-delete', 'edit-delete-confirm', 'edit-delete-dismiss', 'edit-delete-prompt', 'row-form', 'row-title', 'row-column', 'row-type', 'row-value', 'row-field', 'row-fields', 'row-stage', 'row-dismiss', 'row-help', 'row-pending', 'row-pending-list', 'row-pending-prev', 'row-pending-next', 'row-pending-status']; }
   if (ids.includes('browser-select')) { ids = [...ids, 'schema-show', 'schema-panel', 'schema-title', 'schema-kind', 'schema-index', 'schema-inspect', 'schema-size', 'schema-previous', 'schema-next', 'schema-rows', 'schema-status']; }
   for (const id of ids) { root.elements.set(id, new BrowserElement()); }
   return root;

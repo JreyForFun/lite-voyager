@@ -1,8 +1,10 @@
 import { isEditingRequest, type EditingRequest, type EditingState } from '../src/protocol';
 import { editValue, type EditKind, type EditTarget } from '../src/staging/edit-types';
+import { RowEditingView } from './row-editing-view';
 
 type Selected = Omit<EditTarget, 'value'>;
 export class EditingView {
+  private readonly rows: RowEditingView;
   private readonly mode: HTMLInputElement;
   private readonly save: HTMLButtonElement;
   private readonly revert: HTMLButtonElement;
@@ -29,6 +31,7 @@ export class EditingView {
     this.mode = find('edit-mode'); this.save = find('edit-save'); this.revert = find('edit-revert'); this.sql = find('edit-sql');
     this.cell = find('edit-cell'); this.kind = find('edit-type'); this.value = find('edit-value'); this.status = find('edit-status'); this.selected = find('edit-selected');
     this.cancel = find('edit-cancel');
+    this.rows = new RowEditingView(root, (action) => { this.send(action); });
     const options = { signal: this.events.signal };
     this.mode.addEventListener('change', () => { this.send({ action: 'mode', on: this.mode.checked }); }, options);
     this.save.addEventListener('click', () => { this.send({ action: 'save' }); }, options);
@@ -44,6 +47,7 @@ export class EditingView {
     this.controls();
   }
   start(): void { this.send({ action: 'ready' }); }
+  setTable(table: string | null): void { this.rows.setTable(table); }
   setBrowserBusy(busy: boolean): void { this.browserBusy = busy; this.controls(); }
   private send(action: EditingRequest extends infer R ? R extends EditingRequest ? Omit<R, 'type' | 'contextId' | 'requestId'> : never : never): void {
     if (this.disposed || (this.state.busy || this.browserBusy) && action.action !== 'ready' && action.action !== 'cancel') { return; }
@@ -56,6 +60,7 @@ export class EditingView {
   }
   select(target: Selected | undefined): void {
     this.target = target;
+    this.rows.select(target);
     this.selected.textContent = target === undefined ? 'Select a Browse cell to edit.' : `${target.table} · row ${String(target.offset + 1)} · ${target.column}`;
     this.kind.value = target?.expected === null ? 'null' : 'text'; this.value.value = this.state.writeMode ? target?.expected ?? '' : '';
     this.controls();
@@ -63,11 +68,12 @@ export class EditingView {
   receive(state: EditingState): void {
     if (this.disposed || state.revision < this.revision) { return; }
     const refresh = this.revision >= 0 && state.revision > this.revision;
-    this.revision = state.revision; this.state = state; this.status.textContent = state.message; this.controls();
+    this.revision = state.revision; this.state = state; this.status.textContent = state.message; this.rows.receive(state); this.controls();
     if (refresh && !state.busy) { this.refresh(); }
   }
   exercise(action: string, value?: string): void {
     if (this.disposed) { return; }
+    if (action.startsWith('row')) { this.rows.exercise(action, value); return; }
     if (action === 'editMode' && !this.mode.disabled) { this.mode.checked = value === 'true'; this.mode.dispatchEvent(new Event('change')); }
     else if (action === 'editType' && !this.kind.disabled && value !== undefined) { this.kind.value = value; this.kind.dispatchEvent(new Event('change')); }
     else if (action === 'editValue' && !this.value.disabled && value !== undefined) { this.value.value = value; }
@@ -80,8 +86,10 @@ export class EditingView {
     return { writeMode: this.mode.checked, saveDisabled: this.save.disabled, stageDisabled: this.cell.disabled, busy: this.state.busy,
       kind: this.kind.value, valueLength: this.value.value.length, valuePreview: this.value.value.length <= 128 ? this.value.value : null, message: this.status.textContent ?? '' };
   }
+  rowSummary(): NonNullable<import('../src/protocol').BrowserStatus['rowEditing']> { return this.rows.summary(); }
   private controls(): void {
     const busy = this.state.busy || this.browserBusy;
+    this.rows.setBusy(busy, this.state.count);
     this.mode.checked = this.state.writeMode; this.mode.disabled = busy;
     this.cancel.disabled = !this.state.busy;
     this.save.disabled = busy || !this.state.dirty; this.revert.disabled = busy || !this.state.dirty;
@@ -89,5 +97,5 @@ export class EditingView {
     this.cell.disabled = busy || !this.state.writeMode || this.target === undefined;
     this.kind.disabled = this.cell.disabled; this.value.disabled = this.cell.disabled || this.kind.value === 'null';
   }
-  dispose(): void { this.disposed = true; this.events.abort(); this.target = undefined; }
+  dispose(): void { this.disposed = true; this.events.abort(); this.rows.dispose(); this.target = undefined; }
 }

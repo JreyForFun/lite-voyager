@@ -56,3 +56,11 @@ aside { border-left: 3px solid var(--vscode-focusBorder); padding: 8px; backgrou
 #editing { border: 1px solid var(--vscode-panel-border); padding: 8px; }
 #edit-value { display: block; box-sizing: border-box; width: 100%; margin: 8px 0; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); font-family: var(--vscode-editor-font-family, monospace); }
 .cell-staged { border-bottom: 3px solid var(--vscode-editorWarning-foreground, var(--vscode-focusBorder)); }
+#row-form, #row-pending, #edit-delete-prompt { margin: 12px 0; padding: 12px; border: 1px solid var(--vscode-panel-border); }
+#row-form h3, #row-pending h3 { margin-top: 0; }
+#row-value { display: block; box-sizing: border-box; width: 100%; margin: 8px 0; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); font: inherit; }
+#row-fields { max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+#row-pending-list, #row-help, #row-title { overflow-wrap: anywhere; }
+#row-pending-list { max-height: 220px; overflow: auto; padding-left: 24px; }
+#row-pending-list li { margin: 8px 0; }
+#row-column { max-width: 100%; }

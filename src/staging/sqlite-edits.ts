@@ -10,6 +10,7 @@ import { NodeSqliteEngine } from '../engine/node-sqlite';
 import { SqlJsEngine } from '../engine/sqljs';
 import type { GridOptions } from '../protocol';
 import { assertEditOperations, checkWriteStatement, editValue, keyId, MAX_STAGED_BYTES, MAX_STAGED_OPERATIONS, valueBinding, type CellEdit, type EditCommand, type EditOperation, type EditRows, type EditSaveResult, type EditValue, type RowKey } from './edit-types';
+import type { DeleteEdit, InsertTarget, RowSchema } from './edit-types';
 
 const changed = 'The SQLite source changed. Pending edits were preserved. Revert and reopen the file before saving.';
 type Writer = NodeSqliteEngine | SqlJsEngine;
@@ -76,7 +77,7 @@ export function recoverInterruptedSave(path: string, version: string, sqlite: ty
 function read(backend: ReadBackend, sql: string, parameters: Parameter[] = [], page: PageAddress = { limit: 1000 }): EnginePage {
   return collectPage(backend.cursor(sql, parameters), page);
 }
-function identity(backend: ReadBackend, table: string): Identity {
+function identity(backend: ReadBackend, table: string, requireKey = true): Identity {
   const object = read(backend, "SELECT type,sql FROM main.sqlite_schema WHERE name=? AND name NOT GLOB 'sqlite_*'", [table], { limit: 1 }).rows[0];
   if (object?.[0] !== 'table' || /^CREATE\s+VIRTUAL\s+TABLE/iu.test(object[1] ?? '')) { throw new Error('Only ordinary SQLite tables support inline editing. Views and virtual tables remain read-only.'); }
   const schema = read(backend, "SELECT name,pk,hidden FROM temp.pragma_table_xinfo(?, 'main') ORDER BY cid", [table]);
@@ -84,7 +85,7 @@ function identity(backend: ReadBackend, table: string): Identity {
   const columns = schema.rows.map((row) => row[0] ?? '');
   const primary = schema.rows.filter((row) => row[1] !== '0').sort((a, b) => Number(a[1]) - Number(b[1])).map((row) => row[0] ?? '');
   const alias = ['rowid', '_rowid_', 'oid'].find((name) => !columns.some((column) => column.toLowerCase() === name));
-  if (primary.length === 0 && alias === undefined) { throw new Error('This table has no primary key and shadows every rowid alias. A safe row identity is unavailable.'); }
+  if (requireKey && primary.length === 0 && alias === undefined) { throw new Error('This table has no primary key and shadows every rowid alias. A safe row identity is unavailable.'); }
   return { keys: primary.length > 0 ? primary : [alias ?? 'rowid'], columns,
     editable: new Set(schema.rows.filter((row) => row[2] === '0').map((row) => row[0] ?? '')) };
 }
@@ -119,11 +120,23 @@ export class SqliteEdits {
     this.check(expected);
     let value: unknown;
     if (command.action === 'version') { value = this.version; }
-    else if (command.action === 'prepare') {
+    else if (command.action === 'schema') {
+      identity(backend, command.table, false);
+      const columns = read(backend, `SELECT name,type,dflt_value FROM temp.pragma_table_xinfo(?, 'main') WHERE hidden=0 ORDER BY cid`, [command.table]);
+      value = { table: command.table, columns: columns.rows.map((row) => ({ name: row[0] ?? '', type: row[1] ?? '', defaultSql: row[2] ?? null })) } satisfies RowSchema;
+    } else if (command.action === 'insert') {
+      this.insert(backend, command.target);
+      // Renderer/backup objects are untrusted: never let extra properties
+      // replace the operation kind or introduce a queued SQL statement.
+      value = { version: this.version, operation: { kind: 'insert', table: command.target.table,
+        values: command.target.values.map(({ column, value }) => {
+          if (value.kind === 'blob') { throw new Error('BLOB creation is unavailable.'); }
+          return { column, value: editValue(value.kind, value.text) };
+        }) } };
+    } else if (command.action === 'prepare' || command.action === 'delete') {
       const target = command.target; pageAddress({ offset: target.offset, limit: 1 });
-      if (target.value.kind === 'blob') { throw new Error('BLOB editing is unavailable.'); }
       const metadata = identity(backend, target.table);
-      if (!metadata.editable.has(target.column)) { throw new Error('Generated or hidden columns cannot be edited.'); }
+      if (!metadata.columns.includes(target.column) || command.action === 'prepare' && !metadata.editable.has(target.column)) { throw new Error('Generated, hidden or missing columns cannot be edited.'); }
       // The user is editing an already displayed sorted row, so its sort was
       // already accepted. Do not turn that prior confirmation into missing keys.
       const result = this.rows(backend, target.table, { ...target.grid, allowSlowSort: true }, { offset: target.offset, limit: 1 }, metadata);
@@ -133,14 +146,19 @@ export class SqliteEdits {
       if (read(backend, `SELECT COUNT(*) FROM main.${quoteIdentifier(target.table)} WHERE ${where.sql}`, where.parameters, { limit: 1 }).rows[0]?.[0] !== '1') {
         throw new Error('The primary key does not identify exactly one row. Nullable duplicate keys cannot be edited safely.');
       }
-      const column = quoteIdentifier(target.column);
-      const stored = read(backend, `SELECT typeof(${column}),${column} FROM main.${quoteIdentifier(target.table)} WHERE ${where.sql}`, where.parameters, { limit: 1 }).rows[0];
-      const kind = stored?.[0];
-      if (kind === 'blob') { throw new Error('BLOB cells are placeholders and cannot be edited.'); }
-      if (!['null', 'text', 'integer', 'real'].includes(kind ?? '')) { throw new Error('The cell storage type could not be confirmed.'); }
-      const operation: CellEdit = { kind: 'cell', table: target.table, key, column: target.column,
-        before: { kind: kind as EditValue['kind'], text: stored?.[1] ?? '' }, value: editValue(target.value.kind, target.value.text) };
-      value = { version: this.version, operation };
+      if (command.action === 'delete') {
+        value = { version: this.version, operation: { kind: 'delete', table: target.table, key }, before: row[result.page.columns.indexOf(target.column)] ?? null };
+      } else {
+        if (command.target.value.kind === 'blob') { throw new Error('BLOB editing is unavailable.'); }
+        const column = quoteIdentifier(target.column);
+        const stored = read(backend, `SELECT typeof(${column}),${column} FROM main.${quoteIdentifier(target.table)} WHERE ${where.sql}`, where.parameters, { limit: 1 }).rows[0];
+        const kind = stored?.[0];
+        if (kind === 'blob') { throw new Error('BLOB cells are placeholders and cannot be edited.'); }
+        if (!['null', 'text', 'integer', 'real'].includes(kind ?? '')) { throw new Error('The cell storage type could not be confirmed.'); }
+        const operation: CellEdit = { kind: 'cell', table: target.table, key, column: target.column,
+          before: { kind: kind as EditValue['kind'], text: stored?.[1] ?? '' }, value: editValue(command.target.value.kind, command.target.value.text) };
+        value = { version: this.version, operation };
+      }
     } else if (command.action === 'rows') {
       let metadata: Identity | undefined;
       try { metadata = identity(backend, command.table); } catch { /* Browsing remains available for uneditable objects. */ }
@@ -177,6 +195,8 @@ export class SqliteEdits {
     }
     for (const operation of operations) {
       if (operation.kind === 'sql') { checkWriteStatement(operation.sql); }
+      else if (operation.kind === 'insert') { quoteIdentifier(operation.table); }
+      else if (operation.kind === 'delete') { quoteIdentifier(operation.table); predicate(operation.key); }
       else if (operation.kind === 'cell' && typeof operation.table === 'string' && typeof operation.column === 'string' && Array.isArray(operation.key)) {
         quoteIdentifier(operation.table); quoteIdentifier(operation.column); predicate(operation.key);
         if (operation.value.kind === 'blob') { throw new Error('BLOB editing is unavailable.'); }
@@ -184,20 +204,44 @@ export class SqliteEdits {
       } else { throw new Error('Invalid staged operation. Preserve the backup and reopen the document.'); }
     }
   }
+  private insert(backend: ReadBackend, target: InsertTarget): { sql: string; parameters: Parameter[] } {
+    const metadata = identity(backend, target.table, false);
+    if (target.values.length > 1000) { throw new Error('At most 1,000 insert columns are supported. Nothing was truncated.'); }
+    const seen = new Set<string>(); const parameters: Parameter[] = [];
+    const expressions = target.values.map(({ column, value }) => {
+      if (!metadata.editable.has(column)) { throw new Error('A generated, hidden or missing column cannot be inserted.'); }
+      if (seen.has(column)) { throw new Error('Duplicate insert column. Specify each column once.'); } seen.add(column);
+      if (value.kind === 'blob') { throw new Error('BLOB creation is unavailable. Omit the column to use its default.'); }
+      const binding = valueBinding(value); parameters.push(binding.parameter); return binding.expression;
+    });
+    return { sql: `INSERT INTO main.${quoteIdentifier(target.table)} ` + (target.values.length === 0 ? 'DEFAULT VALUES'
+      : `(${target.values.map(({ column }) => quoteIdentifier(column)).join(',')}) VALUES (${expressions.join(',')})`), parameters };
+  }
   private apply(writer: Writer, operations: readonly EditOperation[]): void {
     // Merge each contiguous group of inline operations by ORIGINAL row key.
     // One UPDATE per row means changing a PK cannot orphan its following cells.
-    let group: CellEdit[] = [];
+    let group: (CellEdit | DeleteEdit)[] = [];
     const flush = (): void => {
-      const rows = new Map<string, CellEdit[]>();
-      for (const operation of group) { const id = keyId(operation.table, operation.key); rows.set(id, [...(rows.get(id) ?? []), operation]); }
+      const rows = new Map<string, (CellEdit | DeleteEdit)[]>();
+      for (const operation of group) {
+        const id = keyId(operation.table, operation.key); const changes = [...(rows.get(id) ?? []), operation];
+        // A deletion supersedes that row's earlier cells at the deletion's
+        // position, so child-before-parent deletions retain their queue order.
+        if (operation.kind === 'delete') { rows.delete(id); }
+        rows.set(id, changes);
+      }
       for (const changes of rows.values()) {
         const first = changes[0]; if (first === undefined) { continue; }
         const metadata = identity(writer, first.table);
         if (JSON.stringify(metadata.keys) !== JSON.stringify(first.key.map((key) => key.column))) { throw new Error('The table identity changed. Revert and reopen before saving.'); }
         const where = predicate(first.key);
         if (read(writer, `SELECT COUNT(*) FROM main.${quoteIdentifier(first.table)} WHERE ${where.sql}`, where.parameters, { limit: 1 }).rows[0]?.[0] !== '1') { throw new Error('The saved row key no longer identifies exactly one row.'); }
-        const cells = new Map(changes.map((change) => [change.column, change.value]));
+        if (changes.some((change) => change.kind === 'delete')) {
+          writer.execute(`DELETE FROM main.${quoteIdentifier(first.table)} WHERE ${where.sql}`, where.parameters);
+          if (read(writer, 'SELECT changes()', [], { limit: 1 }).rows[0]?.[0] !== '1') { throw new Error('The deletion did not remove exactly one row. All changes were rolled back.'); }
+          continue;
+        }
+        const cells = new Map(changes.filter((change): change is CellEdit => change.kind === 'cell').map((change) => [change.column, change.value]));
         const parameters: Parameter[] = [];
         const set = [...cells].map(([column, value]) => {
           if (!metadata.editable.has(column)) { throw new Error('A generated, hidden or missing column cannot be saved.'); }
@@ -209,8 +253,15 @@ export class SqliteEdits {
       group = [];
     };
     for (const operation of operations) {
-      if (operation.kind === 'cell') { group.push(operation); }
-      else { flush(); writer.execute(checkWriteStatement(operation.sql)); }
+      if (operation.kind === 'cell' || operation.kind === 'delete') { group.push(operation); }
+      else {
+        flush();
+        if (operation.kind === 'sql') { writer.execute(checkWriteStatement(operation.sql)); }
+        else {
+          const insert = this.insert(writer, operation); writer.execute(insert.sql, insert.parameters);
+          if (read(writer, 'SELECT changes()', [], { limit: 1 }).rows[0]?.[0] !== '1') { throw new Error('The insert did not add exactly one row. All changes were rolled back.'); }
+        }
+      }
     }
     flush();
   }

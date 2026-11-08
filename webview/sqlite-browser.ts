@@ -385,7 +385,8 @@ export class BrowserView {
   private controls(): void {
     if (this.pending === null) { this.size.value = String(this.limit); }
     const busy = this.pending !== null;
-    this.editing?.setBrowserBusy(busy);
+    this.editing?.setBrowserBusy(busy || this.warningPage !== undefined);
+    this.editing?.setTable(this.query.sql === null ? this.table : null);
     this.schema.setBusy(busy || this.warningPage !== undefined);
     const pageBlocked = busy || this.warningPage !== undefined;
     this.root.setAttribute('aria-busy', String(busy));
@@ -427,6 +428,7 @@ export class BrowserView {
     }
     if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
+      case 'rowAdd': case 'rowColumn': case 'rowType': case 'rowValue': case 'rowField': case 'rowStage': case 'rowDelete': case 'rowConfirm': case 'rowDismiss':
       case 'editMode': case 'editType': case 'editValue': case 'editCell': case 'editSql': case 'editSave': case 'editRevert':
         this.editing?.exercise(message.action, message.value); break;
       case 'appearance': {
@@ -513,7 +515,7 @@ export class BrowserView {
         ...(this.responsiveness === undefined ? {} : { responsiveness: { ...this.responsiveness } }),
         cell: this.details.summary(),
         schema: this.schema.summary(),
-        ...(this.editing === undefined ? {} : { editing: this.editing.summary() }),
+        ...(this.editing === undefined ? {} : { editing: this.editing.summary(), rowEditing: this.editing.rowSummary() }),
         ...(this.appearance === undefined ? {} : { appearance: this.appearance }),
         query: this.query.sql !== null, summary: this.total.textContent ?? '', ...this.editor?.metrics(),
         hasMore: this.hasMore, count: this.count, busy: this.pending !== null, message: this.status.textContent ?? '', firstRow: this.grid.firstRow() });

@@ -154,28 +154,50 @@ export type EditingRequest = { type: 'editingRequest'; contextId: string; reques
   | { action: 'cancel' }
   | { action: 'mode'; on: boolean }
   | { action: 'stage'; target: import('./staging/edit-types').EditTarget }
+  | { action: 'insert'; target: import('./staging/edit-types').InsertTarget }
+  | { action: 'delete'; target: import('./staging/edit-types').DeleteTarget }
+  | { action: 'rowSchema'; table: string }
   | { action: 'sql'; sql: string });
-export interface EditingState { type: 'editingState'; revision: number; writeMode: boolean; dirty: boolean; count: number; busy: boolean; message: string; }
+export interface EditingState { type: 'editingState'; revision: number; writeMode: boolean; dirty: boolean; count: number; busy: boolean; message: string;
+  rowSchema?: import('./staging/edit-types').RowSchema; rowChanges?: string[]; }
 export function isEditingRequest(value: unknown): value is EditingRequest {
   if (!isRecord(value) || value['type'] !== 'editingRequest' || typeof value['contextId'] !== 'string'
     || !/^[a-f\d-]{36}$/iu.test(value['contextId']) || !integer(value['requestId'], 1, Number.MAX_SAFE_INTEGER)) { return false; }
   if (['ready', 'save', 'revert', 'cancel'].includes(String(value['action']))) { return true; }
   if (value['action'] === 'mode') { return typeof value['on'] === 'boolean'; }
   if (value['action'] === 'sql') { return identifier(value['sql']) && value['sql'].length > 0; }
+  if (value['action'] === 'rowSchema') { return identifier(value['table']); }
   const target = value['target'];
-  if (value['action'] !== 'stage' || !isRecord(target) || !identifier(target['table']) || !identifier(target['column'])
+  const scalar = (cell: unknown): boolean => isRecord(cell) && ['text', 'integer', 'real', 'null'].includes(String(cell['kind']))
+    && typeof cell['text'] === 'string' && cell['text'].length <= 4 * 1024 * 1024;
+  if (value['action'] === 'insert') {
+    if (!isRecord(target) || !identifier(target['table']) || !Array.isArray(target['values']) || target['values'].length > 1000) { return false; }
+    let length = target['table'].length;
+    return target['values'].every((field: unknown) => {
+      if (!isRecord(field) || !identifier(field['column']) || !scalar(field['value']) || !isRecord(field['value'])) { return false; }
+      length += field['column'].length + String(field['value']['text']).length;
+      return length <= 4 * 1024 * 1024;
+    });
+  }
+  if (!['stage', 'delete'].includes(String(value['action'])) || !isRecord(target) || !identifier(target['table']) || !identifier(target['column'])
     || !integer(target['offset'], 0, Number.MAX_SAFE_INTEGER - BROWSER_PAGE_SIZE)
     || target['expected'] !== null && typeof target['expected'] !== 'string'
     || typeof target['expected'] === 'string' && target['expected'].length > 4 * 1024 * 1024
     || target['grid'] !== undefined && !isGridOptions(target['grid'])) { return false; }
-  const cell = target['value'];
-  return isRecord(cell) && ['text', 'integer', 'real', 'null'].includes(String(cell['kind']))
-    && typeof cell['text'] === 'string' && cell['text'].length <= 4 * 1024 * 1024;
+  return value['action'] === 'delete' || scalar(target['value']);
+}
+function isRowSchema(value: unknown): boolean {
+  return isRecord(value) && identifier(value['table']) && Array.isArray(value['columns']) && value['columns'].length <= 1000
+    && value['columns'].every((column: unknown) => isRecord(column) && identifier(column['name']) && identifier(column['type'])
+      && (column['defaultSql'] === null || identifier(column['defaultSql'])));
 }
 export function isEditingState(value: unknown): value is EditingState {
   return isRecord(value) && value['type'] === 'editingState' && integer(value['revision'], 0, Number.MAX_SAFE_INTEGER)
     && typeof value['writeMode'] === 'boolean' && typeof value['dirty'] === 'boolean' && typeof value['busy'] === 'boolean'
-    && integer(value['count'], 0, 1000) && typeof value['message'] === 'string' && value['message'].length <= 4096;
+    && integer(value['count'], 0, 1000) && typeof value['message'] === 'string' && value['message'].length <= 4096
+    && (value['rowSchema'] === undefined || isRowSchema(value['rowSchema']))
+    && (value['rowChanges'] === undefined || Array.isArray(value['rowChanges']) && value['rowChanges'].length <= 1000
+      && value['rowChanges'].every((label: unknown) => typeof label === 'string' && label.length <= 512));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -330,6 +352,7 @@ export type BrowserResponse =
   | { type: 'browserError'; requestId: number; message: string };
 /** Bounded DOM summaries for local integration tests; long contents are length-only. */
 export interface BrowserStatus {
+  rowEditing?: { addDisabled: boolean; deleteDisabled: boolean; form: boolean; confirm: boolean; column: string; kind: string; fields: number; pending: number; valueLength: number; valuePreview: string | null };
   editing?: { writeMode: boolean; saveDisabled: boolean; stageDisabled: boolean; busy: boolean; kind: string; valueLength: number; valuePreview: string | null; message: string };
   type: 'browserStatus'; revision: number; table: string | null; offset: number;
   cachedRows: number; renderedRows: number; renderedColumns: number; columns: number;
@@ -351,6 +374,7 @@ export interface BrowserExercise {
     | 'cell' | 'extendCell' | 'copyCell' | 'copyRow' | 'copySelection' | 'cancelCell'
     | 'exportCsv' | 'exportJson' | 'completionKey'
     | 'editMode' | 'editType' | 'editValue' | 'editCell' | 'editSql' | 'editSave' | 'editRevert'
+    | 'rowAdd' | 'rowColumn' | 'rowType' | 'rowValue' | 'rowField' | 'rowStage' | 'rowDelete' | 'rowConfirm' | 'rowDismiss'
     | 'schema' | 'schemaKind' | 'schemaNext' | 'schemaPrevious' | 'schemaSize' | 'schemaIndex' | 'appearance' | 'gridKey'
     | 'startResponsiveness' | 'stopResponsiveness' | 'pulseResponsiveness'; value?: string; exerciseId?: number;
 }
@@ -437,6 +461,7 @@ export function isBrowserStatus(value: unknown): value is BrowserStatus {
     && (value['selectionLength'] === undefined || integer(value['selectionLength'], 0, Number.MAX_SAFE_INTEGER))
     && (value['cell'] === undefined || isCellSummary(value['cell']))
     && (value['editing'] === undefined || isEditingSummary(value['editing']))
+    && (value['rowEditing'] === undefined || isRowEditingSummary(value['rowEditing']))
     && (value['appearance'] === undefined || isAppearanceSummary(value['appearance']))
     && (value['completion'] === undefined || isRecord(value['completion']) && typeof value['completion']['open'] === 'boolean'
       && (value['completion']['selected'] === null || typeof value['completion']['selected'] === 'string' && value['completion']['selected'].length <= 128)
@@ -463,6 +488,12 @@ function isEditingSummary(value: unknown): boolean {
     && (value['valuePreview'] === null || typeof value['valuePreview'] === 'string' && value['valuePreview'].length <= 128)
     && typeof value['message'] === 'string' && value['message'].length <= 4096;
 }
+function isRowEditingSummary(value: unknown): boolean {
+  return isRecord(value) && ['addDisabled', 'deleteDisabled', 'form', 'confirm'].every((key) => typeof value[key] === 'boolean')
+    && typeof value['column'] === 'string' && value['column'].length <= MAX_SQL_LENGTH && typeof value['kind'] === 'string'
+    && integer(value['fields'], 0, 1000) && integer(value['pending'], 0, 1000) && integer(value['valueLength'], 0, Number.MAX_SAFE_INTEGER)
+    && (value['valuePreview'] === null || typeof value['valuePreview'] === 'string' && value['valuePreview'].length <= 128);
+}
 function isCellSummary(value: unknown): boolean {
   return isRecord(value) && (value['row'] === null || integer(value['row'], 0, BROWSER_PAGE_SIZE - 1))
     && (value['column'] === null || integer(value['column'], 0, Number.MAX_SAFE_INTEGER)) && integer(value['length'], 0, MAX_CELL_OUTPUT)
@@ -473,7 +504,7 @@ function isCellSummary(value: unknown): boolean {
 export function isBrowserExercise(value: unknown): value is BrowserExercise {
   return isRecord(value) && value['type'] === 'browserExercise'
     && (value['exerciseId'] === undefined || integer(value['exerciseId'], 1, Number.MAX_SAFE_INTEGER))
-    && ['editMode', 'editType', 'editValue', 'editCell', 'editSql', 'editSave', 'editRevert', 'next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'completionKey', 'schema', 'schemaKind', 'schemaNext', 'schemaPrevious', 'schemaSize', 'schemaIndex', 'appearance', 'gridKey', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
+    && ['rowAdd', 'rowColumn', 'rowType', 'rowValue', 'rowField', 'rowStage', 'rowDelete', 'rowConfirm', 'rowDismiss', 'editMode', 'editType', 'editValue', 'editCell', 'editSql', 'editSave', 'editRevert', 'next', 'previous', 'count', 'cancel', 'listNext', 'listPrevious', 'select', 'size', 'lastCell', 'sql', 'run', 'shortcut', 'selection', 'browse', 'sort', 'filter', 'removeFilter', 'clearGrid', 'continueSort', 'dismissSort', 'cell', 'extendCell', 'copyCell', 'copyRow', 'copySelection', 'cancelCell', 'exportCsv', 'exportJson', 'completionKey', 'schema', 'schemaKind', 'schemaNext', 'schemaPrevious', 'schemaSize', 'schemaIndex', 'appearance', 'gridKey', 'startResponsiveness', 'stopResponsiveness', 'pulseResponsiveness'].includes(String(value['action']))
     && (value['value'] === undefined || typeof value['value'] === 'string' && value['value'].length <= MAX_SQL_LENGTH);
 }
 

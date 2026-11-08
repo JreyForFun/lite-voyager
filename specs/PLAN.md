@@ -812,6 +812,12 @@ T-030 delegated design (2026-10-27): [staged editing](../docs/t030-staged-edits.
 Document-owned operation queue; worker-only identity validation and writes;
 read-only browsing remains independent of staged values until explicit Save.
 
+T-031 owner-authorized row actions (2026-11-08): [row operations](../docs/t031-row-operations.md).
+Typed inserts with omitted/default columns and confirmed original-key deletions
+reuse the document queue and worker transaction. A separate paged pending-row
+review preserves saved-data Browse offsets and sort/filter/count semantics.
+No new dependency; existing save/recovery and diagnostic guards remain.
+
 ### T-017 production sort and filter (2026-10-12)
 
 Owner authorizes implementation, scoped fixes and disposable fixture edits;
@@ -1538,6 +1544,8 @@ Evidence/artifact/install/feedback/handoff: docs/t028-milestone2-checkpoint.md.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-031 (2026-11-08): Define typed/default-aware SQLite row insertion, confirmed
+  stable-key deletion and bounded pending-row review using the existing queue.
 - T-030 (2026-10-27): Document the host-owned edit queue and worker-only save
   design; preserve read-only browsing and all existing diagnostic policies.
 - T-028 (2026-10-26): Define local v0.2.0 checkpoint, committed-tree artifact and

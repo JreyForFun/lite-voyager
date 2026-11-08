@@ -1,10 +1,62 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { EditingView } from '../../webview/editing-view';
 import { isEditingRequest, isEditingState, type EditingRequest } from '../../src/protocol';
-import { browserRoot } from './browser-dom';
+import { BrowserElement, browserRoot } from './browser-dom';
 import { sqliteEditorHtml } from '../../src/editor/sqlite-editor-ui';
 
 afterEach(() => vi.unstubAllGlobals());
+
+test('FR-021: Given an empty Browse table, When adding typed values or confirming deletion, Then the UI sends bounded row actions only in write mode', () => {
+  vi.stubGlobal('document', { createElement: () => new BrowserElement() });
+  const ids = ['edit-mode', 'edit-save', 'edit-revert', 'edit-sql', 'edit-cell', 'edit-type', 'edit-value', 'edit-status', 'edit-selected', 'edit-cancel'];
+  const root = browserRoot(ids); const sent: EditingRequest[] = [];
+  const view = new EditingView(root as unknown as HTMLElement, (request) => { sent.push(request); }, () => '', () => {});
+  view.setTable('empty');
+  expect(root.elements.get('edit-add')?.disabled).toBe(true);
+  view.receive({ type: 'editingState', revision: 1, writeMode: true, dirty: false, count: 0, busy: false, message: 'Write mode' });
+  root.elements.get('edit-add')?.click(); expect(sent.at(-1)).toMatchObject({ action: 'rowSchema', table: 'empty' });
+  view.receive({ type: 'editingState', revision: 1, writeMode: true, dirty: false, count: 0, busy: false, message: 'Choose values',
+    rowSchema: { table: 'empty', columns: [{ name: 'value', type: 'INTEGER', defaultSql: null }] } });
+  const set = (id: string, value: string): void => { const element = root.elements.get(id); if (element === undefined) { throw new Error(id); } element.value = value; };
+  set('row-column', 'value'); set('row-type', 'integer'); set('row-value', '9223372036854775807');
+  root.elements.get('row-stage')?.click();
+  expect(sent.at(-1)).toMatchObject({ action: 'insert', target: { table: 'empty', values: [{ column: 'value', value: { kind: 'integer', text: '9223372036854775807' } }] } });
+  view.receive({ type: 'editingState', revision: 2, writeMode: true, dirty: true, count: 1, busy: false, message: 'Pending' });
+  view.select({ table: 'empty', column: 'value', offset: 0, expected: '42' });
+  root.elements.get('edit-delete')?.click(); expect(sent.at(-1)?.action).toBe('insert');
+  expect(root.elements.get('edit-delete-prompt')?.hidden).toBe(false);
+  root.elements.get('edit-delete-confirm')?.click();
+  expect(sent.at(-1)).toMatchObject({ action: 'delete', target: { table: 'empty', offset: 0, expected: '42' } });
+  view.dispose();
+});
+
+test('FR-021: Given malformed row transport and backup previews, When validating, Then unknown columns, BLOB creation, unbounded lists and missing target data are refused', () => {
+  const base = { type: 'editingRequest', contextId: '12345678-1234-1234-1234-123456789012', requestId: 1 };
+  expect(isEditingRequest({ ...base, action: 'insert', target: { table: 't', values: [] } })).toBe(true);
+  for (const target of [{}, { table: 't', values: [{ column: 'a', value: { kind: 'blob', text: 'ab' } }] }, { table: 't', values: Array.from({ length: 1001 }, () => ({ column: 'a', value: { kind: 'null', text: '' } })) }]) {
+    expect(isEditingRequest({ ...base, action: 'insert', target })).toBe(false);
+  }
+  expect(isEditingRequest({ ...base, action: 'delete', target: { table: 't', offset: 0 } })).toBe(false);
+  expect(isEditingState({ type: 'editingState', revision: 0, writeMode: true, dirty: true, count: 1, busy: false, message: 'Pending', rowChanges: ['x'.repeat(513)] })).toBe(false);
+});
+
+test('FR-021: Given two split views and 25 pending row changes, When only one requests an add form or changes selection, Then other drafts stay closed, confirmation expires and reviews are paged', () => {
+  vi.stubGlobal('document', { createElement: () => new BrowserElement() });
+  const ids = ['edit-mode', 'edit-save', 'edit-revert', 'edit-sql', 'edit-cell', 'edit-type', 'edit-value', 'edit-status', 'edit-selected', 'edit-cancel'];
+  const root = browserRoot(ids); const sent: EditingRequest[] = [];
+  const view = new EditingView(root as unknown as HTMLElement, (request) => { sent.push(request); }, () => '', () => {});
+  view.setTable('t');
+  view.receive({ type: 'editingState', revision: 1, writeMode: true, dirty: true, count: 25, busy: false, message: 'Pending', rowChanges: Array.from({ length: 25 }, (_, index) => `Row ${String(index + 1)}`),
+    rowSchema: { table: 't', columns: [{ name: 'a', type: '', defaultSql: null }] } });
+  expect(root.elements.get('row-form')?.hidden).toBe(true);
+  expect(root.elements.get('row-pending-list')?.children).toHaveLength(10);
+  root.elements.get('row-pending-next')?.click(); expect(root.elements.get('row-pending-status')?.textContent).toBe('Row changes 11–20 of 25');
+  root.elements.get('row-pending-next')?.click(); expect(root.elements.get('row-pending-list')?.children).toHaveLength(5);
+  view.select({ table: 't', column: 'a', offset: 0, expected: 'x' }); root.elements.get('edit-delete')?.click();
+  view.select({ table: 't', column: 'a', offset: 1, expected: 'y' }); root.elements.get('edit-delete-confirm')?.click(); expect(sent).toEqual([]);
+  view.setBrowserBusy(true); expect(root.elements.get('edit-add')?.disabled).toBe(true); expect(root.elements.get('edit-delete')?.disabled).toBe(true);
+  view.dispose();
+});
 
 test('FR-020: Given a selected cell, When the browser is loading, Then editing controls cannot act on the old page and resume only after loading settles', () => {
   const root = browserRoot(['edit-mode', 'edit-save', 'edit-revert', 'edit-sql', 'edit-cell', 'edit-type', 'edit-value', 'edit-status', 'edit-selected', 'edit-cancel']);

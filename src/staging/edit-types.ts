@@ -8,10 +8,18 @@ export interface EditValue { kind: EditKind | 'blob'; text: string; }
 export interface RowKey { column: string; value: EditValue; }
 export interface CellEdit { kind: 'cell'; table: string; key: RowKey[]; column: string; before: EditValue; value: EditValue; }
 export interface SqlEdit { kind: 'sql'; sql: string; }
-export type EditOperation = CellEdit | SqlEdit;
+export interface InsertTarget { table: string; values: { column: string; value: EditValue }[]; }
+export interface InsertEdit extends InsertTarget { kind: 'insert'; }
+export interface DeleteEdit { kind: 'delete'; table: string; key: RowKey[]; }
+export type DeleteTarget = Omit<EditTarget, 'value'>;
+export interface RowSchema { table: string; columns: { name: string; type: string; defaultSql: string | null }[]; }
+export type EditOperation = CellEdit | SqlEdit | InsertEdit | DeleteEdit;
 export interface EditTarget { table: string; column: string; offset: number; grid?: GridOptions; expected: string | null; value: EditValue; }
 export type EditCommand =
   | { action: 'prepare'; target: EditTarget; version?: string }
+  | { action: 'insert'; target: InsertTarget; version?: string }
+  | { action: 'delete'; target: DeleteTarget; version?: string }
+  | { action: 'schema'; table: string; version?: string }
   | { action: 'rows'; table: string; grid: GridOptions; page: PageAddress; version?: string }
   | { action: 'version' }
   | { action: 'save'; version: string; operations: readonly EditOperation[]; destination?: string; temporaryDirectory?: string };
@@ -113,7 +121,10 @@ export function assertEditOperations(value: unknown): asserts value is EditOpera
   for (const item of value as unknown[]) {
     if (!record(item)) { throw new Error('Invalid staged-edit operation.'); }
     if (item['kind'] === 'sql' && typeof item['sql'] === 'string') { checkWriteStatement(item['sql']); continue; }
-    if (item['kind'] !== 'cell' || !name(item['table']) || !name(item['column']) || !scalar(item['before']) || !scalar(item['value'])
+    if (item['kind'] === 'insert' && name(item['table']) && Array.isArray(item['values']) && item['values'].length <= 1000
+      && item['values'].every((field: unknown) => record(field) && name(field['column']) && scalar(field['value']))) { continue; }
+    if (!['cell', 'delete'].includes(String(item['kind'])) || !name(item['table'])
+      || item['kind'] === 'cell' && (!name(item['column']) || !scalar(item['before']) || !scalar(item['value']))
       || !Array.isArray(item['key']) || item['key'].length === 0 || item['key'].length > 1000
       || !item['key'].every((key: unknown) => record(key) && name(key['column']) && scalar(key['value'], true))) { throw new Error('Invalid staged cell or row identity. Preserve its backup for recovery.'); }
   }

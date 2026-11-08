@@ -6,6 +6,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { SqliteSession } from '../../src/editor/sqlite-session';
+import { StagedEdits } from '../../src/staging/staged-edits';
 
 const mocks = vi.hoisted(() => ({ edit: vi.fn<NonNullable<Engine['edit']>>(), cancel: vi.fn<Engine['cancel']>(), autoSave: 'off', command: vi.fn() }));
 vi.mock('vscode', () => ({
@@ -18,6 +19,52 @@ const uri = { scheme: 'file', fsPath: '/test.sqlite', toString: () => 'file:///t
 const openContext: vscode.CustomDocumentOpenContext = { backupId: undefined, untitledDocumentData: undefined };
 beforeEach(() => { mocks.autoSave = 'off'; mocks.edit.mockReset(); mocks.cancel.mockReset(); mocks.cancel.mockResolvedValue(undefined); mocks.command.mockReset(); });
 const response = (value: unknown) => ({ columns: ['editing'], rows: [[JSON.stringify(value)]], hasMore: false });
+
+test.each(['metadata', 'save'] as const)('FR-021: Given pending row changes while %s is busy, When VS Code requests a backup, Then the accepted queue and original token are captured without waiting or sending another command', async (phase) => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t031-busy-backup-'));
+  const provider = new SqliteEditorProvider('/extension'); const document = provider.openCustomDocument(uri, openContext, token);
+  const target = { table: 't', values: [{ column: 'value', value: { kind: 'text', text: 'pending' } as const }] };
+  document.edits.setWriteMode(true); mocks.edit.mockResolvedValue(response({ version: 'original-version', operation: { kind: 'insert', ...target } }));
+  await document.edits.stageInsert(target);
+  let release!: (value: ReturnType<typeof response>) => void;
+  mocks.edit.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+  const operation = phase === 'metadata' ? document.edits.rowSchema('t') : document.edits.save(); const path = join(directory, 'backup.json');
+  const commands = mocks.edit.mock.calls.length;
+  try {
+    expect(document.edits.isBusy).toBe(true);
+    const backup = await provider.backupCustomDocument(document, { destination: { fsPath: path } as vscode.Uri }, token);
+    expect(backup.id).toBe(path);
+    const recovered = new StagedEdits({}); recovered.restore(await readFile(path, 'utf8'));
+    expect(recovered.operations).toEqual(document.edits.operations); expect(recovered.writeMode).toBe(false);
+    expect(recovered.backup()).toContain('original-version');
+    expect(mocks.edit.mock.calls).toHaveLength(commands);
+  } finally { release(response(phase === 'metadata' ? { table: 't', columns: [] } : true)); await operation; provider.dispose(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('FR-021: Given a backup requested after the queue became empty, When restoring its snapshot, Then it stays read-only and clean without inventing a source version', () => {
+  const edits = new StagedEdits({}); const restored = new StagedEdits({});
+  restored.restore(edits.backup()); expect(restored.dirty).toBe(false); expect(restored.writeMode).toBe(false);
+  expect(restored.operations).toEqual([]);
+});
+
+test('FR-021: Given a row addition and a BLOB primary-key deletion, When staging and undoing through the provider, Then reversible events and placeholder-only pending previews preserve source safety', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const document = provider.openCustomDocument(uri, openContext, token);
+  const events: vscode.CustomDocumentEditEvent[] = []; const subscription = provider.onDidChangeCustomDocument((event) => { events.push(event); });
+  const base = { type: 'editingRequest', contextId: '12345678-1234-1234-1234-123456789012', requestId: 1 } as const;
+  try {
+    document.edits.setWriteMode(true);
+    const target = { table: 't', values: [{ column: 'value', value: { kind: 'text', text: 'new' } as const }] };
+    mocks.edit.mockResolvedValue(response({ version: 'v', operation: { kind: 'insert', ...target } }));
+    await provider.handleEditing(document, { ...base, action: 'insert', target });
+    expect(events).toHaveLength(1); expect(document.editingState.rowChanges?.[0]).toMatch(/Add to t/u);
+    await events[0]?.undo(); expect(document.edits.dirty).toBe(false); await events[0]?.redo(); expect(document.edits.dirty).toBe(true);
+    mocks.edit.mockResolvedValue(response({ version: 'v', operation: { kind: 'delete', table: 't', key: [{ column: 'id', value: { kind: 'blob', text: 'deadbeef' } }] }, before: 'old' }));
+    await provider.handleEditing(document, { ...base, requestId: 2, action: 'delete', target: { table: 't', column: 'value', offset: 0, expected: 'old' } });
+    expect(document.editingState.rowChanges?.[1]).toContain('[BLOB 4 bytes]');
+    expect(document.editingState.rowChanges?.join(' ')).not.toContain('deadbeef');
+    expect(mocks.edit.mock.calls.every(([command]) => command.action !== 'save')).toBe(true);
+  } finally { subscription.dispose(); provider.dispose(); }
+});
 
 test('FR-020: Given native Save waiting for secondary readers, When toolbar Cancel is clicked, Then no write is sent and suspended readers resume', async () => {
   const provider = new SqliteEditorProvider('/extension'); const document = provider.openCustomDocument(uri, openContext, token); const owner = document.session;

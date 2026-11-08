@@ -31,6 +31,19 @@ ${editing ? `<section id="editing" aria-label="Staged SQLite editing">
 <div class="browser-toolbar"><label><input id="edit-mode" type="checkbox"> Write mode</label>
 <button id="edit-save" disabled>Save changes</button><button id="edit-revert" disabled>Revert all changes</button>
 <button id="edit-sql" disabled>Stage SQL write</button><button id="edit-cancel" disabled>Cancel editing operation</button></div>
+<div class="browser-toolbar" aria-label="Row actions"><button id="edit-add" disabled>Add row</button><button id="edit-delete" disabled>Delete selected row</button></div>
+<div id="edit-delete-prompt" hidden role="group" aria-label="Confirm row deletion"><p>Stage deletion of the selected saved row? The source stays unchanged until Save. Undo can restore this pending row.</p>
+<button id="edit-delete-confirm" disabled>Confirm staged deletion</button> <button id="edit-delete-dismiss">Keep row</button></div>
+<section id="row-form" hidden aria-labelledby="row-title"><h3 id="row-title">Add row</h3>
+<p class="browser-help">Unlisted columns use SQLite defaults. Generated columns are excluded. Apply each column before staging. Constraints are checked on Save.</p>
+<div class="browser-toolbar"><label for="row-column">Column</label><select id="row-column" disabled></select>
+<label for="row-type">Value type</label><select id="row-type" disabled><option value="default">Default (omit)</option><option value="text">TEXT</option><option value="integer">INTEGER (64-bit)</option><option value="real">REAL</option><option value="null">NULL</option></select></div>
+<label for="row-value">Column value</label><textarea id="row-value" rows="3" disabled></textarea>
+<button id="row-field" disabled>Apply column to draft</button><p id="row-help" role="status" aria-live="polite"></p>
+<pre id="row-fields">All columns: Default (omit).</pre><div class="browser-toolbar"><button id="row-stage" disabled>Stage added row</button><button id="row-dismiss">Discard row draft</button></div></section>
+<section id="row-pending" hidden aria-label="Pending row changes"><h3>Pending row changes</h3>
+<p class="browser-help">Previews only; complete values are retained. Undo/Redo/Revert manage pending changes. Browse pages, filters, counts and SQL show saved rows until Save; added rows appear here and deleted rows remain in Browse.</p>
+<ul id="row-pending-list"></ul><div class="browser-toolbar"><button id="row-pending-prev" disabled>Previous row changes</button><span id="row-pending-status" role="status"></span><button id="row-pending-next" disabled>Next row changes</button></div></section>
 <p id="edit-status" role="status" aria-live="polite">Read-only. Enable write mode to stage edits.</p>
 <details><summary>Editing and save safety</summary><p class="browser-help">Edits stay staged until explicit Save. Undo/Redo use VS Code commands. Revert discards all pending edits.
 Sorting, filters, counts and SQL read saved data until Save. Stage SQL reads the whole editor and queues one direct UPDATE, INSERT or DELETE.

@@ -9,7 +9,13 @@ const seed = `CREATE TABLE data(id INTEGER PRIMARY KEY, value TEXT UNIQUE, numbe
     CREATE TABLE shadow(rowid,_rowid_,oid,value); INSERT INTO shadow VALUES(1,2,3,4);
     CREATE TABLE gaps(value); INSERT INTO gaps(rowid,value) VALUES(7,'seven'),(99,'last');
     CREATE TABLE "select ""😀"("key ""🚀" TEXT PRIMARY KEY,note TEXT); INSERT INTO "select ""😀" VALUES('k'||char(0)||'tail','old');
-    CREATE VIEW view_data AS SELECT * FROM data;`;
+    CREATE VIEW view_data AS SELECT * FROM data;
+    CREATE TABLE row_defaults(id INTEGER PRIMARY KEY, value TEXT DEFAULT 'default value', number INTEGER, generated TEXT GENERATED ALWAYS AS (value || '!'));
+    CREATE TABLE ignore_insert(value);
+    CREATE TABLE row_parent(id INTEGER PRIMARY KEY); INSERT INTO row_parent VALUES(1);
+    CREATE TABLE row_child(parent REFERENCES row_parent(id)); INSERT INTO row_child VALUES(1);
+    CREATE TRIGGER ignore_row BEFORE INSERT ON ignore_insert BEGIN SELECT RAISE(IGNORE); END;
+    CREATE TABLE wide_rows(${Array.from({ length: 1000 }, (_, index) => `column_${String(index)} TEXT`).join(',')});`;
 
 export function seedStagedEditDatabase(path: string, statements = seed): void {
   const database = new DatabaseSync(path);

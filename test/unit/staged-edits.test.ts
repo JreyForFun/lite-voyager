@@ -37,6 +37,151 @@ async function fixture(fallback: boolean, run: (edits: StagedEdits, engine: Engi
   }
 }
 
+describe.each([false, true])('FR-021 row operations fallback=%s', (fallback) => {
+  test('FR-021: Given a 1,000-column table, When inserting every column, Then metadata and bindings retain the complete first and last values on both backends', async () => {
+    await fixture(fallback, async (edits, engine) => {
+      edits.setWriteMode(true); const schema = await edits.rowSchema('wide_rows'); expect(schema.columns).toHaveLength(1000);
+      await edits.stageInsert({ table: 'wide_rows', values: schema.columns.map((column, index) => ({ column: column.name, value: editValue('text', `value ${String(index)}`) })) });
+      await edits.save();
+      const result = await engine.query('SELECT * FROM wide_rows'); expect(result.columns).toHaveLength(1000);
+      expect(result.rows[0]).toHaveLength(1000); expect(result.rows[0]?.[0]).toBe('value 0'); expect(result.rows[0]?.[999]).toBe('value 999');
+    });
+  });
+  test('FR-021: Given an untrusted insert target with extra SQL properties, When staging and saving a row, Then only typed columns become an insert operation', async () => {
+    await fixture(fallback, async (edits, engine) => {
+      edits.setWriteMode(true);
+      const target = { table: 'no_key', values: [{ column: 'value', value: editValue('text', 'safe') }], kind: 'sql', sql: 'DELETE FROM data' };
+      await edits.stageInsert(target);
+      expect(edits.operations[0]).toEqual({ kind: 'insert', table: 'no_key', values: target.values });
+      await edits.save();
+      expect((await engine.query('SELECT COUNT(*) FROM data')).rows).toEqual([['2']]);
+      expect((await engine.query('SELECT value FROM no_key ORDER BY rowid')).rows).toEqual([['one'], ['two'], ['safe']]);
+    });
+  });
+  test('FR-021: Given a parent key edit followed by child and parent deletions, When saving, Then deletion supersedes the key edit while retaining deletion order', async () => {
+    await fixture(fallback, async (edits, engine) => {
+      edits.setWriteMode(true);
+      await edits.stage({ table: 'row_parent', column: 'id', offset: 0, expected: '1', value: editValue('integer', '2') });
+      await edits.stageDelete({ table: 'row_child', column: 'parent', offset: 0, expected: '1' });
+      await edits.stageDelete({ table: 'row_parent', column: 'id', offset: 0, expected: '2' });
+      await edits.save();
+      expect((await engine.query('SELECT * FROM row_parent')).rows).toEqual([]);
+      expect((await engine.query('SELECT * FROM row_child')).rows).toEqual([]);
+    });
+  });
+  test('FR-021: Given NULL, empty text, literal NULL, extreme REAL and large text, When inserting through quoted columns and saving a copy, Then every value is complete and the source stays unchanged', async () => {
+    await fixture(fallback, async (edits, _engine, path) => {
+      const before = await readFile(path); edits.setWriteMode(true);
+      const values = [editValue('null', ''), editValue('text', ''), editValue('text', 'NULL'), editValue('real', '1e-200'), editValue('text', '😀'.repeat(300000))];
+      for (const value of values) { await edits.stageInsert({ table: 'no_key', values: [{ column: 'value', value }] }); }
+      await edits.stageInsert({ table: 'select "😀', values: [{ column: 'key "🚀', value: editValue('text', "new'\0tail") }, { column: 'note', value: editValue('text', 'safe') }] });
+      await edits.stageDelete({ table: 'data', column: 'bytes', offset: 1, expected: '[BLOB 4 bytes]' });
+      const output = path + '.rows.sqlite'; await edits.save(output);
+      expect(await readFile(path)).toEqual(before); expect(edits.dirty).toBe(true);
+      const copy = new DatabaseSync(output, { readOnly: true });
+      try {
+        expect(copy.prepare('SELECT typeof(value) AS type,value FROM no_key WHERE rowid>2 ORDER BY rowid').all()).toEqual([
+          { type: 'null', value: null }, { type: 'text', value: '' }, { type: 'text', value: 'NULL' }, { type: 'real', value: 1e-200 }, { type: 'text', value: values[4]?.text },
+        ]);
+        expect(copy.prepare('SELECT note FROM "select ""😀" WHERE "key ""🚀"=?').get("new'\0tail")?.['note']).toBe('safe');
+        expect(copy.prepare('SELECT COUNT(*) AS count FROM data').get()?.['count']).toBe(1);
+      } finally { copy.close(); }
+    });
+  });
+  test('FR-021: Given a foreign-key restricted row and external source changes, When saving or staging, Then failures preserve pending operations and never overwrite the newer source', async () => {
+    await fixture(fallback, async (edits, engine, path) => {
+      edits.setWriteMode(true);
+      await edits.stageDelete({ table: 'row_parent', column: 'id', offset: 0, expected: '1' });
+      await expect(edits.save()).rejects.toThrow(/foreign key/iu);
+      expect(edits.dirty).toBe(true); expect((await engine.query('SELECT id FROM row_parent')).rows).toEqual([['1']]);
+      edits.discard(); edits.setWriteMode(true);
+      await edits.stageInsert({ table: 'row_defaults', values: [] });
+      const external = new DatabaseSync(path); try { external.exec("INSERT INTO no_key VALUES('external')"); } finally { external.close(); }
+      const updated = await readFile(path);
+      await expect(edits.stageInsert({ table: 'row_defaults', values: [] })).rejects.toThrow(/changed/iu);
+      await expect(edits.save()).rejects.toThrow(/changed/iu);
+      expect(edits.operations).toHaveLength(1); expect(await readFile(path)).toEqual(updated);
+    });
+  });
+  test('FR-021: Given a trigger that ignores inserts, When saving an added row, Then silent omission is refused and the complete queue survives', async () => {
+    await fixture(fallback, async (edits, engine) => {
+      edits.setWriteMode(true);
+      // The trigger is installed only in the disposable fixture, never through Stage SQL.
+      await edits.stageInsert({ table: 'ignore_insert', values: [{ column: 'value', value: editValue('text', 'retained') }] });
+      await expect(edits.save()).rejects.toThrow(/insert|row/iu); expect(edits.dirty).toBe(true);
+      expect((await engine.query('SELECT * FROM ignore_insert')).rows).toEqual([]);
+    });
+  });
+  test('FR-021: Given an empty table and typed/default values, When adding rows and recovering a backup, Then only explicit Save writes exact complete data', async () => {
+    await fixture(fallback, async (edits, engine, path) => {
+      const before = await readFile(path);
+      await expect(edits.stageInsert({ table: 'row_defaults', values: [] })).rejects.toThrow(/write mode/iu);
+      edits.setWriteMode(true);
+      const schema = await edits.rowSchema('row_defaults');
+      expect(schema.columns.map((column) => column.name)).toEqual(['id', 'value', 'number']);
+      await edits.stageInsert({ table: 'row_defaults', values: [] });
+      await edits.stageInsert({ table: 'row_defaults', values: [
+        { column: 'id', value: editValue('integer', '9223372036854775807') },
+        { column: 'value', value: editValue('text', "quote'\0tail😀") },
+        { column: 'number', value: editValue('integer', '-9223372036854775808') },
+      ] });
+      expect((await engine.query('SELECT * FROM row_defaults')).rows).toEqual([]);
+      expect(await readFile(path)).toEqual(before);
+      const restored = new StagedEdits(engine); restored.restore(edits.backup());
+      expect(restored.operations).toEqual(edits.operations); expect(restored.writeMode).toBe(false);
+      const queued = restored.operations; restored.replace([]); expect(restored.dirty).toBe(false); restored.replace(queued);
+      await restored.save(); expect(restored.dirty).toBe(false);
+      expect((await engine.query('SELECT id,value,number FROM row_defaults ORDER BY id')).rows).toEqual([
+        ['1', 'default value', null], ['9223372036854775807', "quote'\0tail😀", '-9223372036854775808'],
+      ]);
+    });
+  });
+  test('FR-021: Given saved rows with pending primary-key edits, When deleting the selected row, Then exact original identities survive Undo and deletion supersedes its edits', async () => {
+    await fixture(fallback, async (edits, engine, path) => {
+      const before = await readFile(path); edits.setWriteMode(true);
+      await edits.stage({ table: 'composite', column: 'a', offset: 0, expected: '9223372036854775807', value: editValue('integer', '3') });
+      await edits.stageDelete({ table: 'composite', column: 'a', offset: 0, expected: '3' });
+      await expect(edits.stageDelete({ table: 'composite', column: 'a', offset: 0, expected: '3' })).rejects.toThrow(/delet/iu);
+      await expect(edits.stage({ table: 'composite', column: 'value', offset: 0, expected: 'old', value: editValue('text', 'x') })).rejects.toThrow(/delet/iu);
+      await edits.stageDelete({ table: 'gaps', column: 'value', offset: 1, expected: 'last' });
+      expect(await readFile(path)).toEqual(before);
+      expect((await edits.page('composite', {}, { limit: 1 })).rows[0]?.[0]).toBe('3');
+      await edits.save();
+      expect((await engine.query('SELECT * FROM composite')).rows).toEqual([]);
+      expect((await engine.query('SELECT rowid,value FROM gaps')).rows).toEqual([['7', 'seven']]);
+    });
+  });
+  test('FR-021: Given malformed, generated or ambiguous targets, When staging row operations, Then refusals leave the source and queue unchanged', async () => {
+    await fixture(fallback, async (edits, _engine, path) => {
+      const before = await readFile(path); edits.setWriteMode(true);
+      for (const table of ['view_data', 'sqlite_schema']) {
+        await expect(edits.stageInsert({ table, values: [] })).rejects.toThrow();
+      }
+      for (const column of ['computed', 'missing']) {
+        await expect(edits.stageInsert({ table: 'data', values: [{ column, value: editValue('text', 'x') }] })).rejects.toThrow();
+      }
+      await expect(edits.stageInsert({ table: 'data', values: [{ column: 'value', value: editValue('text', 'a') }, { column: 'value', value: editValue('text', 'b') }] })).rejects.toThrow(/duplicate/iu);
+      for (const target of [
+        { table: 'nullable', column: 'value', expected: 'a' }, { table: 'shadow', column: 'value', expected: '4' },
+        { table: 'no_key', column: 'value', expected: 'stale' }, { table: 'view_data', column: 'value', expected: 'second' },
+      ]) { await expect(edits.stageDelete({ ...target, offset: 0 })).rejects.toThrow(); }
+      expect(edits.dirty).toBe(false); expect(await readFile(path)).toEqual(before);
+    });
+  });
+  test('FR-021: Given a mixed row queue with a constraint failure, When Save fails, Then all inserts and deletions roll back and pending work survives for correction', async () => {
+    await fixture(fallback, async (edits, engine, path) => {
+      edits.setWriteMode(true); const before = await readFile(path);
+      await edits.stageDelete({ table: 'no_key', column: 'value', offset: 0, expected: 'one' });
+      await edits.stageInsert({ table: 'data', values: [{ column: 'value', value: editValue('text', 'first') }] });
+      await expect(edits.save()).rejects.toThrow();
+      expect(edits.operations).toHaveLength(2); expect(await readFile(path)).toEqual(before);
+      expect((await engine.query('SELECT value FROM no_key')).rows).toEqual([['one'], ['two']]);
+      edits.replace(edits.operations.slice(0, 1)); await edits.save();
+      expect((await engine.query('SELECT value FROM no_key')).rows).toEqual([['two']]);
+    });
+  });
+});
+
 test('FR-020: Given explicit cell types, When parsing values, Then int64 stays exact and invalid or overflowing values are refused', () => {
   expect(editValue('integer', '9223372036854775807')).toEqual({ kind: 'integer', text: '9223372036854775807' });
   expect(editValue('null', 'anything')).toEqual({ kind: 'null', text: '' });

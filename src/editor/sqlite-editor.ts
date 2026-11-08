@@ -11,7 +11,7 @@ import { writeClipboard } from './clipboard';
 import { logLifecycle } from '../diagnostics';
 import { open, readFile, rename, rm, stat } from 'node:fs/promises';
 import { StagedEdits } from '../staging/staged-edits';
-import { MAX_STAGED_BYTES, type EditOperation } from '../staging/edit-types';
+import { MAX_STAGED_BYTES, type EditOperation, type RowSchema } from '../staging/edit-types';
 import { isEditingRequest, type EditingRequest, type EditingState } from '../protocol';
 import type { Engine } from '../engine/engine';
 
@@ -25,9 +25,19 @@ export class SqliteDocument implements vscode.CustomDocument {
   restore: Promise<void> | undefined;
   saveGeneration = 0;
   editingState: EditingState = { type: 'editingState', revision: 0, writeMode: false, dirty: false, count: 0, busy: false, message: 'Read-only. Enable write mode to stage changes.' };
-  reportEdits(message: string, advance = true, busy = this.edits.isBusy || this.savingEngine !== undefined): void {
+  reportEdits(message: string, advance = true, busy = this.edits.isBusy || this.savingEngine !== undefined, rowSchema?: RowSchema): void {
+    const preview = (text: string): string => text.length <= 100 ? text : `${text.slice(0, 100)}… (${String(text.length)} characters)`;
+    const rowChanges = this.edits.operations.flatMap((operation, index) => {
+      if (operation.kind === 'insert') {
+        const fields = operation.values.map((field) => `${preview(field.column)}=${field.value.kind === 'null' ? 'NULL' : `${field.value.kind} ${JSON.stringify(preview(field.value.text))}`}`).join(', ');
+        return [`#${String(index + 1)} Add to ${preview(operation.table)}: ${preview(fields || 'DEFAULT VALUES')} (${String(operation.values.length)} explicit columns)`];
+      }
+      if (operation.kind === 'delete') { return [`#${String(index + 1)} Delete from ${preview(operation.table)}: ${preview(operation.key.map((key) => `${preview(key.column)}=${key.value.kind === 'blob' ? `[BLOB ${String(key.value.text.length / 2)} bytes]` : `${key.value.kind} ${JSON.stringify(preview(key.value.text))}`}`).join(', '))}`]; }
+      return [];
+    });
     this.editingState = { type: 'editingState', revision: this.editingState.revision + (advance ? 1 : 0),
-      writeMode: this.edits.writeMode, dirty: this.edits.dirty, count: this.edits.operations.length, busy, message: message.slice(0, 4096) };
+      writeMode: this.edits.writeMode, dirty: this.edits.dirty, count: this.edits.operations.length, busy, message: message.slice(0, 4096), rowChanges,
+      ...(rowSchema === undefined ? {} : { rowSchema }) };
     for (const panel of this.records.keys()) { void panel.webview.postMessage(this.editingState); }
   }
   panel: vscode.WebviewPanel | undefined;
@@ -277,12 +287,21 @@ export class SqliteEditorProvider implements vscode.CustomEditorProvider<SqliteD
       } else { await vscode.commands.executeCommand('workbench.action.files.revert', document.uri); }
       return;
     }
+    if (request.action === 'rowSchema') {
+      const schema = document.edits.rowSchema(request.table);
+      document.reportEdits('Loading writable columns in the worker. Source unchanged.', false, true);
+      try { document.reportEdits('Choose explicit values or keep SQLite defaults. Source unchanged.', false, false, await schema); }
+      catch (error: unknown) { document.reportEdits(error instanceof Error ? error.message : 'Unable to load writable columns.', false); throw error; }
+      return;
+    }
     const before = document.edits.operations;
-    const operation = request.action === 'stage' ? document.edits.stage(request.target) : document.edits.stageSql(request.sql);
+    const operation = request.action === 'stage' ? document.edits.stage(request.target)
+      : request.action === 'insert' ? document.edits.stageInsert(request.target)
+        : request.action === 'delete' ? document.edits.stageDelete(request.target) : document.edits.stageSql(request.sql);
     document.reportEdits('Preparing staged change in the worker. Source is unchanged.', false, true);
     try {
       await operation; this.editEvent(document, before, document.edits.operations);
-      document.reportEdits(`${String(document.edits.operations.length)} pending operations · not saved. Browse highlights staged cells; SQL reads saved data until Save.`);
+      document.reportEdits(`${String(document.edits.operations.length)} pending operations · not saved. Review pending row changes below. Browse paging and SQL read saved rows until Save.`);
     } catch (error: unknown) {
       document.reportEdits(error instanceof Error ? error.message : 'The edit was refused. Source is unchanged.'); throw error;
     }

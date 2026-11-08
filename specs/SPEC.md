@@ -596,6 +596,11 @@ limits are recorded in the linked staged-edit acceptance document.
 
 **FR-021 (P1) Add and delete rows,** same staging and save rules.
 
+T-031 owner-authorized detailed acceptance (2026-11-08):
+[row operations](../docs/t031-row-operations.md). Ordinary SQLite Browse tables,
+typed/default-aware insertion, confirmed stable-key deletion, paged pending-row
+review and the existing explicit atomic Save/Undo/Redo/Revert/recovery rules.
+
 **FR-022 (P2) Write-back for CSV and JSON.** Written to a temp file and renamed atomically. A warning explains that type inference and formatting may change.
 
 ### Multi-file and housekeeping
@@ -785,6 +790,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-031 (2026-11-08): Expand FR-021 acceptance for typed/default-aware insertion,
+  confirmed original-key deletion, pending-row review and retained source safety.
 - T-030 closure (2026-11-08): Owner reports ALL PASSED; public REST confirms run
   42462986619/attempt 1/exact 3db3c7bbb2d1a01f795df798603af0e869ea0e2c passes
   locked installs and full verification on all three platforms. Close only T-030;
