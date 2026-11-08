@@ -4,8 +4,13 @@ Status: Draft v0.1 | Applies to every task and every milestone.
 
 **Rule:** nothing is "done" because an AI says it is. Done means there is evidence: command output you have seen, or a manual check you have performed.
 
-T-030 (2026-10-27): [acceptance and pending evidence](../docs/t030-staged-edits.md).
-Only T-030 is active. Existing workloads and diagnostic policies are unchanged.
+T-030 is complete (2026-11-08): [acceptance and retained evidence](../docs/t030-staged-edits.md).
+Owner reports ALL PASSED; public REST confirms [run 42462986619](https://github.com/JreyForFun/lite-voyager/actions/runs/42462986619),
+attempt 1/exact `3db3c7bbb2d1a01f795df798603af0e869ea0e2c`, passes locked installs and
+applicable full verification on Windows/macOS/Ubuntu. Remote raw counts and
+approved-warning records were not retrieved; no remote warning-free claim.
+Earlier failures, exact local warnings and all workloads/diagnostic policies
+remain unchanged. Only T-030 closes; release and later tasks remain separate.
 
 **Honest limit:** validation lowers the risk of errors; it cannot prove there are none. Large-file speed, memory use, and behavior on other operating systems are only validated by actually running them.
 
@@ -5045,6 +5050,10 @@ Then triage the findings yourself. For each real one, write a failing test first
 - The same bug comes back twice: the spec is probably unclear. Fix the spec.
 
 ## Changelog
+- T-030 closure (2026-11-08): Owner reports ALL PASSED; public REST confirms run
+  42462986619/attempt 1/exact 3db3c7bbb2d1a01f795df798603af0e869ea0e2c passes
+  locked installs and full verification on all three platforms. Close only T-030;
+  preserve failed evidence, local warning metadata and remote raw-log limits.
 - T-030 HOST-008 owner authorization (2026-11-07): Adopt only onboarding unsigned-integer renderer warning timing with mandatory metadata reporting. Preserve all other warning/error failures, original100ms guards and all failed CI; this policy amendment does not repair CSV timing or the Windows WidgetHost rejection.
 - T-030 (2026-10-27): Link detailed staged-edit acceptance and test-first
   evidence. Local gates, visual-tool limits and owner-pushed CI remain separate.

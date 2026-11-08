@@ -1,5 +1,38 @@
 # T-030: macOS CI investigation
 
+## Actual-candidate CI acceptance (2026-11-08)
+
+The owner reports ALL PASSED. Public GitHub REST metadata independently confirms
+[run 42462986619](https://github.com/JreyForFun/lite-voyager/actions/runs/42462986619), attempt 1,
+completed success at exact commit `3db3c7bbb2d1a01f795df798603af0e869ea0e2c`, equal to the verified local
+implementation commit 3db3c7b.
+
+- macOS job [128676090362](https://github.com/JreyForFun/lite-voyager/actions/runs/42462986619/job/128676090362): locked dependency install and Windows/macOS full-verification step succeed.
+- Windows job [128676090464](https://github.com/JreyForFun/lite-voyager/actions/runs/42462986619/job/128676090464): locked dependency install and Windows/macOS full-verification step succeed.
+- Ubuntu job [128676090528](https://github.com/JreyForFun/lite-voyager/actions/runs/42462986619/job/128676090528): locked dependency install and Linux session-bus/virtual-display full-verification step succeed.
+
+This clears actual-candidate three-platform CI acceptance for T-030, including
+Ubuntu strict acceptance. Earlier failed CI, offline Linux GPU errors,
+interrupted runs, raw timings, red-first regressions and manual-host diagnostic
+failures remain historical evidence. A passing candidate does not establish
+their historical GPU/OS scheduling causes or guarantee future error-free runs.
+
+Remote raw logs, test totals and approved-warning records were not retrieved;
+do not call these remote runs warning-free. Exact local approved warnings and
+observation limits remain below. Latest local full verification passes 1,400
+units/131 files and 79 hosts with 405 unchanged hashes; the 5-GB JSONL raw maximum
+is 49.254000 ms against the original 100-ms limit. Its sole approved warning is
+already reported verbatim in the investigation record.
+
+FR-016/FR-020 implementation, both-engine automated source/save/identity/recovery
+coverage, scoped light/dark visual QA and earlier independent review are retained
+in the staged-edit acceptance record. Existing fallback check-to-rename and
+unknown interrupted-save outcome limits remain explicit. Only T-030 closes;
+T-031 and milestone release/tag/publishing remain separate. No runtime, test,
+workflow, workload, deadline or diagnostic-policy change is made for closure.
+Public metadata is retained in out/t030-ci-42462986619-metadata.json.
+
+
 ## CI 42437310018: import launch repair (2026-11-08)
 
 Only T-030 is active. The owner retains push and CI dispatch. No workload,

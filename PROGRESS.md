@@ -1,34 +1,29 @@
 # Progress
-## Current task
-T-030 CI repair only; owner retains push and CI dispatch. No later task starts.
-Owner authorizes scoped fixes, fixtures, QA and task-only local commit.
-## Implemented candidate
-Import process fork now runs in a launcher worker; host awaits real PID readiness.
-PID registration remains durable before jobs; ordered exact-value IPC is retained.
-Cancel-before-PID and child-close plus launcher-exit confirmation are covered.
-Unknown exit rejects; importer/editor retain storage for safe orphan cleanup.
-Build/VSIX/dependency audit include launcher; no dependency or launch flag changed.
-Autocomplete waits now require an active matching popup on an idle host.
-Original actions, workloads, timers, deadlines and all diagnostic failures remain.
-## Current evidence
-CI 42437310018: owner reports macOS PASS; supplied Ubuntu/Windows logs FAIL.
-Windows failure: 5-GB JSONL raw 322.8667 ms; sync fork 320.7046 ms, no GC overlap.
-Ubuntu: 79 hosts PASS, then strict FAIL on nine native ProduceMemory errors.
-RED/green cleanup, package and completion regressions retained in report/out.
-Initial standalone 1,397-unit PASS is superseded by package/guard hardening.
-First final full INCOMPLETE: Windows reboot at 12:38:30; 405 sources still match.
-Recovery npm run verify:full PASS: 1,400 units/131 files, 79 hosts, 2955.65 s.
-Types, lint, build, 36-entry VSIX, integration compilation and strict scans PASS.
-Windows 5-GB JSONL raw max: 49.254000 ms; all 405 hashes match.
-Full is NOT warning-free; every approved record is verbatim in investigation.
-Earlier 403-file Ubuntu full: 78 hosts PASS/1 autocomplete FAIL; big-data cases PASS.
-Final 405-file Ubuntu autocomplete: 4 hosts PASS; both probes fail startup GPU logs.
-CreateCommandBuffer differs from CI ProduceMemory; no graphics cause/fix claim.
-Offline cached runtimes/dependencies only; setup failures and raw logs retained.
-Earlier visual QA retained with failed manual-host logs; no new physical Mac QA.
-## Remaining acceptance / preservation
-Fresh actual-candidate three-platform CI and Ubuntu strict acceptance remain open.
-No threshold, workload, renderer setting, error policy or warning family relaxed.
-Owner README/PLAN/TASKS/VALIDATION edits, unrelated files and six ZIPs preserved.
-Evidence, all 18 changed files and commands: docs/t030-macos-ci-investigation.md.
-T-030 stays unchecked. No push, CI dispatch, tag or release performed.
+## Current status
+T-030 complete (2026-11-08). Only staged SQLite editing/its CI repair closes.
+Owner reports ALL PASSED for run 42462986619; public REST independently confirms it.
+Attempt 1, exact 3db3c7bbb2d1a01f795df798603af0e869ea0e2c, equals implementation HEAD.
+Windows/macOS/Ubuntu locked installs and applicable full steps all succeed.
+Metadata: out/t030-ci-42462986619-metadata.json; evidence: both T-030 reports.
+## Validated behavior
+Read-only default, explicit write mode, exact scalar/PK/rowid identities.
+Staged-only source safety, dirty state, Undo/Redo/Revert, atomic Save/Save As.
+Both-engine rollback/conflict/recovery/backup/cancellation coverage is retained.
+Scoped light/dark visual QA and earlier independent review are recorded.
+Import fork runs off-host; confirmed exit precedes cleanup; uncertain work retained.
+VSIX includes launcher; autocomplete fixtures require an active matching popup.
+Latest local full: 1,400 units/131 files and 79 hosts PASS; 405 hashes match.
+Windows 5-GB JSONL raw maximum 49.254000 ms; unchanged limit 100 ms.
+Local full is NOT warning-free: exact approved HOST-001 record is in investigation.
+Remote raw counts/warning records not retrieved; no remote warning-free claim.
+## Retained limits and evidence
+Historical failed CI/offline GPU/manual-host logs and reboot interruption remain.
+No historical graphics/OS latency cause or future error-free guarantee is claimed.
+Fallback check-to-rename race and unknown interrupted-save outcome remain explicit.
+Original workloads, limits, deadlines, eight warning families and errors policy remain.
+Closure changes records only; verified runtime/tests/workflow stay unchanged.
+Owner README/PLAN/shared-spec hunks and unrelated files/six ZIPs are preserved.
+## Next session
+Start a fresh chat for T-031 if the owner chooses; do not implement it here.
+Load AGENTS.md, CONSTITUTION.md, this file and only T-031's linked requirements.
+Owner retains push/CI; no tag, release, publishing or whole-milestone closure.

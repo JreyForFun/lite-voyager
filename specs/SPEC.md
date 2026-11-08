@@ -590,7 +590,9 @@ file loading remain later tasks.
 T-030 owner-delegated detailed acceptance (2026-10-27):
 [staged SQLite editing](../docs/t030-staged-edits.md). Includes explicit value
 types, stable identities, queued SQL, source-conflict guards, undo/revert,
-custom-document dirty state and recovery; implementation evidence remains pending.
+custom-document dirty state and recovery. T-030 acceptance is complete (2026-11-08):
+actual-candidate three-platform CI passes at 3db3c7b; evidence and documented
+limits are recorded in the linked staged-edit acceptance document.
 
 **FR-021 (P1) Add and delete rows,** same staging and save rules.
 
@@ -783,6 +785,10 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-030 closure (2026-11-08): Owner reports ALL PASSED; public REST confirms run
+  42462986619/attempt 1/exact 3db3c7bbb2d1a01f795df798603af0e869ea0e2c passes
+  locked installs and full verification on all three platforms. Close only T-030;
+  preserve failed evidence, local warning metadata and remote raw-log limits.
 - T-030 (2026-10-27): Link owner-delegated staged SQLite editing acceptance,
   explicit scalar/SQL/save semantics, recovery and source-conflict guards.
 - T-028 (2026-10-26): Owner authorizes local Milestone 2 checkpoint and handoff;

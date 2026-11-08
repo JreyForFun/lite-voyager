@@ -130,7 +130,7 @@ v0.0.1. Owner pushes the final records/tag, then starts T-009 in a fresh chat.
 > **Stay lite (Constitution 8):** ship Milestones 1 and 2 and gather feedback before starting 3 and 4. Later milestones are optional and should be cut or reshaped based on what users actually ask for.
 
 ## Milestone 3: Editing (release 0.3)
-- [ ] **T-030** Write-mode switch and staged edits with dirty state, save, and revert; primary key or `rowid` addressing. *(FR-016, FR-020)*
+- [x] **T-030** Write-mode switch and staged edits complete (2026-11-08). FR-016/FR-020 acceptance, both-engine source-safe atomic Save/Save As, exact scalar/key identity, dirty state, Undo/Redo/Revert and recovery are covered. Owner-reported ALL PASSED and public metadata confirm [run 42462986619](https://github.com/JreyForFun/lite-voyager/actions/runs/42462986619)/attempt 1/exact `3db3c7bbb2d1a01f795df798603af0e869ea0e2c` passes locked installs and applicable full verification on Windows/macOS/Ubuntu. Scoped visual QA and prior independent review are retained; historical failures, exact local approved warnings and documented save limits remain. Remote raw counts/warning records were not retrieved; no remote warning-free or historical GPU-cause claim. Only T-030 closes; T-031 and milestone release/tag/publishing stay separate. *(FR-016, FR-020; docs/t030-staged-edits.md; docs/t030-macos-ci-investigation.md)*
 - [ ] **T-031** Add and delete rows. *(FR-021)*
 - [ ] **T-032** Query history. *(FR-013)*
 - [ ] **T-033** External change detection and refresh prompt. *(FR-040)*
@@ -159,6 +159,10 @@ Every milestone ends with a gate (`VALIDATION.md` section 4): green `npm run ver
 When using an AI coding assistant, give it `CONSTITUTION.md`, the relevant part of `SPEC.md` and `PLAN.md`, and only the single task you are working on.
 
 ## Changelog
+- T-030 closure (2026-11-08): Owner reports ALL PASSED; public REST confirms run
+  42462986619/attempt 1/exact 3db3c7bbb2d1a01f795df798603af0e869ea0e2c passes
+  locked installs and full verification on all three platforms. Close only T-030;
+  preserve failed evidence, local warning metadata and remote raw-log limits.
 - T-028 (2026-10-26): Owner directs local Milestone 2 checkpoint and handoff in
   this chat; keep publishing and future feature implementation separate.
 - T-027 CI investigation (2026-10-25): Failed 40055575496/176b184 remains recorded;
