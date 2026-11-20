@@ -53,7 +53,15 @@ Lite Voyager is a VS Code extension (TypeScript) that opens SQLite, CSV, JSON an
 - Say which acceptance criteria are covered and which are not.
 - At the end of a session, produce an updated `PROGRESS.md` (see its format) and say which checkbox in `specs/TASKS.md` may be ticked, only if the acceptance criteria pass.
 
+## Spec Kit (GitHub `specify` CLI)
+- Installed in `.specify/` with Claude skills in `.claude/skills/speckit-*`. It does not replace this workflow.
+- `.specify/memory/constitution.md` mirrors `specs/CONSTITUTION.md`, which stays authoritative.
+- One Spec Kit feature folder (`specs/NNN-<name>/`) per `specs/TASKS.md` task. Keep the existing FR IDs and record the folder in `PROGRESS.md`.
+- `/speckit-specify`, `/speckit-plan` and `/speckit-tasks` outputs need the owner's OK before `/speckit-implement`. All validation rules above still apply.
+- Never add Claude co-author or attribution lines to commits or PRs (enforced in `.claude/settings.json`).
+
 ## Changelog
+- 2026-11-20: Owner adopts GitHub Spec Kit alongside the existing specs, and forbids Claude attribution in commits and PRs.
 - 2026-11-07: Owner delegates judgement on the reviewed T-030 HOST-008 proposal. Adopt only onboarding unsigned-integer constructor timing; preserve every renderer/severity/reporting guard, every other warning/error failure and no-retry-to-green.
 - 2026-10-31: Owner delegates judgement in response to the exact reviewed T-030 HOST-007 proposal. Adopt only dynamicWindowConfiguration unsigned-integer constructor timing; preserve every renderer/severity/reporting guard, all other warning/error failures and no-retry-to-green.
 - 2026-10-25: Owner approves the exact reviewed T-027 HOST-006 proposal: chat.builtinTools unsigned-integer constructor timing only. Preserve all renderer/severity/reporting guards, every other warning/error failure and no-retry-to-green.
