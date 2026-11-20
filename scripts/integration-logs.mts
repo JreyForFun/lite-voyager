@@ -5,7 +5,7 @@ export interface ApprovedHostDiagnostic {
   source: string;
   line: number;
   severity: 'warning';
-  rule: 'VSCODE-HOST-001' | 'VSCODE-HOST-002' | 'VSCODE-HOST-003' | 'VSCODE-HOST-004' | 'VSCODE-HOST-005' | 'VSCODE-HOST-006' | 'VSCODE-HOST-007' | 'VSCODE-HOST-008';
+  rule: 'VSCODE-HOST-001' | 'VSCODE-HOST-002' | 'VSCODE-HOST-003' | 'VSCODE-HOST-004' | 'VSCODE-HOST-005' | 'VSCODE-HOST-006' | 'VSCODE-HOST-007' | 'VSCODE-HOST-008' | 'VSCODE-HOST-009';
   message: string;
 }
 
@@ -23,6 +23,8 @@ const hostRules = [
   { id: 'VSCODE-HOST-007', message: /^Creation of workbench contribution 'workbench\.contrib\.dynamicWindowConfiguration' took \d+ms\.$/ },
   // Owner-authorized T-030 onboarding constructor timing only; every error still fails.
   { id: 'VSCODE-HOST-008', message: /^Creation of workbench contribution 'workbench\.contrib\.onboarding' took \d+ms\.$/ },
+  // Owner-approved T-033 chat.usagesTool constructor timing only (2026-11-20); every error still fails.
+  { id: 'VSCODE-HOST-009', message: /^Creation of workbench contribution 'chat\.usagesTool' took \d+ms\.$/ },
 ] as const;
 
 function approvedHostDiagnostic(source: string, line: string, number: number): ApprovedHostDiagnostic | undefined {

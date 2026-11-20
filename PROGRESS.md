@@ -12,7 +12,7 @@ Visual QA: 10/10 light/dark native+fallback import refresh checkpoints (out/impo
 CI 77b418e: Ubuntu and macOS pass; Windows aborted in units (libuv fs-event 8.3 short-path assert).
 Fixed: SourceChanges watches realpath(dirname); failing-first test reproduced the exact abort.
 Short-TEMP gates: verify pass (1,462); verify:full 1,462 units + 91/91 hosts pass but the
-log scan fails on unapproved 'chat.usagesTool' 21ms startup warning. HOST-009 proposed, not adopted.
+log scan failed on 'chat.usagesTool' 21ms startup warning. Owner approved it as VSCODE-HOST-009.
 Owner authorizes T-032/T-033 implementation and agent visual QA; owner pushes/CI.
 Both features are implemented; final verify passes, verify:full is running.
 T-031 remains open: owner reports Ubuntu/macOS CI failed; cause not investigated.

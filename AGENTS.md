@@ -17,7 +17,7 @@ Lite Voyager is a VS Code extension (TypeScript) that opens SQLite, CSV, JSON an
 - If the spec is unclear or seems wrong, stop and propose a change to the spec. Do not silently work around it.
 
 ## Validation (see `specs/VALIDATION.md`)
-- Before saying a task is done, run `npm run verify` (or ask me to run it and paste the output). Zero errors and zero warnings. For `verify:full`, the only owner-approved host exceptions are the eight exact renderer diagnostic families in `specs/VALIDATION.md` section 1; report each explicitly and never describe a run containing them as warning-free. Every other warning and every error fails.
+- Before saying a task is done, run `npm run verify` (or ask me to run it and paste the output). Zero errors and zero warnings. For `verify:full`, the only owner-approved host exceptions are the nine exact renderer diagnostic families in `specs/VALIDATION.md` section 1; report each explicitly and never describe a run containing them as warning-free. Every other warning and every error fails.
 - Never skip, weaken, or delete a test to make it pass. Never use `any`, `@ts-ignore`, or lint disables without a written reason.
 - Test names start with the requirement ID, for example `FR-002: shows NULL differently from empty string`.
 - When fixing a bug, write a failing test first.
@@ -61,6 +61,7 @@ Lite Voyager is a VS Code extension (TypeScript) that opens SQLite, CSV, JSON an
 - Never add Claude co-author or attribution lines to commits or PRs (enforced in `.claude/settings.json`).
 
 ## Changelog
+- 2026-11-20: Owner approves the exact T-033 HOST-009 proposal: chat.usagesTool unsigned-integer constructor timing only. Preserve every renderer/severity/reporting guard, every other warning/error failure and no-retry-to-green.
 - 2026-11-20: Owner adopts GitHub Spec Kit alongside the existing specs, and forbids Claude attribution in commits and PRs.
 - 2026-11-07: Owner delegates judgement on the reviewed T-030 HOST-008 proposal. Adopt only onboarding unsigned-integer constructor timing; preserve every renderer/severity/reporting guard, every other warning/error failure and no-retry-to-green.
 - 2026-10-31: Owner delegates judgement in response to the exact reviewed T-030 HOST-007 proposal. Adopt only dynamicWindowConfiguration unsigned-integer constructor timing; preserve every renderer/severity/reporting guard, all other warning/error failures and no-retry-to-green.

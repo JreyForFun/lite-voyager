@@ -748,6 +748,14 @@ Rules:
     repair or that exact macOS vendor source was inspected. The prior212ms
     record and failed run42364917870/12f7bea remain in the investigation report.
     Every other warning and every error still fails; no retry-to-green.
+  - `VSCODE-HOST-009`: `Creation of workbench contribution 'chat.usagesTool' took Nms.`
+    Owner approves the exact T-033 proposal on 2026-11-20. `N` contains only
+    ASCII digits (unsigned integer duration). This accepts only the vendor
+    chat.usagesTool constructor-timing message, with every structured
+    renderer/severity/reporting guard above unchanged. The originating record
+    (`20261120T192754/window1/renderer.log:2`, 21ms, local short-TEMP verify:full)
+    remains in docs/t032-t033-milestone3.md. Not a performance repair.
+    Every other warning and every error still fails; no retry-to-green.
   The original manifest-creation and cloud-dictation timeout warnings remain
   failures. Console diagnostic checks, types, lint and builds retain zero
   errors/warnings. No blanket vendor-warning allowance or retry-to-green is permitted.

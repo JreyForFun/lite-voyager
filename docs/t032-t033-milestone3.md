@@ -266,10 +266,13 @@ test exercises the runner's short-path condition.
   `20261120T192754/window1/renderer.log:2: 2026-11-20 19:27:58.966 [warning] Creation of workbench contribution 'chat.usagesTool' took 21ms.`
   Approved in the same run (not warning-free):
   `{"source":"20261120T192754/window1/renderer.log","line":11,"severity":"warning","rule":"VSCODE-HOST-001","message":"[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]"}`
-- Proposal awaiting owner decision (not adopted): VSCODE-HOST-009, exactly
+- Owner approved (2026-11-20) VSCODE-HOST-009, exactly
   `^Creation of workbench contribution 'chat\.usagesTool' took \d+ms\.$`, with the
   unchanged renderer.log source, `[warning]` severity and metadata-reporting guards
-  of HOST-002..008. Every other warning/error still fails; no retry-to-green.
+  of HOST-002..008 (`scripts/integration-logs.mts`, VALIDATION section 1, AGENTS
+  changelog). Test first: `test/unit/integration-logs-host009.test.ts` had 6 approval
+  cases failing and 25 rejection cases passing before the rule; all 31 pass after,
+  166 log-rule tests / 4 files in total. Every other warning/error still fails; no retry-to-green.
 
 ## Changed files
 
