@@ -42,7 +42,7 @@ test('FR-040: Given a standalone CSV preview and changed disk bytes, When explic
   const controller = new CsvPreviewController('/extension', () => loader, true); const session = await controller.open(fileUri);
   if (session === undefined) { throw new Error('No preview session'); }
   try {
-    await session.finished; await session.source?.ready; await writeFile(path, 'value\nnew\n'); await session.source?.check();
+    await session.finished; await session.source?.ready; await writeFile(path, 'value\nnewer\n'); await session.source?.check(); // Different length: equal-size rewrites can share one file-time tick.
     expect(session.source?.state.changed).toBe(true); expect(session.source?.state.message).not.toMatch(/edit/iu); await session.source?.handle('refresh');
     expect(session.state).toMatchObject({ phase: 'ready', preview: { rows: [['new']] } }); expect(loader.preview).toHaveBeenCalledTimes(2);
   } finally { view.dispose(); await session.closed; controller.dispose(); await rm(directory, { recursive: true, force: true }); }

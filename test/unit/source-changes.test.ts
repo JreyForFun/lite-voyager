@@ -5,6 +5,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 const cleanups: (() => Promise<void>)[] = [];
+/**
+ * External rewrite with a different length from the fixture's 'original'. Equal-size rewrites in the same
+ * file-time tick (about 15.6 ms on many Windows hosts) can keep size/mtime/ctime identical, so a race-free
+ * test must not depend on timestamp granularity.
+ */
+const external = 'external change';
 /** Windows 8.3 alias of an existing directory (GitHub runners already use one: C:\Users\RUNNER~1\...). */
 async function shortDirectory(directory: string): Promise<string> {
   if (process.platform !== 'win32') { return directory; }
@@ -61,19 +67,19 @@ test('FR-040: Given SQLite main bytes are unchanged, When only its WAL changes, 
 });
 test('FR-040: Given dirty edits, When discard confirmation is dismissed then approved, Then refresh occurs only after explicit approval and the new baseline is accepted', async () => {
   const { monitor, path, callbacks } = await fixture(); callbacks.dirty = () => true;
-  await writeFile(path, 'external'); await monitor.check(); callbacks.confirm.mockResolvedValueOnce(false);
+  await writeFile(path, external); await monitor.check(); expect(monitor.state.changed).toBe(true); callbacks.confirm.mockResolvedValueOnce(false);
   await monitor.handle('refresh'); expect(callbacks.refresh).not.toHaveBeenCalled(); expect(monitor.state.changed).toBe(true);
   await monitor.handle('refresh'); expect(callbacks.refresh).toHaveBeenCalledTimes(1); expect(monitor.state.changed).toBe(false);
 });
 test('FR-040: Given an operation becomes busy while a discard dialog is open, When its late approval arrives, Then refresh refuses without discarding pending work', async () => {
   const { monitor, path, callbacks } = await fixture(); callbacks.dirty = () => true;
   let finish!: (value: boolean) => void; callbacks.confirm.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
-  await writeFile(path, 'external'); await monitor.check(); const refresh = monitor.handle('refresh');
+  await writeFile(path, external); await monitor.check(); expect(monitor.state.changed).toBe(true); const refresh = monitor.handle('refresh');
   callbacks.available = () => false; finish(true); await refresh;
   expect(callbacks.refresh).not.toHaveBeenCalled(); expect(monitor.state.message).toMatch(/wait|busy/iu);
 });
 test('FR-040: Given a refresh failure, When refreshing, Then the changed-source warning and pending work remain with an actionable error', async () => {
-  const { monitor, path, callbacks } = await fixture(); await writeFile(path, 'external'); await monitor.check();
+  const { monitor, path, callbacks } = await fixture(); await writeFile(path, external); await monitor.check(); expect(monitor.state.changed).toBe(true);
   callbacks.refresh.mockRejectedValueOnce(new Error('Cannot reopen database')); await monitor.handle('refresh');
   expect(monitor.state).toMatchObject({ changed: true, busy: false }); expect(monitor.state.message).toContain('Cannot reopen database');
 });
@@ -88,7 +94,8 @@ test('FR-040: Given a pending-edit revision changes while confirmation is open, 
   const { monitor, path, callbacks } = await fixture(); let revision = 1;
   const actions = callbacks as typeof callbacks & { revision?: () => unknown }; actions.revision = () => revision; callbacks.dirty = () => true;
   let finish!: (value: boolean) => void; callbacks.confirm.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
-  await writeFile(path, 'external'); await monitor.check(); const refresh = monitor.handle('refresh'); revision++; finish(true); await refresh;
+  await writeFile(path, external); await monitor.check(); expect(monitor.state.changed).toBe(true);
+  const refresh = monitor.handle('refresh'); revision++; finish(true); await refresh;
   expect(callbacks.refresh).not.toHaveBeenCalled(); expect(monitor.state.changed).toBe(true);
 });
 

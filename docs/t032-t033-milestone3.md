@@ -274,6 +274,31 @@ test exercises the runner's short-path condition.
   cases failing and 25 rejection cases passing before the rule; all 31 pass after,
   166 log-rule tests / 4 files in total. Every other warning/error still fails; no retry-to-green.
 
+### CI a00cdd2: equal-size rewrite race in unit fixtures
+
+Windows no longer aborts. Windows and macOS each fail one unit (1,492/1,493):
+`FR-040: Given a pending-edit revision changes while confirmation is open ...`,
+`TypeError: finish is not a function` (source-changes.test.ts:91). The fixture
+writes `original` and the test then writes `external`, both 8 bytes, within
+milliseconds. The monitor fingerprint is dev/ino/size/mtime/ctime; an in-place
+equal-size rewrite inside one file-time tick (about 15.6 ms on default Windows
+hosts) keeps every field, so no change was offered, `handle('refresh')` returned
+before `confirm()`, and `finish` was never assigned. Measured locally: 33/200
+back-to-back equal-size rewrites kept an identical fingerprint. The full test
+path did not miss locally (0/300; this host's timer resolution is finer), so the
+CI timing itself is not reproduced; CI is the confirmation.
+
+Fix (fixtures only, no assertion relaxed): the four `source-changes` cases use a
+different-length external write and assert the change was detected before
+relying on it; `csv-preview-panel` rewrites `value\nold\n` with a different
+length. Integration rewrites happen seconds apart and are unaffected.
+
+Known limit (not changed here): metadata fingerprints, including the T-030
+save-conflict token, cannot see an equal-size rewrite that lands in the same
+file-time tick as the previous modification. Proposal for a later task: add the
+SQLite header file change counter (bytes 24-27, incremented on every commit) to
+the SQLite token; text sources would need a bounded content check.
+
 ## Changed files
 
 Task documentation: `PROGRESS.md`, `docs/t032-t033-milestone3.md`,
