@@ -299,6 +299,56 @@ file-time tick as the previous modification. Proposal for a later task: add the
 SQLite header file change counter (bytes 24-27, incremented on every commit) to
 the SQLite token; text sources would need a bounded content check.
 
+### CI 43377f7: Ubuntu and macOS pass; Windows native WidgetHost console error
+
+Owner reports Ubuntu and macOS pass. Windows passes 1,493 units / 136 files and
+all 91 hosts (7 min, test runner exit 0); the approved record is
+`{"source":"20261120T135548/window1/renderer.log","line":15,"severity":"warning","rule":"VSCODE-HOST-001","message":"[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]"}`.
+Strict console validation then rejects one native Chromium error, so Windows
+full verification fails and is not warning-free:
+`[7508:1120/135717.756:ERROR:mojo\public\cpp\bindings\lib\interface_endpoint_client.cc:748] Message 4 rejected by interface blink.mojom.WidgetHost`.
+It appears in the first T-026 imported schema-completion case
+(`completion/csv/native`) between action 26005 `run/end` (13:57:17.743Z) and
+`dispose/start` (13:57:17.749Z). This is the third occurrence of the identical
+vendor error in the same test (T-027 run of 2026-10-24, T-030 run of
+2026-11-07); both earlier investigations found no product defect and left the
+cause unestablished. No T-032/T-033 or repair change touches the completion
+fixture, CodeMirror or webview input code. The failure is retained; it is not
+approved, and it is not rerun without explicit owner authorization.
+
+Owner asked for further investigation before any rerun (2026-11-20). Findings:
+
+- Message identity: in Chromium 150.0.7871.250 (VS Code 1.140.0 / Electron
+  43.7.3), `blink.mojom.WidgetHost` is declared in
+  `third_party/blink/public/mojom/widget/platform_widget.mojom`; ordinal 4 is
+  `TextInputStateChanged(ui.mojom.TextInputState)`, the renderer's report of the
+  focused editable's input/IME state. "Message N rejected" is logged when the
+  receiving dispatcher's `Accept()` returns false (main-branch
+  `interface_endpoint_client.cc`; line 748 of the 150 tag not compared).
+  Which deserialization step failed is not established.
+- Timing: the native line is stamped 13:57:17.756, inside the first case's panel
+  disposal (`dispose/start` 17.749Z, `dispose/end` 17.770Z); stdout/stderr
+  interleaving prints it earlier. `completionKey` calls CodeMirror `view.focus()`;
+  `run` clicks the button programmatically, so the editor still has focus when
+  `panel.dispose()` runs 6 ms later. Hypothesis (unconfirmed): closing the webview
+  with a focused editor races a final TextInputStateChanged against widget teardown.
+- Local reproduction attempts, archived VS Code 1.140.0 with Windows `--disable-gpu`:
+  0/50 focused-editor import closes (probe `out/widgethost-probe.test.ts`, ignored);
+  0/15 isolated runs of the real `sql-completion.test.js` (60 tests, 150 closes);
+  0/8 runs with `LITE_VOYAGER_INTERVAL_DIAGNOSTICS=1`, seven of them while 16
+  busy-loop processes loaded every core. The error is not reproducible on this host, so no mitigation
+  can be verified locally; all three CI occurrences hit the first case only.
+
+Owner decision (2026-11-20): one unchanged rerun of the failed Windows job only;
+retain the failure. Owner reports the Windows rerun of 43377f7 passes. With the
+first-attempt Ubuntu and macOS passes, all three platforms pass at 43377f7. Run
+ID/URL and the rerun's raw counts and approved-diagnostic records were not
+supplied, so no warning-free remote claim is made. The rerun pass does not
+establish the WidgetHost cause or clear the failed attempt; the hypothesis and the
+Windows-only focus-before-close mitigation stay open for a later task if the error
+recurs. Remaining before ticking T-032/T-033 (and T-031, whose Ubuntu/macOS
+failures did not recur): the independent review named above.
+
 ## Changed files
 
 Task documentation: `PROGRESS.md`, `docs/t032-t033-milestone3.md`,

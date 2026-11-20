@@ -15,6 +15,11 @@ Short-TEMP gates: verify pass (1,462); verify:full 1,462 units + 91/91 hosts pas
 log scan failed on 'chat.usagesTool' 21ms startup warning. Owner approved it as VSCODE-HOST-009.
 CI a00cdd2: Windows/macOS 1 unit fail: equal-size rewrite inside one file-time tick (fixture race).
 Fixed fixtures (different-length writes + detection preconditions). Limit/proposal in docs.
+CI 43377f7: Ubuntu, macOS pass; Windows failed strict console scan on native Chromium
+"Message 4 rejected by interface blink.mojom.WidgetHost" (TextInputStateChanged, during
+first completion-case panel close). Not reproducible locally (0 hits). Owner authorized one
+Windows rerun: it passes. All three platforms pass at 43377f7; failure and findings retained.
+Next: independent review, then tick T-031/T-032/T-033 and merge t032-t033-history-refresh.
 Owner authorizes T-032/T-033 implementation and agent visual QA; owner pushes/CI.
 Both features are implemented; final verify passes, verify:full is running.
 T-031 remains open: owner reports Ubuntu/macOS CI failed; cause not investigated.
