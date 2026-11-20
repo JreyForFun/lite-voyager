@@ -40,7 +40,11 @@ export class SourceChanges {
       if (this.disposed) { return; }
       if (options.watch !== false) {
         try {
-          this.watcher = watch(dirname(path), { persistent: false }, (_event, filename) => {
+          // On Windows, libuv aborts the whole process when a directory watched through an 8.3 short
+          // name (for example C:\Users\RUNNER~1\...) reports long file names. Watch the canonical path.
+          const directory = await realpath(dirname(path));
+          if (this.disposed) { return; }
+          this.watcher = watch(directory, { persistent: false }, (_event, filename) => {
             const name = filename?.toString(); const match = (value: string) => process.platform === 'win32' ? value.toLowerCase() : value;
             if (name === undefined || [basename(path), ...(sqlite ? [basename(path) + '-wal'] : [])].some(value => match(value) === match(name))) { void this.check(); }
           });

@@ -9,7 +9,10 @@ Final: verify 1,461 units pass, zero warnings; verify:full 1,461 units + 91/91 h
 one approved VSCODE-HOST-001 (not warning-free). One intermediate full failed on disk space
 (pagefile growth); orphan 6.7 GB T-016 fixture removed. Details: docs/t032-t033-milestone3.md.
 Visual QA: 10/10 light/dark native+fallback import refresh checkpoints (out/import-refresh-qa-*).
-Next: owner pushes and runs three-platform CI; T-031 Ubuntu/macOS CI still uninvestigated.
+CI 77b418e: Ubuntu and macOS pass; Windows aborted in units (libuv fs-event 8.3 short-path assert).
+Fixed: SourceChanges watches realpath(dirname); failing-first test reproduced the exact abort.
+Short-TEMP gates: verify pass (1,462); verify:full 1,462 units + 91/91 hosts pass but the
+log scan fails on unapproved 'chat.usagesTool' 21ms startup warning. HOST-009 proposed, not adopted.
 Owner authorizes T-032/T-033 implementation and agent visual QA; owner pushes/CI.
 Both features are implemented; final verify passes, verify:full is running.
 T-031 remains open: owner reports Ubuntu/macOS CI failed; cause not investigated.

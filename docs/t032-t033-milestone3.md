@@ -237,6 +237,40 @@ Run every gate from an uppercase `C:/` working directory: a lowercase `c:\` cwd
 This machine runs near its disk limit; keep at least 14 GB free before `verify:full`.
 Owner-pushed Windows/macOS/Ubuntu CI and an independent review remain pending.
 
+### Windows CI abort: watcher on an 8.3 short directory name
+
+First CI of branch `t032-t033-history-refresh` (commit 77b418e): Ubuntu and
+macOS pass; Windows aborts during units before any result:
+`Assertion failed: !_wcsnicmp(filename, dir, dirlen), file src\win\fs-event.c, line 72`,
+exit code 3221226505 (0xC0000409). GitHub's Windows temp is the 8.3 alias
+`C:\Users\RUNNER~1\...`. `SourceChanges` watched `dirname(path)` as given; libuv
+expands changed file names to their long form, the prefix check against the
+short watched directory fails, and libuv aborts the whole process. This is a
+product defect too: a source opened through a short path could abort the
+extension host. Local temp (`C:\Users\ADMIN\...`) has no short alias, so local
+gates could not see it.
+
+Test first: `FR-040: Given a source reached through a Windows 8.3 short directory
+name ...` (source-changes) reproduces the identical assertion abort locally.
+Fix: watch `realpath(dirname(path))` (native canonical long path); if it cannot
+be resolved, notifications are reported unavailable and periodic checks remain;
+a monitor disposed during resolution never creates a watcher. Related suites:
+66 tests / 5 files pass. Gates were run with `TEMP`/`TMP` set to the 8.3 alias
+`C:\Users\ADMIN\AppData\Local\Temp\LV-CI-~1` so every temp-using unit and host
+test exercises the runner's short-path condition.
+
+- `npm run verify` (short TEMP) exit 0: 1,462 units / 135 files, zero errors/warnings.
+- `npm run verify:full` (short TEMP) exit 1. 1,462 units and 91/91 hosts pass (37 min),
+  and the crash does not recur. The strict log scan fails on one unapproved VS Code
+  renderer startup-timing warning (not product code), recorded and not retried:
+  `20261120T192754/window1/renderer.log:2: 2026-11-20 19:27:58.966 [warning] Creation of workbench contribution 'chat.usagesTool' took 21ms.`
+  Approved in the same run (not warning-free):
+  `{"source":"20261120T192754/window1/renderer.log","line":11,"severity":"warning","rule":"VSCODE-HOST-001","message":"[CloudSandboxApi] No 'github' session with scopes [read:user, user:email, repo, workflow]"}`
+- Proposal awaiting owner decision (not adopted): VSCODE-HOST-009, exactly
+  `^Creation of workbench contribution 'chat\.usagesTool' took \d+ms\.$`, with the
+  unchanged renderer.log source, `[warning]` severity and metadata-reporting guards
+  of HOST-002..008. Every other warning/error still fails; no retry-to-green.
+
 ## Changed files
 
 Task documentation: `PROGRESS.md`, `docs/t032-t033-milestone3.md`,

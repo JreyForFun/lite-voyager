@@ -1,8 +1,16 @@
 import { afterEach, expect, test, vi } from 'vitest';
+import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 const cleanups: (() => Promise<void>)[] = [];
+/** Windows 8.3 alias of an existing directory (GitHub runners already use one: C:\Users\RUNNER~1\...). */
+async function shortDirectory(directory: string): Promise<string> {
+  if (process.platform !== 'win32') { return directory; }
+  const result = await promisify(execFile)('cmd.exe', ['/d', '/s', '/c', `"for %I in ("${directory}") do @echo %~sI"`], { windowsVerbatimArguments: true });
+  return result.stdout.trim();
+}
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) { await cleanup(); } });
 async function fixture(sqlite = false, editable?: boolean) {
   const directory = await mkdtemp(join(tmpdir(), 'lv-t033-')); cleanups.push(() => rm(directory, { recursive: true, force: true }));
@@ -13,6 +21,19 @@ async function fixture(sqlite = false, editable?: boolean) {
   const monitor = new SourceChanges(path, sqlite, callbacks, { watch: false, intervalMs: 60000, ...(editable === undefined ? {} : { editable }) }); cleanups.push(() => { monitor.dispose(); return Promise.resolve(); }); await monitor.ready;
   return { monitor, path, callbacks, sourceFingerprint };
 }
+test('FR-040: Given a source reached through a Windows 8.3 short directory name, When the file changes, Then the watcher reports it without aborting the host process', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t033-long-directory-name-')); cleanups.push(() => rm(directory, { recursive: true, force: true }));
+  const reached = await shortDirectory(directory); const path = join(reached, 'source.data'); await writeFile(path, 'original');
+  const { SourceChanges } = await import('../../src/editor/source-changes');
+  const callbacks = { refresh: vi.fn<() => Promise<void>>().mockResolvedValue(undefined), dirty: () => false, available: () => true,
+    confirm: vi.fn<() => Promise<boolean>>().mockResolvedValue(true), changed: vi.fn() };
+  // Only the file watcher can notice this change: periodic checks are ten minutes apart.
+  const monitor = new SourceChanges(path, false, callbacks, { intervalMs: 600000 }); cleanups.push(() => { monitor.dispose(); return Promise.resolve(); }); await monitor.ready;
+  expect(monitor.state.message).toBe('');
+  await writeFile(path, 'newer content from another program');
+  await vi.waitFor(() => { expect(monitor.state).toMatchObject({ changed: true, offered: true }); }, { timeout: 10000, interval: 50 });
+  expect(callbacks.refresh).not.toHaveBeenCalled(); expect(await readFile(path, 'utf8')).toBe('newer content from another program');
+});
 test('FR-040: Given an open source, When replacing, dismissing, deleting and recreating it, Then each newer change offers refresh without writing or refreshing automatically', async () => {
   const { monitor, path, callbacks } = await fixture(); await writeFile(path + '.replacement', 'newer'); await rename(path + '.replacement', path);
   await monitor.check(); expect(monitor.state).toMatchObject({ changed: true, offered: true });
