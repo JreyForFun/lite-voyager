@@ -5,10 +5,13 @@ import { CsvPreviewLoader } from '../loaders/csv-loader';
 import type { PreviewLoader } from '../loaders/file-loader';
 import { isCsvPreviewRequest, isCsvPreviewStatus, type CsvPreviewResult, type CsvPreviewState, type CsvPreviewStatus } from '../protocol';
 import { csvPreviewHtml } from './csv-preview-ui';
+import { SourceChanges } from './source-changes';
+import { isSourceRequest } from '../protocol';
 
 export class CsvPreviewSession {
+  readonly source: SourceChanges | undefined;
   readonly contextId = randomBytes(16).toString('hex');
-  readonly finished: Promise<void>;
+  finished: Promise<void>;
   readonly initialized: Promise<boolean>;
   readonly closed: Promise<void>;
   firstRowsMs: number | undefined;
@@ -21,7 +24,7 @@ export class CsvPreviewSession {
   private finishInitialization: (ready: boolean) => void = () => {};
   private current: CsvPreviewState;
   get state(): CsvPreviewState { return this.current; }
-  constructor(readonly uri: vscode.Uri, readonly panel: vscode.WebviewPanel, directory: string, loader: PreviewLoader<CsvPreviewResult>, private readonly remove: () => void, private readonly started: number) {
+  constructor(readonly uri: vscode.Uri, readonly panel: vscode.WebviewPanel, directory: string, loader: PreviewLoader<CsvPreviewResult>, private readonly remove: () => void, private readonly started: number, observeSources = false) {
     this.closed = new Promise<void>((accept) => { this.closeComplete = accept; });
     this.current = { type: 'csvPreviewState', contextId: this.contextId, phase: 'loading', message: 'Reading the first records…' };
     panel.webview.html = csvPreviewHtml(basename(uri.fsPath), this.contextId, {
@@ -33,6 +36,17 @@ export class CsvPreviewSession {
       panel.onDidDispose(() => { this.dispose(); }));
     this.initialized = this.initializeTransport();
     this.finished = this.load(loader);
+    if (observeSources) {
+      this.source = new SourceChanges(uri.fsPath, false, {
+        dirty: () => false, confirm: () => Promise.resolve(true), available: () => !this.disposed && this.current.phase !== 'loading' && !this.cancellation.signal.aborted,
+        changed: state => { if (!this.disposed) { void panel.webview.postMessage(state).then(undefined, () => {}); } },
+        refresh: async () => {
+          this.current = { type: 'csvPreviewState', contextId: this.contextId, phase: 'loading', message: 'Refreshing preview from disk…' }; this.send();
+          this.finished = this.load(loader); await this.finished;
+          if (this.state.phase !== 'ready') { throw new Error(this.state.message); }
+        },
+      }, { editable: false });
+    }
   }
   private initializeTransport(): Promise<boolean> {
     return new Promise<boolean>((accept) => {
@@ -71,6 +85,7 @@ export class CsvPreviewSession {
   }
   private receive(value: unknown): void {
     if (this.disposed) { return; }
+    if (isSourceRequest(value)) { void this.source?.handle(value.action); return; }
     if (isCsvPreviewRequest(value) && value.contextId === this.contextId) {
       if (value.type === 'csvPreviewReady') { this.send(); }
       else if (this.current.phase === 'loading') { void this.cancel(); }
@@ -95,6 +110,7 @@ export class CsvPreviewSession {
   dispose(): void {
     if (this.disposed) { return; }
     void this.cancel(); this.disposed = true; this.cancellation.abort();
+    this.source?.dispose();
     this.finishInitialization(false);
     for (const subscription of this.subscriptions) { subscription.dispose(); }
     this.listeners.clear(); this.remove();
@@ -105,7 +121,7 @@ export class CsvPreviewSession {
 export class CsvPreviewController implements vscode.Disposable {
   private readonly active = new Set<CsvPreviewSession>();
   private disposed = false;
-  constructor(private readonly extensionPath: string, private readonly createLoader: (directory: string) => PreviewLoader<CsvPreviewResult> = (directory) => new CsvPreviewLoader(directory)) {}
+  constructor(private readonly extensionPath: string, private readonly createLoader: (directory: string) => PreviewLoader<CsvPreviewResult> = (directory) => new CsvPreviewLoader(directory), private readonly observeSources = false) {}
   sessions(uri: vscode.Uri): CsvPreviewSession[] { return [...this.active].filter((session) => session.uri.toString() === uri.toString()); }
   private showFailure(message: string): void {
     // A notification resolves only on dismissal. Command cleanup must finish
@@ -123,7 +139,7 @@ export class CsvPreviewController implements vscode.Disposable {
     const panel = vscode.window.createWebviewPanel('lite-voyager.csvPreview', `CSV preview: ${basename(uri.fsPath)}`, vscode.ViewColumn.Active,
       { enableScripts: true, localResourceRoots: [vscode.Uri.file(directory)], retainContextWhenHidden: true });
     let session: CsvPreviewSession;
-    try { session = new CsvPreviewSession(uri, panel, directory, this.createLoader(directory), () => { this.active.delete(session); }, started); }
+    try { session = new CsvPreviewSession(uri, panel, directory, this.createLoader(directory), () => { this.active.delete(session); }, started, this.observeSources); }
     catch { panel.dispose(); this.showFailure('Unable to create the CSV preview. Rebuild the extension and reopen the file.'); return undefined; }
     this.active.add(session);
     if (!await session.initialized) {

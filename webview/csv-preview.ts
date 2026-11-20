@@ -2,6 +2,8 @@ import { isCsvPreviewState, type CsvPreviewRequest, type CsvPreviewStatus } from
 import { BrowserGrid } from './browser-grid';
 import './sqlite-browser.css';
 import './csv-preview.css';
+import { SourceView } from './source-view';
+import { isSourceState, type SourceRequest } from '../src/protocol';
 
 type Post = (message: CsvPreviewRequest | CsvPreviewStatus) => void;
 export class CsvPreviewView {
@@ -43,13 +45,14 @@ export class CsvPreviewView {
   }
   dispose(): void { this.disposed = true; this.events.abort(); this.grid.dispose(); }
 }
-declare function acquireVsCodeApi(): { postMessage(message: CsvPreviewRequest | CsvPreviewStatus): void };
+declare function acquireVsCodeApi(): { postMessage(message: CsvPreviewRequest | CsvPreviewStatus | SourceRequest): void };
 if (typeof acquireVsCodeApi === 'function') {
   const root = document.getElementById('csv-preview');
   const contextId = root?.getAttribute('data-context');
   if (root !== null && contextId !== null && contextId !== undefined) {
     const api = acquireVsCodeApi(); const view = new CsvPreviewView(root, contextId, (message) => { api.postMessage(message); });
-    window.addEventListener('message', (event: MessageEvent<unknown>) => { view.receive(event.data); });
-    window.addEventListener('pagehide', () => { view.dispose(); });
+    const source = new SourceView(root, message => { api.postMessage(message); }); source.start();
+    window.addEventListener('message', (event: MessageEvent<unknown>) => { if (isSourceState(event.data)) { source.receive(event.data); } else { view.receive(event.data); } });
+    window.addEventListener('pagehide', () => { source.dispose(); view.dispose(); });
   }
 }

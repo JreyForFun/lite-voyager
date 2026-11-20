@@ -427,6 +427,10 @@ file loading remain later tasks.
 
 **FR-013 (P2) Query history,** last 50 per file.
 
+T-032 owner-delegated acceptance (2026-11-08):
+[local query history](../docs/t032-t033-milestone3.md). Exact successful explicit
+runs, 50 per original source, local persistence and load-without-execution UI.
+
 **FR-014 (P1) Export results** to CSV or JSON, streamed so large results do not exhaust memory.
 
 #### T-015 acceptance (owner-delegated decisions, 2026-10-13)
@@ -609,6 +613,10 @@ review and the existing explicit atomic Save/Undo/Redo/Revert/recovery rules.
 
 **FR-040 (P2) External change detection.** If the file changes on disk, offer to refresh. Never overwrite newer on-disk changes without asking.
 
+T-033 owner-delegated acceptance (2026-11-08):
+[source change and refresh](../docs/t032-t033-milestone3.md). Include SQLite WAL,
+dirty-discard confirmation, shared views and explicit imported-source re-preview.
+
 ## 4.1 Data fidelity (applies to every format)
 
 - SQLite integers are 64-bit. Values beyond JavaScript's safe range (about 9 quadrillion) must display exactly, never rounded. The engine reads them as BigInt or text.
@@ -790,6 +798,8 @@ Every screen must handle each of these, with a test or a manual checklist item:
 | D-5 | CSV open behavior | SQLite files open in Lite Voyager by default (the text editor is useless for them). CSV, TSV, JSON, JSONL, XLSX do **not** hijack the default editor: they open through "Open With...", an Explorer right-click "Open in Lite Voyager", and a button in the editor title bar. Setting `liteVoyager.openCsvByDefault` (default off) flips this. |
 
 ## Changelog
+- T-032/T-033 (2026-11-08): Define local bounded exact query history and explicit
+  source refresh with retained edits, source-conflict guards and diagnostic policy.
 - T-031 (2026-11-08): Expand FR-021 acceptance for typed/default-aware insertion,
   confirmed original-key deletion, pending-row review and retained source safety.
 - T-030 closure (2026-11-08): Owner reports ALL PASSED; public REST confirms run

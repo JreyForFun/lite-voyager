@@ -1,4 +1,5 @@
 import type { SqliteEditorState } from './sqlite-session';
+import { sourceChangeShell } from './source-change-ui';
 
 function escapeHtml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
@@ -27,6 +28,7 @@ ${browser ? browserShell(assets, saveContext === undefined) : ''}
 
 function browserShell(assets: SqliteEditorAssets, editing: boolean): string {
   return `<section id="browser" aria-label="Table browser">
+${sourceChangeShell()}
 ${editing ? `<section id="editing" aria-label="Staged SQLite editing">
 <div class="browser-toolbar"><label><input id="edit-mode" type="checkbox"> Write mode</label>
 <button id="edit-save" disabled>Save changes</button><button id="edit-revert" disabled>Revert all changes</button>
@@ -53,6 +55,10 @@ Write mode requires files.autoSave off so VS Code can back up pending work. Canc
 SQLite column affinity still applies to explicitly typed inputs. Undo applies to pending operations; saved writes cannot be undone.</p></details></section>` : ''}
 <div class="sql-toolbar"><h2>SQL</h2><button id="sql-run" disabled>Run SQL</button><span>Ctrl/Cmd+Enter · selection or whole editor · read-only</span></div>
 <div id="sql-editor"></div>
+<button id="history-show">Query history</button>
+<section id="history-panel" hidden aria-label="Query history"><p class="browser-help">Last 50 successful explicit runs per source file, stored locally in extension storage. History can contain sensitive SQL. Clear removes this file's history.</p>
+<div class="browser-toolbar"><label for="history-select">Recent query</label><select id="history-select" disabled></select><button id="history-load" disabled>Load into editor</button><button id="history-clear" disabled>Clear this history</button></div>
+<p id="history-status" role="status" aria-live="polite"></p></section>
 <div class="browser-toolbar" aria-label="Export query results"><button id="browser-export-csv" disabled>Export CSV</button>
 <button id="browser-export-json" disabled>Export JSON</button></div>
 <p class="browser-help">Export reruns the complete last successful query once, including all pages; changed files and nondeterministic SQL may give different results.

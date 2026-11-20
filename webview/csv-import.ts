@@ -1,5 +1,7 @@
 import { isCsvImportExercise, isCsvImportState, type CsvImportRequest, type CsvPreviewRequest, type CsvPreviewStatus } from '../src/protocol';
 import { CsvPreviewView } from './csv-preview';
+import { SourceView } from './source-view';
+import { isSourceState, type SourceRequest } from '../src/protocol';
 
 type Post = (message: CsvImportRequest | CsvPreviewRequest | CsvPreviewStatus) => void;
 export class CsvImportView {
@@ -85,12 +87,13 @@ export class CsvImportView {
   dispose(): void { this.disposed = true; this.clearExerciseStart(); this.events.abort(); this.preview.dispose(); }
 }
 
-declare function acquireVsCodeApi(): { postMessage(message: CsvImportRequest | CsvPreviewRequest | CsvPreviewStatus): void };
+declare function acquireVsCodeApi(): { postMessage(message: CsvImportRequest | CsvPreviewRequest | CsvPreviewStatus | SourceRequest): void };
 if (typeof acquireVsCodeApi === 'function') {
   const root = document.getElementById('csv-import'); const contextId = root?.getAttribute('data-context');
   if (root !== null && contextId !== null && contextId !== undefined) {
     const api = acquireVsCodeApi(); const view = new CsvImportView(root, contextId, (message) => { api.postMessage(message); });
-    window.addEventListener('message', (event: MessageEvent<unknown>) => { view.receive(event.data); });
-    window.addEventListener('pagehide', () => { view.dispose(); });
+    const source = new SourceView(root, message => { api.postMessage(message); }); source.start();
+    window.addEventListener('message', (event: MessageEvent<unknown>) => { if (isSourceState(event.data)) { source.receive(event.data); } else { view.receive(event.data); } });
+    window.addEventListener('pagehide', () => { source.dispose(); view.dispose(); });
   }
 }

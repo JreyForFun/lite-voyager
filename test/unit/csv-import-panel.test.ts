@@ -9,7 +9,7 @@ import { CsvImportSession } from '../../src/editor/csv-import';
 import { SqliteSession } from '../../src/editor/sqlite-session';
 import { SqliteSaveService } from '../../src/editor/sqlite-save';
 import { TempStorage } from '../../src/storage/temp-storage';
-import type { JsonPreviewResult } from '../../src/protocol';
+import type { ImportPreviewResult, JsonPreviewResult } from '../../src/protocol';
 import { channel } from 'node:diagnostics_channel';
 import { IMPORT_HOST_CHANNEL } from '../../src/import-host-diagnostics';
 import { UnconfirmedImportExitError } from '../../src/loaders/import-helper';
@@ -41,13 +41,48 @@ function engine() {
     schema: vi.fn().mockResolvedValue(page), columns: vi.fn().mockResolvedValue(page), indexes: vi.fn().mockResolvedValue(page), indexColumns: vi.fn().mockResolvedValue(page),
     page: vi.fn().mockResolvedValue(page), grid: vi.fn().mockResolvedValue(page), query: vi.fn().mockResolvedValue(page), exportResults: vi.fn(), cancel: vi.fn().mockResolvedValue(undefined), close: vi.fn().mockResolvedValue(undefined) } satisfies Engine;
 }
-async function fixture(loader: FileLoader, started?: number, format: 'csv' | 'json' | 'xlsx' = 'csv') {
+async function fixture(loader: FileLoader, started?: number, format: 'csv' | 'json' | 'xlsx' = 'csv', observeSources = false) {
   const root = await mkdtemp(join(tmpdir(), 'lv-import-panel-')); fixtureRoots.push(root);
   const directory = join(root, 'storage'); await mkdir(directory); const source = join(root, 'source.csv'); await writeFile(source, 'a\n1\n');
   const view = panel(); const db = engine();
-  const session = new CsvImportSession({ fsPath: source } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started, format);
+  const session = new CsvImportSession({ fsPath: source, toString: () => source } as vscode.Uri, view as unknown as vscode.WebviewPanel, '/extension/dist', directory, loader, () => {}, () => db, started, format, false, undefined, observeSources);
   await session.finished; return { directory, view, db, session };
 }
+
+test.each(['csv', 'json', 'xlsx'] as const)('FR-040: Given an opened %s import and changed original source, When explicitly refreshing, Then the old browser closes and a fresh preview requires Import again', async (format) => {
+  const base = { columns: ['a'], rows: [['1']], bytesRead: '4', totalBytes: '4', reachedEnd: true, notice: '', threadId: 1 };
+  const result: ImportPreviewResult = format === 'csv' ? preview : format === 'json'
+    ? { ...base, format: 'json' } : { ...base, format: 'xlsx', sheetCount: 1, sheetName: 'Sheet1' };
+  const loader = { extensions: ['csv'], preview: vi.fn<FileLoader['preview']>().mockResolvedValue(result),
+    import: vi.fn<FileLoader['import']>().mockResolvedValue([{ name: 'records', columns: ['a'], rowCount: '1' }]) } satisfies FileLoader;
+  const run = await fixture(loader, undefined, format, true);
+  try {
+    await run.session.source?.ready; await run.session.startImport(); expect(run.session.state.phase).toBe('opened');
+    await writeFile(run.session.uri.fsPath, 'a\nchanged externally\n'); await run.session.source?.check(); expect(run.session.source?.state.changed).toBe(true);
+    await run.session.source?.handle('refresh'); expect(run.session.state.phase).toBe('ready'); expect(loader.preview).toHaveBeenCalledTimes(2);
+    expect(loader.import).toHaveBeenCalledTimes(1); expect(run.db.close).toHaveBeenCalled(); expect(run.view.webview.html).toContain('id="csv-import"');
+    expect(await readFile(run.session.uri.fsPath, 'utf8')).toBe('a\nchanged externally\n');
+  } finally { run.session.dispose(); await run.session.closed; }
+});
+
+test('FR-040: Given a rendered preview frame, When explicit refresh replaces that frame, Then preview readiness clears until the new frame renders rows', async () => {
+  const loader = { extensions: ['csv'], preview: vi.fn<FileLoader['preview']>().mockResolvedValue(preview),
+    import: vi.fn<FileLoader['import']>().mockResolvedValue([{ name: 'records', columns: ['a'], rowCount: '1' }]) } satisfies FileLoader;
+  const run = await fixture(loader, undefined, 'csv', true); const contextId = run.session.contextId;
+  const rendered = { type: 'csvPreviewStatus', contextId, renderedRows: 1, renderedColumns: 1 };
+  try {
+    expect(run.session.previewStatus).toBeUndefined();
+    run.view.receive(rendered); expect(run.session.previewStatus).toEqual(rendered);
+    await run.session.source?.ready; await run.session.startImport(); expect(run.session.state.phase).toBe('opened');
+    await writeFile(run.session.uri.fsPath, 'a\nchanged externally\n'); await run.session.source?.check();
+    expect(run.session.source?.state.message).toMatch(/changed on disk/u); expect(run.session.source?.state.message).not.toMatch(/edit/iu);
+    await run.session.source?.handle('refresh'); expect(run.session.state.phase).toBe('ready');
+    expect(run.session.previewStatus).toBeUndefined();
+    run.view.receive({ type: 'csvPreviewReady', contextId }); expect(run.session.previewStatus).toBeUndefined();
+    run.view.receive({ ...rendered, renderedRows: 0 }); expect(run.session.previewStatus?.renderedRows).toBe(0);
+    run.view.receive(rendered); expect(run.session.previewStatus).toEqual(rendered);
+  } finally { run.session.dispose(); await run.session.closed; }
+});
 
 test('FR-007: Given an unconfirmed import helper exit, When the editor handles failure and closes, Then its owned storage survives until startup confirms the owner and helpers are absent', async () => {
   const run = await fixture({ extensions: ['csv'], preview: () => Promise.resolve(preview), import: async (_source, target) => {

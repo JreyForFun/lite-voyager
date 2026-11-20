@@ -21,8 +21,12 @@ import { isSqliteSaveDom, isSqliteSaveRequest, type SqliteSaveDom, type SqliteSa
 import { logLifecycle, type DiagnosticOutput } from '../diagnostics';
 import { traceHostAwait, traceHostSync } from '../import-host-diagnostics';
 import { UnconfirmedImportExitError } from '../loaders/import-helper';
+import { QueryHistory } from './query-history';
+import { SourceChanges } from './source-changes';
+import { isSourceRequest } from '../protocol';
 
 export class CsvImportSession {
+  readonly source: SourceChanges | undefined;
   readonly contextId = randomBytes(16).toString('hex');
   readonly initialized: Promise<boolean>;
   readonly closed: Promise<void>;
@@ -30,6 +34,8 @@ export class CsvImportSession {
   firstRowsMs: number | undefined;
   readonly previewTimings: { transportMs?: number; readStartedMs?: number; readFinishedMs?: number; webviewReadyMs?: number } = {};
   browserStatus: BrowserStatus | undefined;
+  /** Latest preview DOM report from the current frame; cleared whenever the frame is replaced or announces itself. */
+  previewStatus: CsvPreviewStatus | undefined;
   saveDom: SqliteSaveDom | undefined;
   saveState: SqliteSaveState = { type: 'sqliteSaveState', contextId: this.contextId, phase: 'idle', message: 'Save the entire imported database, including all rows and original BLOB bytes.', bytes: '0', total: '0' };
   private readonly started = performance.now();
@@ -55,11 +61,26 @@ export class CsvImportSession {
   constructor(readonly uri: vscode.Uri, readonly panel: vscode.WebviewPanel, private readonly directory: string, private readonly storageRoot: string,
     private readonly loader: FileLoader, private readonly remove: () => void,
     private readonly createEngine: (fallback: boolean) => Engine = (fallback) => new EngineClient({ directory, forceFallback: fallback, ...(this.storage === undefined ? {} : { ownerDirectory: this.storage }) }), started?: number,
-    private readonly format: 'csv' | 'json' | 'xlsx' = 'csv', waitForReady = false) {
+    private readonly format: 'csv' | 'json' | 'xlsx' = 'csv', waitForReady = false, private readonly historyRoot?: string, observeSources = false) {
     this.started = started ?? this.started;
     this.closed = new Promise((accept) => { this.closeComplete = accept; });
     panel.webview.html = csvImportHtml(basename(uri.fsPath), this.contextId, this.assets('csv-import'), format);
     this.subscriptions.push(panel.webview.onDidReceiveMessage((value: unknown) => { this.receive(value); }), panel.onDidDispose(() => { this.dispose(); }));
+    if (observeSources) {
+      this.source = new SourceChanges(uri.fsPath, false, {
+        dirty: () => false, confirm: () => Promise.resolve(true),
+        available: () => !this.disposed && this.saving === undefined && ['ready', 'opened', 'error'].includes(this.state.phase) && this.database?.browser.busy !== true,
+        changed: state => { this.send(state); },
+        refresh: async () => {
+          const options = this.state.options;
+          if (!await this.cleanup()) { throw new Error('Old import storage could not close. Retry after releasing its files.'); }
+          this.originalSource = undefined; this.browserStatus = undefined; this.previewStatus = undefined; this.saveDom = undefined;
+          this.panel.webview.html = csvImportHtml(basename(this.uri.fsPath), this.contextId, this.assets('csv-import'), this.format);
+          await this.readPreview(options);
+          if (this.state.phase !== 'ready') { throw new Error(this.state.message); }
+        },
+      }, { editable: false });
+    }
     this.initialized = new Promise<boolean>((accept) => {
       let settled = false;
       const finish = (ready: boolean): void => {
@@ -153,6 +174,7 @@ export class CsvImportSession {
       this.originalSource = original;
       this.update({ phase: 'opening', message: 'Import complete. Opening read-only SQL browser…' });
       const database = new SqliteSession(path, this.createEngine(fallback)); this.database = database;
+      if (this.historyRoot !== undefined) { database.browser.setHistory(new QueryHistory(this.historyRoot, this.uri.toString())); }
       void database.closed.then(() => {
         const state = database.state;
         if (state.phase === 'error' && /^(Export |The export )/u.test(state.message)) { void vscode.window.showErrorMessage(state.message); }
@@ -182,6 +204,8 @@ export class CsvImportSession {
   private failure(error: unknown): void { this.update({ phase: 'error', message: `${error instanceof Error ? error.message : 'Import failed.'} Apply options / preview or reopen to retry.`.slice(0, 4096) }); }
   private receive(value: unknown): void {
     if (this.disposed) { return; }
+    if (isSourceRequest(value)) { void this.source?.handle(value.action); return; }
+    if (this.source?.state.busy === true && (isCsvImportRequest(value) || isSqliteSaveRequest(value) || isBrowserRequest(value))) { return; }
     if (isSqliteSaveDom(value) && value.contextId === this.contextId) {
       this.saveDom = value; for (const listener of this.listeners) { listener(); }
     } else if (isSqliteSaveRequest(value) && value.contextId === this.contextId && this.state.phase === 'opened') {
@@ -193,17 +217,18 @@ export class CsvImportSession {
       else if (value.type === 'csvImportRefresh') { void this.refresh(value.options); }
       else { void this.cancel(); }
     } else if (isCsvPreviewRequest(value) && value.contextId === this.contextId) {
-      if (value.type === 'csvPreviewReady') { this.finishTransport(true); this.previewTimings.webviewReadyMs ??= performance.now() - this.started; this.sendState(); }
+      if (value.type === 'csvPreviewReady') { this.previewStatus = undefined; this.finishTransport(true); this.previewTimings.webviewReadyMs ??= performance.now() - this.started; this.sendState(); if (this.source !== undefined) { this.send(this.source.state); } }
       else { void this.cancel(); }
     } else if (isCsvPreviewStatus(value) && value.contextId === this.contextId && this.state.preview !== undefined) {
-      this.previewStatus(value);
+      this.handlePreviewStatus(value);
     } else if (this.database?.state.phase === 'opened') {
       if (isBrowserStatus(value)) { this.browserStatus = value; if (value.contextId !== undefined) { this.cells?.activate(value.contextId); } for (const listener of this.listeners) { listener(); } }
       else if (isCellRequest(value)) { this.cells?.handle(value); }
       else if (isBrowserRequest(value)) { void this.database.browser.handle(value, (reply) => { this.send(reply); }); }
     }
   }
-  private previewStatus(value: CsvPreviewStatus): void {
+  private handlePreviewStatus(value: CsvPreviewStatus): void {
+    this.previewStatus = value;
     if (value.renderedRows > 0 && value.renderedColumns > 0 && this.firstRowsMs === undefined) { this.firstRowsMs = performance.now() - this.started; }
     for (const listener of this.listeners) { listener(); }
   }
@@ -233,6 +258,7 @@ export class CsvImportSession {
   dispose(): void {
     if (this.disposed) { return; }
     this.disposed = true; this.cancellation.abort(); this.save?.abort(); this.finishTransport(false); this.remove();
+    this.source?.dispose();
     this.cells?.dispose(); this.listeners.clear(); for (const item of this.subscriptions) { item.dispose(); }
     this.shutdown = (async () => { await this.database?.close(); await this.work; await this.cleanup(); })();
     void this.shutdown.then(this.closeComplete, () => { this.closeComplete(); void vscode.window.showErrorMessage('CSV session storage could not be removed. Close programs locking extension storage, then reload VS Code.'); });
@@ -277,7 +303,7 @@ export class CsvImportController implements vscode.Disposable {
   private readonly active = new Set<CsvImportSession>();
   private disposed = false;
   readonly ready: Promise<void>;
-  constructor(private readonly extensionPath: string, private readonly storageRoot: string, private readonly format: 'csv' | 'json' | 'xlsx' = 'csv', private readonly output?: DiagnosticOutput) {
+  constructor(private readonly extensionPath: string, private readonly storageRoot: string, private readonly format: 'csv' | 'json' | 'xlsx' = 'csv', private readonly output?: DiagnosticOutput, private readonly historyRoot?: string, private readonly observeSources = false) {
     this.ready = new TempStorage(storageRoot).cleanupOrphans().catch((error: unknown) => {
       void vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Import storage cleanup failed. Check extension storage permissions and reload VS Code.');
     });
@@ -305,7 +331,7 @@ export class CsvImportController implements vscode.Disposable {
     const directory = join(this.extensionPath, 'dist');
     panel.webview.options = { enableScripts: true, localResourceRoots: [vscode.Uri.file(directory)] };
     try {
-      const session = new CsvImportSession(uri, panel, directory, this.storageRoot, this.format === 'xlsx' ? new XlsxLoader(directory, approveXlsxMemory) : this.format === 'json' ? new JsonLoader(directory) : new CsvLoader(directory), () => { this.active.delete(session); }, undefined, started, this.format, waitForReady);
+      const session = new CsvImportSession(uri, panel, directory, this.storageRoot, this.format === 'xlsx' ? new XlsxLoader(directory, approveXlsxMemory) : this.format === 'json' ? new JsonLoader(directory) : new CsvLoader(directory), () => { this.active.delete(session); }, undefined, started, this.format, waitForReady, this.historyRoot, this.observeSources);
       this.active.add(session);
       logLifecycle(this.output, this.format, { get state() { return session.state; }, closed: session.closed, subscribe: (listener) => session.onStatus(listener) });
       // VS Code mounts a custom editor only after resolveCustomEditor returns.

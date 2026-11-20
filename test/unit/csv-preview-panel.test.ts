@@ -3,6 +3,9 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import type { PreviewLoader } from '../../src/loaders/file-loader';
 import type { CsvPreviewResult as PreviewResult } from '../../src/protocol';
 import { CsvPreviewController } from '../../src/editor/csv-preview';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const mocks = vi.hoisted(() => ({ panel: vi.fn(), error: vi.fn(), dialog: vi.fn() }));
 vi.mock('vscode', () => ({ Uri: { file: (path: string) => ({ fsPath: path, toString: () => path }) }, ViewColumn: { Active: -1 },
@@ -30,6 +33,20 @@ function deferred() {
 const result: PreviewResult = { columns: ['value'], rows: [['9007199254740993']], delimiter: ',', header: true,
   bytesRead: '10', totalBytes: '10', reachedEnd: true, notice: '', threadId: 1 };
 beforeEach(() => { vi.clearAllMocks(); mocks.dialog.mockResolvedValue(undefined); mocks.error.mockResolvedValue(undefined); });
+
+test('FR-040: Given a standalone CSV preview and changed disk bytes, When explicitly refreshing, Then the loader rereads the source without replacing its bytes', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t033-preview-')); const path = join(directory, 'source.csv'); await writeFile(path, 'value\nold\n');
+  const fileUri = { scheme: 'file', fsPath: path, toString: () => path } as vscode.Uri;
+  const view = panel(); mocks.panel.mockReturnValue(view);
+  const loader = { extensions: ['csv'], preview: vi.fn<PreviewLoader<PreviewResult>['preview']>().mockResolvedValueOnce(result).mockResolvedValueOnce({ ...result, rows: [['new']] }) };
+  const controller = new CsvPreviewController('/extension', () => loader, true); const session = await controller.open(fileUri);
+  if (session === undefined) { throw new Error('No preview session'); }
+  try {
+    await session.finished; await session.source?.ready; await writeFile(path, 'value\nnew\n'); await session.source?.check();
+    expect(session.source?.state.changed).toBe(true); expect(session.source?.state.message).not.toMatch(/edit/iu); await session.source?.handle('refresh');
+    expect(session.state).toMatchObject({ phase: 'ready', preview: { rows: [['new']] } }); expect(loader.preview).toHaveBeenCalledTimes(2);
+  } finally { view.dispose(); await session.closed; controller.dispose(); await rm(directory, { recursive: true, force: true }); }
+});
 
 test('FR-004: Given a new preview, When messages arrive before/after completion, Then the current context receives state and old contexts have no effect', async () => {
   const view = panel(); const task = deferred(); mocks.panel.mockReturnValue(view);

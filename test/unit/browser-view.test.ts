@@ -395,7 +395,7 @@ test('FR-010: Given a tab still restoring its catalog, When the SQL document cha
 test('FR-011: Given successful SQL results, When edited SQL fails, Then the old DOM, count and successful paging SQL remain', () => {
   view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [], hasMore: false });
   view.runSql('SELECT x FROM data ORDER BY x');
-  expect(requests().at(-1)).toEqual({ type: 'browserQuery', requestId: 2, sql: 'SELECT x FROM data ORDER BY x', offset: 0, limit: 100 });
+  expect(requests().at(-1)).toEqual({ type: 'browserQuery', requestId: 2, sql: 'SELECT x FROM data ORDER BY x', offset: 0, limit: 100, remember: true });
   view.receive({ type: 'browserQueryRows', requestId: 2, offset: 0, limit: 100, ms: 5, page: { columns: ['x'], rows: [['1']], hasMore: true } }); flush();
   expect(root.elements.get('browser-total')?.textContent).toContain('Page execution time: 5.0 ms');
   expect(root.elements.get('browser-count')?.disabled).toBe(true);

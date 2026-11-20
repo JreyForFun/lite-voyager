@@ -32,6 +32,16 @@ function fixture() {
   return { engine, browser, sent, send };
 }
 
+test('FR-040: Given worker work independent of visible DOM status, When a query or export dialog is pending, Then the host reports busy until it actually settles', async () => {
+  const { engine, browser, send } = fixture(); let finish!: (page: Awaited<ReturnType<Engine['query']>>) => void;
+  engine.query.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const query = browser.handle({ type: 'browserQuery', requestId: 1, sql: 'SELECT 1', offset: 0, limit: 1 }, send);
+  expect(browser.busy).toBe(true); finish({ columns: ['v'], rows: [['1']], hasMore: false }); await query; expect(browser.busy).toBe(false);
+  let dismiss!: () => void; browser.setExporter({ run: () => new Promise(resolve => { dismiss = () => { resolve(undefined); }; }), abort: () => {}, settled: async () => {} });
+  const exporting = browser.handle({ type: 'browserExport', requestId: 2, format: 'csv' }, send); expect(browser.busy).toBe(true);
+  dismiss(); await exporting; expect(browser.busy).toBe(false); browser.dispose();
+});
+
 test('FR-014: Given an earlier save failure and a later running query, When cancelling that query, Then retained save diagnostics cannot turn successful query recovery into an error', async () => {
   const { engine, browser, sent, send } = fixture();
   const failure = new Error('The export could not be saved. Existing output was not replaced.');

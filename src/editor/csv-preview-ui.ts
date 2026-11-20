@@ -1,3 +1,4 @@
+import { sourceChangeShell } from './source-change-ui';
 interface Assets { scriptUri: string; styleUri: string; nonce: string; cspSource: string; }
 const escape = (value: string): string => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 export function csvPreviewHtml(name: string, contextId: string, assets: Assets): string {
@@ -5,7 +6,7 @@ export function csvPreviewHtml(name: string, contextId: string, assets: Assets):
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${escape(assets.nonce)}'; style-src ${escape(assets.cspSource)}; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>CSV preview</title>
 <link rel="stylesheet" href="${escape(assets.styleUri)}"></head><body>
-<main id="csv-preview" data-context="${escape(contextId)}"><h1>CSV / TSV preview</h1><p>${escape(name)}</p>
+<main id="csv-preview" data-context="${escape(contextId)}">${sourceChangeShell()}<h1>CSV / TSV preview</h1><p>${escape(name)}</p>
 <p>Read-only preview of up to 100 complete rows. Full import and SQL are not available yet.</p>
 <p class="browser-help">CSV uses comma and TSV uses tab; the first row is the header. Values remain exact text.
 Preview is limited to 1,000 columns, 2 Mi UTF-16 code units of names/cells and 4 Mi per raw record.

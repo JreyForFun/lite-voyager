@@ -1,6 +1,6 @@
 import { EditorState } from '@codemirror/state';
 import { EditorView, drawSelection, highlightActiveLine, keymap, lineNumbers } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, isolateHistory } from '@codemirror/commands';
 import { sql, SQLite } from '@codemirror/lang-sql';
 import { bracketMatching, syntaxHighlighting } from '@codemirror/language';
 import { classHighlighter } from '@lezer/highlight';
@@ -54,6 +54,7 @@ export class SqlEditor {
   }
   setDisabled(disabled: boolean): void { this.button.disabled = disabled; }
   setText(text: string): void { this.view.dispatch({ changes: { from: 0, to: this.view.state.doc.length, insert: text }, selection: { anchor: 0 } }); }
+  loadHistory(text: string): void { this.view.dispatch({ changes: { from: 0, to: this.view.state.doc.length, insert: text }, selection: { anchor: 0 }, annotations: isolateHistory.of('full') }); this.view.focus(); }
   select(anchor: number, head: number): void {
     if (Number.isSafeInteger(anchor) && Number.isSafeInteger(head) && anchor >= 0 && head >= 0 && anchor <= this.view.state.doc.length && head <= this.view.state.doc.length) {
       this.view.dispatch({ selection: { anchor, head } });

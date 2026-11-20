@@ -8,10 +8,12 @@ import { join } from 'node:path';
 import { SqliteSession } from '../../src/editor/sqlite-session';
 import { StagedEdits } from '../../src/staging/staged-edits';
 
-const mocks = vi.hoisted(() => ({ edit: vi.fn<NonNullable<Engine['edit']>>(), cancel: vi.fn<Engine['cancel']>(), autoSave: 'off', command: vi.fn() }));
+const mocks = vi.hoisted(() => ({ edit: vi.fn<NonNullable<Engine['edit']>>(), cancel: vi.fn<Engine['cancel']>(), autoSave: 'off', command: vi.fn(), confirm: vi.fn() }));
 vi.mock('vscode', () => ({
+  CancellationTokenSource: class { readonly token = { isCancellationRequested: false, onCancellationRequested: () => ({ dispose() {} }) }; dispose() {} },
   workspace: { getConfiguration: () => ({ get: () => mocks.autoSave }) },
   commands: { executeCommand: mocks.command },
+  window: { showWarningMessage: mocks.confirm },
 }));
 vi.mock('../../src/engine/engine-client', () => ({ EngineClient: vi.fn(function () { return { edit: mocks.edit, cancel: mocks.cancel, close: async () => {} }; }) }));
 const token: vscode.CancellationToken = { isCancellationRequested: false, onCancellationRequested: () => ({ dispose() {} }) };
@@ -19,6 +21,75 @@ const uri = { scheme: 'file', fsPath: '/test.sqlite', toString: () => 'file:///t
 const openContext: vscode.CustomDocumentOpenContext = { backupId: undefined, untitledDocumentData: undefined };
 beforeEach(() => { mocks.autoSave = 'off'; mocks.edit.mockReset(); mocks.cancel.mockReset(); mocks.cancel.mockResolvedValue(undefined); mocks.command.mockReset(); });
 const response = (value: unknown) => ({ columns: ['editing'], rows: [[JSON.stringify(value)]], hasMore: false });
+
+test('FR-040: Given a staged edit and a refresh lock, When VS Code requests Undo or Redo, Then the confirmed queue cannot change during reopening', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const document = provider.openCustomDocument(uri, openContext, token);
+  const events: vscode.CustomDocumentEditEvent[] = []; provider.onDidChangeCustomDocument(event => { events.push(event); });
+  document.edits.setWriteMode(true); mocks.edit.mockResolvedValue(response('version'));
+  await provider.handleEditing(document, { type: 'editingRequest', contextId: '12345678-1234-1234-1234-123456789012', requestId: 1, action: 'sql', sql: 'UPDATE data SET value=1' });
+  document.refreshing = true; const before = document.edits.backup();
+  try {
+    expect(() => events[0]?.undo()).toThrow(/refresh/iu); expect(() => events[0]?.redo()).toThrow(/refresh/iu);
+    expect(document.edits.backup()).toBe(before);
+  } finally { document.refreshing = false; provider.dispose(); }
+});
+
+test('FR-040: Given a dirty document and an early-returning VS Code Revert command, When refresh is confirmed, Then the source stays busy until the provider actually finishes reopening', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t033-deferred-revert-')); const path = join(directory, 'source.sqlite'); await writeFile(path, 'original');
+  const fileUri = { scheme: 'file', fsPath: path, toString: () => path } as vscode.Uri;
+  const provider = new SqliteEditorProvider('/extension', undefined, undefined, true); const document = provider.openCustomDocument(fileUri, openContext, token);
+  const panel = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  document.attach(panel, () => document.session); document.session.state = { phase: 'opened', message: 'Opened' };
+  document.edits.setWriteMode(true); mocks.edit.mockResolvedValue(response('original-version')); await document.edits.stageSql('UPDATE data SET value=1');
+  mocks.confirm.mockResolvedValue('Discard pending edits and refresh'); let reopen!: () => Promise<void>;
+  mocks.command.mockImplementation(() => { reopen = () => provider.revertCustomDocument(document, token); return Promise.resolve(); });
+  let settled = false;
+  try {
+    await document.source?.ready; await writeFile(path, 'changed'); await document.source?.check();
+    const refreshing = document.source?.handle('refresh').then(() => { settled = true; });
+    await vi.waitFor(() => expect(mocks.command).toHaveBeenCalled());
+    expect(settled).toBe(false); expect(document.source?.state.busy).toBe(true); expect(document.edits.dirty).toBe(true);
+    await reopen(); await refreshing;
+    expect(document.source?.state).toMatchObject({ busy: false, changed: false }); expect(document.edits.dirty).toBe(false); expect(document.edits.writeMode).toBe(false);
+  } finally { provider.dispose(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('FR-040: Given a clean custom document whose VS Code Revert command is a no-op, When refreshing changed disk data, Then the provider explicitly reopens its reader', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t033-clean-refresh-')); const path = join(directory, 'source.sqlite'); await writeFile(path, 'original');
+  const fileUri = { scheme: 'file', fsPath: path, toString: () => path } as vscode.Uri;
+  const provider = new SqliteEditorProvider('/extension', undefined, undefined, true); const document = provider.openCustomDocument(fileUri, openContext, token);
+  const panel = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  document.attach(panel, () => document.session); document.session.state = { phase: 'opened', message: 'Opened' };
+  try {
+    await document.source?.ready; await writeFile(path, 'newer disk data'); await document.source?.check(); expect(document.source?.state.changed).toBe(true);
+    await document.source?.handle('refresh'); expect(mocks.cancel).toHaveBeenCalledTimes(1); expect(document.saveGeneration).toBe(1);
+    expect(document.source?.state.changed).toBe(false); expect(mocks.command).not.toHaveBeenCalled();
+  } finally { provider.dispose(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('FR-040: Given dirty staged edits and a reader that cannot reopen, When refreshing through Revert, Then the entire queue and write mode survive the failed refresh', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const document = provider.openCustomDocument(uri, openContext, token);
+  document.edits.setWriteMode(true); mocks.edit.mockResolvedValue(response('original-version')); await document.edits.stageSql('UPDATE data SET value=1');
+  const panel = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  document.attach(panel, () => document.session); mocks.cancel.mockRejectedValueOnce(new Error('Cannot reopen database'));
+  const before = document.edits.backup();
+  try { await expect(provider.revertCustomDocument(document, token)).rejects.toThrow('Cannot reopen'); expect(document.edits.backup()).toBe(before); expect(document.edits.writeMode).toBe(true); }
+  finally { provider.dispose(); }
+});
+
+test('FR-040: Given split readers where one fails and another is still reopening, When refreshing, Then failure waits for every reader to settle before releasing the refresh lock', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const document = provider.openCustomDocument(uri, openContext, token);
+  const first = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  const second = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  document.attach(first, () => document.session); let release!: () => void;
+  document.attach(second, () => new SqliteSession('/test.sqlite', { cancel: () => new Promise<void>(resolve => { release = resolve; }), close: () => Promise.resolve() } as unknown as Engine));
+  mocks.cancel.mockRejectedValueOnce(new Error('First reader failed')); let settled = false;
+  const refresh = provider.revertCustomDocument(document, token).then(() => { settled = true; }, () => { settled = true; });
+  try {
+    await new Promise(resolve => setTimeout(resolve, 0)); expect(settled).toBe(false); expect(document.refreshing).toBe(true);
+    release(); await refresh; expect(document.refreshing).toBe(false);
+  } finally { release(); await refresh; provider.dispose(); }
+});
 
 test.each(['metadata', 'save'] as const)('FR-021: Given pending row changes while %s is busy, When VS Code requests a backup, Then the accepted queue and original token are captured without waiting or sending another command', async (phase) => {
   const directory = await mkdtemp(join(tmpdir(), 'lv-t031-busy-backup-'));

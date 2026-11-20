@@ -4282,6 +4282,32 @@ deadline or diagnostic allowance is weakened. Only closure/evidence docs change
 after these final passing gates. Existing generated/unrelated untracked files
 are not included in the repair/closure commit. Next task starts in a fresh chat.
 
+#### T-015 repaired-candidate CI confirmation (2026-10-13)
+
+Owner supplies [run 38361770876](https://github.com/JreyForFun/lite-voyager/actions/runs/38361770876)
+as PASS and ready for the next task. Public GitHub API metadata independently
+confirms attempt 1, completed success, at
+`f03c98184f3b62387eac0498e54b9e5d88227b47`. This equals local HEAD and contains
+the 204197a implementation plus the independently checked repair/closure commit.
+- macOS job 115177398533: locked installation and Windows/macOS full-verification
+  step succeed.
+- Windows job 115177398837: locked installation and the same full-verification
+  step succeed.
+- Ubuntu job 115177398920: locked installation and the Linux session-bus/virtual-
+  display full-verification step succeed.
+
+This clears the actual-candidate CI item left open at scoped task closure.
+Remote raw logs, test counts and warning counts were not retrieved; do not call
+remote full runs warning-free. Retain the prior local approved renderer warning,
+failed host/lint candidates, red-first evidence and old-run 38352950470 SHA
+mismatch. No implementation/test change follows f03c981; this follow-up updates
+CI evidence and handoff documents only. The observed prior clean 482-test verify,
+passing 38-host/log gate, owner QA 1–6 and independent review remain valid.
+
+T-015 stays checked and is fully handed off. T-016, schema follow-up, whole-
+milestone QA/review and the milestone release/tag remain open. Start T-016 in a
+fresh chat using AGENTS/CONSTITUTION/PROGRESS and only that task's references.
+
 ### T-016 implementation and validation (2026-10-13)
 
 The owner authorizes full implementation, scoped fixes and fixture changes,
@@ -5093,6 +5119,7 @@ Then triage the findings yourself. For each real one, write a failing test first
 - T-016 CI repair (2026-10-13): Independently confirm failed caf209b run 38378099885, retain OS/full-startup failures and red-first regressions. Separate final 489-test zero-diagnostic verify and 45-host/log gates pass with 270.7/276.1 MB peaks, 5.4 MB size growth and one exact approved renderer warning. Reopen T-016 pending fresh full CI; all acceptance limits remain unchanged.
 - T-016 local completion (2026-10-13): Final repaired full gate passes 487 unit/45 host tests; record genuine 1.285 GB/5.874 GB source-safe memory evidence, 269.8 MB/285.0 MB sampled peaks and the exact approved renderer warning. Preserve failed candidates and owner push/CI/milestone work.
 - T-016 implementation (2026-10-13): Record source-safety and sampled-memory coverage, owner-approved SHM clarification, red-first observer repairs, exact calibration diagnostics and disk-space block. Retain the large acceptance and final gates as pending.
+- T-015 repaired-candidate CI (2026-10-13): Independently confirm final repair f03c981 and all three full-verification jobs in run 38361770876. Preserve exact local warning and raw remote-log limits; clear T-015 CI pending and hand off T-016.
 - T-015 delegated closure/review (2026-10-13): Record independent cumulative review, confirmed post-closure save-error defect, red-first notification/cancellation repairs and independent follow-up. Keep actual-candidate CI explicitly at the milestone gate; scoped task closure awaits current local gates and commit.
 - T-015 owner QA/CI audit (2026-10-13): Record QA 1–6 PASS; independently verify green 38352950470 on the old 6e25977 tree. Preserve missing actual-candidate CI and fresh-review requirements.
 - T-015 (2026-10-13): Record delegated contract, red-first tests, scoped memory evidence, failed pre-render comparison and strengthened DOM wait. Retain native-dialog QA, fresh review and post-push CI.

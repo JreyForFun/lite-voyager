@@ -4,6 +4,7 @@ import { BROWSER_PAGE_SIZE, isBrowserRequest, type BrowserObject, type BrowserRe
 import type { ExportRunner } from './export-service';
 import { findCompletions } from './sql-completion';
 import type { StagedEdits } from '../staging/staged-edits';
+import type { QueryHistoryAccess } from './query-history';
 
 interface Pending { request: BrowserRequest; send: (message: BrowserResponse) => void; resolve: () => void; }
 
@@ -21,10 +22,13 @@ export class SqliteBrowser {
   private committedCancel: { requestId: number; send: (message: BrowserResponse) => void; resolve: () => void } | undefined;
   private saveOutcome: BrowserResponse | undefined;
   private edits: StagedEdits | undefined;
+  private history: QueryHistoryAccess | undefined;
 
   constructor(private readonly engine: Engine) {}
+  get busy(): boolean { return this.running || this.recovering || this.queued !== undefined || this.exportRunning; }
   setExporter(exporter: ExportRunner): void { this.exporter = exporter; }
   setEdits(edits: StagedEdits): void { this.edits = edits; }
+  setHistory(history: QueryHistoryAccess): void { this.history = history; }
 
   handle(request: BrowserRequest, send: (message: BrowserResponse) => void): Promise<void> {
     if (this.disposed || !isBrowserRequest(request) || request.requestId <= this.lastId) { return Promise.resolve(); }
@@ -80,6 +84,12 @@ export class SqliteBrowser {
   private async execute(request: BrowserRequest, send: (message: BrowserResponse) => void): Promise<BrowserResponse> {
     const requestId = request.requestId;
     switch (request.type) {
+      case 'browserHistory': {
+        if (this.history === undefined) { throw new Error('Query history storage is unavailable. Reopen after rebuilding the extension.'); }
+        if (request.action === 'load') { return { type: 'browserHistorySql', requestId, sql: await this.history.read(request.id) }; }
+        if (request.action === 'clear') { await this.history.clear(); }
+        return { type: 'browserHistoryEntries', requestId, entries: await this.history.list() };
+      }
       case 'browserComplete': return { type: 'browserCompletions', requestId, ...await findCompletions(this.engine, request) };
       case 'browserSchema': {
         const address = { offset: request.offset, limit: request.limit };
@@ -106,9 +116,16 @@ export class SqliteBrowser {
         const page = await this.engine.query(request.sql, [], { offset: request.offset, limit: request.limit }, () => {
           if (!this.disposed && requestId === this.lastId) { send({ type: 'browserQueryStarted', requestId }); }
         });
-        if (!this.disposed && requestId === this.lastId) { this.successfulSql = request.sql; }
+        let historyError: string | undefined;
+        if (!this.disposed && requestId === this.lastId) {
+          this.successfulSql = request.sql;
+          if (request.remember === true && this.history !== undefined) {
+            try { await this.history.record(request.sql); }
+            catch { historyError = 'Query complete, but local query history could not be saved. Check extension storage permissions or disk space; earlier history was preserved.'; }
+          }
+        }
         return { type: 'browserQueryRows', requestId, offset: request.offset, limit: request.limit,
-          ms: performance.now() - started, page };
+          ms: performance.now() - started, page, ...(historyError === undefined ? {} : { historyError }) };
       }
       case 'browserList': {
         this.successfulSql = undefined;

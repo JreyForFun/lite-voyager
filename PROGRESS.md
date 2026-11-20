@@ -1,36 +1,47 @@
 # Progress
 ## Current status
-T-031 local implementation, visual QA and gates pass; not closed (2026-11-08).
-Scope: FR-021 SQLite row add/delete only; owner retains push and CI.
-T-030 remains complete; no milestone/release/tag/publishing closure.
-Final standalone passes 1,427 units/131 files and packaging; zero errors/warnings.
-Final full passes 1,427 units and 81 hosts; independent review/CI remain pending.
-## Validated behavior
-Typed/default-aware inserts and confirmed deletion of exact original row keys.
-Both-engine staging/source safety, dirty state, Undo/Redo/Revert and recovery.
-Atomic mixed-queue Save/Save As, constraints/foreign keys and external conflicts.
-Exact int64, NULL/empty/literal NULL, NUL/Unicode, >1-MB cells and 1,000 columns.
-Child-before-parent deletion ordering; BLOB-key previews contain placeholders.
-Untrusted insert properties cannot replace the worker-created operation kind.
-Supported 1.140.0 native/fallback light/dark visual QA passes (ten saved captures).
-Native narrow split shares pending changes; requesting view owns its add form.
-Explicit visual Save changes only disposable fixtures; independent reads agree.
-Busy metadata/Save backup snapshots and empty restore pass regression tests.
-Final visual strict scan passes with exact approved HOST-004 and HOST-001.
-## Evidence and retained limits
-Acceptance, file list and transcripts: docs/t031-row-operations.md.
-Final standalone transcript: out/t031-verify-3.log (exit 0).
-Full transcript: out/t031-full-2.log (exit 0; sole exact approved HOST-001).
-First gate (1,422 units) is superseded by boundary hardening and new tests.
-All red tests, first failed host synchronization run and tool failures remain.
-Archived-host UI binding failed; installed-host UI binding enabled visual QA.
-Installed visual hosts have vendor proposal notices; no strict-log pass claimed.
-First supported visual scan found the backup defect; repaired test-first.
-No diagnostic allowance, workload, deadline, memory or responsiveness limit changed.
-Retain T-030 fallback rename race and unknown interrupted-save outcome limits.
-Owner README/PLAN/TASKS/VALIDATION hunks, unrelated files and six ZIPs preserved.
+2026-11-20: Spec Kit (specify 1.4.1.dev0) set up in .specify/ with a constitution mirror; no feature specs yet.
+2026-11-20: verify passes (1,459 units/135 files) when run from an uppercase C:/ cwd; lowercase c:\ makes Vitest fail every suite.
+2026-11-20: verify:full stopped by owner request after 57/57 host cases passed (incomplete; no result).
+2026-11-20: verify:full failed 90/1 (json history-refresh: exercised Start raced frame reload).
+Fixed: previewStatus readiness + test waits for painted preview; read-only source wording.
+Final: verify 1,461 units pass, zero warnings; verify:full 1,461 units + 91/91 hosts pass,
+one approved VSCODE-HOST-001 (not warning-free). One intermediate full failed on disk space
+(pagefile growth); orphan 6.7 GB T-016 fixture removed. Details: docs/t032-t033-milestone3.md.
+Visual QA: 10/10 light/dark native+fallback import refresh checkpoints (out/import-refresh-qa-*).
+Next: owner pushes and runs three-platform CI; T-031 Ubuntu/macOS CI still uninvestigated.
+Owner authorizes T-032/T-033 implementation and agent visual QA; owner pushes/CI.
+Both features are implemented; final verify passes, verify:full is running.
+T-031 remains open: owner reports Ubuntu/macOS CI failed; cause not investigated.
+T-030 remains complete. No milestone/release/tag/publishing closure.
+## Implemented acceptance
+FR-013: exact last 50 successful explicit SQL runs per original source URI.
+Atomic bounded metadata index, individually stored SQL, serialized split views.
+Keyboard history load never executes SQL; isolated editor Undo; per-source clear.
+Paging/export/metadata/failed/cancelled queries do not append history.
+Escaped preview bytes stay bounded; malformed action types are refused.
+FR-040: asynchronous metadata/WAL monitoring with periodic checks and disposal.
+Refresh/Keep; dirty discard confirmation; queue/revision/actual host-busy guards.
+All reader reopen results settle before discarding edits; failure retains queue.
+Dirty refresh awaits provider completion; clean Revert explicitly reopens readers.
+Refresh locks include Undo/Redo; own Save baseline uses the worker version token.
+Imports return to preview and require Import again; original URI history survives.
+Standalone CSV preview offers explicit reload. No automatic source writes.
+## Evidence and limits
+Acceptance, files, failures and QA limits: docs/t032-t033-milestone3.md.
+Focused run: 136 tests/10 files before final QA repairs; 10 real-host cases pass.
+Latest provider suite: 17 pass; history/import focused suite: 34 pass/3 files.
+New action-guard regressions pass; original red/failing attempts are retained.
+Native/fallback light/dark QA covers real Cancel/Discard and refreshed split views.
+Sources stay byte-identical after discard; dirty/write mode clear only on success.
+Visual hosts use installed 1.145.2 because 1.140 desktop targeting fails.
+Installed visual-host strict log scans FAIL; exact vendor/helper records retained.
+Those scoped observations do not substitute for the supported-host full gate.
+332 final executable/test/config hashes captured in out/ for gate comparison.
+Final verify: 1,459 units/135 files; types/lint/build/VSIX pass, zero diagnostics.
+No dependency, exception, workload, deadline, clock or resource limit changed.
+Owner edits/unrelated untracked files are preserved; no push or remote CI run.
 ## Remaining work
-Task-only diff and exact warning metadata: docs/t031-row-operations.md.
-Independent review uses a fresh chat and out/t031-review.patch.
-Owner pushes and supplies exact-candidate Windows/macOS/Ubuntu CI.
-Keep T-031 unchecked until its required acceptance evidence passes.
+Finish npm run verify:full; record host counts, hashes and exact diagnostics.
+Fresh independent review and owner-pushed Windows/macOS/Ubuntu CI remain pending.
+Keep T-031/T-032/T-033 and milestone checkboxes open until all required evidence.

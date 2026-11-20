@@ -64,3 +64,6 @@ aside { border-left: 3px solid var(--vscode-focusBorder); padding: 8px; backgrou
 #row-pending-list { max-height: 220px; overflow: auto; padding-left: 24px; }
 #row-pending-list li { margin: 8px 0; }
 #row-column { max-width: 100%; }
+#history-select { max-width: min(100%, 52rem); min-width: 12rem; }
+#history-panel { margin: 0.75rem 0; padding: 0.75rem; border: 1px solid var(--vscode-panel-border); }
+#source-changes { border-left: 3px solid var(--vscode-editorWarning-foreground); padding: 0.5rem 0.75rem; margin: 0.75rem 0; }

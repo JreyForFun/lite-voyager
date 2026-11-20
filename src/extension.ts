@@ -92,14 +92,15 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(disposable);
-	const sqliteEditor = new SqliteEditorProvider(context.extensionPath, output);
-	const csvPreview = new CsvPreviewController(context.extensionPath);
+	const historyRoot = join(context.globalStorageUri.fsPath, 'query-history');
+	const sqliteEditor = new SqliteEditorProvider(context.extensionPath, output, historyRoot, true);
+	const csvPreview = new CsvPreviewController(context.extensionPath, undefined, true);
 	context.subscriptions.push(csvPreview, vscode.commands.registerCommand('lite-voyager.csvPreview', (file?: vscode.Uri) => csvPreview.open(file)));
-	const csvImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'csv', output);
+	const csvImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'csv', output, historyRoot, true);
 	context.subscriptions.push(csvImport, vscode.commands.registerCommand('lite-voyager.csvImport', (file?: vscode.Uri) => csvImport.open(file)));
-	const jsonImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'json', output);
+	const jsonImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'json', output, historyRoot, true);
 	context.subscriptions.push(jsonImport, vscode.commands.registerCommand('lite-voyager.jsonImport', (file?: vscode.Uri) => jsonImport.open(file)));
-	const xlsxImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'xlsx', output);
+	const xlsxImport = new CsvImportController(context.extensionPath, join(context.globalStorageUri.fsPath, 'imports'), 'xlsx', output, historyRoot, true);
 	context.subscriptions.push(xlsxImport, vscode.commands.registerCommand('lite-voyager.xlsxImport', (file?: vscode.Uri) => xlsxImport.open(file)));
 	context.subscriptions.push(vscode.commands.registerCommand('lite-voyager.saveAsSqlite', () => (xlsxImport.hasActive ? xlsxImport : jsonImport.hasActive ? jsonImport : csvImport).saveActive()));
 	const tabularEditor = new TabularEditorProvider(sqliteEditor, { csv: csvImport, json: jsonImport, xlsx: xlsxImport });

@@ -9,9 +9,12 @@ import { installSqliteSave } from './sqlite-save';
 import { isCompletionSearch, type CompletionSearch, type SchemaSuggestions } from '../src/protocol';
 import { isEditingState, type EditingRequest } from '../src/protocol';
 import { EditingView } from './editing-view';
+import { HistoryView } from './history-view';
+import { SourceView } from './source-view';
+import { isSourceState, type SourceRequest, type SourceState } from '../src/protocol';
 
 type Post = (message: BrowserRequest | BrowserStatus | CellRequest) => void;
-type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'> & Partial<Pick<SqlEditor, 'completionKey'>>;
+type BrowserSqlEditor = Pick<SqlEditor, 'text' | 'metrics' | 'setDisabled' | 'setText' | 'select' | 'clickRun' | 'shortcut' | 'dispose'> & Partial<Pick<SqlEditor, 'completionKey' | 'loadHistory'>>;
 export interface BrowserSavedState { requestId: number; table: string | null; offset: number; listOffset: number; limit: number; sqlText?: string; querySql?: string; grid?: GridOptions; }
 const INITIAL_STATE: BrowserSavedState = { requestId: 0, table: null, offset: 0, listOffset: 0, limit: BROWSER_PAGE_SIZE };
 
@@ -96,8 +99,10 @@ export class BrowserView {
   private probeKey: string | undefined;
   private readonly editing: EditingView | undefined;
   private editRefreshPending = false;
+  private readonly history: HistoryView | undefined;
+  private readonly source: SourceView | undefined;
 
-  constructor(private readonly root: HTMLElement, private readonly post: Post, private readonly saved: BrowserSavedState = INITIAL_STATE, editPost?: (message: EditingRequest) => void) {
+  constructor(private readonly root: HTMLElement, private readonly post: Post, private readonly saved: BrowserSavedState = INITIAL_STATE, editPost?: (message: EditingRequest) => void, sourcePost?: (message: SourceRequest) => void) {
     this.requestId = saved.requestId; this.listOffset = saved.listOffset; this.limit = saved.limit;
     const find = <T extends HTMLElement>(id: string): T => {
       const element = root.querySelector<T>(`#${id}`);
@@ -117,6 +122,12 @@ export class BrowserView {
     this.applyFilter = find('browser-filter-apply'); this.removeFilter = find('browser-filter-remove'); this.clearGrid = find('browser-grid-clear');
     this.gridSummary = find('browser-grid-summary'); this.sortWarning = find('browser-sort-warning');
     this.continueSort = find('browser-sort-continue'); this.dismissSort = find('browser-sort-dismiss');
+    if (root.querySelector('#history-show') !== null) {
+      this.history = new HistoryView(root, action => { this.request({ type: 'browserHistory', requestId: ++this.requestId, ...action }); }, sql => {
+        if (this.editor?.loadHistory !== undefined) { this.editor.loadHistory(sql); } else { this.editor?.setText(sql); } this.editorChanged();
+      });
+    }
+    if (sourcePost !== undefined && root.querySelector('#source-refresh') !== null) { this.source = new SourceView(root, sourcePost); }
     this.details = new CellDetails(root, this.contextId, (message) => { this.post(message); }, (mode) => this.grid.copyRows(mode), () => { this.report(); });
     if (editPost !== undefined && root.querySelector('#edit-mode') !== null) {
       this.editing = new EditingView(root, editPost, () => this.editor?.text ?? '', () => {
@@ -148,10 +159,15 @@ export class BrowserView {
     this.controls();
   }
 
-  start(): void { this.editing?.start(); this.list(this.listOffset); }
+  start(): void { this.source?.start(); this.editing?.start(); this.list(this.listOffset); }
+  receiveSource(message: SourceState): void {
+    const refreshed = this.source?.summary().busy === true && !message.busy && !message.changed;
+    this.source?.receive(message); this.controls(); this.report();
+    if (refreshed) { this.editRefreshPending = false; this.query.reset(); this.restoring = false; this.list(0); }
+  }
   receiveEditing(message: import('../src/protocol').EditingState): void { this.editing?.receive(message); this.report(); }
   private refreshEditing(): void {
-    if (!this.editRefreshPending || this.pending !== null || this.disposed) { return; }
+    if (!this.editRefreshPending || this.pending !== null || this.disposed || this.source?.summary().busy === true) { return; }
     this.editRefreshPending = false;
     if (this.query.sql !== null) { this.queryPage(this.query.sql, this.offset); }
     else if (this.table !== null) { this.page(this.offset); }
@@ -179,18 +195,18 @@ export class BrowserView {
   }
 
   runSql(sql: string): void {
-    if (this.disposed || this.pending === 'browserCancel' || this.pending === 'browserExport') { return; }
+    if (this.disposed || this.source?.summary().busy === true || this.pending === 'browserCancel' || this.pending === 'browserExport') { return; }
     if (sql.trim().length === 0) { this.message('Enter SQL or select a statement, then Run.', true); this.report(); return; }
     if (sql.length > MAX_SQL_LENGTH || sql.includes('\0')) {
       this.message('SQL exceeds the 4-Mi-character limit or contains a NUL character. Nothing was truncated. Shorten the text or run a smaller selection. Oversized editor text is not saved across tab hiding.', true);
       this.report(); return;
     }
     this.restoring = false;
-    this.queryPage(sql, 0);
+    this.queryPage(sql, 0, this.limit, true);
   }
 
-  private queryPage(sql: string, offset: number, limit = this.limit): void {
-    this.request({ type: 'browserQuery', requestId: ++this.requestId, sql, offset, limit });
+  private queryPage(sql: string, offset: number, limit = this.limit, remember = false): void {
+    this.request({ type: 'browserQuery', requestId: ++this.requestId, sql, offset, limit, ...(remember ? { remember: true } : {}) });
   }
 
   savedState(): BrowserSavedState {
@@ -306,6 +322,7 @@ export class BrowserView {
     const resolveCompletion = this.completionResolve; this.completionResolve = undefined;
     resolveCompletion?.(message.type === 'browserCompletions' ? { items: message.items, hasMore: message.hasMore } : undefined);
     switch (message.type) {
+      case 'browserHistoryEntries': case 'browserHistorySql': this.history?.receive(message); this.message('Query history updated. Data results retained.'); break;
       case 'browserCompletions': this.message('Autocomplete metadata complete. Data results retained.'); break;
       case 'browserSchemaRows': this.schema.receive(message); this.message('Schema metadata complete. Data results retained.'); break;
       case 'browserExportDone':
@@ -360,7 +377,7 @@ export class BrowserView {
         this.query.commit(sql, message.offset, message.page, message.ms);
         this.count = this.query.count; this.total.textContent = this.query.summary;
         this.grid.setPage(message.page, message.offset, false);
-        this.message('Query complete. Edit SQL and Run, or page these results.');
+        this.message(message.historyError ?? 'Query complete. Edit SQL and Run, or page these results.');
         break;
       }
       case 'browserCounted':
@@ -384,7 +401,9 @@ export class BrowserView {
 
   private controls(): void {
     if (this.pending === null) { this.size.value = String(this.limit); }
-    const busy = this.pending !== null;
+    const busy = this.pending !== null || this.source?.summary().busy === true;
+    this.source?.setBusy(this.pending !== null);
+    this.history?.setBusy(busy);
     this.editing?.setBrowserBusy(busy || this.warningPage !== undefined);
     this.editing?.setTable(this.query.sql === null ? this.table : null);
     this.schema.setBusy(busy || this.warningPage !== undefined);
@@ -428,6 +447,8 @@ export class BrowserView {
     }
     if (message.exerciseId !== undefined) { this.exerciseId = message.exerciseId; }
     switch (message.action) {
+      case 'sourceRefresh': case 'sourceKeep': this.source?.exercise(message.action); break;
+      case 'historyShow': case 'historySelect': case 'historyLoad': case 'historyClear': this.history?.exercise(message.action, message.value); break;
       case 'rowAdd': case 'rowColumn': case 'rowType': case 'rowValue': case 'rowField': case 'rowStage': case 'rowDelete': case 'rowConfirm': case 'rowDismiss':
       case 'editMode': case 'editType': case 'editValue': case 'editCell': case 'editSql': case 'editSave': case 'editRevert':
         this.editing?.exercise(message.action, message.value); break;
@@ -517,6 +538,8 @@ export class BrowserView {
         schema: this.schema.summary(),
         ...(this.editing === undefined ? {} : { editing: this.editing.summary(), rowEditing: this.editing.rowSummary() }),
         ...(this.appearance === undefined ? {} : { appearance: this.appearance }),
+        ...(this.history === undefined ? {} : { history: this.history.summary() }),
+        ...(this.source === undefined ? {} : { source: this.source.summary() }),
         query: this.query.sql !== null, summary: this.total.textContent ?? '', ...this.editor?.metrics(),
         hasMore: this.hasMore, count: this.count, busy: this.pending !== null, message: this.status.textContent ?? '', firstRow: this.grid.firstRow() });
     }
@@ -547,7 +570,7 @@ export class BrowserView {
     this.probeKey = undefined;
   }
 
-  dispose(): void { this.disposed = true; this.editing?.dispose(); this.completionResolve?.(undefined); this.completionResolve = undefined; this.stopProbe(); this.events.abort(); this.schema.dispose(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
+  dispose(): void { this.disposed = true; this.source?.dispose(); this.history?.dispose(); this.editing?.dispose(); this.completionResolve?.(undefined); this.completionResolve = undefined; this.stopProbe(); this.events.abort(); this.schema.dispose(); this.details.dispose(); this.grid.dispose(); this.editor?.dispose(); this.query.reset(); this.objects = []; }
 }
 
 declare function acquireVsCodeApi(): {
@@ -566,7 +589,7 @@ if (typeof acquireVsCodeApi === 'function') {
       view = new BrowserView(root, (message) => {
         if (view !== undefined) { api.setState(view.savedState()); }
         api.postMessage(message);
-      }, readSavedState(api.getState()), (message) => { api.postMessage(message); });
+      }, readSavedState(api.getState()), (message) => { api.postMessage(message); }, (message) => { api.postMessage(message); });
       const browser = view;
       const editorRoot = document.getElementById('sql-editor');
       const runButton = document.getElementById('sql-run');
@@ -574,6 +597,7 @@ if (typeof acquireVsCodeApi === 'function') {
       if (editorRoot === null || !(runButton instanceof HTMLButtonElement) || nonce === undefined) { throw new Error('Missing SQL editor assets'); }
       window.addEventListener('message', (event: MessageEvent<unknown>) => {
         if (isBrowserResponse(event.data)) { browser.receive(event.data); }
+        else if (isSourceState(event.data)) { browser.receiveSource(event.data); }
         else if (isEditingState(event.data)) { browser.receiveEditing(event.data); }
         else if (isCellResponse(event.data)) { browser.receiveCell(event.data); }
         else if (isBrowserExercise(event.data)) { browser.exercise(event.data); }

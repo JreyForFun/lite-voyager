@@ -818,6 +818,13 @@ reuse the document queue and worker transaction. A separate paged pending-row
 review preserves saved-data Browse offsets and sort/filter/count semantics.
 No new dependency; existing save/recovery and diagnostic guards remain.
 
+T-032/T-033 owner-delegated sequence (2026-11-08):
+[history and refresh](../docs/t032-t033-milestone3.md). Store per-original-URI query
+history as a bounded atomic index plus separate SQL files in local extension
+storage. Watch source metadata asynchronously, including WAL, and offer explicit
+refresh while retaining staged edits until confirmed successful reopening.
+No dependency, automatic source writes or diagnostic-policy change.
+
 ### T-017 production sort and filter (2026-10-12)
 
 Owner authorizes implementation, scoped fixes and disposable fixture edits;
@@ -1011,7 +1018,11 @@ Final `npm run verify` passes 482 tests /44 files with zero errors/warnings;
 current real-host suite/log scan passes 38 tests with one explicitly reported
 approved renderer warning. Under the owner-delegated per-task closure checks,
 T-015 is complete using acceptance, QA, independent review and local gates.
-Actual-candidate CI stays a milestone gate. No milestone completion is claimed.
+Final repair CI run 38361770876 /attempt 1 at f03c981 succeeds on Windows,
+macOS and Ubuntu, including locked installs and applicable full checks. This
+clears the T-015 actual-candidate CI item. Remote raw diagnostic counts are not
+claimed. T-016/schema follow-up and whole-milestone QA/review remain open;
+no milestone completion is claimed.
 
 Webview to host: `ready`, `listTables`, `getRows {table, offset, limit, sort?, filter?}`, `getSchema {table}`, `countRows {table}`, `runQuery {sql}`, `cancel`, `stageEdit {table, key, column, value}`, `save`, `revert`, `exportResults {format}`, `setWriteMode {on}`.
 
@@ -1544,6 +1555,8 @@ Evidence/artifact/install/feedback/handoff: docs/t028-milestone2-checkpoint.md.
 | R-7 | Competitors are ahead on installs and polish | Focus on G1 to G5 and publish real benchmark results |
 
 ## Changelog
+- T-032/T-033 (2026-11-08): Plan persistent per-source query history and explicit
+  external-change refresh; owner retains combined push/CI and prior CI failures.
 - T-031 (2026-11-08): Define typed/default-aware SQLite row insertion, confirmed
   stable-key deletion and bounded pending-row review using the existing queue.
 - T-030 (2026-10-27): Document the host-owned edit queue and worker-only save
@@ -1575,6 +1588,7 @@ Evidence/artifact/install/feedback/handoff: docs/t028-milestone2-checkpoint.md.
 - T-016 CI repair (2026-10-13): Retain failed caf209b Windows/macOS evidence and the local Vitest-startup full failure. Reopen the task, reuse one hash buffer and persist the Windows OS reader. Separate 489-test zero-diagnostic verify and 45-host/log gates pass without relaxing targets; fresh full CI remains pending.
 - T-016 local result (2026-10-13): Record passing 487-unit/45-host full gate and source-identical 1.285 GB/5.874 GB primary SQLite memory observations. Preserve the 600 s deadline, all workloads and exact warning policy after the red-first hash/budget repair.
 - T-016 plan (2026-10-13): Define test-only real-editor safety, populated 1 GB/5 GB fixtures, bounded streaming hashes and sampled OS process coverage. Record owner-approved SHM coordination and retain all original production/CSV targets.
+- T-015 repaired-candidate CI (2026-10-13): Independently confirm run 38361770876 /attempt 1 at f03c981 passes all three platforms and applicable full steps. Clear T-015 CI pending status; hand off T-016 without closing the milestone.
 - T-015 scoped closure (2026-10-13): Record independently checked review repairs, 482-test clean verify and 38-host passing integration/log gate. Close the task at owner-delegated judgment; preserve actual-candidate CI at the milestone gate.
 - T-015 owner QA/CI audit (2026-10-13): Record all six owner QA checks PASS. Verify supplied green run 38352950470 at 6e25977, which predates T-015; retain candidate CI and fresh review as pending.
 - T-015 (2026-10-13): Stream one backend cursor through 64-KiB worker writes; host owns destination protection, temporary cleanup and atomic publication. Reuse helper recovery and typed progress without dependencies.
