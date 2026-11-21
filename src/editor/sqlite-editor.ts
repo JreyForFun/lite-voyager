@@ -18,12 +18,22 @@ import { QueryHistory } from './query-history';
 import { SourceChanges } from './source-changes';
 import { isSourceRequest } from '../protocol';
 
+/** Resolves true when `signal` settles within `milliseconds`, false otherwise; never rejects. */
+function settlesWithin(signal: Promise<void>, milliseconds: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const timer = setTimeout(() => { resolve(false); }, milliseconds);
+    void signal.then(() => { clearTimeout(timer); resolve(true); });
+  });
+}
+
 export const SQLITE_EDITOR_VIEW_TYPE = 'lite-voyager.sqlite';
 
 export class SqliteDocument implements vscode.CustomDocument {
   source: SourceChanges | undefined;
   refreshing = false;
   refreshReverted: ((error?: Error) => void) | undefined;
+  /** Called when VS Code actually invokes the provider's revert during a dirty refresh. */
+  refreshRevertStarted: (() => void) | undefined;
   readonly edits: StagedEdits;
   editingEngine: Engine | undefined;
   savingEngine: Engine | undefined;
@@ -128,6 +138,8 @@ export class SqliteEditorProvider implements vscode.CustomEditorProvider<SqliteD
     this.editListeners.add(callback); const disposable = { dispose: () => { this.editListeners.delete(callback); } };
     disposables?.push(disposable); return disposable;
   };
+  /** How long a dirty refresh waits for VS Code to start the provider's revert after the command returns. */
+  revertStartTimeoutMs = 10000;
   constructor(private readonly extensionPath: string, private readonly output?: vscode.OutputChannel, private readonly historyRoot?: string, private readonly observeSources = false) {}
 
   private monitor(document: SqliteDocument): void {
@@ -136,6 +148,9 @@ export class SqliteEditorProvider implements vscode.CustomEditorProvider<SqliteD
       dirty: () => document.edits.dirty, revision: () => document.edits.operations,
       available: () => !document.edits.isBusy && document.savingEngine === undefined && !document.refreshing && document.views.size > 0
         && [...document.views.values()].every(view => view.session.state.phase === 'opened' && !view.session.browser.busy),
+      // A failed, cancelled or closed reader is terminal: waiting cannot help, and refresh cannot revive it.
+      unavailableReason: () => [...document.views.values()].some(view => ['error', 'cancelled', 'closed'].includes(view.session.state.phase))
+        ? 'One view of this file could not open its database reader. Close that view, then refresh again, or reopen the file.' : undefined,
       confirm: async () => await vscode.window.showWarningMessage('Refreshing discards all pending edits and reopens the newer file from disk. Pending edits cannot be recovered with Undo after refresh.', { modal: true }, 'Discard pending edits and refresh') === 'Discard pending edits and refresh',
       refresh: async () => {
         const generation = document.saveGeneration; document.refreshing = true;
@@ -143,11 +158,14 @@ export class SqliteEditorProvider implements vscode.CustomEditorProvider<SqliteD
           if (document.edits.dirty) {
             // The command can return before VS Code calls the provider. Await
             // that provider result as well as the command's dispatch result.
+            // Bound only the wait for VS Code to *start* the provider; reopening itself may take long.
             const completed = new Promise<Error | undefined>(resolve => { document.refreshReverted = resolve; });
+            const started = new Promise<void>(resolve => { document.refreshRevertStarted = resolve; });
             try {
               await vscode.commands.executeCommand('workbench.action.files.revert', document.uri);
+              if (!await settlesWithin(started, this.revertStartTimeoutMs)) { throw new Error('VS Code did not start Revert for this document. Retry refresh, or use File > Revert.'); }
               const error = await completed; if (error !== undefined) { throw error; }
-            } finally { document.refreshReverted = undefined; }
+            } finally { document.refreshReverted = undefined; document.refreshRevertStarted = undefined; }
           }
           else {
             // VS Code deliberately skips its Revert pipeline for clean custom
@@ -434,6 +452,7 @@ export class SqliteEditorProvider implements vscode.CustomEditorProvider<SqliteD
     }
   }
   revertCustomDocument(document: SqliteDocument, cancellation: vscode.CancellationToken): Promise<void> {
+    document.refreshRevertStarted?.();
     const result = this.reopenDocument(document, cancellation);
     void result.then(() => { document.refreshReverted?.(); }, (error: unknown) => {
       document.refreshReverted?.(error instanceof Error ? error : new Error('A SQLite reader could not reopen.'));
@@ -444,8 +463,8 @@ export class SqliteEditorProvider implements vscode.CustomEditorProvider<SqliteD
     if (document.savingEngine !== undefined) { throw new Error('Wait for the current SQLite save to finish.'); }
     if (cancellation.isCancellationRequested) { throw new Error('Revert cancelled.'); }
     if (document.source?.state.busy === true && !document.refreshing) { throw new Error('Wait for source refresh to finish.'); }
-    const alreadyRefreshing = document.refreshing; document.refreshing = true;
-    document.reportEdits('Reopening readers. Pending edits are retained until refresh succeeds.', false, true);
+    const alreadyRefreshing = document.refreshing; document.refreshing = true; const operation = alreadyRefreshing ? 'refresh' : 'revert';
+    document.reportEdits(`Reopening readers. Pending edits are retained until ${operation} succeeds.`, false, true);
     try {
       const readers = await Promise.allSettled([...document.views.values()].map(async (record) => { await record.session.engine.cancel(); }));
       for (const reader of readers) {
@@ -453,7 +472,10 @@ export class SqliteEditorProvider implements vscode.CustomEditorProvider<SqliteD
       }
       document.edits.discard(); document.saveGeneration++;
       document.reportEdits('Reverted all pending edits. The source was not modified; write mode is off.');
-    } catch (error: unknown) { document.reportEdits('Refresh failed. Pending edits were preserved; restore the source and retry.'); throw error; }
+    } catch (error: unknown) {
+      document.reportEdits(alreadyRefreshing ? 'Refresh failed. Pending edits were preserved; restore the source and retry.' : 'Revert failed. Pending edits were preserved; retry File > Revert.');
+      throw error;
+    }
     finally { document.refreshing = alreadyRefreshing; }
   }
   async backupCustomDocument(document: SqliteDocument, context: vscode.CustomDocumentBackupContext, cancellation: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {

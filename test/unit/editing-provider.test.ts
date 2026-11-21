@@ -54,6 +54,50 @@ test('FR-040: Given a dirty document and an early-returning VS Code Revert comma
   } finally { provider.dispose(); await rm(directory, { recursive: true, force: true }); }
 });
 
+test('FR-040: Given a dirty refresh whose VS Code Revert command never reaches the provider, When the start window passes, Then refresh fails visibly, unlocks the document and keeps pending edits', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t033-revert-never-')); const path = join(directory, 'source.sqlite'); await writeFile(path, 'original');
+  const fileUri = { scheme: 'file', fsPath: path, toString: () => path } as vscode.Uri;
+  const provider = new SqliteEditorProvider('/extension', undefined, undefined, true); provider.revertStartTimeoutMs = 50;
+  const document = provider.openCustomDocument(fileUri, openContext, token);
+  const panel = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  document.attach(panel, () => document.session); document.session.state = { phase: 'opened', message: 'Opened' };
+  document.edits.setWriteMode(true); mocks.edit.mockResolvedValue(response('original-version')); await document.edits.stageSql('UPDATE data SET value=1');
+  mocks.confirm.mockResolvedValue('Discard pending edits and refresh'); mocks.command.mockResolvedValue(undefined);
+  try {
+    await document.source?.ready; await writeFile(path, 'changed on disk'); await document.source?.check(); expect(document.source?.state.changed).toBe(true);
+    await document.source?.handle('refresh');
+    expect(document.source?.state).toMatchObject({ busy: false, changed: true }); expect(document.source?.state.message).toMatch(/did not start Revert/u);
+    expect(document.refreshing).toBe(false); expect(document.edits.dirty).toBe(true); expect(document.edits.operations).toHaveLength(1);
+  } finally { provider.dispose(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('FR-040: Given one view of a changed SQLite file whose reader failed, When refresh is requested, Then it explains how to recover instead of asking the user to wait', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'lv-t033-failed-view-')); const path = join(directory, 'source.sqlite'); await writeFile(path, 'original');
+  const fileUri = { scheme: 'file', fsPath: path, toString: () => path } as vscode.Uri;
+  const provider = new SqliteEditorProvider('/extension', undefined, undefined, true); const document = provider.openCustomDocument(fileUri, openContext, token);
+  const panel = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  document.attach(panel, () => document.session); document.session.state = { phase: 'error', message: 'Unable to open SQLite. Reopen the file to retry.' };
+  try {
+    await document.source?.ready; await writeFile(path, 'changed on disk'); await document.source?.check(); expect(document.source?.state.changed).toBe(true);
+    await document.source?.handle('refresh');
+    expect(document.source?.state.message).toMatch(/^One view of this file could not open its database reader\. Close that view, then refresh again, or reopen the file\./u);
+    expect(document.source?.state.message).not.toMatch(/Wait for the current/u); expect(mocks.command).not.toHaveBeenCalled();
+  } finally { provider.dispose(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('FR-020: Given File > Revert outside any source refresh, When a reader fails to reopen, Then the status uses revert wording, not refresh wording', async () => {
+  const provider = new SqliteEditorProvider('/extension'); const document = provider.openCustomDocument(uri, openContext, token);
+  const panel = { webview: { postMessage: () => Promise.resolve(true) } } as unknown as vscode.WebviewPanel;
+  document.attach(panel, () => document.session); document.session.state = { phase: 'opened', message: 'Opened' };
+  document.edits.setWriteMode(true); mocks.edit.mockResolvedValue(response('version')); await document.edits.stageSql('UPDATE data SET value=1');
+  mocks.cancel.mockRejectedValue(new Error('reader busy'));
+  try {
+    await expect(provider.revertCustomDocument(document, token)).rejects.toThrow('reader busy');
+    expect(document.editingState.message).toMatch(/^Revert failed\. Pending edits were preserved/u); expect(document.editingState.message).not.toMatch(/refresh/iu);
+    expect(document.edits.dirty).toBe(true);
+  } finally { provider.dispose(); }
+});
+
 test('FR-040: Given a clean custom document whose VS Code Revert command is a no-op, When refreshing changed disk data, Then the provider explicitly reopens its reader', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'lv-t033-clean-refresh-')); const path = join(directory, 'source.sqlite'); await writeFile(path, 'original');
   const fileUri = { scheme: 'file', fsPath: path, toString: () => path } as vscode.Uri;

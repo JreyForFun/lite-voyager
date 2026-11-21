@@ -48,3 +48,28 @@ test('FR-013: Given history with literal previews, When loading and clearing thr
   view.receive({ type: 'browserHistorySql', requestId: 2, sql: ' SELECT 42; ' }); expect(loaded).toEqual([' SELECT 42; ']);
   root.elements.get('history-clear')?.click(); expect(sent.at(-1)).toEqual({ action: 'clear' }); view.dispose();
 });
+const historyIds = ['history-show', 'history-panel', 'history-select', 'history-load', 'history-clear', 'history-status'];
+test('FR-013: Given a stored preview, When listed, Then the option shows it verbatim with its length and adds no ellipsis of its own', async () => {
+  const { HistoryView } = await import('../../webview/history-view');
+  vi.stubGlobal('document', { createElement: () => new BrowserElement() }); const root = browserRoot(historyIds);
+  const view = new HistoryView(root as unknown as HTMLElement, () => {}, () => {});
+  view.receive({ type: 'browserHistoryEntries', requestId: 1, entries: [{ id: 'a'.repeat(32), preview: 'SELECT * FROM t', length: 19 }, { id: 'b'.repeat(32), preview: 'SELECT long…', length: 400 }] });
+  expect(root.elements.get('history-select')?.children.map(option => option.textContent)).toEqual(['1. SELECT * FROM t (19 characters)', '2. SELECT long… (400 characters)']);
+  view.dispose();
+});
+test('FR-013: Given history that cannot be read, When the error reaches the history panel, Then it is shown there and Clear stays available for recovery', async () => {
+  const { HistoryView } = await import('../../webview/history-view');
+  vi.stubGlobal('document', { createElement: () => new BrowserElement() }); const root = browserRoot(historyIds); const sent: unknown[] = [];
+  const view = new HistoryView(root as unknown as HTMLElement, action => { sent.push(action); }, () => {});
+  root.elements.get('history-show')?.click(); view.setBusy(true);
+  view.failed('Query history is unreadable or invalid. Its stored files were preserved.');
+  expect(root.elements.get('history-status')?.textContent).toBe('Query history is unreadable or invalid. Its stored files were preserved. Clear this history to start over.');
+  expect(root.elements.get('history-clear')?.disabled).toBe(false); expect(root.elements.get('history-load')?.disabled).toBe(true);
+  root.elements.get('history-clear')?.click(); expect(sent.at(-1)).toEqual({ action: 'clear' }); view.dispose();
+});
+test('FR-013: Given unreadable history storage, When the host lists it, Then the error is reported without the page-size retry hint', async () => {
+  const browser = new SqliteBrowser({} as unknown as Engine); const detail = 'Query history is unreadable or invalid. Its stored files were preserved.';
+  browser.setHistory({ record: () => Promise.resolve(), list: () => Promise.reject(new Error(detail)), read: () => Promise.resolve(''), clear: () => Promise.resolve() });
+  const messages: BrowserResponse[] = []; await browser.handle({ type: 'browserHistory', requestId: 1, action: 'list' }, message => { messages.push(message); });
+  expect(messages.at(-1)).toEqual({ type: 'browserError', requestId: 1, message: detail }); browser.dispose();
+});

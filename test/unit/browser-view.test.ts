@@ -613,3 +613,17 @@ test('FR-002: Given a webview context recreated after hiding a tab, When restori
   expect(requests().at(-1)).toEqual({ type: 'browserPage', requestId: 6, table: 'saved', offset: 100, limit: 10 });
   expect(view.savedState()).toEqual({ requestId: 6, table: 'saved', offset: 100, listOffset: 100, limit: 10 });
 });
+
+test('FR-013: Given a query history request, When it is pending and then fails, Then status names history and the error stays in the history panel', () => {
+  view.dispose();
+  for (const id of ['history-show', 'history-panel', 'history-select', 'history-load', 'history-clear', 'history-status']) { root.elements.set(id, new BrowserElement()); }
+  view = new BrowserView(root as unknown as HTMLElement, (message) => { sent.push(message); }); view.start();
+  view.receive({ type: 'browserTables', requestId: 1, offset: 0, objects: [], hasMore: false }); flush();
+  root.elements.get('history-show')?.click(); const request = requests().at(-1);
+  expect(request?.type).toBe('browserHistory'); expect(root.elements.get('browser-status')?.textContent).toBe('Loading query history…');
+  const detail = 'Query history is unreadable or invalid. Its stored files were preserved.';
+  view.receive({ type: 'browserError', requestId: request?.requestId ?? 0, message: detail }); flush();
+  expect(root.elements.get('history-status')?.textContent).toContain(detail);
+  expect(root.elements.get('schema-status')?.textContent ?? '').not.toContain('history');
+  expect(root.elements.get('history-clear')?.disabled).toBe(false);
+});

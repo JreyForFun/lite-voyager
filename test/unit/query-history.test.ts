@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'vitest';
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const roots: string[] = [];
@@ -53,4 +53,54 @@ test('FR-013: Given two source histories, When explicitly clearing one, Then onl
   const { root, history, QueryHistory } = await fixture(); const other = new QueryHistory(root, 'file:///two.sqlite');
   await history.record('SELECT 1'); await other.record('SELECT 2'); await history.clear();
   expect(await history.list()).toEqual([]); expect(await other.list()).toHaveLength(1);
+});
+async function folderOf(root: string): Promise<string> { const [directory] = await readdir(root); return join(root, directory ?? ''); }
+test('FR-013: Given a corrupted index, When explicitly clearing history, Then an empty history replaces it and only owned SQL files are removed', async () => {
+  const { root, history } = await fixture(); await history.record('SELECT 1'); await history.record('SELECT 2'); const folder = await folderOf(root);
+  await writeFile(join(folder, 'index.json'), '{broken'); await writeFile(join(folder, 'notes.txt'), 'not owned by history');
+  await history.clear();
+  expect(await history.list()).toEqual([]); expect((await readdir(folder)).sort()).toEqual(['index.json', 'notes.txt']);
+  await history.record('SELECT 3'); expect((await history.list()).map(entry => entry.preview)).toEqual(['SELECT 3']);
+});
+test('FR-013: Given another VS Code window holds this history lock, When recording, Then the write waits until the lock is released', async () => {
+  const { root, history } = await fixture(); await history.record('SELECT 1'); const lock = join(await folderOf(root), 'history.lock');
+  await writeFile(lock, 'held by another window'); let done = false; const pending = history.record('SELECT 2').then(() => { done = true; });
+  await new Promise(resolve => setTimeout(resolve, 200)); expect(done).toBe(false);
+  await rm(lock); await pending;
+  expect((await history.list()).map(entry => entry.preview)).toEqual(['SELECT 2', 'SELECT 1']); await expect(access(lock)).rejects.toThrow();
+});
+test('FR-013: Given a stale history lock left by a crashed window, When recording, Then the lock is reclaimed and the run is saved', async () => {
+  const { root, history } = await fixture(); await history.record('SELECT 1'); const lock = join(await folderOf(root), 'history.lock');
+  await writeFile(lock, 'crashed window'); const old = new Date(Date.now() - 120000); await utimes(lock, old, old);
+  await history.record('SELECT 2');
+  expect(await history.list()).toHaveLength(2); await expect(access(lock)).rejects.toThrow();
+});
+test('FR-013: Given two windows recording the same file concurrently, When both finish, Then exactly 50 runs remain, every listed SQL file exists and none is orphaned', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'lv-t032-windows-')); roots.push(root); const build = await mkdtemp(join(tmpdir(), 'lv-t032-bundle-')); roots.push(build);
+  const bundle = join(build, 'query-history.cjs'); const { build: esbuild } = await import('esbuild');
+  await esbuild({ entryPoints: ['src/editor/query-history.ts'], bundle: true, platform: 'node', format: 'cjs', outfile: bundle, logLevel: 'silent' });
+  const { Worker } = await import('node:worker_threads');
+  // Each worker has its own module instance, so its in-process queue cannot see the other: like two VS Code windows.
+  const script = `const { workerData, parentPort } = require('node:worker_threads'); const { QueryHistory } = require(workerData.bundle);
+(async () => { const history = new QueryHistory(workerData.root, 'file:///shared.sqlite'); for (let i = 0; i < 40; i++) { await history.record('SELECT ' + workerData.tag + ' + ' + i); } })()
+  .then(() => { parentPort.postMessage('done'); }, (error) => { parentPort.postMessage('error: ' + error.message); });`;
+  const window = (tag: string) => new Promise<void>((resolve, reject) => {
+    const worker = new Worker(script, { eval: true, workerData: { bundle, root, tag } });
+    worker.once('message', (message: unknown) => { void worker.terminate(); if (message === 'done') { resolve(); } else { reject(new Error(String(message))); } });
+    worker.once('error', reject);
+  });
+  await Promise.all([window('a'), window('b')]);
+  const { QueryHistory } = await import('../../src/editor/query-history'); const history = new QueryHistory(root, 'file:///shared.sqlite');
+  const entries = await history.list(); expect(entries).toHaveLength(50);
+  const files = (await readdir(await folderOf(root))).filter(name => name.endsWith('.sql'));
+  expect(files.sort()).toEqual(entries.map(entry => `${entry.id}.sql`).sort());
+  for (const entry of entries) { expect(await history.read(entry.id)).toMatch(/^SELECT [ab] \+ \d+$/u); }
+}, 60000);
+test('FR-013: Given short multi-line, long and escape-heavy SQL, When listing history, Then only genuinely shortened previews end with an ellipsis', async () => {
+  const { history } = await fixture();
+  await history.record('SELECT *\n    FROM t'); await history.record(`SELECT '${'x'.repeat(300)}'`); await history.record(`SELECT '${'\u0001'.repeat(100)}'`);
+  const [escaped, long, short] = await history.list();
+  expect(short?.preview).toBe('SELECT * FROM t');
+  expect(long?.preview.endsWith('…')).toBe(true); expect(long?.preview.length).toBeLessThanOrEqual(160);
+  expect(escaped?.preview.endsWith('…')).toBe(true); expect(Buffer.byteLength(JSON.stringify(escaped?.preview), 'utf8')).toBeLessThanOrEqual(480);
 });

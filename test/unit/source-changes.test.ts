@@ -55,11 +55,26 @@ test('FR-040: Given a read-only imported or previewed source, When it changes or
   expect(monitor.state).toMatchObject({ changed: true, offered: true }); expect(monitor.state.message).toMatch(/changed on disk/iu); expect(monitor.state.message).not.toMatch(/edit/iu);
   await monitor.handle('keep'); expect(monitor.state.message).toMatch(/Current view retained/u); expect(monitor.state.message).not.toMatch(/edit|save-conflict/iu);
   await writeFile(path, 'newest'); await monitor.check(); expect(monitor.state.offered).toBe(true);
+  // Refused before refresh starts: the view really is untouched.
+  callbacks.available = () => false; await monitor.handle('refresh'); callbacks.available = () => true;
+  expect(monitor.state.message).toMatch(/^Wait for .*The current view was preserved; no source file was written\.$/u); expect(callbacks.refresh).not.toHaveBeenCalled();
+  // Failed after refresh started (an import is torn down before the new preview is read): never claim it was preserved.
   callbacks.refresh.mockRejectedValueOnce(new Error('Preview failed.')); await monitor.handle('refresh');
-  expect(monitor.state.message).toMatch(/^Preview failed\. .*no source file was written/u); expect(monitor.state.message).not.toMatch(/edit/iu);
+  expect(monitor.state.message).toMatch(/^Preview failed\. Refresh did not finish, so the previous view may be unavailable; no source file was written\./u);
+  expect(monitor.state.message).not.toMatch(/edit|preserved/iu);
   await rm(path); await monitor.check(); expect(monitor.state.message).toMatch(/missing|deleted/iu); expect(monitor.state.message).not.toMatch(/edit/iu);
   const editable = await fixture(); await writeFile(editable.path, 'newer'); await editable.monitor.check();
   expect(editable.monitor.state.message).toMatch(/Pending edits are retained/u);
+});
+test('FR-040: Given refresh is unavailable for an explained reason, When refresh is requested, Then that reason is shown instead of a generic wait', async () => {
+  const { monitor, path, callbacks } = await fixture();
+  const actions = callbacks as typeof callbacks & { unavailableReason?: () => string | undefined };
+  const reason = 'One view of this file could not open its database reader. Close that view, then refresh again, or reopen the file.';
+  callbacks.available = () => false; actions.unavailableReason = () => reason;
+  await writeFile(path, external); await monitor.check(); expect(monitor.state.changed).toBe(true);
+  await monitor.handle('refresh');
+  expect(monitor.state.message.startsWith(reason)).toBe(true); expect(monitor.state.message).not.toMatch(/Wait for the current/u);
+  expect(callbacks.refresh).not.toHaveBeenCalled(); expect(monitor.state).toMatchObject({ changed: true, busy: false });
 });
 test('FR-040: Given SQLite main bytes are unchanged, When only its WAL changes, Then refresh is offered and the main source remains untouched', async () => {
   const { monitor, path } = await fixture(true); await writeFile(path + '-wal', 'committed changes'); await monitor.check();

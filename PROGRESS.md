@@ -19,7 +19,15 @@ CI 43377f7: Ubuntu, macOS pass; Windows failed strict console scan on native Chr
 "Message 4 rejected by interface blink.mojom.WidgetHost" (TextInputStateChanged, during
 first completion-case panel close). Not reproducible locally (0 hits). Owner authorized one
 Windows rerun: it passes. All three platforms pass at 43377f7; failure and findings retained.
-Next: independent review, then tick T-031/T-032/T-033 and merge t032-t033-history-refresh.
+2026-11-21: owner delegated review/tick/merge. Independent /code-review high of the branch
+found 7 important + 3 minor issues; all reproduced and fixed test-first (stuck/false source
+banners, read-only refresh wording, bounded revert start, failed-reader guidance, cross-window
+history lock, corrupted-index Clear, history UI errors/previews). Details in the docs.
+Gates after repairs: verify 1,508 units/137 files, zero warnings; verify:full 1,508 units +
+91/91 hosts, one approved VSCODE-HOST-001 (not warning-free). History UI visual QA 6/6
+light/dark (out/history-ui-qa-*). Restored two double-encoded T-008 lines in TASKS.md.
+Pending before ticks/merge: three-platform CI on the repair commit; independent T-031
+review (its diff is on main, outside the branch review); follow-up review of the repairs.
 Owner authorizes T-032/T-033 implementation and agent visual QA; owner pushes/CI.
 Both features are implemented; final verify passes, verify:full is running.
 T-031 remains open: owner reports Ubuntu/macOS CI failed; cause not investigated.
@@ -52,6 +60,6 @@ Final verify: 1,459 units/135 files; types/lint/build/VSIX pass, zero diagnostic
 No dependency, exception, workload, deadline, clock or resource limit changed.
 Owner edits/unrelated untracked files are preserved; no push or remote CI run.
 ## Remaining work
-Finish npm run verify:full; record host counts, hashes and exact diagnostics.
-Fresh independent review and owner-pushed Windows/macOS/Ubuntu CI remain pending.
+Three-platform CI on the review-repair commit; independent T-031 review; follow-up
+review of the repairs. Then tick T-031/T-032/T-033 and fast-forward main.
 Keep T-031/T-032/T-033 and milestone checkboxes open until all required evidence.

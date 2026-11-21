@@ -61,8 +61,9 @@ export class SqliteBrowser {
           this.deliver(pending, result);
         } catch (error: unknown) {
           const detail = error instanceof Error ? error.message : 'The database operation failed.';
+          // History storage errors carry their own guidance; page-size advice applies only to database work.
           this.deliver(pending, { type: 'browserError', requestId: pending.request.requestId,
-            message: `${detail} Retry with a smaller page if needed, or reopen the file to recover.` });
+            message: pending.request.type === 'browserHistory' ? detail : `${detail} Retry with a smaller page if needed, or reopen the file to recover.` });
         } finally { pending.resolve(); }
       }
     } finally { this.running = false; }

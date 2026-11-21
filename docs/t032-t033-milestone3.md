@@ -349,6 +349,83 @@ Windows-only focus-before-close mitigation stay open for a later task if the err
 recurs. Remaining before ticking T-032/T-033 (and T-031, whose Ubuntu/macOS
 failures did not recur): the independent review named above.
 
+## Independent review (2026-11-21) and repairs
+
+Owner delegated the review, ticking and merge. A forked `/code-review high` of
+branch `t032-t033-history-refresh` against `main` reported 7 important and
+3 minor findings. Each was checked against the code; all reproduce. Ticking
+and merging were held until they were fixed. Every fix started with a failing test.
+
+1. **Stuck "Unable to inspect" banner** (`source-changes.ts`): a failed metadata
+   read left `observed` unchanged, so the next good read returned early. The
+   catch now forgets the observation. Test: `source-changes-errors.test.ts`
+   (EBUSY injected through a mocked `stat`).
+2. **False "changed on disk" after a failed first read**: the baseline stayed
+   empty. The first successful read now becomes the baseline (`baselineKnown`).
+3. **Read-only refresh failure claimed the view was preserved**: imports and
+   previews are torn down before rereading. Messages now distinguish a refusal
+   before refresh starts ("current view was preserved") from a failure after it
+   starts ("Refresh did not finish, so the previous view may be unavailable").
+4. **Dirty refresh could hang** if VS Code never invoked the provider's revert:
+   only the wait for the revert to *start* is bounded
+   (`revertStartTimeoutMs`, 10 s), then it fails visibly and unlocks the
+   document with edits kept; the reopen itself remains unbounded.
+5. **Refresh blocked forever by a failed reader**: the review's suggested fix is
+   unsafe (an `error` session is terminal: stopped, helper closed). Instead,
+   `unavailableReason` tells the user to close that view or reopen the file,
+   replacing the misleading "Wait for the current query…".
+6. **Two windows corrupting shared history**: the in-process queue cannot
+   coordinate windows. A `history.lock` file (exclusive create, 10 s wait,
+   30 s stale reclaim) now guards every read and write. A two-worker test, with
+   separate module instances like two windows, first failed with
+   Windows `EPERM` on the index rename and now keeps exactly 50 runs with no
+   missing or orphaned SQL files.
+7. **Unrecoverable corrupted index**: `clear()` no longer parses the old index;
+   it publishes an empty one and removes only owned `<32-hex>.sql/.tmp` files.
+   The history panel shows load errors itself and keeps Clear enabled.
+8. Minor: File > Revert outside a refresh now uses revert wording.
+9. Minor: history requests show "Loading query history…", and history errors
+   go to the history panel without the page-size retry hint.
+10. Minor: previews end with "…" only when text was actually cut (length or
+    escaped-byte bound); whitespace collapsing alone adds none.
+
+Focused evidence: monitor/editor/import/preview 67 + 71 tests, history 16
+(three stable runs), UI/browser 69; all type configs and lint clean.
+
+Local gates after the repairs (2026-11-21, short `TEMP`, uppercase `C:/` cwd),
+one run each, no retry:
+
+- `npm run verify`: 1,508 units / 137 files pass; types, lint, builds and
+  VSIX packaging with zero errors and zero warnings.
+- `npm run verify:full`: 1,508 units / 137 files and 91/91 real-host cases
+  pass (36 min host suite), including all ten T-032/T-033 history-refresh
+  cases on both engines. Log gate passes with exactly one approved record:
+  `VSCODE-HOST-001` (`[CloudSandboxApi] No 'github' session ...`,
+  `window1/renderer.log` line 10, warning). Not warning-free.
+
+Visual QA of the repaired history panel (archived VS Code 1.140.0, isolated
+profile, loopback CDP screenshots, native CSV import; git-ignored
+`out/history-ui-qa-*`): six checkpoints pass, light and dark.
+Two runs (multi-line short and over-160-character SQL) list 2 entries; the
+long preview is cut by the select width only. After `index.json` is replaced
+with `{broken`, Show reports "Query history is unreadable or invalid. Its stored
+files were preserved. Clear this history to start over." inside the history
+panel, Select/Load are disabled, Clear stays enabled, and the corrupt bytes are
+unchanged. Clear leaves only an empty `index.json`, disables Clear and shows
+"0 of 50"; the next run records again ("1 of 50"). Source bytes match the
+pre-import digest. The short entry's exact option text is covered by unit tests,
+not the closed-select screenshot.
+
+Branch hygiene: commit `77b418e` carried pre-existing working-tree text into
+`specs/TASKS.md` with two double-encoded T-008 lines (`20Ã¢â‚¬â€œ23`). Those two
+lines are restored to `main`'s exact bytes; `main`'s older single mojibake
+(`20â€“23`) is left for the owner.
+
+Actual-candidate gates still pending at this point: three-platform CI on the
+repair commit; independent T-031 review (T-031's diff is already on `main`,
+so the branch review above did not cover it); a follow-up review of these
+repairs.
+
 ## Changed files
 
 Task documentation: `PROGRESS.md`, `docs/t032-t033-milestone3.md`,
@@ -369,14 +446,21 @@ Tests: `src/test/history-refresh.test.ts`, `test/unit/query-history.test.ts`,
 `test/unit/source-change-ui.test.ts`, `test/unit/editing-provider.test.ts`,
 `test/unit/browser-view.test.ts`, `test/unit/csv-import-panel.test.ts`,
 `test/unit/csv-preview-panel.test.ts`, `test/unit/sql-editor.test.ts`,
-`test/unit/sqlite-browser.test.ts`.
+`test/unit/sqlite-browser.test.ts`, `test/unit/source-changes-errors.test.ts`,
+`test/unit/integration-logs-host009.test.ts`.
+
+Validation policy (owner-approved HOST-009): `scripts/integration-logs.mts`,
+`specs/VALIDATION.md`, `AGENTS.md`.
 
 Ignored local QA helpers/artifacts: `out/t032-t033-focused.mts`,
 `out/t032-t033-visual-test.ts`, `out/t032-t033-visual-launch.mts`,
 `out/t032-t033-development-qa.ts`, `out/t032-t033-rebuild-development-qa.mts`,
 `out/t032-t033-capture.mts`, `out/t032-t033-capture-5.mts`,
 `out/t032-t033-capture-6.mts`, `out/t032-t033-capture-7.mts`,
-`out/t032-t033-scan-profiles.mts`, `out/t032-t033-source-hashes.mts`, their
+`out/t032-t033-scan-profiles.mts`, `out/t032-t033-source-hashes.mts`,
+`out/import-refresh-qa-run.mts`, `out/import-refresh-qa-test.ts`,
+`out/history-ui-qa-run.mts`, `out/history-ui-qa-test.ts`,
+`out/widgethost-probe.test.ts`, their
 transcripts/metadata/screenshots and disposable profiles. They are not shipped.
 
 Owner changes to `README.md`, T-015 parts of `specs/PLAN.md`,

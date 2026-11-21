@@ -233,7 +233,8 @@ export class BrowserView {
       : message.type === 'browserCancel' ? 'Cancelling and reopening the database…'
       : message.type === 'browserList' ? 'Loading tables and views…' : message.type === 'browserQuery' ? 'Running SQL in the worker…'
         : message.type === 'browserComplete' ? 'Loading autocomplete metadata in the worker. You can cancel.'
-        : message.type === 'browserSchema' ? 'Loading schema metadata in the worker…' : 'Loading rows…';
+        : message.type === 'browserSchema' ? 'Loading schema metadata in the worker…'
+        : message.type === 'browserHistory' ? 'Loading query history…' : 'Loading rows…';
     this.message(label); this.controls(); this.post(message); this.report();
   }
 
@@ -315,6 +316,7 @@ export class BrowserView {
     const sql = this.pendingSql;
     const pendingPage = this.pendingPage;
     if (message.type === 'browserQueryRows' && (this.pending !== 'browserQuery' || sql === null)) { return; }
+    const pendingType = this.pending;
     this.pending = null;
     this.exportSaving = false;
     this.pendingSql = null;
@@ -391,7 +393,10 @@ export class BrowserView {
         this.schema.failed('Operation cancelled.');
         this.gridOptions = savedGrid(this.shownGrid); this.loadFilter();
         this.message('Operation cancelled. The database is ready; use Run to retry SQL, select a table or change page size.'); break;
-      case 'browserError': this.schema.failed(message.message); this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
+      case 'browserError':
+        // History failures belong to the history panel, not to schema metadata or grid paging.
+        if (pendingType === 'browserHistory' && this.history !== undefined) { this.history.failed(message.message); this.message(message.message, true); break; }
+        this.schema.failed(message.message); this.gridOptions = savedGrid(this.shownGrid); this.loadFilter(); this.message(message.message, true); break;
     }
     // Page replacement renders synchronously; publish only settled controls/status.
     this.controls(); this.report(); this.refreshEditing();
